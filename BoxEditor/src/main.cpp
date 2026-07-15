@@ -1,23 +1,23 @@
 #include <BoxEngine.h>
 #include <BoxWindow.h>
+#include <App.h>
 #include <miniBoxLog.h>
 
 
 int main() {
 
-	BOX_LOG_INFO("Hello, from the BoxEditor!");
-	BoxEngine boxE;
+    BOX_LOG_INFO("Hello from the BoxEditor!");
 
-	WindowConfig cfg;
-	cfg.width = 800;
-	cfg.height = 600;
-	cfg.title = "Box Editor Test Window";
+    BoxEngine boxEngine;
+    App app;
 
-	// Initialize the window with config 
-	
+    if (!app.Init())
+    {
+        BOX_LOG_DEBUG("Failed to initialize BoxEditor");
+        return -1;
+    }
 
+    boxEngine.testFunction();
 
-	boxE.testFunction();
-
-	return 0;
+    return app.Run();
 }

@@ -1,5 +1,8 @@
 #pragma once
 
+#include <memory>
+
+class BoxWindow;
 
 
 class App
@@ -13,7 +16,7 @@ public:
 	void Shutdown();
 
 private:
-
-	
+		
 	bool m_isRunning = false;
+	std::unique_ptr<BoxWindow> m_window;
 };

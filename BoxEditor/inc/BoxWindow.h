@@ -18,15 +18,16 @@ class BoxWindow
 public:
 
 	explicit BoxWindow(const WindowConfig& config);
-	~BoxWindow() = default;
+	~BoxWindow();
 
-	bool Initialize(int width, int height, const char* title);
 	void Update();
 	void Shutdown();
-	// Getters
+
 	GLFWwindow* GetWindow() const { return window; }
+	bool ShouldClose() const;
 
 	void SetVSync(bool enabled);
+
 
 private:
 
