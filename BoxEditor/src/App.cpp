@@ -23,6 +23,8 @@ bool App::Init()
 
     m_imgui = std::make_unique<ImGuiLayer>();
 
+    m_imgui->SetEnableDocking(true);
+
     if (!m_imgui->Initialize(m_window->GetWindow()))
     {
         BOX_LOG_ERROR("Failed to initialize ImGui");
@@ -50,7 +52,8 @@ int App::Run()
     }
 
     GLFWwindow* nativeWindow = m_window->GetWindow();
-
+        bool dockspaceOpen = true;
+   
     while (m_isRunning && !glfwWindowShouldClose(nativeWindow))
     {
         glfwPollEvents();
@@ -60,10 +63,10 @@ int App::Run()
 
         m_imgui->BeginFrame();
 
-        ImGui::Begin("Hello");
-        ImGui::Text("Box Editor");
-        ImGui::End();
+        m_imgui->MainDockSpace(&dockspaceOpen);
 
+		m_imgui->testwindow(); // test window for ImGui    
+        
 		
 		m_imgui->RenderImGui();
 

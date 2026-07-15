@@ -10,10 +10,20 @@ public:
     bool Initialize(GLFWwindow* window);
     void BeginFrame();
 
+
+    // Draw all editor panels here
+	void testwindow();  
+    /*void DrawMainMenu();
+    void DrawSceneViewport();
+    void DrawObjectExplorer();
+    void DrawInspector();*/
+
+
     // Docking control
-    //void SetEnableDocking(bool enabled);
-    //bool GetEnableDocking() const;
-    //void MainDockSpace(bool* p_open); // docking space
+    void SetEnableDocking(bool enabled);
+    bool GetEnableDocking() const;
+    void MainDockSpace(bool* p_open); // docking space
+
     void RenderImGui(); // finish ImGui frame and render
     void ImGuiShutdown();
  
