@@ -4,7 +4,9 @@
 int main() {
 	std::cout << "Hello, BoxEditor!" << std::endl;
 
-	testFunction();
+	BoxEngine boxE;
+
+	boxE.testFunction();
 
 	return 0;
 }
