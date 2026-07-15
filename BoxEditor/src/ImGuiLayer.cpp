@@ -10,6 +10,8 @@
 
 #include <GLFW/glfw3.h>
 
+
+
 bool ImGuiLayer::Initialize(GLFWwindow* window)
 {
 
@@ -68,6 +70,37 @@ void ImGuiLayer::testwindow()
     ImGui::Begin("Test window");
     ImGui::Text("Box Editor");
     ImGui::End();
+	
+
+}
+
+MenuAction ImGuiLayer::DrawMainMenu()
+{
+    if (ImGui::BeginMainMenuBar())
+    {
+        if (ImGui::BeginMenu("File"))
+        {
+            if (ImGui::MenuItem("New"))
+            {
+            }
+            if (ImGui::MenuItem("New Window"))
+            {
+               
+            }
+
+            if (ImGui::MenuItem("Exit"))
+            {
+                ImGui::EndMenu();
+                ImGui::EndMainMenuBar();
+                return MenuAction::Exit;
+               
+            }
+
+            ImGui::EndMenu();
+        }
+
+        ImGui::EndMainMenuBar();
+    }
 }
 
 void ImGuiLayer::SetEnableDocking(bool enabled)

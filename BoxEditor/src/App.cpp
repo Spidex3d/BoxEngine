@@ -66,7 +66,20 @@ int App::Run()
 
         m_imgui->MainDockSpace(&dockspaceOpen);
 
-		m_imgui->testwindow(); // test window for ImGui    
+        switch (m_imgui->DrawMainMenu())
+        {
+        case MenuAction::Exit:
+            glfwSetWindowShouldClose(
+                m_window->GetWindow(),
+                GLFW_TRUE);
+            break;
+        
+        default:
+            break;
+        }
+
+		
+        m_imgui->testwindow(); // test window for ImGui    
         
 		
 		m_imgui->RenderImGui();

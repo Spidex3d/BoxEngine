@@ -1,5 +1,15 @@
 
+enum class MenuAction
+{
+    None,
+    Exit,
+    NewScene,
+    OpenScene,
+    SaveScene
+};
+
 struct GLFWwindow;
+
 
 class ImGuiLayer
 {
@@ -12,9 +22,9 @@ public:
 
 
     // Draw all editor panels here
-	void testwindow();  
-    /*void DrawMainMenu();  dedicated panel classes once they grow.
-    void DrawSceneViewport();
+    void testwindow();
+    MenuAction DrawMainMenu(); // dedicated panel classes once they grow.
+    /*void DrawSceneViewport();
     void DrawObjectExplorer();
     void DrawInspector();*/
 
