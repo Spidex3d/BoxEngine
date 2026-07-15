@@ -44,6 +44,7 @@ bool App::Init()
 
 int App::Run()
 {
+	m_window->SetIcon(m_window->GetWindow()); // set the window icon from the assets folder
 
     if (!m_window || !m_window->GetWindow())
     {

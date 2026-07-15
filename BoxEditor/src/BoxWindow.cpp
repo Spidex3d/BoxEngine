@@ -1,16 +1,23 @@
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb/stb_image.h>
+#include <Helpers.h>
+#include <BoxDiffs.h>
 #include <BoxWindow.h>
 #include <miniBoxLog.h>
 
 
 // initialize static refcount
 int BoxWindow::s_glfwRefCount = 0;
+
 void BoxWindow::SetIcon(GLFWwindow* window)
 {
-    //std::string iconPath = GetAssetPath(ICON_PATH);
-    //GLFWimage images[1];
-    //images[0].pixels = stbi_load(iconPath.c_str(), &images[0].width, &images[0].height, 0, 4); // rgba = png
-    //glfwSetWindowIcon(window, 1, images);
-    //stbi_image_free(images[0].pixels);
+    Helpers helpers;
+
+    std::string iconPath = helpers.GetAssetPath(ICON_PATH);
+    GLFWimage images[1];
+    images[0].pixels = stbi_load(iconPath.c_str(), &images[0].width, &images[0].height, 0, 4); // rgba = png
+    glfwSetWindowIcon(window, 1, images);
+    stbi_image_free(images[0].pixels);
 }
 BoxWindow::BoxWindow(const WindowConfig & config)
     : m_config(config)
