@@ -4,7 +4,14 @@
 
 // initialize static refcount
 int BoxWindow::s_glfwRefCount = 0;
-
+void BoxWindow::SetIcon(GLFWwindow* window)
+{
+    //std::string iconPath = GetAssetPath(ICON_PATH);
+    //GLFWimage images[1];
+    //images[0].pixels = stbi_load(iconPath.c_str(), &images[0].width, &images[0].height, 0, 4); // rgba = png
+    //glfwSetWindowIcon(window, 1, images);
+    //stbi_image_free(images[0].pixels);
+}
 BoxWindow::BoxWindow(const WindowConfig & config)
     : m_config(config)
 {
@@ -33,6 +40,20 @@ BoxWindow::BoxWindow(const WindowConfig & config)
 
     glfwMakeContextCurrent(window);
 
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        BOX_LOG_DEBUG("Failed to initialize GLAD");
+        return;
+    }
+    BOX_LOG_INFO("GLAD initialized");
+
+    BOX_LOG_INFO(
+        "OpenGL Version: "
+        << reinterpret_cast<const char*>(glGetString(GL_VERSION))
+    );
+    BOX_LOG_INFO(
+        "Renderer: "
+        << reinterpret_cast<const char*>(glGetString(GL_RENDERER))
+    );
     // Set vsync as requested
     SetVSync(m_config.vsync);
 }

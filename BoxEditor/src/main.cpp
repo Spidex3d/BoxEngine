@@ -17,7 +17,7 @@ int main() {
         return -1;
     }
 
-    boxEngine.testFunction();
+	boxEngine.testFunction(); // test to see if we are linked with BoxEngine library correctly
 
     return app.Run();
 }

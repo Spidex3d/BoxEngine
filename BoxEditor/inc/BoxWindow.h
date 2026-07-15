@@ -1,4 +1,5 @@
 #pragma once
+#include <glad\glad.h>
 #ifndef GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_NONE
 #endif
@@ -19,6 +20,9 @@ public:
 
 	explicit BoxWindow(const WindowConfig& config);
 	~BoxWindow();
+
+	void SetIcon(GLFWwindow* window); // set window icon from image file
+	
 
 	void Update();
 	void Shutdown();

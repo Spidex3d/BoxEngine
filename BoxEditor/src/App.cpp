@@ -1,6 +1,7 @@
 #include "App.h"
 #include "BoxWindow.h"
 #include <miniBoxLog.h>
+#include <imgui/imgui.h>
 
 bool App::Init()
 {
@@ -20,13 +21,26 @@ bool App::Init()
         return false;
     }
 
+    m_imgui = std::make_unique<ImGuiLayer>();
+
+    if (!m_imgui->Initialize(m_window->GetWindow()))
+    {
+        BOX_LOG_ERROR("Failed to initialize ImGui");
+
+        m_imgui.reset();
+        m_window->Shutdown();
+        m_window.reset();
+
+        return false;
+    }
+   
     m_isRunning = true;
 
     BOX_LOG_INFO("App initialized successfully");
     return true;
 }
 
-bool App::Run()
+int App::Run()
 {
 
     if (!m_window || !m_window->GetWindow())
@@ -41,8 +55,17 @@ bool App::Run()
     {
         glfwPollEvents();
 
-       // glClearColor(0.15f, 0.18f, 0.22f, 1.0f);
-        //glClear(GL_COLOR_BUFFER_BIT);
+        glClearColor(0.15f, 0.18f, 0.22f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        m_imgui->BeginFrame();
+
+        ImGui::Begin("Hello");
+        ImGui::Text("Box Editor");
+        ImGui::End();
+
+		
+		m_imgui->RenderImGui();
 
         // Engine update/render and ImGui will go here later.
 
@@ -59,10 +82,17 @@ bool App::Run()
 void App::Shutdown()
 {
 	// shutdown the window and ImGui context and go to bed.
-    if (!m_isRunning && !m_window)
+    if (!m_isRunning && !m_window && !m_imgui)
         return;
 
     m_isRunning = false;
+
+    // ImGui requires a valid GLFW window and OpenGL context during shutdown.
+    if (m_imgui)
+    {
+        m_imgui->ImGuiShutdown();
+        m_imgui.reset();
+    }
 
     if (m_window)
     {
@@ -71,6 +101,7 @@ void App::Shutdown()
     }
 
     BOX_LOG_INFO("App shutdown complete");
+
 }
 
 
