@@ -1,7 +1,11 @@
 #include "App.h"
+#include "BoxWindow.h"
 
-bool App::Initialize()
+bool App::Init()
 {
+
+
+
 	return false;
 }
 
@@ -9,6 +13,7 @@ bool App::Run()
 {
 	return false;
 }
+
 
 void App::Shutdown()
 {
