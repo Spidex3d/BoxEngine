@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h> 
 
 struct WindowConfig {
+	
 	int width = 1280;
 	int height = 720;
 	const char* title = "Box Editor";
@@ -25,11 +26,13 @@ public:
 	// Getters
 	GLFWwindow* GetWindow() const { return window; }
 
-
+	void SetVSync(bool enabled);
 
 private:
 
 	GLFWwindow* window = nullptr;
+	WindowConfig m_config;
 
-
+	// Simple refcount so multiple SpxWindow instances don't re-init/terminate GLFW
+	static int s_glfwRefCount; // static member declaration
 };
