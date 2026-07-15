@@ -1,8 +1,10 @@
-#include <iostream>
 #include <BoxEngine.h>
+#include <miniBoxLog.h>
+
 
 int main() {
-	std::cout << "Hello, BoxEditor!" << std::endl;
+
+	BOX_LOG_INFO("Hello, from the BoxEditor!");
 
 	BoxEngine boxE;
 
