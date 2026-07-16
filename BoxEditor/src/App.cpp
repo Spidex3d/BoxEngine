@@ -1,7 +1,7 @@
 #include "App.h"
 #include "BoxWindow.h"
 #include <miniBoxLog.h>
-
+#include <BoxEngine.h>
 #include <imgui/imgui.h>
 
 bool App::Init()
@@ -40,6 +40,9 @@ bool App::Init()
 
         return false;
     }
+
+    //BoxEngine boxEngine;
+    //boxEngine.testFunction(); // test to see if we are linked with BoxEngine library correctly
    
     m_isRunning = true;
 
@@ -59,7 +62,10 @@ int App::Run()
 
     GLFWwindow* nativeWindow = m_window->GetWindow();
         bool dockspaceOpen = true;
-   
+
+		BoxEngine boxEngine; // just for testing BoxEngine integration, will be removed later
+        boxEngine.testFunction(); // Render the scene to the framebuffer
+
     while (m_isRunning && !glfwWindowShouldClose(nativeWindow))
     {
         glfwPollEvents();
@@ -83,12 +89,15 @@ int App::Run()
             break;
         }
 		// ########################################### Scene Viewport and Scene Collection Panels #################
-		m_imgScene->DrawSceneViewport(); // Draw the Scene Viewport panel
+		//m_imgScene->DrawSceneViewport(); // Draw the Scene Viewport panel
+		m_imgScene->DrawSceneViewport(boxEngine); // Draw the Scene Viewport panel with BoxEngine rendering
 		m_imgSceneCollection->DrawSceneCollection(); // Draw the Scene Collection panel
          
         
 		
 		m_imgui->RenderImGui();
+
+        
 
         // Engine update/render and ImGui will go here later.
 

@@ -3,13 +3,16 @@
 #include <functional>
 #include <string>
 
+class BoxEngine;
+
 class SceneViewportPanel
 {
 public:
 	using ActionCallback = std::function<void(const std::string&)>; // called when UI requests an action
 
 
-	void DrawSceneViewport(); // dedicated panel classes once they grow.
+	//void DrawSceneViewport(); // dedicated panel classes once they grow.
+	void DrawSceneViewport(BoxEngine& engine);
 
 private:
 	// toolbar height in UI units
