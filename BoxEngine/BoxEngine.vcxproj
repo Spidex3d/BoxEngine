@@ -148,10 +148,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="inc\BoxEngine.h" />
+    <ClInclude Include="inc\entity\Entity.h" />
     <ClInclude Include="inc\rendering\Framebuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\BoxEngine.cpp" />
+    <ClCompile Include="src\entity\Entity.cpp" />
     <ClCompile Include="src\rendering\Framebuffer.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
