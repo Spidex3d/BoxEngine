@@ -65,15 +65,6 @@ void ImGuiLayer::BeginFrame()
     ImGui::NewFrame();
 }
 
-void ImGuiLayer::testwindow()
-{
-    ImGui::Begin("Test window");
-    ImGui::Text("Box Editor");
-    ImGui::End();
-	
-
-}
-
 void ImGuiLayer::SetEnableDocking(bool enabled)
 {
 	m_enableDocking = enabled;

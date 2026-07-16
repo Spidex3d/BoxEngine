@@ -7,8 +7,8 @@
 bool App::Init()
 {
     WindowConfig config;
-    config.width = 800;
-    config.height = 600;
+    config.width = 1280;
+    config.height = 720;
     config.title = "Box Editor Test Window";
     config.resizable = true;
     config.vsync = true;
@@ -22,8 +22,11 @@ bool App::Init()
         return false;
     }
 
-    m_imgui = std::make_unique<ImGuiLayer>();
-	m_imgMenu = std::make_unique<MainMenuBar>(); // Main Menu Bar panel for ImGui
+	// ################################### Initialize ImGuiLayer and panels #################################################
+	m_imgui = std::make_unique<ImGuiLayer>();                         // ImGuiLayer for the main window docking and rendering
+	m_imgMenu = std::make_unique<MainMenuBar>();                      // Main Menu Bar panel for the main window
+	m_imgScene = std::make_unique<SceneViewportPanel>();              // Scene Viewport panel for the main window    
+	m_imgSceneCollection = std::make_unique<SceneCollectionPanel>();  // Scene Collection panel for the main window
 
     m_imgui->SetEnableDocking(true);
 
@@ -67,7 +70,7 @@ int App::Run()
         m_imgui->BeginFrame();
 
         m_imgui->MainDockSpace(&dockspaceOpen);
-
+		// ########################################### Main Menu Bar ###########################################
         switch (m_imgMenu->DrawMainMenu())
         {
         case MenuAction::Exit:
@@ -79,9 +82,10 @@ int App::Run()
         default:
             break;
         }
-
-		
-        m_imgui->testwindow(); // test window for ImGui    
+		// ########################################### Scene Viewport and Scene Collection Panels #################
+		m_imgScene->DrawSceneViewport(); // Draw the Scene Viewport panel
+		m_imgSceneCollection->DrawSceneCollection(); // Draw the Scene Collection panel
+         
         
 		
 		m_imgui->RenderImGui();

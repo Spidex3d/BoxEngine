@@ -20,8 +20,3 @@ private:
 	// Add any private members or methods if needed
 
 };
-
-//MenuAction DrawMainMenu(); // dedicated panel classes once they grow.
-   /*void DrawSceneViewport();
-   void DrawObjectExplorer();
-   void DrawInspector();*/

@@ -13,6 +13,9 @@ MenuAction MainMenuBar::DrawMainMenu()
         {
             if (ImGui::MenuItem("New Scene"))
             {
+                ImGui::EndMenu();
+                ImGui::EndMainMenuBar();
+                return MenuAction::NewScene;
             }
             if (ImGui::MenuItem("Open Scene"))
             {

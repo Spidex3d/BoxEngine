@@ -138,6 +138,9 @@
     <ClCompile Include="src\ImGuiLayer.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\panels\MainMenuBar.cpp" />
+    <ClCompile Include="src\panels\ObjectExplorerPanel.cpp" />
+    <ClCompile Include="src\panels\SceneCollectionPanel.cpp" />
+    <ClCompile Include="src\panels\SceneViewportPanel.cpp" />
     <ClCompile Include="vendor\imgui\imgui.cpp" />
     <ClCompile Include="vendor\imgui\imgui_demo.cpp" />
     <ClCompile Include="vendor\imgui\imgui_draw.cpp" />
@@ -159,6 +162,9 @@
     <ClInclude Include="inc\ImGuiLayer.h" />
     <ClInclude Include="inc\miniBoxLog.h" />
     <ClInclude Include="inc\panels\MainMenuBar.h" />
+    <ClInclude Include="inc\panels\ObjectExplorerPanel.h" />
+    <ClInclude Include="inc\panels\SceneCollectionPanel.h" />
+    <ClInclude Include="inc\panels\SceneViewportPanel.h" />
     <ClInclude Include="vendor\imgui\imconfig.h" />
     <ClInclude Include="vendor\imgui\imgui.h" />
     <ClInclude Include="vendor\imgui\ImGuiAF.h" />

@@ -20,10 +20,6 @@ public:
     bool Initialize(GLFWwindow* window);
     void BeginFrame();
 
-
-    // Draw all editor panels here
-    void testwindow();
-   
     // Docking control
     void SetEnableDocking(bool enabled);
     bool GetEnableDocking() const;
