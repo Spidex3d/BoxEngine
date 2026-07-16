@@ -1,9 +1,11 @@
 #pragma once
 #include <memory>
 #include <ImGuiLayer.h>
+#include "panels\MainMenuBar.h"
 
 class BoxWindow;
-class ImGuiLayer;
+//class ImGuiLayer;
+//class MainMenuBar;
 
 class App
 {
@@ -20,4 +22,5 @@ private:
 	bool m_isRunning = false;
 	std::unique_ptr<BoxWindow> m_window;
 	std::unique_ptr<ImGuiLayer> m_imgui;
+	std::unique_ptr<MainMenuBar> m_imgMenu; // menu bar panel for ImGui
 };

@@ -1,12 +1,12 @@
 
-enum class MenuAction
-{
-    None,
-    Exit,
-    NewScene,
-    OpenScene,
-    SaveScene
-};
+//enum class MenuAction
+//{
+//    None,
+//    Exit,
+//    NewScene,
+//    OpenScene,
+//    SaveScene
+//};
 
 struct GLFWwindow;
 
@@ -23,12 +23,7 @@ public:
 
     // Draw all editor panels here
     void testwindow();
-    MenuAction DrawMainMenu(); // dedicated panel classes once they grow.
-    /*void DrawSceneViewport();
-    void DrawObjectExplorer();
-    void DrawInspector();*/
-
-
+   
     // Docking control
     void SetEnableDocking(bool enabled);
     bool GetEnableDocking() const;

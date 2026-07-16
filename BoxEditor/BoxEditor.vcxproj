@@ -137,6 +137,7 @@
     <ClCompile Include="src\Helpers.cpp" />
     <ClCompile Include="src\ImGuiLayer.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\panels\MainMenuBar.cpp" />
     <ClCompile Include="vendor\imgui\imgui.cpp" />
     <ClCompile Include="vendor\imgui\imgui_demo.cpp" />
     <ClCompile Include="vendor\imgui\imgui_draw.cpp" />
@@ -157,6 +158,7 @@
     <ClInclude Include="inc\Helpers.h" />
     <ClInclude Include="inc\ImGuiLayer.h" />
     <ClInclude Include="inc\miniBoxLog.h" />
+    <ClInclude Include="inc\panels\MainMenuBar.h" />
     <ClInclude Include="vendor\imgui\imconfig.h" />
     <ClInclude Include="vendor\imgui\imgui.h" />
     <ClInclude Include="vendor\imgui\ImGuiAF.h" />

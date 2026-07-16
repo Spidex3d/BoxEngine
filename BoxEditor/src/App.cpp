@@ -1,6 +1,7 @@
 #include "App.h"
 #include "BoxWindow.h"
 #include <miniBoxLog.h>
+
 #include <imgui/imgui.h>
 
 bool App::Init()
@@ -22,6 +23,7 @@ bool App::Init()
     }
 
     m_imgui = std::make_unique<ImGuiLayer>();
+	m_imgMenu = std::make_unique<MainMenuBar>(); // Main Menu Bar panel for ImGui
 
     m_imgui->SetEnableDocking(true);
 
@@ -66,7 +68,7 @@ int App::Run()
 
         m_imgui->MainDockSpace(&dockspaceOpen);
 
-        switch (m_imgui->DrawMainMenu())
+        switch (m_imgMenu->DrawMainMenu())
         {
         case MenuAction::Exit:
             glfwSetWindowShouldClose(
@@ -93,9 +95,6 @@ int App::Run()
     return 0;
 }
 
-
-
-
 void App::Shutdown()
 {
 	// shutdown the window and ImGui context and go to bed.
@@ -103,6 +102,11 @@ void App::Shutdown()
         return;
 
     m_isRunning = false;
+
+    if (m_imgMenu)
+    {
+        m_imgMenu.reset();
+    }
 
     // ImGui requires a valid GLFW window and OpenGL context during shutdown.
     if (m_imgui)
