@@ -44,7 +44,7 @@ bool ImGuiLayer::Initialize(GLFWwindow* window)
 
     fontconfig.GlyphOffset = ImVec2(0.0f, 1.0f);
 	std::string fontPath = helpers.GetAssetPath(FONT_PATH_MAIN_REL); // comic sans font
-    io.Fonts->AddFontFromFileTTF(fontPath.c_str(), MY_FONT_SIZE);
+    io.Fonts->AddFontFromFileTTF(fontPath.c_str(), FONT_SIZE);
 
     std::string AFfontPath = helpers.GetAssetPath(FA_SOLID_PATH);
     io.Fonts->AddFontFromFileTTF(AFfontPath.c_str(), FONT_SIZE, &fontconfig, ranges);

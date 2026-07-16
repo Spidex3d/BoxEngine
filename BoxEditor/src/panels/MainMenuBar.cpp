@@ -40,7 +40,7 @@ MenuAction MainMenuBar::DrawMainMenu()
             }
 
 			ImGui::Separator();
-            if (ImGui::MenuItem("Exit"))
+            if (ImGui::MenuItem(ICON_FA_SIGN_OUT_ALT" Exit"))
             {
                 ImGui::EndMenu();
                 ImGui::EndMainMenuBar();
