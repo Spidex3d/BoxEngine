@@ -118,7 +118,7 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)BoxEngine\inc;$(SolutionDir)BoxEditor\vendor;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)BoxEditor\inc;$(SolutionDir)BoxEngine\inc;$(SolutionDir)BoxEditor\vendor</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -138,7 +138,7 @@
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)BoxEngine\inc;$(SolutionDir)BoxEditor\vendor;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)BoxEditor\inc;$(SolutionDir)BoxEngine\inc;$(SolutionDir)BoxEditor\vendor</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>

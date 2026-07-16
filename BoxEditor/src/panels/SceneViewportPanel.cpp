@@ -1,6 +1,5 @@
 #include "panels\SceneViewportPanel.h"
-#include <imgui\imgui_impl_glfw.h>
-#include <imgui\imgui_impl_opengl3.h>
+
 #include <imgui\ImGuiAF.h>
 #include <miniBoxLog.h>
 
@@ -16,8 +15,11 @@ void SceneViewportPanel::DrawSceneViewport()
     ImVec2 pos = ImGui::GetCursorScreenPos();
     ImGuiIO& io = ImGui::GetIO();
 
-    // ########################################## Top Tool bar ############################################
+    int desired_w = static_cast<int>(window_width * io.DisplayFramebufferScale.x);
+    int desired_h = static_cast<int>(window_height * io.DisplayFramebufferScale.y);
 
+
+    // ########################################## Top Tool bar ############################################
         const float tbHeight = 25.0f;
         ImGui::BeginChild("##scene_toolbar", ImVec2(ImGui::GetContentRegionAvail().x, tbHeight), false, ImGuiWindowFlags_NoDecoration);
 
@@ -62,53 +64,7 @@ void SceneViewportPanel::DrawSceneViewport()
         ImGui::EndChild();
 
         // ########################################## End Top Tool bar ############################################
-
-        int desired_w = static_cast<int>(window_width * io.DisplayFramebufferScale.x);
-        int desired_h = static_cast<int>(window_height * io.DisplayFramebufferScale.y);
-
-        // Recreate framebuffer if size changed or not created yet
-        if (desired_w > 0 && desired_h > 0) {
-            if (desired_w != m_fbWidth || desired_h != m_fbHeight || m_fbo == 0) {
-                // Rescale_frambuffer((float)desired_w, (float)desired_h);
-            }
-        }
-
-        // If we have an FBO, bind it, clear and render scene into it.
-        if (!m_fbo) {
-            // Bind FBO and clear
-           // Bind_Framebuffer();
-            glClearColor(0.12f, 0.15f, 0.18f, 1.0f);
-            glEnable(GL_DEPTH_TEST);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-            // Call the registered render callback so Engine renders into the bound FBO.
-            // If no callback is set, nothing happens (safe).
-            if (m_renderCallback) {
-                m_renderCallback();
-            }
-
-            // Done rendering to FBO
-            // Unbinde_Frambuffer();
-
-
-
-            ImGui::Image((void*)(intptr_t)m_fboColor,
-                ImVec2(window_width, window_height),
-                ImVec2(0, 1), ImVec2(1, 0)); // uv0, uv1 flipped for GL
-
-            // ##################################################### Picking ########################################################
-                   // After drawing the resulting texture inside the ImGui window:
-                   // store viewport rectangle for picking (screen coords and UI units)
-            m_sceneViewportPos = ImGui::GetItemRectMin();
-            m_sceneViewportSize = ImGui::GetItemRectSize();
-        }
-        else {
-            // fallback: draw empty box or placeholder text
-            ImGui::TextWrapped("Frame buffer not initialized.");
-        }
-
-
-
+      
 
         // Detect right-click for popup menu (existing UI code)
         if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
