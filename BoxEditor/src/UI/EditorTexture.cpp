@@ -87,4 +87,12 @@ EditorTexture LoadEditorTexture(const std::string& relativePath)
 
 void DestroyEditorTexture(EditorTexture& texture)
 {
+    if (texture.id != 0)
+    {
+        glDeleteTextures(1, &texture.id);
+    }
+
+    texture.id = 0;
+    texture.width = 0;
+    texture.height = 0;
 }

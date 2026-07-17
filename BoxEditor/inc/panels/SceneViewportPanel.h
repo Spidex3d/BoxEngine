@@ -2,8 +2,10 @@
 #include "imgui\imgui.h"
 #include <functional>
 #include <string>
+#include <UI\EditorTexture.h>
 
 class BoxEngine;
+class EditorIcons;
 
 enum class ViewportAction
 {
@@ -40,8 +42,8 @@ class SceneViewportPanel
 {
 
 public:
-	
-	ViewportAction DrawSceneViewport(BoxEngine& engine);
+
+	ViewportAction DrawSceneViewport(BoxEngine& engine, const EditorIcons& icons);
 
     ImVec2 GetViewportPosition() const
     {
@@ -53,9 +55,12 @@ public:
         return m_sceneViewportSize;
     }	
 
+	void Shutdown();
+
 private:
 	
 	int m_EditMode = 0;
+
     		
 	ImVec2 m_sceneViewportPos = ImVec2(0, 0);
 	ImVec2 m_sceneViewportSize = ImVec2(0, 0);

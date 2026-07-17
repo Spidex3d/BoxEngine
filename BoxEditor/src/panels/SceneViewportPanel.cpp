@@ -4,9 +4,12 @@
 #include <BoxDiffs.h>
 #include <miniBoxLog.h>
 #include <Helpers.h>
+#include <UI\EditorIcons.h>
 
-ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine)
+
+ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const EditorIcons& icons)
 {
+   
     ViewportAction action = ViewportAction::None;
     Helpers helpers;
 
@@ -58,42 +61,50 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine)
     }
     ImGui::SameLine();
     // ################################################## Buttons #########################################
-    const ImVec2 editTypeSize(16, 16); // icon button size
-    static GLuint texVertex = 0, texEdge = 0, texFace = 0;
-    static bool editIconsLoaded = false;
-    if (!editIconsLoaded) {
-        // load textures once (paths from your assets)
-        std::string iconPath = helpers.GetAssetPath(ICON_PATH);
-        std::string image1 = iconPath + "vertex.png";
-        std::string iconPath1 = helpers.GetAssetPath(ICON_PATH);
-        std::string image2 = iconPath1 + "edge.png";
-        std::string iconPath2 = helpers.GetAssetPath(ICON_PATH);
-        std::string image3 = iconPath2 + "face.png";
-        //texVertex = TextureManager::Load(image1);
-        //texEdge = TextureManager::Load(image2);
-       // texFace = TextureManager::Load(image3);
-        editIconsLoaded = true;
-    }
+    const EditorTexture& vertexIcon =
+        icons.GetVertexIcon();
+
+    const EditorTexture& edgeIcon =
+        icons.GetEdgeIcon();
+
+    const EditorTexture& faceIcon =
+        icons.GetFaceIcon();
 
     // keep an int for current edit target: 0 = vertex, 1 = edge, 2 = face
     // If you already have a member, use that one instead.
     static int m_editType = 0;
+    const ImVec2 editTypeSize(16, 16);
+    const ImVec2 iconSize(16, 16);
     // AddVertexMode AddEdgeMode AddFaceMode
     ImGui::SameLine();
     ImGui::PushID("editTargetIcons");
+    // ########################
+    if (ImGui::ImageButton("##VertexTool", reinterpret_cast<ImTextureID>(static_cast<intptr_t>(vertexIcon.id)),iconSize))
+    {
+        m_editType = 0;
+        // action = ViewportAction::VertexEditMode;
+    }
 
-    // Vertex
-    if (texVertex != 0) {
-        if (ImGui::ImageButton((void*)(intptr_t)texVertex, editTypeSize, ImVec2(0, 1), ImVec2(1, 0))) {
-            m_editType = 0;
-			action = ViewportAction::vertexEditMode;
-        }
+    if (m_editType == 0)
+    {
+        const ImVec2 min = ImGui::GetItemRectMin();
+        const ImVec2 max = ImGui::GetItemRectMax();
+
+        ImGui::GetWindowDrawList()->AddRect(
+            min,
+            max,
+            IM_COL32(50, 150, 255, 255),
+            4.0f,
+            0,
+            2.0f
+        );
     }
-    else {
-        if (ImGui::Button("V", editTypeSize)) {
-            m_editType = 0;
-        }
+
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::SetTooltip("Vertex Edit");
     }
+    
     // draw selection outline if active
     if (m_editType == 0) {
         ImVec2 a = ImGui::GetItemRectMin();
@@ -101,42 +112,68 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine)
         ImGui::GetWindowDrawList()->AddRect(a, b, IM_COL32(50, 150, 255, 255), 4.0f, 0, 2.0f);
     }
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vertex Edit");
-
-    // Edge
     ImGui::SameLine();
-    if (texEdge != 0) {
-        if (ImGui::ImageButton((void*)(intptr_t)texEdge, editTypeSize, ImVec2(0, 1), ImVec2(1, 0))) {
-            m_editType = 1;
-			action = ViewportAction::edgeEditMode;
-        }
+    // Edge
+    if (ImGui::ImageButton("##EdgeTool", reinterpret_cast<ImTextureID>(static_cast<intptr_t>(edgeIcon.id)), iconSize))
+    {
+        m_editType = 1;
+        // action = ViewportAction::EdgeEditMode;
     }
-    else {
-        if (ImGui::Button("E", editTypeSize)) {
-            m_editType = 1;
-            
-        }
+
+    if (m_editType == 1)
+    {
+        const ImVec2 min = ImGui::GetItemRectMin();
+        const ImVec2 max = ImGui::GetItemRectMax();
+
+        ImGui::GetWindowDrawList()->AddRect(
+            min,
+            max,
+            IM_COL32(50, 150, 255, 255),
+            4.0f,
+            0,
+            2.0f
+        );
     }
+
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::SetTooltip("Edge Edit");
+    }
+    
     if (m_editType == 1) {
         ImVec2 a = ImGui::GetItemRectMin();
         ImVec2 b = ImGui::GetItemRectMax();
         ImGui::GetWindowDrawList()->AddRect(a, b, IM_COL32(50, 150, 255, 255), 4.0f, 0, 2.0f);
     }
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("Edge Edit");
-
-    // Face
     ImGui::SameLine();
-    if (texFace != 0) {
-        if (ImGui::ImageButton((void*)(intptr_t)texFace, editTypeSize, ImVec2(0, 1), ImVec2(1, 0))) {
-            m_editType = 2;
-			action = ViewportAction::faceEditMode;
-        }
+    // Face
+    if (ImGui::ImageButton("##FaceTool", reinterpret_cast<ImTextureID>(static_cast<intptr_t>(faceIcon.id)), iconSize))
+    {
+        m_editType = 2;
+        // action = ViewportAction::FaceEditMode;
     }
-    else {
-        if (ImGui::Button("F", editTypeSize)) {
-            m_editType = 2;
-            
-        }
+
+    if (m_editType == 2)
+    {
+        const ImVec2 min = ImGui::GetItemRectMin();
+        const ImVec2 max = ImGui::GetItemRectMax();
+
+        ImGui::GetWindowDrawList()->AddRect(
+            min,
+            max,
+            IM_COL32(50, 150, 255, 255),
+            4.0f,
+            0,
+            2.0f
+        );
     }
+
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::SetTooltip("Face Edit");
+    }
+    
     if (m_editType == 2) {
         ImVec2 a = ImGui::GetItemRectMin();
         ImVec2 b = ImGui::GetItemRectMax();
@@ -308,4 +345,10 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine)
 }
 
 
-
+void SceneViewportPanel::Shutdown() {
+    // Cleanup code here (if needed)
+   /* DestroyEditorTexture(m_vertexIcon);
+    DestroyEditorTexture(m_edgeIcon);
+    DestroyEditorTexture(m_faceIcon);*/
+   // DestroyEditorTexture(m_scaleIcon);
+}

@@ -2,6 +2,7 @@
 #include "BoxWindow.h"
 #include <miniBoxLog.h>
 #include <BoxEngine.h>
+#include <UI/EditorIcons.h>
 #include <imgui/imgui.h>
 
 bool App::Init()
@@ -41,8 +42,15 @@ bool App::Init()
         return false;
     }
 
-    //BoxEngine boxEngine;
-    //boxEngine.testFunction(); // test to see if we are linked with BoxEngine library correctly
+	m_editorIcons = std::make_unique<EditorIcons>();  // add the EditorIcons class to manage the icons for the editor
+
+    if (!m_editorIcons->Initialize())
+    {
+        BOX_LOG_ERROR("Failed to initialize editor icons");
+        return false;
+    }
+
+    m_sceneViewport = std::make_unique<SceneViewportPanel>();
    
     m_isRunning = true;
 
@@ -85,11 +93,10 @@ int App::Run()
 
         
 		// ############################################ Scene Viewport and Scene Collection Panels #################
-        
-        ViewportAction viewportAction = m_imgScene->DrawSceneViewport(boxEngine);
+        ViewportAction viewportAction = m_sceneViewport->DrawSceneViewport(boxEngine, *m_editorIcons);
 
         HandleViewportAction(viewportAction, boxEngine);
-
+        
 		m_imgSceneCollection->DrawSceneCollection(); // Draw the Scene Collection panel
          
 		m_imgui->RenderImGui();
@@ -138,6 +145,12 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
 
 void App::Shutdown()
 {
+    if (m_editorIcons)
+    {
+        m_editorIcons->Shutdown();
+        m_editorIcons.reset();
+    }
+
 	// shutdown the window and ImGui context and go to bed.
     if (!m_isRunning && !m_window && !m_imgui)
         return;
