@@ -18,7 +18,9 @@ public:
 	void Shutdown();
 
 private:
-		
+	void HandleMenuAction(MenuAction action);
+	void HandleViewportAction(ViewportAction action, BoxEngine& engine);
+
 	bool m_isRunning = false;
 	std::unique_ptr<BoxWindow> m_window;
 

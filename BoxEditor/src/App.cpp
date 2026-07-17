@@ -49,7 +49,10 @@ bool App::Init()
     BOX_LOG_INFO("App initialized successfully");
     return true;
 }
+// ####################
 
+
+// ####################
 int App::Run()
 {
 	m_window->SetIcon(m_window->GetWindow()); // set the window icon from the assets folder
@@ -64,7 +67,7 @@ int App::Run()
         bool dockspaceOpen = true;
 
 		BoxEngine boxEngine; // just for testing BoxEngine integration, will be removed later
-        //boxEngine.testFunction(); // Render the scene to the framebuffer
+        
 
     while (m_isRunning && !glfwWindowShouldClose(nativeWindow))
     {
@@ -77,19 +80,16 @@ int App::Run()
 
         m_imgui->MainDockSpace(&dockspaceOpen);
 		// ########################################### Main Menu Bar ###########################################
-        switch (m_imgMenu->DrawMainMenu())
-        {
-        case MenuAction::Exit:
-            glfwSetWindowShouldClose(
-                m_window->GetWindow(),
-                GLFW_TRUE);
-            break;
+
+		HandleMenuAction(m_imgMenu->DrawMainMenu());
+
         
-        default:
-            break;
-        }
 		// ############################################ Scene Viewport and Scene Collection Panels #################
-		m_imgScene->DrawSceneViewport(boxEngine);    // Draw the Scene Viewport panel with BoxEngine rendering
+        
+        ViewportAction viewportAction = m_imgScene->DrawSceneViewport(boxEngine);
+
+        HandleViewportAction(viewportAction, boxEngine);
+
 		m_imgSceneCollection->DrawSceneCollection(); // Draw the Scene Collection panel
          
 		m_imgui->RenderImGui();
@@ -102,6 +102,39 @@ int App::Run()
     Shutdown();
     return 0;
 }
+// handle the menu actions from the MainMenuBar
+void App::HandleMenuAction(MenuAction action)
+{
+    switch (m_imgMenu->DrawMainMenu())
+    {
+    case MenuAction::Exit:
+        glfwSetWindowShouldClose(
+            m_window->GetWindow(),
+            GLFW_TRUE);
+        break;
+
+    default:
+        break;
+    }
+}
+// handel the viewport actions from the SceneViewportPanel
+void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
+{
+    switch (action)
+    {
+    case ViewportAction::AddEditableCube:
+        //engine.AddEditableCube();
+
+        break;
+
+
+
+    case ViewportAction::None:
+    default:
+        break;
+    }
+}
+
 
 void App::Shutdown()
 {

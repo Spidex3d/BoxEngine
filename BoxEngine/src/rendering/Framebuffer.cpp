@@ -1,3 +1,4 @@
+
 #include <rendering\Framebuffer.h>
 #include <miniBoxLog.h>
 
@@ -99,6 +100,8 @@ void Framebuffer::Unbind()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
+
+
 
 void Framebuffer::Destroy()
 {

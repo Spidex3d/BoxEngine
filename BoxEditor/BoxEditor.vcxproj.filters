@@ -66,6 +66,9 @@
     <ClCompile Include="src\panels\SceneCollectionPanel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\UI\EditorTexture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\App.h">
@@ -126,6 +129,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="inc\panels\SceneCollectionPanel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\UI\EditorTexture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

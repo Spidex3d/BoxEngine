@@ -12,6 +12,10 @@ enum class ViewportAction
     SetObjectMode,
     SetEditMode,
 
+	vertexEditMode,
+	edgeEditMode,
+	faceEditMode,
+
     AddObjModel,
     AddGltfModel,
 

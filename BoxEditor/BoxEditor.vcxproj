@@ -141,6 +141,7 @@
     <ClCompile Include="src\panels\ObjectExplorerPanel.cpp" />
     <ClCompile Include="src\panels\SceneCollectionPanel.cpp" />
     <ClCompile Include="src\panels\SceneViewportPanel.cpp" />
+    <ClCompile Include="src\UI\EditorTexture.cpp" />
     <ClCompile Include="vendor\imgui\imgui.cpp" />
     <ClCompile Include="vendor\imgui\imgui_demo.cpp" />
     <ClCompile Include="vendor\imgui\imgui_draw.cpp" />
@@ -165,6 +166,7 @@
     <ClInclude Include="inc\panels\ObjectExplorerPanel.h" />
     <ClInclude Include="inc\panels\SceneCollectionPanel.h" />
     <ClInclude Include="inc\panels\SceneViewportPanel.h" />
+    <ClInclude Include="inc\UI\EditorTexture.h" />
     <ClInclude Include="vendor\imgui\imconfig.h" />
     <ClInclude Include="vendor\imgui\imgui.h" />
     <ClInclude Include="vendor\imgui\ImGuiAF.h" />

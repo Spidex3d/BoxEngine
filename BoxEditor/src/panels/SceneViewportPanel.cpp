@@ -1,12 +1,14 @@
 #include "panels\SceneViewportPanel.h"
 #include <BoxEngine.h>
 #include <imgui\ImGuiAF.h>
+#include <BoxDiffs.h>
 #include <miniBoxLog.h>
+#include <Helpers.h>
 
-//void SceneViewportPanel::DrawSceneViewport(BoxEngine& engine)
 ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine)
 {
     ViewportAction action = ViewportAction::None;
+    Helpers helpers;
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(12, 12));
     ImGui::Begin("Main Scene");
@@ -33,15 +35,12 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine)
     ImGui::PushID("top_Buttons");
 
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // normal
-
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.16f, 0.70f, 0.16f, 1.0f)); // hover
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.10f, 0.50f, 0.10f, 1.0f)); // active/click
     ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.8f, 1.0f)); // active/click
 
     ImGui::GetStyle().FrameBorderSize = 0.3f; // Add a border to the button
     ImGui::GetStyle().FrameRounding = 6.0f; // rounded corners of buttons
-
-
 
     const char* items[] = { "Select Mode", ICON_FA_CUBE " Object Mode", ICON_FA_VECTOR_SQUARE " Edit Mode" };
     ImGui::SetNextItemWidth(100.0f);
@@ -58,6 +57,98 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine)
         }
     }
     ImGui::SameLine();
+    // ################################################## Buttons #########################################
+    const ImVec2 editTypeSize(16, 16); // icon button size
+    static GLuint texVertex = 0, texEdge = 0, texFace = 0;
+    static bool editIconsLoaded = false;
+    if (!editIconsLoaded) {
+        // load textures once (paths from your assets)
+        std::string iconPath = helpers.GetAssetPath(ICON_PATH);
+        std::string image1 = iconPath + "vertex.png";
+        std::string iconPath1 = helpers.GetAssetPath(ICON_PATH);
+        std::string image2 = iconPath1 + "edge.png";
+        std::string iconPath2 = helpers.GetAssetPath(ICON_PATH);
+        std::string image3 = iconPath2 + "face.png";
+        //texVertex = TextureManager::Load(image1);
+        //texEdge = TextureManager::Load(image2);
+       // texFace = TextureManager::Load(image3);
+        editIconsLoaded = true;
+    }
+
+    // keep an int for current edit target: 0 = vertex, 1 = edge, 2 = face
+    // If you already have a member, use that one instead.
+    static int m_editType = 0;
+    // AddVertexMode AddEdgeMode AddFaceMode
+    ImGui::SameLine();
+    ImGui::PushID("editTargetIcons");
+
+    // Vertex
+    if (texVertex != 0) {
+        if (ImGui::ImageButton((void*)(intptr_t)texVertex, editTypeSize, ImVec2(0, 1), ImVec2(1, 0))) {
+            m_editType = 0;
+			action = ViewportAction::vertexEditMode;
+        }
+    }
+    else {
+        if (ImGui::Button("V", editTypeSize)) {
+            m_editType = 0;
+        }
+    }
+    // draw selection outline if active
+    if (m_editType == 0) {
+        ImVec2 a = ImGui::GetItemRectMin();
+        ImVec2 b = ImGui::GetItemRectMax();
+        ImGui::GetWindowDrawList()->AddRect(a, b, IM_COL32(50, 150, 255, 255), 4.0f, 0, 2.0f);
+    }
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vertex Edit");
+
+    // Edge
+    ImGui::SameLine();
+    if (texEdge != 0) {
+        if (ImGui::ImageButton((void*)(intptr_t)texEdge, editTypeSize, ImVec2(0, 1), ImVec2(1, 0))) {
+            m_editType = 1;
+			action = ViewportAction::edgeEditMode;
+        }
+    }
+    else {
+        if (ImGui::Button("E", editTypeSize)) {
+            m_editType = 1;
+            
+        }
+    }
+    if (m_editType == 1) {
+        ImVec2 a = ImGui::GetItemRectMin();
+        ImVec2 b = ImGui::GetItemRectMax();
+        ImGui::GetWindowDrawList()->AddRect(a, b, IM_COL32(50, 150, 255, 255), 4.0f, 0, 2.0f);
+    }
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Edge Edit");
+
+    // Face
+    ImGui::SameLine();
+    if (texFace != 0) {
+        if (ImGui::ImageButton((void*)(intptr_t)texFace, editTypeSize, ImVec2(0, 1), ImVec2(1, 0))) {
+            m_editType = 2;
+			action = ViewportAction::faceEditMode;
+        }
+    }
+    else {
+        if (ImGui::Button("F", editTypeSize)) {
+            m_editType = 2;
+            
+        }
+    }
+    if (m_editType == 2) {
+        ImVec2 a = ImGui::GetItemRectMin();
+        ImVec2 b = ImGui::GetItemRectMax();
+        ImGui::GetWindowDrawList()->AddRect(a, b, IM_COL32(50, 150, 255, 255), 4.0f, 0, 2.0f);
+    }
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Face Edit");
+
+    ImGui::PopID();
+
+    ImGui::SameLine();
+
+	// ################################################## End Buttons #########################################
 
     ImGui::PopStyleVar(2);
     ImGui::PopStyleColor(4); // pop all 4 pushed colors has to match top
@@ -207,14 +298,13 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine)
     }
     // ################################################################################################
 
+    ImGui::End();
     ImGui::PopStyleVar(1);
     //ImGui::PopStyleColor(4); // pop all 4 pushed colors has to match top
     //ImGui::PopID();
 
 
-
-    ImGui::End();
-	return ViewportAction::None;
+    return action;
 }
 
 
