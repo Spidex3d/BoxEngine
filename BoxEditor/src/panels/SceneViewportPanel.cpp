@@ -61,18 +61,13 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     }
     ImGui::SameLine();
     // ################################################## Buttons #########################################
-    const EditorTexture& vertexIcon =
-        icons.GetVertexIcon();
-
-    const EditorTexture& edgeIcon =
-        icons.GetEdgeIcon();
-
-    const EditorTexture& faceIcon =
-        icons.GetFaceIcon();
+    const EditorTexture& vertexIcon = icons.GetVertexIcon();
+    const EditorTexture& edgeIcon = icons.GetEdgeIcon();
+    const EditorTexture& faceIcon = icons.GetFaceIcon();
 
     // keep an int for current edit target: 0 = vertex, 1 = edge, 2 = face
     // If you already have a member, use that one instead.
-    static int m_editType = 0;
+    
     const ImVec2 editTypeSize(16, 16);
     const ImVec2 iconSize(16, 16);
     // AddVertexMode AddEdgeMode AddFaceMode
@@ -105,13 +100,6 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
         ImGui::SetTooltip("Vertex Edit");
     }
     
-    // draw selection outline if active
-    if (m_editType == 0) {
-        ImVec2 a = ImGui::GetItemRectMin();
-        ImVec2 b = ImGui::GetItemRectMax();
-        ImGui::GetWindowDrawList()->AddRect(a, b, IM_COL32(50, 150, 255, 255), 4.0f, 0, 2.0f);
-    }
-    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Vertex Edit");
     ImGui::SameLine();
     // Edge
     if (ImGui::ImageButton("##EdgeTool", reinterpret_cast<ImTextureID>(static_cast<intptr_t>(edgeIcon.id)), iconSize))
@@ -140,12 +128,6 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
         ImGui::SetTooltip("Edge Edit");
     }
     
-    if (m_editType == 1) {
-        ImVec2 a = ImGui::GetItemRectMin();
-        ImVec2 b = ImGui::GetItemRectMax();
-        ImGui::GetWindowDrawList()->AddRect(a, b, IM_COL32(50, 150, 255, 255), 4.0f, 0, 2.0f);
-    }
-    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Edge Edit");
     ImGui::SameLine();
     // Face
     if (ImGui::ImageButton("##FaceTool", reinterpret_cast<ImTextureID>(static_cast<intptr_t>(faceIcon.id)), iconSize))
@@ -173,19 +155,26 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     {
         ImGui::SetTooltip("Face Edit");
     }
-    
-    if (m_editType == 2) {
-        ImVec2 a = ImGui::GetItemRectMin();
-        ImVec2 b = ImGui::GetItemRectMax();
-        ImGui::GetWindowDrawList()->AddRect(a, b, IM_COL32(50, 150, 255, 255), 4.0f, 0, 2.0f);
-    }
-    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Face Edit");
-
+   
     ImGui::PopID();
-
     ImGui::SameLine();
 
 	// ################################################## End Buttons #########################################
+    const char* addObj[] = { "Add Mesh", ICON_FA_CUBE " Add Cube", ICON_FA_SQUARE " Add Plane", ICON_FA_CIRCLE " Add UV Sphere", ICON_FA_CIRCLE " Add ICO Sphere",
+        " Add Cone", " Add Torus" };
+    ImGui::SetNextItemWidth(100.0f);
+    ImGui::SameLine();
+    /*if (ImGui::Combo("##comboAdd", &m_AddObjects, addObj, IM_ARRAYSIZE(addObj))) {
+        if (m_AddObjects == 1) {
+            if (m_actionCallback) m_actionCallback("AddEditableCube");
+            LOG_INFO("Add Cube selected");
+        }
+        else if (m_AddObjects == 2) {
+            if (m_actionCallback) m_actionCallback("AddEditablePlane");
+            LOG_INFO("Add Plane selected");
+        }
+    }*/
+
 
     ImGui::PopStyleVar(2);
     ImGui::PopStyleColor(4); // pop all 4 pushed colors has to match top

@@ -183,6 +183,10 @@
   <ItemGroup>
     <Image Include="assets\textures\icons\Icon.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="assets\shader\basicCube.frag" />
+    <None Include="assets\shader\basicCube.vert" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

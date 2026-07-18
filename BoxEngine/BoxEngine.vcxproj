@@ -150,11 +150,13 @@
     <ClInclude Include="inc\BoxEngine.h" />
     <ClInclude Include="inc\entity\Entity.h" />
     <ClInclude Include="inc\rendering\Framebuffer.h" />
+    <ClInclude Include="inc\shader\Shader.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\BoxEngine.cpp" />
     <ClCompile Include="src\entity\Entity.cpp" />
     <ClCompile Include="src\rendering\Framebuffer.cpp" />
+    <ClCompile Include="src\shader\Shader.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

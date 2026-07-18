@@ -8,12 +8,12 @@
 
 class BoxWindow;
 class EditorIcons;
-
+class BoxEngine;
 class App
 {
 public:
-	App() = default;
-	// ~App() = default;
+	App();
+	~App();
 
 	bool Init(); // Initialize the window and ImGui context
 	int Run();        // set the main loop
@@ -25,6 +25,8 @@ private:
 	bool m_isRunning = false;
 	std::unique_ptr<BoxWindow> m_window;
 	std::unique_ptr<EditorIcons> m_editorIcons;
+
+	std::unique_ptr<BoxEngine> m_engine;
 
 	// Imgui Initialize panels for the main window
 	std::unique_ptr<ImGuiLayer> m_imgui;

@@ -5,6 +5,9 @@
 #include <UI/EditorIcons.h>
 #include <imgui/imgui.h>
 
+App::App() = default;
+App::~App() = default;
+
 bool App::Init()
 {
     WindowConfig config;
@@ -50,17 +53,14 @@ bool App::Init()
         return false;
     }
 
-    m_sceneViewport = std::make_unique<SceneViewportPanel>();
+    m_sceneViewport = std::make_unique<SceneViewportPanel>();   
    
     m_isRunning = true;
 
     BOX_LOG_INFO("App initialized successfully");
     return true;
 }
-// ####################
 
-
-// ####################
 int App::Run()
 {
 	m_window->SetIcon(m_window->GetWindow()); // set the window icon from the assets folder
@@ -74,7 +74,14 @@ int App::Run()
     GLFWwindow* nativeWindow = m_window->GetWindow();
         bool dockspaceOpen = true;
 
-		BoxEngine boxEngine; // just for testing BoxEngine integration, will be removed later
+        BoxEngine boxEngine; // just for testing BoxEngine integration, will be removed later
+
+        if (!boxEngine.Initialize())
+        {
+            return false;
+        }
+
+        boxEngine.AddEditableCube();
         
 
     while (m_isRunning && !glfwWindowShouldClose(nativeWindow))

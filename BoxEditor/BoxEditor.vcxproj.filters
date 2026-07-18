@@ -146,4 +146,8 @@
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="assets\shader\basicCube.vert" />
+    <None Include="assets\shader\basicCube.frag" />
+  </ItemGroup>
 </Project>
