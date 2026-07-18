@@ -184,6 +184,7 @@ bool Entity::CreateCube()
     return true;
 }
 
+
 void Entity::Render(
     const Shader& shader,
     const glm::mat4& view,

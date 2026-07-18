@@ -1,6 +1,7 @@
 #include "BoxEngine.h"
 #include <shader/Shader.h>
 #include <entity/Entity.h>
+#include <rendering/Grid.h>
 
 #include <Helpers.h>
 #include <miniBoxLog.h>
@@ -16,19 +17,19 @@ bool BoxEngine::Initialize()
 {
     Helpers helpers;
 
-    const std::string vertexShaderPath =
+    const std::string cubeVertexShaderPath =
         helpers.GetAssetPath(
             "assets/shader/basicCube.vert"
         );
 
-    const std::string fragmentShaderPath =
+    const std::string cubeFragmentShaderPath =
         helpers.GetAssetPath(
             "assets/shader/basicCube.frag"
         );
 
     m_sceneShader = std::make_unique<Shader>(
-        vertexShaderPath,
-        fragmentShaderPath
+        cubeVertexShaderPath,
+        cubeFragmentShaderPath
     );
 
     if (!m_sceneShader ||
@@ -42,23 +43,89 @@ bool BoxEngine::Initialize()
         return false;
     }
 
+    const std::string gridVertexShaderPath =
+        helpers.GetAssetPath(
+            "assets/shader/grid.vert"
+        );
+
+    const std::string gridFragmentShaderPath =
+        helpers.GetAssetPath(
+            "assets/shader/grid.frag"
+        );
+
+    m_gridShader = std::make_unique<Shader>(
+        gridVertexShaderPath,
+        gridFragmentShaderPath
+    );
+
+    if (!m_gridShader ||
+        m_gridShader->ID() == 0)
+    {
+        BOX_LOG_ERROR(
+            "BoxEngine failed to create grid shader"
+        );
+
+        m_gridShader.reset();
+        m_sceneShader.reset();
+        return false;
+    }
+
+    if (!AddGrid(glm::vec3(0.0f), 20, 1.0f))
+    {
+        BOX_LOG_ERROR(
+            "BoxEngine failed to create grid"
+        );
+
+        return false;
+    }
+
     BOX_LOG_INFO("BoxEngine initialized");
     return true;
+
 }
 
 void BoxEngine::Shutdown()
 {
-    // Destroy entities first because they own VAOs/VBOs.
+    if (m_grid)
+    {
+        m_grid->Destroy();
+        m_grid.reset();
+    }
+
+    // Entity destructors delete their OpenGL buffers.
     m_entities.clear();
 
-    // Shader owns an OpenGL program.
+    m_gridShader.reset();
     m_sceneShader.reset();
 
-    // Framebuffer owns OpenGL textures/renderbuffers.
     m_sceneFramebuffer.Destroy();
 
     BOX_LOG_INFO("BoxEngine shutdown complete");
 }
+
+bool BoxEngine::AddGrid(const glm::vec3& position, int halfSize, float spacing)
+{
+    m_grid = std::make_unique<Grid>();
+
+    m_grid->SetPosition(position);
+
+    if (!m_grid->Create(halfSize, spacing))
+    {
+        BOX_LOG_ERROR(
+            "Failed to add editor grid"
+        );
+
+        m_grid.reset();
+        return false;
+    }
+
+    BOX_LOG_INFO(
+        "Added editor grid"
+    );
+
+    return true;
+}
+
 
 bool BoxEngine::AddEditableCube(
     const glm::vec3& position)
@@ -126,6 +193,7 @@ void BoxEngine::RenderScene()
         GL_COLOR_BUFFER_BIT |
         GL_DEPTH_BUFFER_BIT
     );
+	
 
     if (m_sceneShader &&
         m_sceneShader->ID() != 0)
@@ -182,6 +250,22 @@ void BoxEngine::RenderScene()
             )
         );
 
+        // ################################## Grid Rendering ########################################
+        if (m_grid && m_gridShader)
+        {
+            m_gridShader->Use();
+
+            m_gridShader->setVec3(
+                "uGridColor",
+                glm::vec3(0.35f)
+            );
+
+            m_grid->Render(*m_gridShader, view, projection);
+        }
+                
+        // ##########################################################################################
+
+		// Render entities
         for (const auto& entity : m_entities)
         {
             if (entity)
@@ -198,6 +282,8 @@ void BoxEngine::RenderScene()
     Framebuffer::Unbind();
 }
 
+
+
 GLuint BoxEngine::GetSceneTexture() const
 {
     return m_sceneFramebuffer.GetColorTexture();
@@ -205,43 +291,3 @@ GLuint BoxEngine::GetSceneTexture() const
 
 
 
-
-
-
-//#include <iostream>
-//
-//#include "BoxEngine.h"
-//
-//
-//
-// TODO: This is an example of a library function
-//void BoxEngine::testFunction()
-//{
-//	std::cout << "This is a test function from BoxEngine lib!" << std::endl;
-//}
-//
-//void BoxEngine::ResizeSceneViewport(int width, int height)
-//{
-//    m_sceneFramebuffer.Resize(width, height);
-//}
-//
-//void BoxEngine::RenderScene()
-//{
-//    if (!m_sceneFramebuffer.IsValid())
-//        return;
-//
-//    m_sceneFramebuffer.Bind();
-//
-//    glEnable(GL_DEPTH_TEST);
-//    glClearColor(0.12f, 0.15f, 0.18f, 1.0f);
-//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//
-//     Renderer draws camera, grid, entities, lights, etc.
-//
-//    Framebuffer::Unbind();
-//}
-//
-//GLuint BoxEngine::GetSceneTexture() const
-//{
-//    return m_sceneFramebuffer.GetColorTexture();
-//}

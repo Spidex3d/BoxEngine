@@ -7,6 +7,7 @@
 #include <vector>
 
 class Shader;
+class Grid;
 class Entity;
 
 class BoxEngine
@@ -28,10 +29,9 @@ public:
 
     void RenderScene();
 
-    bool AddEditableCube(
-        const glm::vec3& position =
-        glm::vec3(0.0f)
-    );
+    bool AddGrid(const glm::vec3& position, int halfSize, float spacing);    
+
+    bool AddEditableCube(const glm::vec3& position = glm::vec3(0.0f));
 
     GLuint GetSceneTexture() const;
 
@@ -39,7 +39,9 @@ private:
     Framebuffer m_sceneFramebuffer;
 
     std::unique_ptr<Shader> m_sceneShader;
-    std::vector<std::unique_ptr<Entity>> m_entities;
+    std::unique_ptr<Shader> m_gridShader;
+	std::unique_ptr<Grid> m_grid; // for the editor grid not an entity
+	std::vector<std::unique_ptr<Entity>> m_entities; // for the editable cubes and other entities
 
     int m_nextEntityID = 0;
 
@@ -51,30 +53,3 @@ private:
 };
 
 
-
-//#include <rendering\Framebuffer.h>
-//
-//#define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
-//
-//
-//
-//class BoxEngine
-//{
-//public:
-//	BoxEngine() = default;
-//	~BoxEngine() = default;
-//	
-//	void testFunction();
-//	
-//	bool Initialize();
-//
-//	void ResizeSceneViewport(int width, int height);
-//	void RenderScene();
-//
-//	GLuint GetSceneTexture() const;
-//private:
-//	Framebuffer m_sceneFramebuffer;
-//	
-//
-//
-//};

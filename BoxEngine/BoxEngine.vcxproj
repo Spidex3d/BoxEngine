@@ -150,9 +150,11 @@
     <ClInclude Include="inc\BoxEngine.h" />
     <ClInclude Include="inc\entity\Entity.h" />
     <ClInclude Include="inc\rendering\Framebuffer.h" />
+    <ClInclude Include="inc\rendering\grid.h" />
     <ClInclude Include="inc\shader\Shader.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="inc\rendering\grid.cpp" />
     <ClCompile Include="src\BoxEngine.cpp" />
     <ClCompile Include="src\entity\Entity.cpp" />
     <ClCompile Include="src\rendering\Framebuffer.cpp" />

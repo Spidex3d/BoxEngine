@@ -20,18 +20,18 @@ public:
 	void Shutdown();
 
 private:
-	void HandleMenuAction(MenuAction action);
-	void HandleViewportAction(ViewportAction action, BoxEngine& engine);
-	bool m_isRunning = false;
-	std::unique_ptr<BoxWindow> m_window;
-	std::unique_ptr<EditorIcons> m_editorIcons;
+	void HandleMenuAction(MenuAction action);		// Handle actions from the main menu bar
+	void HandleViewportAction(ViewportAction action, BoxEngine& engine); // Handle actions from the main menu and viewport panels
+	bool m_isRunning = false;						// Flag to indicate if the application is running
+	std::unique_ptr<BoxWindow> m_window;			// BoxWindow instance for managing the application window
+	std::unique_ptr<EditorIcons> m_editorIcons;		// EditorIcons instance for managing editor icons
 
-	std::unique_ptr<BoxEngine> m_engine;
+	std::unique_ptr<BoxEngine> m_engine;			// BoxEngine instance for rendering and scene management
 
 	// Imgui Initialize panels for the main window
 	std::unique_ptr<ImGuiLayer> m_imgui;
-	std::unique_ptr<MainMenuBar> m_imgMenu; // menu bar panel for ImGui
+	std::unique_ptr<MainMenuBar> m_imgMenu;			// menu bar panel for ImGui
 	std::unique_ptr<SceneViewportPanel> m_imgScene; // Scene panel for ImGui
 	std::unique_ptr<SceneCollectionPanel> m_imgSceneCollection; // Scene Collection for ImGui
-	std::unique_ptr<SceneViewportPanel> m_sceneViewport;
+	std::unique_ptr<SceneViewportPanel> m_sceneViewport; // Scene Viewport panel for ImGui
 };

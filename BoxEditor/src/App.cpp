@@ -52,8 +52,20 @@ bool App::Init()
         BOX_LOG_ERROR("Failed to initialize editor icons");
         return false;
     }
-
+      
     m_sceneViewport = std::make_unique<SceneViewportPanel>();   
+
+    
+
+	// Initialize the engine after the window and ImGui have been initialized
+    m_engine = std::make_unique<BoxEngine>();
+
+    if (!m_engine->Initialize())
+    {
+        BOX_LOG_ERROR("Failed to initialize BoxEngine");
+        m_engine.reset();
+        return false;
+    }
    
     m_isRunning = true;
 
@@ -74,16 +86,7 @@ int App::Run()
     GLFWwindow* nativeWindow = m_window->GetWindow();
         bool dockspaceOpen = true;
 
-        BoxEngine boxEngine; // just for testing BoxEngine integration, will be removed later
-
-        if (!boxEngine.Initialize())
-        {
-            return false;
-        }
-
-        boxEngine.AddEditableCube();
         
-
     while (m_isRunning && !glfwWindowShouldClose(nativeWindow))
     {
         glfwPollEvents();
@@ -100,9 +103,9 @@ int App::Run()
 
         
 		// ############################################ Scene Viewport and Scene Collection Panels #################
-        ViewportAction viewportAction = m_sceneViewport->DrawSceneViewport(boxEngine, *m_editorIcons);
+        ViewportAction viewportAction = m_sceneViewport->DrawSceneViewport(*m_engine, *m_editorIcons);
 
-        HandleViewportAction(viewportAction, boxEngine);
+        HandleViewportAction(viewportAction, *m_engine);
         
 		m_imgSceneCollection->DrawSceneCollection(); // Draw the Scene Collection panel
          
@@ -137,7 +140,8 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
     switch (action)
     {
     case ViewportAction::AddEditableCube:
-        //engine.AddEditableCube();
+
+        engine.AddEditableCube();
 
         break;
 
@@ -152,6 +156,12 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
 
 void App::Shutdown()
 {
+    if (m_engine)
+    {
+        m_engine->Shutdown();
+        m_engine.reset();
+    }
+
     if (m_editorIcons)
     {
         m_editorIcons->Shutdown();
