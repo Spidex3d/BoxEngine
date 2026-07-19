@@ -133,6 +133,7 @@
   <ItemGroup>
     <ClCompile Include="src\App.cpp" />
     <ClCompile Include="src\BoxWindow.cpp" />
+    <ClCompile Include="src\EditorInput.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\Helpers.cpp" />
     <ClCompile Include="src\ImGuiLayer.cpp" />
@@ -160,6 +161,7 @@
     <ClInclude Include="inc\App.h" />
     <ClInclude Include="inc\BoxDiffs.h" />
     <ClInclude Include="inc\BoxWindow.h" />
+    <ClInclude Include="inc\EditorInput.h" />
     <ClInclude Include="inc\Helpers.h" />
     <ClInclude Include="inc\ImGuiLayer.h" />
     <ClInclude Include="inc\miniBoxLog.h" />

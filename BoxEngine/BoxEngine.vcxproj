@@ -148,6 +148,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="inc\BoxEngine.h" />
+    <ClInclude Include="inc\camera\Camera.h" />
     <ClInclude Include="inc\entity\Entity.h" />
     <ClInclude Include="inc\rendering\Framebuffer.h" />
     <ClInclude Include="inc\rendering\grid.h" />
@@ -156,6 +157,7 @@
   <ItemGroup>
     <ClCompile Include="inc\rendering\grid.cpp" />
     <ClCompile Include="src\BoxEngine.cpp" />
+    <ClCompile Include="src\camera\Camera.cpp" />
     <ClCompile Include="src\entity\Entity.cpp" />
     <ClCompile Include="src\rendering\Framebuffer.cpp" />
     <ClCompile Include="src\shader\Shader.cpp" />

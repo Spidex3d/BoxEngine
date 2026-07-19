@@ -9,6 +9,8 @@
 class BoxWindow;
 class EditorIcons;
 class BoxEngine;
+class EditorInput;
+
 class App
 {
 public:
@@ -22,9 +24,11 @@ public:
 private:
 	void HandleMenuAction(MenuAction action);		// Handle actions from the main menu bar
 	void HandleViewportAction(ViewportAction action, BoxEngine& engine); // Handle actions from the main menu and viewport panels
+	void HandleInput();							// Handle input events
 	bool m_isRunning = false;						// Flag to indicate if the application is running
 	std::unique_ptr<BoxWindow> m_window;			// BoxWindow instance for managing the application window
 	std::unique_ptr<EditorIcons> m_editorIcons;		// EditorIcons instance for managing editor icons
+	std::unique_ptr<EditorInput> m_input;		// EditorInput instance for managing input
 
 	std::unique_ptr<BoxEngine> m_engine;			// BoxEngine instance for rendering and scene management
 

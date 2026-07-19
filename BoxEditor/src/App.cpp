@@ -3,6 +3,7 @@
 #include <miniBoxLog.h>
 #include <BoxEngine.h>
 #include <UI/EditorIcons.h>
+#include <EditorInput.h>
 #include <imgui/imgui.h>
 
 App::App() = default;
@@ -55,7 +56,18 @@ bool App::Init()
       
     m_sceneViewport = std::make_unique<SceneViewportPanel>();   
 
-    
+    m_input = std::make_unique<EditorInput>();
+
+    if (!m_input->Initialize(
+        m_window->GetWindow()))
+    {
+        BOX_LOG_ERROR(
+            "Failed to initialize editor input"
+        );
+
+        m_input.reset();
+        return false;
+    }
 
 	// Initialize the engine after the window and ImGui have been initialized
     m_engine = std::make_unique<BoxEngine>();
@@ -94,7 +106,10 @@ int App::Run()
         glClearColor(0.15f, 0.18f, 0.22f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        m_imgui->BeginFrame();
+		m_input->Update(); // Update input with a fixed delta time (for now)
+		HandleInput(); // Handle input events
+
+		m_imgui->BeginFrame(); // Start a new ImGui frame
 
         m_imgui->MainDockSpace(&dockspaceOpen);
 		// ########################################### Main Menu Bar ###########################################
@@ -150,6 +165,48 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
     case ViewportAction::None:
     default:
         break;
+    }
+}
+
+void App::HandleInput()
+{
+    if (!m_input || !m_window)
+    {
+        return;
+    }
+
+    if (m_input->IsKeyPressed(GLFW_KEY_ESCAPE))
+    {
+        glfwSetWindowShouldClose(m_window->GetWindow(), GLFW_TRUE);
+    }
+
+    if (m_input->IsKeyPressed(GLFW_KEY_SPACE))
+    {
+        BOX_LOG_INFO("Space pressed");
+    }
+
+    if (m_input->IsKeyReleased(GLFW_KEY_SPACE))
+    {
+        BOX_LOG_INFO("Space released");
+    }
+
+    if (m_input->IsMouseButtonDown(
+        GLFW_MOUSE_BUTTON_RIGHT))
+    {
+        BOX_LOG_INFO(
+            "Mouse delta: "
+            << m_input->GetMouseDeltaX()
+            << ", "
+            << m_input->GetMouseDeltaY()
+        );
+    }
+
+    if (m_input->GetScrollY() != 0.0)
+    {
+        BOX_LOG_INFO(
+            "Mouse wheel: "
+            << m_input->GetScrollY()
+        );
     }
 }
 
