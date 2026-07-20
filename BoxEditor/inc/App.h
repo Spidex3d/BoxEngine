@@ -22,6 +22,11 @@ public:
 	void Shutdown();
 
 private:
+	float m_deltaTime = 0.0f;
+	float m_lastFrameTime = 0.0f;
+
+	
+
 	void HandleMenuAction(MenuAction action);		// Handle actions from the main menu bar
 	void HandleViewportAction(ViewportAction action, BoxEngine& engine); // Handle actions from the main menu and viewport panels
 	void HandleInput();							// Handle input events

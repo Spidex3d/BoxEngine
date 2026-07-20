@@ -9,6 +9,7 @@
 class Shader;
 class Grid;
 class Entity;
+class Camera;
 
 class BoxEngine
 {
@@ -29,11 +30,16 @@ public:
 
     void RenderScene();
 
+    Camera& GetCamera();
+    const Camera& GetCamera() const;
+
+    GLuint GetSceneTexture() const;
+
     bool AddGrid(const glm::vec3& position, int halfSize, float spacing);    
 
     bool AddEditableCube(const glm::vec3& position = glm::vec3(0.0f));
 
-    GLuint GetSceneTexture() const;
+    
 
 private:
     Framebuffer m_sceneFramebuffer;
@@ -42,14 +48,12 @@ private:
     std::unique_ptr<Shader> m_gridShader;
 	std::unique_ptr<Grid> m_grid; // for the editor grid not an entity
 	std::vector<std::unique_ptr<Entity>> m_entities; // for the editable cubes and other entities
+    
+    std::unique_ptr<Camera> m_camera;
 
     int m_nextEntityID = 0;
 
-    glm::vec3 m_cameraPosition{
-        2.5f,
-        2.0f,
-        3.5f
-    };
+    //glm::vec3 m_cameraPosition{ 2.5f, 2.0f, 3.5f};
 };
 
 

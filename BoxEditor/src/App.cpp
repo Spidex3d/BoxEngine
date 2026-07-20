@@ -3,6 +3,7 @@
 #include <miniBoxLog.h>
 #include <BoxEngine.h>
 #include <UI/EditorIcons.h>
+#include "camera/Camera.h"
 #include <EditorInput.h>
 #include <imgui/imgui.h>
 
@@ -53,6 +54,12 @@ bool App::Init()
         BOX_LOG_ERROR("Failed to initialize editor icons");
         return false;
     }
+
+    /*Camera& camera = m_engine->GetCamera();
+
+    camera.Target = glm::vec3(0.0f);
+    camera.OrbitDistance = glm::length(camera.Position - camera.Target);*/
+
       
     m_sceneViewport = std::make_unique<SceneViewportPanel>();   
 
@@ -98,9 +105,16 @@ int App::Run()
     GLFWwindow* nativeWindow = m_window->GetWindow();
         bool dockspaceOpen = true;
 
+    m_lastFrameTime = static_cast<float>(glfwGetTime());
         
     while (m_isRunning && !glfwWindowShouldClose(nativeWindow))
     {
+        const float currentFrameTime = static_cast<float>(glfwGetTime());
+        m_deltaTime = currentFrameTime - m_lastFrameTime;
+        m_lastFrameTime = currentFrameTime;
+
+        m_input->BeginFrame();
+
         glfwPollEvents();
 
         glClearColor(0.15f, 0.18f, 0.22f, 1.0f);
@@ -170,47 +184,183 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
 
 void App::HandleInput()
 {
-    if (!m_input || !m_window)
+    if (!m_input ||
+        !m_window ||
+        !m_engine)
     {
         return;
     }
-
+    
+	// keyboard input handling for camera movement and application exit
     if (m_input->IsKeyPressed(GLFW_KEY_ESCAPE))
     {
-        glfwSetWindowShouldClose(m_window->GetWindow(), GLFW_TRUE);
-    }
-
-    if (m_input->IsKeyPressed(GLFW_KEY_SPACE))
-    {
-        BOX_LOG_INFO("Space pressed");
-    }
-
-    if (m_input->IsKeyReleased(GLFW_KEY_SPACE))
-    {
-        BOX_LOG_INFO("Space released");
-    }
-
-    if (m_input->IsMouseButtonDown(
-        GLFW_MOUSE_BUTTON_RIGHT))
-    {
-        BOX_LOG_INFO(
-            "Mouse delta: "
-            << m_input->GetMouseDeltaX()
-            << ", "
-            << m_input->GetMouseDeltaY()
+        glfwSetWindowShouldClose(
+            m_window->GetWindow(),
+            GLFW_TRUE
         );
     }
 
-    if (m_input->GetScrollY() != 0.0)
+    Camera& camera =
+        m_engine->GetCamera();
+
+    const bool middleMouseDown =
+        m_input->IsMouseButtonDown(
+            GLFW_MOUSE_BUTTON_MIDDLE
+        );
+
+    const bool shiftDown =
+        m_input->IsKeyDown(
+            GLFW_KEY_LEFT_SHIFT
+        ) ||
+        m_input->IsKeyDown(
+            GLFW_KEY_RIGHT_SHIFT
+        );
+
+    const float mouseDeltaX =
+        static_cast<float>(
+            m_input->GetMouseDeltaX()
+            );
+
+    const float mouseDeltaY =
+        static_cast<float>(
+            m_input->GetMouseDeltaY()
+            );
+
+    if (middleMouseDown)
     {
-        BOX_LOG_INFO(
-            "Mouse wheel: "
-            << m_input->GetScrollY()
+        if (shiftDown)
+        {
+            camera.ProcessPan(
+                mouseDeltaX,
+                mouseDeltaY
+            );
+        }
+        else
+        {
+            camera.ProcessOrbit(
+                mouseDeltaX,
+                -mouseDeltaY
+            );
+        }
+    }
+
+    const float scroll =
+        static_cast<float>(
+            m_input->GetScrollY()
+            );
+
+    if (scroll != 0.0f)
+    {
+        camera.ProcessOrbitZoom(scroll);
+    }
+	// use this to center the camera on the origin and reset the orbit distance to 10.0f
+    if (m_input->IsKeyPressed(GLFW_KEY_HOME))
+    {
+        camera.FocusOn(
+            glm::vec3(0.0f),
+            10.0f
         );
     }
+
+    /*const float verticalSpeed =
+        5.0f * m_deltaTime;
+
+    if (m_input->IsKeyDown(GLFW_KEY_E))
+    {
+        camera.MoveVertical(
+            verticalSpeed
+        );
+    }
+
+    if (m_input->IsKeyDown(GLFW_KEY_Q))
+    {
+        camera.MoveVertical(
+            -verticalSpeed
+        );
+    }*/
+
+ //   Camera& camera =
+ //       m_engine->GetCamera();
+	//// Handle camera movement based on keyboard input
+ //   if (m_input->IsKeyDown(GLFW_KEY_W))
+ //   {
+ //       camera.ProcessKeyboard(
+ //           FORWARD,
+ //           m_deltaTime
+ //       );
+ //   }
+
+ //   if (m_input->IsKeyDown(GLFW_KEY_S))
+ //   {
+ //       camera.ProcessKeyboard(
+ //           BACKWARD,
+ //           m_deltaTime
+ //       );
+ //   }
+
+ //   if (m_input->IsKeyDown(GLFW_KEY_A))
+ //   {
+ //       camera.ProcessKeyboard(
+ //           LEFT,
+ //           m_deltaTime
+ //       );
+ //   }
+
+ //   if (m_input->IsKeyDown(GLFW_KEY_D))
+ //   {
+ //       camera.ProcessKeyboard(
+ //           RIGHT,
+ //           m_deltaTime
+ //       );
+ //   }
+
+ //   if (m_input->IsKeyDown(GLFW_KEY_E))
+ //   {
+ //       camera.ProcessKeyboard(
+ //           UP,
+ //           m_deltaTime
+ //       );
+ //   }
+
+ //   if (m_input->IsKeyDown(GLFW_KEY_Q))
+ //   {
+ //       camera.ProcessKeyboard(
+ //           DOWN,
+ //           m_deltaTime
+ //       );
+ //   }
+	//// Handle mouse input for camera rotation and zoom
+ //   if (m_input->IsMouseButtonDown(
+ //       GLFW_MOUSE_BUTTON_LEFT))
+ //   {
+ //       const float mouseDeltaX =
+ //           static_cast<float>(
+ //               m_input->GetMouseDeltaX()
+ //               );
+
+ //       const float mouseDeltaY =
+ //           static_cast<float>(
+ //               m_input->GetMouseDeltaY()
+ //               );
+
+ //       camera.ProcessMouseMovement(
+ //           mouseDeltaX,
+ //           -mouseDeltaY
+ //       );
+ //   }
+ //   const float scroll =
+ //       static_cast<float>(
+ //           m_input->GetScrollY()
+ //           );
+
+ //   if (scroll != 0.0f)
+ //   {
+ //       camera.ProcessMouseScroll(scroll);
+ //   }
 }
 
 
+// shutdown the window and ImGui context and go to bed.
 void App::Shutdown()
 {
     if (m_engine)
@@ -225,7 +375,6 @@ void App::Shutdown()
         m_editorIcons.reset();
     }
 
-	// shutdown the window and ImGui context and go to bed.
     if (!m_isRunning && !m_window && !m_imgui)
         return;
 

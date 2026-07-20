@@ -2,6 +2,7 @@
 #include <shader/Shader.h>
 #include <entity/Entity.h>
 #include <rendering/Grid.h>
+#include "camera/Camera.h"
 
 #include <Helpers.h>
 #include <miniBoxLog.h>
@@ -70,6 +71,15 @@ bool BoxEngine::Initialize()
         return false;
     }
 
+    m_camera = std::make_unique<Camera>(glm::vec3(6.0f, 5.0f, 8.0f));
+
+    m_camera->SetPositionYawPitch(glm::vec3(6.0f, 5.0f, 8.0f), -135.0f, -25.0f);
+
+    m_camera->Target = glm::vec3(0.0f);
+
+    m_camera->OrbitDistance = glm::length(m_camera->Position - m_camera->Target);
+
+    
     if (!AddGrid(glm::vec3(0.0f), 20, 1.0f))
     {
         BOX_LOG_ERROR(
@@ -95,12 +105,24 @@ void BoxEngine::Shutdown()
     // Entity destructors delete their OpenGL buffers.
     m_entities.clear();
 
+    m_camera.reset();
+
     m_gridShader.reset();
     m_sceneShader.reset();
 
     m_sceneFramebuffer.Destroy();
 
     BOX_LOG_INFO("BoxEngine shutdown complete");
+}
+
+Camera& BoxEngine::GetCamera()
+{
+    return *m_camera;
+}
+
+const Camera& BoxEngine::GetCamera() const
+{
+    return *m_camera;
 }
 
 bool BoxEngine::AddGrid(const glm::vec3& position, int halfSize, float spacing)
@@ -213,7 +235,19 @@ void BoxEngine::RenderScene()
             ? width / height
             : 1.0f;
 
+        if (!m_camera)
+        {
+            Framebuffer::Unbind();
+            return;
+        }
+
+        const glm::mat4 view =
+            m_camera->GetViewMatrix();
+
         const glm::mat4 projection =
+            m_camera->GetProjectionMatrix(aspect);
+
+        /*const glm::mat4 projection =
             glm::perspective(
                 glm::radians(45.0f),
                 aspect,
@@ -226,7 +260,7 @@ void BoxEngine::RenderScene()
                 m_cameraPosition,
                 glm::vec3(0.0f),
                 glm::vec3(0.0f, 1.0f, 0.0f)
-            );
+            );*/
 
         m_sceneShader->Use();
 

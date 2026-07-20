@@ -7,6 +7,8 @@ Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch)
     Yaw = yaw;
     Pitch = pitch;
     updateCameraVectors();
+
+    Target = Position + Front * OrbitDistance;
 }
 
 glm::mat4 Camera::GetViewMatrix() const {
@@ -46,6 +48,10 @@ void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime) {
         Position += Right * velocity;
     if (direction == UP)
         Position += Up * velocity;
+    if (direction == DOWN)
+        Position -= Up * velocity;
+    
+    
 }
 
 void Camera::ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch) {
@@ -119,27 +125,111 @@ void Camera::ResetToDefaults(const glm::vec3& pos, float yaw, float pitch)
 
 void Camera::FocusOn(const glm::vec3& target, float distance)
 {
-    glm::vec3 front = Front;
-    if (glm::length(front) < 1e-6f) {
-        front = glm::vec3(0.0f, 0.0f, -1.0f);
-    }
-    else {
-        front = glm::normalize(front);
-    }
+    Target = target;
+    OrbitDistance =
+        glm::max(distance, 0.25f);
 
-    // Place camera at target - front * distance so camera looks at target
-    Position = target - front * distance;
+    UpdateOrbitPosition();
 
-    // Recompute Front (should point at target), Right and Up
-    Front = glm::normalize(target - Position);
-    Right = glm::normalize(glm::cross(Front, WorldUp));
-    Up = glm::normalize(glm::cross(Right, Front));
+}
 
-    // Update yaw/pitch to match new Front so other operations remain consistent
-    // yaw = atan2(z, x), pitch = asin(y)
-    Yaw = glm::degrees(atan2(Front.z, Front.x));
-    Pitch = glm::degrees(asin(glm::clamp(Front.y, -1.0f, 1.0f)));
+void Camera::ProcessOrbit(float xOffset, float yOffset)
+{
+   
+        Yaw += xOffset * MouseSensitivity;
+        Pitch += yOffset * MouseSensitivity;
 
+        if (Pitch > 89.0f)
+        {
+            Pitch = 89.0f;
+        }
+
+        if (Pitch < -89.0f)
+        {
+            Pitch = -89.0f;
+        }
+
+        UpdateOrbitPosition();
+    
+}
+
+void Camera::ProcessPan(float xOffset, float yOffset)
+{
+    const float panSpeed =
+        OrbitDistance * 0.0015f;
+
+    const glm::vec3 movement =
+        (-Right * xOffset +
+            Up * yOffset) *
+        panSpeed;
+
+    Position += movement;
+    Target += movement;
+}
+
+void Camera::ProcessOrbitZoom(float amount)
+{
+
+    constexpr float zoomSensitivity = 0.03f;
+    constexpr float minimumDistance = 2.0f;
+    constexpr float maximumDistance = 50.0f;
+
+    const float zoomAmount =
+        OrbitDistance *
+        zoomSensitivity *
+        amount;
+
+    OrbitDistance -= zoomAmount;
+
+    OrbitDistance =
+        glm::clamp(
+            OrbitDistance,
+            minimumDistance,
+            maximumDistance
+        );
+
+    UpdateOrbitPosition();
+
+}
+
+void Camera::MoveVertical(float amount)
+{
+    const glm::vec3 movement =
+        WorldUp * amount;
+
+    Position += movement;
+    Target += movement;
+}
+
+void Camera::UpdateOrbitPosition()
+{
+    glm::vec3 direction;
+
+    direction.x =
+        cos(glm::radians(Yaw)) *
+        cos(glm::radians(Pitch));
+
+    direction.y =
+        sin(glm::radians(Pitch));
+
+    direction.z =
+        sin(glm::radians(Yaw)) *
+        cos(glm::radians(Pitch));
+
+    Front = glm::normalize(direction);
+
+    Position =
+        Target - Front * OrbitDistance;
+
+    Right =
+        glm::normalize(
+            glm::cross(Front, WorldUp)
+        );
+
+    Up =
+        glm::normalize(
+            glm::cross(Right, Front)
+        );
 }
 
 void Camera::updateCameraVectors() {

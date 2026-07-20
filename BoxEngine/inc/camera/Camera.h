@@ -10,14 +10,15 @@ enum Camera_Movement {
     BACKWARD,
     LEFT,
     RIGHT,
-    UP
+    UP,
+    DOWN
 };
 
 const float YAW = -90.0f;
 const float PITCH = 0.0f;
-const float SPEED = 2.5f;
+const float SPEED = 2.5f; // 2.5f
 const float SENSITIVITY = 0.1f;
-const float ZOOM = 45.0f;
+const float ZOOM = 45.0f; //45.0f
 
 
 class Camera {
@@ -66,7 +67,21 @@ public:
     // Focus the camera on a target point at a specified distance, maintaining current yaw and pitch
     void FocusOn(const glm::vec3& target, float distance);
 
+	// ordit camera around a target point, maintaining current distance and pitch
+    glm::vec3 Target = glm::vec3(0.0f);
+    float OrbitDistance = 10.0f;
+
+    void ProcessOrbit(float xOffset, float yOffset);
+    void ProcessPan(float xOffset, float yOffset);
+    void ProcessOrbitZoom(float amount);
+    void MoveVertical(float amount);
+
+
+
+
+
 private:
+    void UpdateOrbitPosition();
     void updateCameraVectors();
 };
 
