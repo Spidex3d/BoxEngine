@@ -113,7 +113,7 @@ int App::Run()
         m_deltaTime = currentFrameTime - m_lastFrameTime;
         m_lastFrameTime = currentFrameTime;
 
-        m_input->BeginFrame();
+		m_input->BeginFrame(); // Begin a new input frame for the EditorInput class mouse and keyboard input handling
 
         glfwPollEvents();
 
@@ -136,7 +136,7 @@ int App::Run()
 
         HandleViewportAction(viewportAction, *m_engine);
         
-		m_imgSceneCollection->DrawSceneCollection(); // Draw the Scene Collection panel
+		m_imgSceneCollection->DrawSceneCollection(*m_engine); // Draw the Scene Collection panel cubes and other entities in the scene
          
 		m_imgui->RenderImGui();
 

@@ -1,6 +1,6 @@
 #pragma once
 #include <rendering/Framebuffer.h>
-
+#include <entity\Entity.h>
 #include <glm/glm.hpp>
 
 #include <memory>
@@ -40,7 +40,7 @@ public:
     bool AddEditableCube(const glm::vec3& position = glm::vec3(0.0f));
 
     
-
+	const std::vector<std::unique_ptr<Entity>>& GetEntities() const; // used to access the entities in the scene from the editor panels
 private:
     Framebuffer m_sceneFramebuffer;
 

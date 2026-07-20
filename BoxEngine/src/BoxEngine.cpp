@@ -184,6 +184,12 @@ bool BoxEngine::AddEditableCube(
 
     return true;
 }
+// Return a const reference to the vector of unique_ptr<Entity> for the editor panels to access the entities in the scene
+const std::vector<std::unique_ptr<Entity>>&
+BoxEngine::GetEntities() const
+{
+    return m_entities;
+}
 
 void BoxEngine::ResizeSceneViewport(
     int width,
