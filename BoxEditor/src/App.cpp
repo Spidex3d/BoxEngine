@@ -33,6 +33,7 @@ bool App::Init()
 	m_imgMenu = std::make_unique<MainMenuBar>();                      // Main Menu Bar panel for the main window
 	m_imgScene = std::make_unique<SceneViewportPanel>();              // Scene Viewport panel for the main window    
 	m_imgSceneCollection = std::make_unique<SceneCollectionPanel>();  // Scene Collection panel for the main window
+    m_imgObjectExplorer = std::make_unique<ObjectExplorerPanel>();
 
     m_imgui->SetEnableDocking(true);
 
@@ -55,12 +56,6 @@ bool App::Init()
         return false;
     }
 
-    /*Camera& camera = m_engine->GetCamera();
-
-    camera.Target = glm::vec3(0.0f);
-    camera.OrbitDistance = glm::length(camera.Position - camera.Target);*/
-
-      
     m_sceneViewport = std::make_unique<SceneViewportPanel>();   
 
     m_input = std::make_unique<EditorInput>();
@@ -138,6 +133,8 @@ int App::Run()
         
 		m_imgSceneCollection->DrawSceneCollection(*m_engine); // Draw the Scene Collection panel cubes and other entities in the scene
          
+		m_imgObjectExplorer->DrawObjectExplorer(*m_engine); // Draw the Object Explorer panel for the selected entity
+
 		m_imgui->RenderImGui();
 
         // Engine update/render and ImGui will go here later.
@@ -262,101 +259,7 @@ void App::HandleInput()
         );
     }
 
-    /*const float verticalSpeed =
-        5.0f * m_deltaTime;
-
-    if (m_input->IsKeyDown(GLFW_KEY_E))
-    {
-        camera.MoveVertical(
-            verticalSpeed
-        );
-    }
-
-    if (m_input->IsKeyDown(GLFW_KEY_Q))
-    {
-        camera.MoveVertical(
-            -verticalSpeed
-        );
-    }*/
-
- //   Camera& camera =
- //       m_engine->GetCamera();
-	//// Handle camera movement based on keyboard input
- //   if (m_input->IsKeyDown(GLFW_KEY_W))
- //   {
- //       camera.ProcessKeyboard(
- //           FORWARD,
- //           m_deltaTime
- //       );
- //   }
-
- //   if (m_input->IsKeyDown(GLFW_KEY_S))
- //   {
- //       camera.ProcessKeyboard(
- //           BACKWARD,
- //           m_deltaTime
- //       );
- //   }
-
- //   if (m_input->IsKeyDown(GLFW_KEY_A))
- //   {
- //       camera.ProcessKeyboard(
- //           LEFT,
- //           m_deltaTime
- //       );
- //   }
-
- //   if (m_input->IsKeyDown(GLFW_KEY_D))
- //   {
- //       camera.ProcessKeyboard(
- //           RIGHT,
- //           m_deltaTime
- //       );
- //   }
-
- //   if (m_input->IsKeyDown(GLFW_KEY_E))
- //   {
- //       camera.ProcessKeyboard(
- //           UP,
- //           m_deltaTime
- //       );
- //   }
-
- //   if (m_input->IsKeyDown(GLFW_KEY_Q))
- //   {
- //       camera.ProcessKeyboard(
- //           DOWN,
- //           m_deltaTime
- //       );
- //   }
-	//// Handle mouse input for camera rotation and zoom
- //   if (m_input->IsMouseButtonDown(
- //       GLFW_MOUSE_BUTTON_LEFT))
- //   {
- //       const float mouseDeltaX =
- //           static_cast<float>(
- //               m_input->GetMouseDeltaX()
- //               );
-
- //       const float mouseDeltaY =
- //           static_cast<float>(
- //               m_input->GetMouseDeltaY()
- //               );
-
- //       camera.ProcessMouseMovement(
- //           mouseDeltaX,
- //           -mouseDeltaY
- //       );
- //   }
- //   const float scroll =
- //       static_cast<float>(
- //           m_input->GetScrollY()
- //           );
-
- //   if (scroll != 0.0f)
- //   {
- //       camera.ProcessMouseScroll(scroll);
- //   }
+   
 }
 
 

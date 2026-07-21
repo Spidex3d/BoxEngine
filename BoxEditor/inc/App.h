@@ -4,6 +4,7 @@
 #include "panels\MainMenuBar.h"
 #include "panels\SceneViewportPanel.h"
 #include "panels\SceneCollectionPanel.h"
+#include "panels\ObjectExplorerPanel.h"
 #include <UI/EditorIcons.h>
 
 class BoxWindow;
@@ -25,7 +26,7 @@ private:
 	float m_deltaTime = 0.0f;
 	float m_lastFrameTime = 0.0f;
 
-	
+
 
 	void HandleMenuAction(MenuAction action);		// Handle actions from the main menu bar
 	void HandleViewportAction(ViewportAction action, BoxEngine& engine); // Handle actions from the main menu and viewport panels
@@ -43,4 +44,5 @@ private:
 	std::unique_ptr<SceneViewportPanel> m_imgScene; // Scene panel for ImGui
 	std::unique_ptr<SceneCollectionPanel> m_imgSceneCollection; // Scene Collection for ImGui
 	std::unique_ptr<SceneViewportPanel> m_sceneViewport; // Scene Viewport panel for ImGui
+	std::unique_ptr<ObjectExplorerPanel> m_imgObjectExplorer;
 };

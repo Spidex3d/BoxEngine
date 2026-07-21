@@ -39,8 +39,19 @@ public:
 
     bool AddEditableCube(const glm::vec3& position = glm::vec3(0.0f));
 
-    
+
 	const std::vector<std::unique_ptr<Entity>>& GetEntities() const; // used to access the entities in the scene from the editor panels
+    
+    void SetSelectedEntity(int entityID);
+
+    Entity* GetSelectedEntity();
+
+    const Entity* GetSelectedEntity() const;
+
+    int GetSelectedEntityID() const;
+
+    void ClearSelectedEntity();
+    
 private:
     Framebuffer m_sceneFramebuffer;
 
@@ -53,7 +64,7 @@ private:
 
     int m_nextEntityID = 0;
 
-    //glm::vec3 m_cameraPosition{ 2.5f, 2.0f, 3.5f};
+	int m_selectedEntityID = -1; // used to track the selected entity in the editor panels
 };
 
 

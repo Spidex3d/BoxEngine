@@ -80,7 +80,7 @@ bool BoxEngine::Initialize()
     m_camera->OrbitDistance = glm::length(m_camera->Position - m_camera->Target);
 
     
-    if (!AddGrid(glm::vec3(0.0f), 20, 1.0f))
+    if (!AddGrid(glm::vec3(0.0f, -0.5f, 0.0f), 20, 1.0f))
     {
         BOX_LOG_ERROR(
             "BoxEngine failed to create grid"
@@ -101,6 +101,8 @@ void BoxEngine::Shutdown()
         m_grid->Destroy();
         m_grid.reset();
     }
+
+    m_selectedEntityID = -1;
 
     // Entity destructors delete their OpenGL buffers.
     m_entities.clear();
@@ -177,6 +179,8 @@ bool BoxEngine::AddEditableCube(
         std::move(cube)
     );
 
+	m_selectedEntityID = entityID; // set the newly added cube as the selected entity
+
     BOX_LOG_INFO(
         "Added editable cube. Entity count: "
         << m_entities.size()
@@ -189,6 +193,63 @@ const std::vector<std::unique_ptr<Entity>>&
 BoxEngine::GetEntities() const
 {
     return m_entities;
+}
+
+void BoxEngine::SetSelectedEntity(int entityID)
+{
+    {
+        for (const auto& entity : m_entities)
+        {
+            if (entity &&
+                entity->GetID() == entityID)
+            {
+                m_selectedEntityID = entityID;
+                return;
+            }
+        }
+
+        m_selectedEntityID = -1;
+    }
+}
+
+Entity* BoxEngine::GetSelectedEntity()
+{
+    for (auto& entity : m_entities)
+    {
+        if (entity &&
+            entity->GetID() ==
+            m_selectedEntityID)
+        {
+            return entity.get();
+        }
+    }
+
+    return nullptr;
+}
+
+const Entity* BoxEngine::GetSelectedEntity() const
+{
+    for (const auto& entity : m_entities)
+    {
+        if (entity &&
+            entity->GetID() ==
+            m_selectedEntityID)
+        {
+            return entity.get();
+        }
+    }
+
+    return nullptr;
+}
+
+int BoxEngine::GetSelectedEntityID() const
+{
+    return m_selectedEntityID;
+}
+
+void BoxEngine::ClearSelectedEntity()
+{
+    m_selectedEntityID = -1;
 }
 
 void BoxEngine::ResizeSceneViewport(

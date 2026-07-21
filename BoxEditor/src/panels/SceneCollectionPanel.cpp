@@ -1,15 +1,8 @@
+#include "BoxEngine.h"
 #include "panels/SceneCollectionPanel.h"
 #include <imgui/imgui.h>
 #include <imgui/ImGuiAF.h>
 
-//void SceneCollectionPanel::DrawSceneCollection()
-//{
-//    ImGui::Begin("Scene Collection window");
-//    ImGui::Text("Cube Editor");
-//    ImGui::End();
-//}
-
-#include <BoxEngine.h>
 #include <entity/Entity.h>
 
 void SceneCollectionPanel::DrawSceneCollection(
@@ -32,8 +25,12 @@ void SceneCollectionPanel::DrawSceneCollection(
                 continue;
             }
 
+            /*const bool isSelected =
+                m_selectedEntity == entity.get();*/
+
             const bool isSelected =
-                m_selectedEntity == entity.get();
+                engine.GetSelectedEntityID() ==
+                entity->GetID();
 
             ImGuiTreeNodeFlags flags =
                 ImGuiTreeNodeFlags_Leaf |
@@ -57,18 +54,27 @@ void SceneCollectionPanel::DrawSceneCollection(
 
             if (ImGui::IsItemClicked())
             {
-                m_selectedEntity =
-                    entity.get();
+                /*m_selectedEntity =
+                    entity.get();*/
+
+                engine.SetSelectedEntity(
+                    entity->GetID()
+                );
             }
         }
 
         ImGui::TreePop();
     }
+	// clicking on the empty space of the Scene Collection panel will clear the selected entity
+    if (ImGui::IsWindowHovered() &&
+        ImGui::IsMouseClicked(
+            ImGuiMouseButton_Left) &&
+        !ImGui::IsAnyItemHovered())
+    {
+        engine.ClearSelectedEntity();
+    }
 
     ImGui::End();
 }
 
-Entity* SceneCollectionPanel::GetSelectedEntity() const
-{
-    return m_selectedEntity;
-}
+
