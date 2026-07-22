@@ -5,7 +5,7 @@
 #include <miniBoxLog.h>
 #include <Helpers.h>
 #include <UI\EditorIcons.h>
-
+#include <camera/Camera.h>
 
 ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const EditorIcons& icons)
 {
@@ -301,6 +301,8 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 
         const GLuint sceneTexture = engine.GetSceneTexture();
 
+        const ImVec2 imageTopLeft = ImGui::GetCursorScreenPos(); // piking
+
         if (sceneTexture != 0)
         {
             ImGui::Image(
@@ -314,13 +316,64 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 
             m_sceneViewportPos = ImGui::GetItemRectMin();
             m_sceneViewportSize = ImGui::GetItemRectSize();
+            /*}
+            else
+            {
+                ImGui::TextUnformatted(
+                    "Scene framebuffer is unavailable."
+                );
+            }*/
+
+            // ################################################ Mouse Picking ############################################
+            const bool viewportClicked =
+                ImGui::IsItemHovered() &&
+                ImGui::IsMouseClicked(
+                    ImGuiMouseButton_Left
+                );
+
+            if (viewportClicked)
+            {
+                const ImVec2 mousePosition =
+                    ImGui::GetMousePos();
+
+                const float mouseX =
+                    mousePosition.x -
+                    m_sceneViewportPos.x;
+
+                const float mouseY =
+                    mousePosition.y -
+                    m_sceneViewportPos.y;
+
+                Camera& camera = engine.GetCamera();
+
+                const glm::mat4 view = camera.GetViewMatrix();
+
+                const float aspectRatio =
+                    m_sceneViewportSize.y > 0.0f
+                    ? m_sceneViewportSize.x / m_sceneViewportSize.y
+                    : 1.0f;
+
+                const glm::mat4 projection =
+                    camera.GetProjectionMatrix(
+                        aspectRatio
+                    );
+
+                const glm::vec3 rayDirection =
+                    CreateMouseRay(
+                        mouseX,
+                        mouseY,
+                        m_sceneViewportSize.x,
+                        m_sceneViewportSize.y,
+                        view,
+                        projection
+                    );
+
+                engine.PickEntity(camera.Position, rayDirection
+                );
+            }
+
         }
-        else
-        {
-            ImGui::TextUnformatted(
-                "Scene framebuffer is unavailable."
-            );
-        }
+		// ############################################# Mouse Picking end ############################################
     }
     // ################################################################################################
 
@@ -333,6 +386,55 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     return action;
 }
 
+
+glm::vec3 SceneViewportPanel::CreateMouseRay(float mouseX, float mouseY, float viewportWidth, float viewportHeight,
+    const glm::mat4& view, const glm::mat4& projection) const
+{
+    if (viewportWidth <= 0.0f ||
+        viewportHeight <= 0.0f)
+    {
+        return glm::vec3(0.0f);
+    }
+
+    const float normalisedX =
+        (2.0f * mouseX) /
+        viewportWidth -
+        1.0f;
+
+    const float normalisedY =
+        1.0f -
+        (2.0f * mouseY) /
+        viewportHeight;
+
+    const glm::vec4 rayClip(
+        normalisedX,
+        normalisedY,
+        -1.0f,
+        1.0f
+    );
+
+    glm::vec4 rayEye =
+        glm::inverse(projection) *
+        rayClip;
+
+    rayEye =
+        glm::vec4(
+            rayEye.x,
+            rayEye.y,
+            -1.0f,
+            0.0f
+        );
+
+    const glm::vec3 rayWorld =
+        glm::normalize(
+            glm::vec3(
+                glm::inverse(view) *
+                rayEye
+            )
+        );
+
+    return rayWorld;
+}
 
 void SceneViewportPanel::Shutdown() {
     // Cleanup code here (if needed)

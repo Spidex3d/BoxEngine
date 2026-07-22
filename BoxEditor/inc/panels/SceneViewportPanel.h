@@ -3,6 +3,7 @@
 #include <functional>
 #include <string>
 #include <UI\EditorTexture.h>
+#include <glm/glm.hpp>
 
 class BoxEngine;
 class EditorIcons;
@@ -54,11 +55,15 @@ public:
     {
         return m_sceneViewportSize;
     }	
+	
 
 	void Shutdown();
 
 private:
-	
+    // Converts mouse coordinates to a ray in world space for piking
+    glm::vec3 CreateMouseRay(float mouseX, float mouseY, float viewportWidth, float viewportHeight, const glm::mat4& view,
+        const glm::mat4& projection) const;
+
 	int m_EditMode = 0;
     int m_editType = 0;
     		

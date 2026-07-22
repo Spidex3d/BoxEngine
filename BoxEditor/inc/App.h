@@ -11,6 +11,7 @@ class BoxWindow;
 class EditorIcons;
 class BoxEngine;
 class EditorInput;
+class ObjectExplorerPanel;
 
 class App
 {
@@ -25,8 +26,6 @@ public:
 private:
 	float m_deltaTime = 0.0f;
 	float m_lastFrameTime = 0.0f;
-
-
 
 	void HandleMenuAction(MenuAction action);		// Handle actions from the main menu bar
 	void HandleViewportAction(ViewportAction action, BoxEngine& engine); // Handle actions from the main menu and viewport panels
@@ -44,5 +43,5 @@ private:
 	std::unique_ptr<SceneViewportPanel> m_imgScene; // Scene panel for ImGui
 	std::unique_ptr<SceneCollectionPanel> m_imgSceneCollection; // Scene Collection for ImGui
 	std::unique_ptr<SceneViewportPanel> m_sceneViewport; // Scene Viewport panel for ImGui
-	std::unique_ptr<ObjectExplorerPanel> m_imgObjectExplorer;
+	std::unique_ptr<ObjectExplorerPanel> m_imgObjectExplorer; // Object Explorer panel for ImGui
 };

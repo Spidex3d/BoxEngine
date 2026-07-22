@@ -3,6 +3,7 @@
 #include <miniBoxLog.h>
 #include <stb/stb_image.h>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/constants.hpp>
 #include <utility>
 
 Entity::Entity(
@@ -184,6 +185,16 @@ bool Entity::CreateCube()
     return true;
 }
 
+// shader for the selection outline effect
+void Entity::DrawMesh() const
+{
+    glBindVertexArray(m_vao);
+
+    glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
+
+    glBindVertexArray(0);
+}
+
 
 void Entity::Render(
     const Shader& shader,
@@ -192,6 +203,8 @@ void Entity::Render(
 {
     if (!m_visible || m_vao == 0)
         return;
+
+    const glm::mat4 model = GetModelMatrix(); // piking
 
     shader.Use();
 
@@ -214,6 +227,54 @@ void Entity::Render(
     glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
     glBindVertexArray(0);
 }
+
+glm::mat4 Entity::GetModelMatrix() const
+{
+    glm::mat4 model =
+        glm::mat4(1.0f);
+
+    model = glm::translate(
+        model,
+        m_position
+    );
+
+    model = glm::rotate(
+        model,
+        glm::radians(m_rotation.x),
+        glm::vec3(1.0f, 0.0f, 0.0f)
+    );
+
+    model = glm::rotate(
+        model,
+        glm::radians(m_rotation.y),
+        glm::vec3(0.0f, 1.0f, 0.0f)
+    );
+
+    model = glm::rotate(
+        model,
+        glm::radians(m_rotation.z),
+        glm::vec3(0.0f, 0.0f, 1.0f)
+    );
+
+    model = glm::scale(
+        model,
+        m_scale
+    );
+
+    return model;
+}
+
+const glm::vec3& Entity::GetAABBMin() const
+{
+    return m_aabbMin;
+}
+
+const glm::vec3& Entity::GetAABBMax() const
+{
+    return m_aabbMax;
+}
+
+
 
 glm::mat4 Entity::CalculateModelMatrix() const
 {

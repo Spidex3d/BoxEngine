@@ -10,8 +10,9 @@ void SceneCollectionPanel::DrawSceneCollection(
 {
     ImGui::Begin("Scene Collection");
 
-    const auto& entities =
-        engine.GetEntities();
+    const auto& entities = engine.GetEntities();
+
+    int entityToDelete = -1;
 
     if (ImGui::TreeNodeEx(
         "Scene",
@@ -25,12 +26,9 @@ void SceneCollectionPanel::DrawSceneCollection(
                 continue;
             }
 
-            /*const bool isSelected =
-                m_selectedEntity == entity.get();*/
+            const int entityID = entity->GetID();
 
-            const bool isSelected =
-                engine.GetSelectedEntityID() ==
-                entity->GetID();
+            const bool isSelected = engine.GetSelectedEntityID() == entityID;
 
             ImGuiTreeNodeFlags flags =
                 ImGuiTreeNodeFlags_Leaf |
@@ -39,33 +37,86 @@ void SceneCollectionPanel::DrawSceneCollection(
 
             if (isSelected)
             {
-                flags |=
-                    ImGuiTreeNodeFlags_Selected;
+                flags |= ImGuiTreeNodeFlags_Selected;
             }
+
+            const char* visibilityIcon =
+                entity->IsVisible()
+                ? ICON_FA_EYE
+                : ICON_FA_EYE_SLASH;
+
+            const std::string displayName =
+                entity->GetName().empty()
+                ? "Entity " +
+                std::to_string(entityID)
+                : entity->GetName();
+
+            const std::string label =
+                std::string(visibilityIcon) +
+                " " +
+                displayName;
 
             ImGui::TreeNodeEx(
                 reinterpret_cast<void*>(
                     static_cast<intptr_t>(
-                        entity->GetID())),
+                        entityID
+                        )
+                    ),
                 flags,
                 "%s",
-                entity->GetName().c_str()
+                label.c_str()
             );
 
             if (ImGui::IsItemClicked())
             {
-                /*m_selectedEntity =
-                    entity.get();*/
-
                 engine.SetSelectedEntity(
-                    entity->GetID()
+                    entityID
                 );
+            }
+
+            if (ImGui::BeginPopupContextItem())
+            {
+                ImGui::TextDisabled(
+                    "%s",
+                    displayName.c_str()
+                );
+
+                ImGui::Separator();
+
+                if (ImGui::MenuItem(
+                    ICON_FA_TRASH_ALT " Delete"))
+                {
+                    entityToDelete =
+                        entityID;
+                }
+
+                const char* visibilityText =
+                    entity->IsVisible()
+                    ? ICON_FA_EYE_SLASH " Hide"
+                    : ICON_FA_EYE " Show";
+
+                if (ImGui::MenuItem(
+                    visibilityText))
+                {
+                    entity->SetVisible(
+                        !entity->IsVisible()
+                    );
+                }
+
+                ImGui::EndPopup();
             }
         }
 
         ImGui::TreePop();
     }
-	// clicking on the empty space of the Scene Collection panel will clear the selected entity
+
+    if (entityToDelete != -1)
+    {
+        engine.RemoveEntity(
+            entityToDelete
+        );
+    }
+
     if (ImGui::IsWindowHovered() &&
         ImGui::IsMouseClicked(
             ImGuiMouseButton_Left) &&

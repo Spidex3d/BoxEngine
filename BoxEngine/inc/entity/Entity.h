@@ -1,6 +1,7 @@
 #pragma once
 #include <glad\glad.h>
 #include <glm\glm.hpp>
+#include <glm/mat4x4.hpp>
 
 #include <string>
 
@@ -26,6 +27,8 @@ public:
 
     bool CreateCube();
 
+    void DrawMesh() const;
+
     void Render(
         const Shader& shader,
         const glm::mat4& view,
@@ -42,6 +45,11 @@ public:
     const std::string& GetName() const
     {
         return m_name;
+    }
+
+    
+    void SetName(const std::string& name) {
+		m_name = name;
     }
 
     void SetPosition(const glm::vec3& position)
@@ -83,10 +91,18 @@ public:
     {
         return m_visible;
     }
+    // ###################################### Piking ######################################
+    glm::mat4 GetModelMatrix() const;
+    const glm::vec3& GetAABBMin() const;
+    const glm::vec3& GetAABBMax() const;
+    
+
 
 private:
     glm::mat4 CalculateModelMatrix() const;
 
+    glm::vec3 m_aabbMin = glm::vec3(-0.5f); // piking
+    glm::vec3 m_aabbMax = glm::vec3(0.5f);  // piking
 private:
     int m_id = -1;
     std::string m_name;

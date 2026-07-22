@@ -51,12 +51,21 @@ public:
     int GetSelectedEntityID() const;
 
     void ClearSelectedEntity();
+
+    bool RemoveEntity(int entityID);
     
+    void PickEntity(const glm::vec3& rayOrigin, const glm::vec3& rayDirection);
+
+private:
+    void RenderSelectedEntityOutline(const glm::mat4& view, const glm::mat4& projection); // Render the outline of the selected entity
+
 private:
     Framebuffer m_sceneFramebuffer;
 
-    std::unique_ptr<Shader> m_sceneShader;
-    std::unique_ptr<Shader> m_gridShader;
+	std::unique_ptr<Shader> m_sceneShader;      // for rendering the scene entities
+	std::unique_ptr<Shader> m_gridShader;       // for rendering the editor grid
+	std::unique_ptr<Shader> m_outlineShader;    // for rendering the outline of the selected entity
+
 	std::unique_ptr<Grid> m_grid; // for the editor grid not an entity
 	std::vector<std::unique_ptr<Entity>> m_entities; // for the editable cubes and other entities
     
@@ -65,6 +74,17 @@ private:
     int m_nextEntityID = 0;
 
 	int m_selectedEntityID = -1; // used to track the selected entity in the editor panels
+
+	// piking helper function to check if a ray intersects an AABB in world space
+    bool RayIntersectsAABB(
+        const glm::vec3& rayOriginWorld,
+        const glm::vec3& rayDirectionWorld,
+        const glm::mat4& modelMatrix,
+        const glm::vec3& aabbMinLocal,
+        const glm::vec3& aabbMaxLocal,
+        float& outDistanceWorld
+    ) const;
+
 };
 
 

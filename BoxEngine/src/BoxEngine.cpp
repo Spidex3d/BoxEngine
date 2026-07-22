@@ -10,6 +10,12 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <string>
+#include <algorithm>
+
+#include <cmath>
+#include <limits>
+
+#include <glm/gtc/matrix_inverse.hpp>
 
 BoxEngine::BoxEngine() = default;
 BoxEngine::~BoxEngine() = default;
@@ -70,6 +76,32 @@ bool BoxEngine::Initialize()
         m_sceneShader.reset();
         return false;
     }
+	// ############################################### outline shader for selected entity ###############################################
+    const std::string outlineVertexPath =
+        helpers.GetAssetPath(
+            "assets/shader/outline.vert"
+        );
+
+    const std::string outlineFragmentPath =
+        helpers.GetAssetPath(
+            "assets/shader/outline.frag"
+        );
+
+    m_outlineShader = std::make_unique<Shader>(
+            outlineVertexPath, outlineFragmentPath
+        );
+
+    if (!m_outlineShader ||
+        m_outlineShader->ID() == 0)
+    {
+        BOX_LOG_ERROR(
+            "Failed to create outline shader."
+        );
+
+        return false;
+    }
+
+	// ################################################# end shader ########################################################
 
     m_camera = std::make_unique<Camera>(glm::vec3(6.0f, 5.0f, 8.0f));
 
@@ -111,6 +143,7 @@ void BoxEngine::Shutdown()
 
     m_gridShader.reset();
     m_sceneShader.reset();
+    m_outlineShader.reset();
 
     m_sceneFramebuffer.Destroy();
 
@@ -252,6 +285,34 @@ void BoxEngine::ClearSelectedEntity()
     m_selectedEntityID = -1;
 }
 
+bool BoxEngine::RemoveEntity(int entityID)
+{
+    const auto iterator =
+        std::find_if(
+            m_entities.begin(),
+            m_entities.end(),
+            [entityID](const std::unique_ptr<Entity>& entity)
+    {
+        return entity &&
+            entity->GetID() == entityID;
+    }
+        );
+
+    if (iterator == m_entities.end())
+    {
+        return false;
+    }
+
+    if (m_selectedEntityID == entityID)
+    {
+        m_selectedEntityID = -1;
+    }
+
+    m_entities.erase(iterator);
+
+    return true;
+}
+
 void BoxEngine::ResizeSceneViewport(
     int width,
     int height)
@@ -314,21 +375,6 @@ void BoxEngine::RenderScene()
         const glm::mat4 projection =
             m_camera->GetProjectionMatrix(aspect);
 
-        /*const glm::mat4 projection =
-            glm::perspective(
-                glm::radians(45.0f),
-                aspect,
-                0.1f,
-                100.0f
-            );
-
-        const glm::mat4 view =
-            glm::lookAt(
-                m_cameraPosition,
-                glm::vec3(0.0f),
-                glm::vec3(0.0f, 1.0f, 0.0f)
-            );*/
-
         m_sceneShader->Use();
 
         m_sceneShader->setVec3(
@@ -364,7 +410,9 @@ void BoxEngine::RenderScene()
             m_grid->Render(*m_gridShader, view, projection);
         }
                 
-        // ##########################################################################################
+        // ############################################ outline rendring ##############################################
+
+        RenderSelectedEntityOutline(view, projection);
 
 		// Render entities
         for (const auto& entity : m_entities)
@@ -390,5 +438,239 @@ GLuint BoxEngine::GetSceneTexture() const
     return m_sceneFramebuffer.GetColorTexture();
 }
 
+bool BoxEngine::RayIntersectsAABB(
+    const glm::vec3& rayOriginWorld,
+    const glm::vec3& rayDirectionWorld,
+    const glm::mat4& modelMatrix,
+    const glm::vec3& aabbMinLocal,
+    const glm::vec3& aabbMaxLocal,
+    float& outDistanceWorld) const
+{
+    const glm::mat4 inverseModel =
+        glm::inverse(modelMatrix);
 
+    const glm::vec3 rayOriginLocal =
+        glm::vec3(
+            inverseModel *
+            glm::vec4(
+                rayOriginWorld,
+                1.0f
+            )
+        );
 
+    const glm::vec3 unnormalisedDirectionLocal =
+        glm::vec3(
+            inverseModel *
+            glm::vec4(
+                rayDirectionWorld,
+                0.0f
+            )
+        );
+
+    const float directionLength =
+        glm::length(
+            unnormalisedDirectionLocal
+        );
+
+    if (directionLength <= 0.000001f)
+    {
+        return false;
+    }
+
+    const glm::vec3 rayDirectionLocal =
+        unnormalisedDirectionLocal /
+        directionLength;
+
+    float tMin = 0.0f;
+
+    float tMax =
+        std::numeric_limits<float>::max();
+
+    constexpr float epsilon =
+        0.000001f;
+
+    for (int axis = 0; axis < 3; ++axis)
+    {
+        if (std::abs(
+            rayDirectionLocal[axis]) <
+            epsilon)
+        {
+            if (rayOriginLocal[axis] <
+                aabbMinLocal[axis] ||
+                rayOriginLocal[axis] >
+                aabbMaxLocal[axis])
+            {
+                return false;
+            }
+
+            continue;
+        }
+
+        const float inverseDirection =
+            1.0f /
+            rayDirectionLocal[axis];
+
+        float t1 =
+            (aabbMinLocal[axis] -
+                rayOriginLocal[axis]) *
+            inverseDirection;
+
+        float t2 =
+            (aabbMaxLocal[axis] -
+                rayOriginLocal[axis]) *
+            inverseDirection;
+
+        if (t1 > t2)
+        {
+            std::swap(t1, t2);
+        }
+
+        tMin =
+            std::max(tMin, t1);
+
+        tMax =
+            std::min(tMax, t2);
+
+        if (tMin > tMax)
+        {
+            return false;
+        }
+    }
+
+    const glm::vec3 localHitPoint =
+        rayOriginLocal +
+        rayDirectionLocal *
+        tMin;
+
+    const glm::vec3 worldHitPoint =
+        glm::vec3(
+            modelMatrix *
+            glm::vec4(
+                localHitPoint,
+                1.0f
+            )
+        );
+
+    outDistanceWorld =
+        glm::length(
+            worldHitPoint -
+            rayOriginWorld
+        );
+
+    return true;
+}
+
+void BoxEngine::PickEntity(
+    const glm::vec3& rayOrigin,
+    const glm::vec3& rayDirection)
+{
+    Entity* closestEntity =
+        nullptr;
+
+    float closestDistance =
+        std::numeric_limits<float>::max();
+
+    for (const auto& entity : m_entities)
+    {
+        if (!entity ||
+            !entity->IsVisible())
+        {
+            continue;
+        }
+
+        float hitDistance = 0.0f;
+
+        const bool hit =
+            RayIntersectsAABB(
+                rayOrigin,
+                rayDirection,
+                entity->GetModelMatrix(),
+                entity->GetAABBMin(),
+                entity->GetAABBMax(),
+                hitDistance
+            );
+
+        if (hit &&
+            hitDistance < closestDistance)
+        {
+            closestDistance =
+                hitDistance;
+
+            closestEntity =
+                entity.get();
+        }
+    }
+
+    if (closestEntity)
+    {
+        SetSelectedEntity(
+            closestEntity->GetID()
+        );
+    }
+    else
+    {
+        ClearSelectedEntity();
+    }
+}
+
+void BoxEngine::RenderSelectedEntityOutline(
+    const glm::mat4& view,
+    const glm::mat4& projection)
+{
+    if (!m_outlineShader)
+    {
+        return;
+    }
+
+    Entity* selectedEntity =
+        GetSelectedEntity();
+
+    if (!selectedEntity ||
+        !selectedEntity->IsVisible())
+    {
+        return;
+    }
+
+    m_outlineShader->Use();
+
+    m_outlineShader->setMat4(
+        "model",
+        selectedEntity->GetModelMatrix()
+    );
+
+    m_outlineShader->setMat4(
+        "view",
+        view
+    );
+
+    m_outlineShader->setMat4(
+        "projection",
+        projection
+    );
+	// Set the outline scale factor to slightly enlarge the back faces of the selected entity
+    m_outlineShader->SetUniformFloat(
+        "outlineScale",
+        1.02f
+    );
+
+    m_outlineShader->setVec3(
+        "outlineColor",
+        glm::vec3(
+            1.0f,
+            0.55f,
+            0.05f
+        )
+    );
+
+    /*
+     * Draw only the object's back faces.
+     * The slightly enlarged back faces appear
+     * around the normally rendered cube.
+     */
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
+
+    selectedEntity->DrawMesh();
+
+    glCullFace(GL_BACK);
+}
