@@ -10,6 +10,15 @@ class Shader;
 class Grid;
 class Entity;
 class Camera;
+class MoveGizmo;
+
+enum class TransformTool
+{
+    Select,
+    Move,
+    Rotate,
+    Scale
+};
 
 class BoxEngine
 {
@@ -56,6 +65,9 @@ public:
     
     void PickEntity(const glm::vec3& rayOrigin, const glm::vec3& rayDirection);
 
+    TransformTool m_activeTool = TransformTool::Move;
+
+
 private:
     void RenderSelectedEntityOutline(const glm::mat4& view, const glm::mat4& projection); // Render the outline of the selected entity
 
@@ -65,6 +77,9 @@ private:
 	std::unique_ptr<Shader> m_sceneShader;      // for rendering the scene entities
 	std::unique_ptr<Shader> m_gridShader;       // for rendering the editor grid
 	std::unique_ptr<Shader> m_outlineShader;    // for rendering the outline of the selected entity
+
+	std::unique_ptr<MoveGizmo> m_moveGizmo;     // for rendering the move gizmo for the selected entity
+	std::unique_ptr<Shader> m_gizmoShader;      // for rendering the move gizmo
 
 	std::unique_ptr<Grid> m_grid; // for the editor grid not an entity
 	std::vector<std::unique_ptr<Entity>> m_entities; // for the editable cubes and other entities

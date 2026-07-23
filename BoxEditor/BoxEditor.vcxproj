@@ -188,6 +188,8 @@
   <ItemGroup>
     <None Include="assets\shader\basicCube.frag" />
     <None Include="assets\shader\basicCube.vert" />
+    <None Include="assets\shader\gizmo.frag" />
+    <None Include="assets\shader\gizmo.vert" />
     <None Include="assets\shader\grid.frag" />
     <None Include="assets\shader\grid.vert" />
     <None Include="assets\shader\outline.frag" />

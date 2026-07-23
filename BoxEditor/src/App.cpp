@@ -122,10 +122,12 @@ int App::Run()
 
         m_imgui->MainDockSpace(&dockspaceOpen);
 		// ########################################### Main Menu Bar ###########################################
+        		
+        MenuAction menuAction = m_imgMenu->DrawMainMenu();
 
-		HandleMenuAction(m_imgMenu->DrawMainMenu());
+        HandleMenuAction(menuAction, *m_engine);
 
-        
+
 		// ############################################ Scene Viewport and Scene Collection Panels #################
         ViewportAction viewportAction = m_sceneViewport->DrawSceneViewport(*m_engine, *m_editorIcons);
 
@@ -146,16 +148,24 @@ int App::Run()
     return 0;
 }
 // handle the menu actions from the MainMenuBar
-void App::HandleMenuAction(MenuAction action)
+void App::HandleMenuAction(
+    MenuAction action,
+    BoxEngine& engine)
 {
-    switch (m_imgMenu->DrawMainMenu())
+    switch (action)
     {
     case MenuAction::Exit:
         glfwSetWindowShouldClose(
             m_window->GetWindow(),
-            GLFW_TRUE);
+            GLFW_TRUE
+        );
         break;
 
+    case MenuAction::AddCube:
+        engine.AddEditableCube();
+        break;
+
+    case MenuAction::None:
     default:
         break;
     }

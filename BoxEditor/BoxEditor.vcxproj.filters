@@ -159,5 +159,7 @@
     <None Include="assets\shader\grid.frag" />
     <None Include="assets\shader\outline.vert" />
     <None Include="assets\shader\outline.frag" />
+    <None Include="assets\shader\gizmo.frag" />
+    <None Include="assets\shader\gizmo.vert" />
   </ItemGroup>
 </Project>

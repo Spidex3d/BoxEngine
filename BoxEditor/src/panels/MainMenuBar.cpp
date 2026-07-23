@@ -5,45 +5,45 @@
 
 MenuAction MainMenuBar::DrawMainMenu()
 {
+    MenuAction action = MenuAction::None;
+
     if (ImGui::BeginMainMenuBar())
     {
         if (ImGui::BeginMenu("File"))
         {
             if (ImGui::MenuItem("New Scene"))
             {
-                ImGui::EndMenu();
-                ImGui::EndMainMenuBar();
-                return MenuAction::NewScene;
+                action = MenuAction::NewScene;
             }
+
             if (ImGui::MenuItem("Open Scene"))
             {
-
             }
+
             if (ImGui::MenuItem("Save"))
             {
-
             }
+
             if (ImGui::MenuItem("Save As"))
             {
-
             }
-			ImGui::Separator();
+
+            ImGui::Separator();
+
             if (ImGui::MenuItem("Import .obj"))
             {
-				// implement import functionality here, e.g., open a file dialog to select a file to import into the scene.
             }
+
             if (ImGui::MenuItem("Export .mbx"))
             {
-				// Export the current scene or selected objects to a file format, e.g., OBJ or a custom format MBX.
             }
 
-			ImGui::Separator();
-            if (ImGui::MenuItem(ICON_FA_SIGN_OUT_ALT" Exit"))
-            {
-                ImGui::EndMenu();
-                ImGui::EndMainMenuBar();
-                return MenuAction::Exit;
+            ImGui::Separator();
 
+            if (ImGui::MenuItem(
+                ICON_FA_SIGN_OUT_ALT " Exit"))
+            {
+                action = MenuAction::Exit;
             }
 
             ImGui::EndMenu();
@@ -54,53 +54,75 @@ MenuAction MainMenuBar::DrawMainMenu()
             if (ImGui::MenuItem("Undo"))
             {
             }
+
             if (ImGui::MenuItem("Redo"))
             {
-
-            }
-            if (ImGui::MenuItem("Test_01"))
-            {
-
-            }
-            if (ImGui::MenuItem("Test_02"))
-            {
-
             }
 
             ImGui::Separator();
+
             if (ImGui::MenuItem("Preferences"))
             {
-				// open preferences dialog set grid size, snap to grid, screen color etc. 
-
             }
 
             ImGui::EndMenu();
         }
+
         if (ImGui::BeginMenu("Render"))
         {
             if (ImGui::MenuItem("Render Image"))
             {
-				// Render the current scene to an image file, e.g., PNG or JPEG.
-                // This would involve capturing the framebuffer and saving it to disk.
             }
+
             if (ImGui::MenuItem("Render Animation"))
             {
-
             }
+
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Add Object"))
+        {
+            if (ImGui::MenuItem("Add Cube"))
+            {
+                action = MenuAction::AddCube;
+            }
+
+            if (ImGui::MenuItem("Add Plane"))
+            {
+            }
+
             ImGui::Separator();
-            if (ImGui::MenuItem("Test_01"))
-            {
 
-            }
-            if (ImGui::MenuItem("Test_02"))
+            if (ImGui::MenuItem("Add Icosphere"))
             {
-
             }
 
-            if (ImGui::MenuItem("Test_03"))
+            if (ImGui::MenuItem("Add UV Sphere"))
             {
-                
+            }
 
+            ImGui::Separator();
+
+            if (ImGui::MenuItem("Add Cylinder"))
+            {
+            }
+
+            if (ImGui::MenuItem("Add Cone"))
+            {
+            }
+
+            if (ImGui::MenuItem("Add Torus"))
+            {
+            }
+
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Tools"))
+        {
+            if (ImGui::MenuItem("Move"))
+            {
             }
 
             ImGui::EndMenu();
@@ -108,5 +130,6 @@ MenuAction MainMenuBar::DrawMainMenu()
 
         ImGui::EndMainMenuBar();
     }
-    return MenuAction::None;
+
+    return action;
 }

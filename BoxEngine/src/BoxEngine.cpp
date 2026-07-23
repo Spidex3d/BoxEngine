@@ -6,6 +6,7 @@
 
 #include <Helpers.h>
 #include <miniBoxLog.h>
+#include "tools/MoveGizmo.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -102,6 +103,48 @@ bool BoxEngine::Initialize()
     }
 
 	// ################################################# end shader ########################################################
+    
+	// ################################################# Tools  ########################################################
+   
+    const std::string gizmoVertexPath =
+        helpers.GetAssetPath(
+            "assets/shader/gizmo.vert"
+        );
+
+    const std::string gizmoFragmentPath =
+        helpers.GetAssetPath(
+            "assets/shader/gizmo.frag"
+        );
+
+    m_gizmoShader =
+        std::make_unique<Shader>(
+            gizmoVertexPath,
+            gizmoFragmentPath
+        );
+
+    if (!m_gizmoShader ||
+        m_gizmoShader->ID() == 0)
+    {
+        BOX_LOG_ERROR(
+            "Failed to create gizmo shader."
+        );
+
+        return false;
+    }
+
+    m_moveGizmo =
+        std::make_unique<MoveGizmo>();
+
+    if (!m_moveGizmo->Create())
+    {
+        BOX_LOG_ERROR(
+            "Failed to create move gizmo."
+        );
+
+        return false;
+    }
+
+	// ################################################# End tools######################################################
 
     m_camera = std::make_unique<Camera>(glm::vec3(6.0f, 5.0f, 8.0f));
 
@@ -144,6 +187,14 @@ void BoxEngine::Shutdown()
     m_gridShader.reset();
     m_sceneShader.reset();
     m_outlineShader.reset();
+
+    if (m_moveGizmo)
+    {
+        m_moveGizmo->Destroy();
+        m_moveGizmo.reset();
+    }
+    m_gizmoShader.reset();
+
 
     m_sceneFramebuffer.Destroy();
 
@@ -332,6 +383,10 @@ void BoxEngine::RenderScene()
 
     glEnable(GL_DEPTH_TEST);
 
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
+
     glClearColor(
         0.12f,
         0.15f,
@@ -409,12 +464,10 @@ void BoxEngine::RenderScene()
 
             m_grid->Render(*m_gridShader, view, projection);
         }
-                
-        // ############################################ outline rendring ##############################################
-
+        
         RenderSelectedEntityOutline(view, projection);
 
-		// Render entities
+        // Render entities
         for (const auto& entity : m_entities)
         {
             if (entity)
@@ -426,6 +479,47 @@ void BoxEngine::RenderScene()
                 );
             }
         }
+
+        // ############################################ Tools rendring ##############################################
+        Entity* selectedEntity =
+            GetSelectedEntity();
+
+        if (selectedEntity &&
+            selectedEntity->IsVisible() &&
+            m_moveGizmo &&
+            m_gizmoShader)
+        {
+            const float gizmoScale = 1.5f;
+
+            const glm::vec3 entityScale =
+                selectedEntity->GetScale();
+
+            const float cubeTop =
+                entityScale.y * 0.5f;
+
+            const float gizmoHalfSize =
+                0.08f * gizmoScale;
+
+            const glm::vec3 gizmoPosition =
+                selectedEntity->GetPosition() +
+                glm::vec3(
+                    0.0f,
+                    cubeTop + gizmoHalfSize,
+                    0.0f
+                );
+
+            m_moveGizmo->Render(
+                *m_gizmoShader,
+                gizmoPosition,
+                gizmoScale,
+                view,
+                projection
+            );
+        }
+        
+        // ############################################ End tools rendring ##############################################
+
+       
     }
 
     Framebuffer::Unbind();

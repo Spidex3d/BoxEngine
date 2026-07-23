@@ -153,6 +153,7 @@
     <ClInclude Include="inc\rendering\Framebuffer.h" />
     <ClInclude Include="inc\rendering\grid.h" />
     <ClInclude Include="inc\shader\Shader.h" />
+    <ClInclude Include="inc\tools\MoveGizmo.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="inc\rendering\grid.cpp" />
@@ -161,6 +162,7 @@
     <ClCompile Include="src\entity\Entity.cpp" />
     <ClCompile Include="src\rendering\Framebuffer.cpp" />
     <ClCompile Include="src\shader\Shader.cpp" />
+    <ClCompile Include="src\tools\MoveGizmo.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

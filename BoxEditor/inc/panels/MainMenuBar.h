@@ -9,7 +9,9 @@ enum class MenuAction
     Exit,
     NewScene,
     OpenScene,
-    SaveScene
+    SaveScene,
+
+    AddCube
 };
 
 
