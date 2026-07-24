@@ -420,12 +420,7 @@ void BoxEngine::RenderScene()
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
 
-    glClearColor(
-        0.12f,
-        0.15f,
-        0.18f,
-        1.0f
-    );
+    glClearColor(0.12f, 0.15f, 0.18f, 1.0f);
 
     glClear(
         GL_COLOR_BUFFER_BIT |
@@ -475,17 +470,6 @@ void BoxEngine::RenderScene()
                 )
             )
         );
-
-       
-
-          /* m_sceneShader->setVec3(
-                "uBaseColor",
-                glm::vec3(
-                    0.2f,
-                    0.55f,
-                    0.9f
-                )
-            );*/
 
 
         // ################################## Grid Rendering ########################################
@@ -800,10 +784,15 @@ void BoxEngine::RenderSelectedEntityOutline(
      * The slightly enlarged back faces appear
      * around the normally rendered cube.
      */
+    glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_FALSE);
+
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
 
     selectedEntity->DrawMesh();
 
     glCullFace(GL_BACK);
+    glDepthMask(GL_TRUE);
+    
 }

@@ -234,11 +234,7 @@ void Entity::DrawMesh() const
 
     glBindVertexArray(0);
 
-   /* glBindVertexArray(m_vao);
-
-    glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
-
-    glBindVertexArray(0); */
+  
 }
 
 
@@ -280,12 +276,7 @@ void Entity::Render(
         renderColor
     );
 
-    /*shader.setVec4(
-        "uBaseColor",
-        m_material.GetBaseColor()
-    );*/
-
-    
+       
 
 	DrawMesh();
 
@@ -392,18 +383,20 @@ bool Entity::CreateSphere(int sectors, int stacks)
             if (stack != 0)
             {
                 indices.push_back(first);
-                indices.push_back(second);
                 indices.push_back(first + 1);
+                indices.push_back(second);
             }
+            
 
             // Do not create triangles below
             // the lower pole.
             if (stack != stacks - 1)
             {
                 indices.push_back(first + 1);
-                indices.push_back(second);
                 indices.push_back(second + 1);
+                indices.push_back(second);
             }
+            
         }
     }
 
@@ -621,4 +614,6 @@ void Entity::Destroy()
     }
 
     m_vertexCount = 0;
+    m_indexCount = 0;
+    m_useIndices = false;
 }

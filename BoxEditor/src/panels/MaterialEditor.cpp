@@ -38,6 +38,9 @@ void MaterialEditor::DrawMaterialProperties(Entity& entity)
 
     if (ImGui::CollapsingHeader("Material Properties", ImGuiTreeNodeFlags_DefaultOpen))
     {
+		// put a imgui image of the material preview here.
+		// display a sphere with the material applied to it.
+
         ImGui::Spacing();
         ImGui::Text("Textures for: %s", entity.GetName().c_str());
         ImGui::Spacing();
