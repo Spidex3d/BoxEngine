@@ -152,6 +152,7 @@
     <ClInclude Include="inc\entity\Entity.h" />
     <ClInclude Include="inc\rendering\Framebuffer.h" />
     <ClInclude Include="inc\rendering\grid.h" />
+    <ClInclude Include="inc\rendering\Material.h" />
     <ClInclude Include="inc\shader\Shader.h" />
     <ClInclude Include="inc\tools\MoveGizmo.h" />
   </ItemGroup>
@@ -161,6 +162,7 @@
     <ClCompile Include="src\camera\Camera.cpp" />
     <ClCompile Include="src\entity\Entity.cpp" />
     <ClCompile Include="src\rendering\Framebuffer.cpp" />
+    <ClCompile Include="src\rendering\Material.cpp" />
     <ClCompile Include="src\shader\Shader.cpp" />
     <ClCompile Include="src\tools\MoveGizmo.cpp" />
   </ItemGroup>

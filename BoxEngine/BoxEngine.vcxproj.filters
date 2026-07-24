@@ -36,6 +36,9 @@
     <ClInclude Include="inc\tools\MoveGizmo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="inc\rendering\Material.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\BoxEngine.cpp">
@@ -57,6 +60,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\tools\MoveGizmo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rendering\Material.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

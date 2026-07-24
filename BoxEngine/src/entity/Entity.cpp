@@ -5,6 +5,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/constants.hpp>
 #include <utility>
+#include <vector>
+#include <cmath>
 
 Entity::Entity(
     int id,
@@ -20,7 +22,8 @@ Entity::~Entity()
 }
 
 Entity::Entity(Entity&& other) noexcept
-    : m_id(other.m_id),
+    : m_material(std::move(other.m_material)),
+    m_id(other.m_id),
     m_name(std::move(other.m_name)),
     m_position(other.m_position),
     m_rotation(other.m_rotation),
@@ -28,11 +31,19 @@ Entity::Entity(Entity&& other) noexcept
     m_visible(other.m_visible),
     m_vao(other.m_vao),
     m_vbo(other.m_vbo),
-    m_vertexCount(other.m_vertexCount)
+    m_ebo(other.m_ebo),
+    m_vertexCount(other.m_vertexCount),
+    m_indexCount(other.m_indexCount),
+    m_useIndices(other.m_useIndices)
 {
     other.m_vao = 0;
     other.m_vbo = 0;
+    other.m_ebo = 0;
+
     other.m_vertexCount = 0;
+    other.m_indexCount = 0;
+    other.m_useIndices = false;
+    
 }
 
 Entity& Entity::operator=(Entity&& other) noexcept
@@ -64,6 +75,12 @@ Entity& Entity::operator=(Entity&& other) noexcept
 bool Entity::CreateCube()
 {
     Destroy();
+
+    m_useIndices = false;
+    m_indexCount = 0;
+
+    m_aabbMin = glm::vec3(-0.5f);
+    m_aabbMax = glm::vec3(0.5f);
 
     // Position XYZ, Normal XYZ
     const float vertices[] =
@@ -185,14 +202,43 @@ bool Entity::CreateCube()
     return true;
 }
 
+
+
 // shader for the selection outline effect
 void Entity::DrawMesh() const
 {
+    if (m_vao == 0)
+    {
+        return;
+    }
+
     glBindVertexArray(m_vao);
+
+    if (m_useIndices)
+    {
+        glDrawElements(
+            GL_TRIANGLES,
+            m_indexCount,
+            GL_UNSIGNED_INT,
+            nullptr
+        );
+    }
+    else
+    {
+        glDrawArrays(
+            GL_TRIANGLES,
+            0,
+            m_vertexCount
+        );
+    }
+
+    glBindVertexArray(0);
+
+   /* glBindVertexArray(m_vao);
 
     glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
 
-    glBindVertexArray(0);
+    glBindVertexArray(0); */
 }
 
 
@@ -223,10 +269,252 @@ void Entity::Render(
         projection
     );
 
-    glBindVertexArray(m_vao);
-    glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
-    glBindVertexArray(0);
+    glm::vec4 renderColor =
+        m_material.GetBaseColor();
+
+    renderColor.a =
+        m_material.GetAlpha();
+
+    shader.setVec4(
+        "uBaseColor",
+        renderColor
+    );
+
+    /*shader.setVec4(
+        "uBaseColor",
+        m_material.GetBaseColor()
+    );*/
+
+    
+
+	DrawMesh();
+
+    
 }
+
+bool Entity::CreateSphere(int sectors, int stacks)
+{
+    Destroy();
+
+    if (sectors < 3)
+    {
+        sectors = 3;
+    }
+
+    if (stacks < 2)
+    {
+        stacks = 2;
+    }
+
+    constexpr float radius = 0.5f;
+
+    std::vector<float> vertices;
+    std::vector<unsigned int> indices;
+
+    const float sectorStep =
+        glm::two_pi<float>() /
+        static_cast<float>(sectors);
+
+    const float stackStep =
+        glm::pi<float>() /
+        static_cast<float>(stacks);
+
+    // Build sphere vertices.
+    for (unsigned int stack = 0;
+        stack <= stacks;
+        ++stack)
+    {
+        const float stackAngle =
+            glm::half_pi<float>() -
+            static_cast<float>(stack) *
+            stackStep;
+
+        const float xy =
+            radius *
+            std::cos(stackAngle);
+
+        const float y =
+            radius *
+            std::sin(stackAngle);
+
+        for (unsigned int sector = 0;
+            sector <= sectors;
+            ++sector)
+        {
+            const float sectorAngle =
+                static_cast<float>(sector) *
+                sectorStep;
+
+            const float x =
+                xy *
+                std::cos(sectorAngle);
+
+            const float z =
+                xy *
+                std::sin(sectorAngle);
+
+            // Position
+            vertices.push_back(x);
+            vertices.push_back(y);
+            vertices.push_back(z);
+
+            // Normal
+            const glm::vec3 normal =
+                glm::normalize(
+                    glm::vec3(x, y, z)
+                );
+
+            vertices.push_back(normal.x);
+            vertices.push_back(normal.y);
+            vertices.push_back(normal.z);
+        }
+    }
+
+    // Build triangle indices.
+    for (unsigned int stack = 0;
+        stack < stacks;
+        ++stack)
+    {
+        unsigned int first =
+            stack * (sectors + 1);
+
+        unsigned int second =
+            first + sectors + 1;
+
+        for (unsigned int sector = 0;
+            sector < sectors;
+            ++sector,
+            ++first,
+            ++second)
+        {
+            // Do not create triangles above
+            // the upper pole.
+            if (stack != 0)
+            {
+                indices.push_back(first);
+                indices.push_back(second);
+                indices.push_back(first + 1);
+            }
+
+            // Do not create triangles below
+            // the lower pole.
+            if (stack != stacks - 1)
+            {
+                indices.push_back(first + 1);
+                indices.push_back(second);
+                indices.push_back(second + 1);
+            }
+        }
+    }
+
+    glGenVertexArrays(1, &m_vao);
+    glGenBuffers(1, &m_vbo);
+    glGenBuffers(1, &m_ebo);
+
+    glBindVertexArray(m_vao);
+
+    glBindBuffer(
+        GL_ARRAY_BUFFER,
+        m_vbo
+    );
+
+    glBufferData(
+        GL_ARRAY_BUFFER,
+        vertices.size() * sizeof(float),
+        vertices.data(),
+        GL_STATIC_DRAW
+    );
+
+    glBindBuffer(
+        GL_ELEMENT_ARRAY_BUFFER,
+        m_ebo
+    );
+
+    glBufferData(
+        GL_ELEMENT_ARRAY_BUFFER,
+        indices.size() *
+        sizeof(unsigned int),
+        indices.data(),
+        GL_STATIC_DRAW
+    );
+
+    // Position: XYZ
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(
+        0,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        6 * sizeof(float),
+        reinterpret_cast<void*>(0)
+    );
+
+    // Normal: XYZ
+    glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(
+        1,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        6 * sizeof(float),
+        reinterpret_cast<void*>(
+            3 * sizeof(float)
+            )
+    );
+
+    glBindVertexArray(0);
+
+    m_vertexCount =
+        static_cast<GLsizei>(
+            vertices.size() / 6
+            );
+
+    m_indexCount =
+        static_cast<GLsizei>(
+            indices.size()
+            );
+
+    m_useIndices = true;
+
+    // Local bounds for picking.
+    m_aabbMin =
+        glm::vec3(-radius);
+
+    m_aabbMax =
+        glm::vec3(radius);
+
+    const bool valid =
+        m_vao != 0 &&
+        m_vbo != 0 &&
+        m_ebo != 0 &&
+        m_indexCount > 0;
+
+    if (!valid)
+    {
+        BOX_LOG_ERROR(
+            "Entity::CreateSphere failed for entity "
+            << m_name
+        );
+
+        Destroy();
+        return false;
+    }
+
+    BOX_LOG_INFO(
+        "Created sphere entity: "
+        << m_name
+        << " ID=" << m_id
+        << " Vertices=" << m_vertexCount
+        << " Indices=" << m_indexCount
+    );
+
+    return true;
+}
+
+
+
 
 glm::mat4 Entity::GetModelMatrix() const
 {
@@ -313,6 +601,13 @@ glm::mat4 Entity::CalculateModelMatrix() const
 
 void Entity::Destroy()
 {
+    if (m_ebo != 0)
+    {
+        glDeleteBuffers(1, &m_ebo);
+
+        m_ebo = 0;
+    }
+
     if (m_vbo != 0)
     {
         glDeleteBuffers(1, &m_vbo);

@@ -98,8 +98,9 @@ MenuAction MainMenuBar::DrawMainMenu()
             {
             }
 
-            if (ImGui::MenuItem("Add UV Sphere"))
+            if (ImGui::MenuItem("Add Sphere"))
             {
+				action = MenuAction::AddSphere;
             }
 
             ImGui::Separator();

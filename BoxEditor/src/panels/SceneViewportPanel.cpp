@@ -217,8 +217,8 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 				action = ViewportAction::AddEditablePlane;
             }
 
-            if (ImGui::MenuItem("Editable UV Sphere")) {
-				action = ViewportAction::AddEditableUVSphere;
+            if (ImGui::MenuItem("Editable Sphere")) {
+				action = ViewportAction::AddEditableSphere;
             }
 
             if (ImGui::MenuItem("Editable ICO Sphere")) {

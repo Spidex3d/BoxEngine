@@ -1,16 +1,21 @@
 #pragma once
-
+#include <memory>
 
 class BoxEngine;
 class Entity;
+class MaterialEditor;
 
 class ObjectExplorerPanel
 {
 public:
-	ObjectExplorerPanel() = default;
-	~ObjectExplorerPanel() = default;
+	ObjectExplorerPanel();
+	~ObjectExplorerPanel();
+
+    bool Initialize();
 
 	void DrawObjectExplorer(BoxEngine& engine); // dedicated panel classes once they grow.
+
+	void Shutdown();
 
 private:
     void DrawObjectTab(
@@ -24,6 +29,8 @@ private:
     void DrawModifiersTab(
         Entity& entity
     );
+
+    std::unique_ptr<MaterialEditor> m_materialEditor;
 
 private:
 	bool m_isOpen = false;

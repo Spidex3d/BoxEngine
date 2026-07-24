@@ -11,7 +11,8 @@ enum class MenuAction
     OpenScene,
     SaveScene,
 
-    AddCube
+    AddCube,
+    AddSphere
 };
 
 

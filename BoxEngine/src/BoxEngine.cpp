@@ -272,6 +272,39 @@ bool BoxEngine::AddEditableCube(
 
     return true;
 }
+
+bool BoxEngine::AddEditableSphere(const glm::vec3& position)
+{
+    const int entityID = m_nextEntityID++;
+
+    const std::string name =
+        "Sphere " +
+        std::to_string(entityID);
+
+    auto sphere =
+        std::make_unique<Entity>(
+            entityID,
+            name
+        );
+
+    sphere->SetPosition(position);
+
+    if (!sphere->CreateSphere())
+    {
+        return false;
+    }
+
+    m_entities.push_back(
+        std::move(sphere)
+    );
+
+    return true;
+}
+
+
+
+
+
 // Return a const reference to the vector of unique_ptr<Entity> for the editor panels to access the entities in the scene
 const std::vector<std::unique_ptr<Entity>>&
 BoxEngine::GetEntities() const
@@ -443,14 +476,17 @@ void BoxEngine::RenderScene()
             )
         );
 
-        m_sceneShader->setVec3(
-            "uObjectColor",
-            glm::vec3(
-                0.2f,
-                0.55f,
-                0.9f
-            )
-        );
+       
+
+          /* m_sceneShader->setVec3(
+                "uBaseColor",
+                glm::vec3(
+                    0.2f,
+                    0.55f,
+                    0.9f
+                )
+            );*/
+
 
         // ################################## Grid Rendering ########################################
         if (m_grid && m_gridShader)
@@ -479,6 +515,9 @@ void BoxEngine::RenderScene()
                 );
             }
         }
+
+       
+
 
         // ############################################ Tools rendring ##############################################
         Entity* selectedEntity =

@@ -165,6 +165,11 @@ void App::HandleMenuAction(
         engine.AddEditableCube();
         break;
 
+    case MenuAction::AddSphere:
+		engine.AddEditableSphere(glm::vec3(0.0f));
+         
+		 break;
+
     case MenuAction::None:
     default:
         break;
@@ -180,7 +185,9 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
         engine.AddEditableCube();
 
         break;
-
+	case ViewportAction::AddEditableSphere:
+		engine.AddEditableSphere(glm::vec3(0.0f));
+		break;
 
 
     case ViewportAction::None:

@@ -109,9 +109,16 @@ void Shader::setRGBAVec4(const std::string& name, float r, float g, float b, flo
 // ------------------------------------------------------------------------
 void Shader::setVec4(const std::string& name, const glm::vec4& value) const
 {
-	if (!programID) return;
-	glUniform4fv(glGetUniformLocation(programID, name.c_str()), 1, &value[0]);
+	glUniform4f(glGetUniformLocation(programID, name.c_str()),
+		value.x, value.y, value.z, value.w );
 }
+
+//void Shader::setVec4(const std::string& name, const glm::vec4& value) const
+//{
+//	if (!programID) return;
+//	glUniform4fv(glGetUniformLocation(programID, name.c_str()), 1, &value[0]);
+//
+//}
 void Shader::setVec4(const std::string& name, float x, float y, float z, float w)
 {
 	if (!programID) return;

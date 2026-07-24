@@ -1,5 +1,6 @@
 #include <BoxEngine.h>
 #include "panels/ObjectExplorerPanel.h"
+#include <panels/MaterialEditor.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <imgui/imgui.h>
 #include <imgui/ImGuiAF.h>
@@ -7,6 +8,28 @@
 #include <entity/Entity.h>
 #include <cstring>
 #include <string>
+
+ObjectExplorerPanel::ObjectExplorerPanel() = default;
+
+ObjectExplorerPanel::~ObjectExplorerPanel()
+{
+    Shutdown();
+}
+
+bool ObjectExplorerPanel::Initialize()
+{
+    m_materialEditor =
+        std::make_unique<MaterialEditor>();
+
+    if (!m_materialEditor->Initialize())
+    {
+        m_materialEditor.reset();
+        return false;
+    }
+
+    return true;
+}
+
 
 void ObjectExplorerPanel::DrawObjectExplorer(
     BoxEngine& engine)
@@ -130,12 +153,10 @@ void ObjectExplorerPanel::DrawObjectTab(Entity& entity)
     }
 }
 
+// Textures and Material tab.
 void ObjectExplorerPanel::DrawTexturesTab(Entity& entity)
 {
-    ImGui::Text(
-        "Textures for: %s",
-        entity.GetName().c_str()
-    );
+    
 
     ImGui::Separator();
 
@@ -144,25 +165,30 @@ void ObjectExplorerPanel::DrawTexturesTab(Entity& entity)
     );
 
     ImGui::Spacing();
-    ImGui::TextDisabled(
-        "Add a Material to the object."
-    );
-    if (ImGui::Button(
-        "Material",
-		ImVec2(120.0f, 0.0f))) // change this to an image button with a material icon later.
-    {
-        // Texture browser or file dialog later.
-    }
+
+	// Draw the material editor for the selected entity.
+    m_materialEditor->Draw(entity);
+
+    
+	// We can do Textures after we have material working properly, including Save and Load.
 
     ImGui::Spacing();
-    ImGui::TextDisabled(
-        "Add a texture to the object."
-    );
-    if (ImGui::Button(
-        "Add Texture",
-		ImVec2(120.0f, 0.0f))) // change this to an image button with a texture icon later.
+    ImGui::SeparatorText("Texture settings");
+    ImGui::Spacing();
+
+    if (ImGui::CollapsingHeader("Textures", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        // Texture browser or file dialog later.
+        ImGui::Text("Textures for: %s", entity.GetName().c_str());
+
+        ImGui::TextDisabled(
+            "Add a texture to the object."
+        );
+        if (ImGui::Button(
+            "Add Texture",
+            ImVec2(120.0f, 0.0f))) // change this to an image button with a texture icon later.
+        {
+            // Texture browser or file dialog later.
+        }
     }
 }
 
@@ -189,6 +215,13 @@ void ObjectExplorerPanel::DrawModifiersTab(Entity& entity)
     }
 }
 
-
+void ObjectExplorerPanel::Shutdown()
+{
+    if (m_materialEditor)
+    {
+        m_materialEditor->Shutdown();
+        m_materialEditor.reset();
+    }
+}
 
 
