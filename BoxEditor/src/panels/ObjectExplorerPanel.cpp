@@ -8,6 +8,7 @@
 #include <entity/Entity.h>
 #include <cstring>
 #include <string>
+#include <miniBoxLog.h>
 
 ObjectExplorerPanel::ObjectExplorerPanel() = default;
 
@@ -18,8 +19,12 @@ ObjectExplorerPanel::~ObjectExplorerPanel()
 
 bool ObjectExplorerPanel::Initialize()
 {
-    m_materialEditor =
-        std::make_unique<MaterialEditor>();
+    BOX_LOG_INFO(
+        "ObjectExplorerPanel::Initialize called"
+    );
+
+
+    m_materialEditor = std::make_unique<MaterialEditor>();
 
     if (!m_materialEditor->Initialize())
     {
@@ -165,13 +170,21 @@ void ObjectExplorerPanel::DrawTexturesTab(Entity& entity)
     );
 
     ImGui::Spacing();
-
-	// Draw the material editor for the selected entity.
-    m_materialEditor->Draw(entity);
-
     
-	// We can do Textures after we have material working properly, including Save and Load.
+	// Draw the material editor for the selected entity.
+    if (m_materialEditor)
+    {
+        m_materialEditor->Draw(entity);
+    }
+    else
+    {
+        ImGui::TextDisabled(
+            "Material editor is not initialized."
+        );
+    }
 
+
+	// We can do Textures after we have material working properly, including Save and Load.
     ImGui::Spacing();
     ImGui::SeparatorText("Texture settings");
     ImGui::Spacing();

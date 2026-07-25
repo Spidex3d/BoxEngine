@@ -81,6 +81,20 @@ bool App::Init()
         return false;
     }
    
+    m_imgObjectExplorer = std::make_unique<ObjectExplorerPanel>();
+
+    if (!m_imgObjectExplorer->Initialize())
+    {
+        BOX_LOG_ERROR(
+            "ObjectExplorerPanel failed to initialize"
+        );
+
+        m_imgObjectExplorer.reset();
+        return false;
+    }
+    
+   
+
     m_isRunning = true;
 
     BOX_LOG_INFO("App initialized successfully");
@@ -135,7 +149,10 @@ int App::Run()
         
 		m_imgSceneCollection->DrawSceneCollection(*m_engine); // Draw the Scene Collection panel cubes and other entities in the scene
          
-		m_imgObjectExplorer->DrawObjectExplorer(*m_engine); // Draw the Object Explorer panel for the selected entity
+        if (m_imgObjectExplorer)
+        {
+			m_imgObjectExplorer->DrawObjectExplorer(*m_engine); // draw the Object Explorer panel for the selected entity
+        }
 
 		m_imgui->RenderImGui();
 
@@ -279,10 +296,15 @@ void App::HandleInput()
    
 }
 
-
 // shutdown the window and ImGui context and go to bed.
 void App::Shutdown()
 {
+    if (m_imgObjectExplorer)
+    {
+        m_imgObjectExplorer->Shutdown();
+        m_imgObjectExplorer.reset();
+    }
+
     if (m_engine)
     {
         m_engine->Shutdown();

@@ -1,5 +1,6 @@
 #include "Helpers.h"
 #include <string>
+#include <imgui\imgui.h>
 
     // Try several strategies in order:
     // 1) Look upward from this source file's directory for a directory that contains "assets"
@@ -45,6 +46,8 @@ fs::path Helpers::FindAssetsRoot()
     // 3) as last resort, return the executable/cwd path
     return fs::current_path();
 }
+
+
 
 
 

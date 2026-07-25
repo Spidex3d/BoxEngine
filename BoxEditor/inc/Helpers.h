@@ -12,6 +12,7 @@ public:
 
 	static fs::path FindAssetsRoot();
 
+	
 
 private:
 

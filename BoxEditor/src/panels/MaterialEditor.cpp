@@ -4,20 +4,38 @@
 #include <entity\Entity.h>
 #include <rendering\Material.h>
 #include <preview/MaterialPreview.h>
+#include <miniBoxLog.h>
 
 MaterialEditor::MaterialEditor() = default;
 
+
 MaterialEditor::~MaterialEditor()
 {
+    
     Shutdown();
 }
 
 bool MaterialEditor::Initialize()
 {
-    if (!m_preview)
+
+    BOX_LOG_INFO(
+        "MaterialEditor::Initialize called"
+    );
+
+    m_preview = std::make_unique<MaterialPreview>();
+
+    if (!m_preview->Initialize(
+        200,
+        200))
     {
-        m_preview = std::make_unique<MaterialPreview>();
-	}
+        BOX_LOG_ERROR(
+            "MaterialPreview initialization failed"
+        );
+
+        m_preview.reset();
+        return false;
+    }
+
 	return true;
 }
 
@@ -25,18 +43,43 @@ bool MaterialEditor::Initialize()
 
 void MaterialEditor::Draw(Entity& entity)
 {
-    //if (ImGui::CollapsingHeader("Material Editor"))
-    //{
+       
+
+    if (ImGui::CollapsingHeader(
+        "Material Editor"))
+    {
+      
+        Material& material = entity.GetMaterial();
+
+        ImGui::Spacing();
+
+       
+
+        if (m_preview)
+        {
+            ImGui::TextUnformatted(
+                "Material Preview"
+            );
+            m_preview->Draw(material);
+        }
+        else
+        {
+            ImGui::TextDisabled(
+                "Preview unavailable."
+            );
+        }
+
         DrawMaterialProperties(entity);
-        DrawEmissionControls(entity.GetMaterial());
+        DrawEmissionControls(material);
         DrawTextureProperties(entity);
-   // }
+    }
+
 }
 
 void MaterialEditor::DrawMaterialProperties(Entity& entity)
 {
 
-    if (ImGui::CollapsingHeader("Material Properties", ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader("Material Properties")) // ImGuiTreeNodeFlags_DefaultOpen
     {
 		// put a imgui image of the material preview here.
 		// display a sphere with the material applied to it.
@@ -102,7 +145,11 @@ void MaterialEditor::DrawTextureProperties(Entity& entity)
 void MaterialEditor::Shutdown()
 {
     
-	m_preview->Shutdown();
+    if (m_preview)
+    {
+        m_preview->Shutdown();
+        m_preview.reset();
+    }
 	
     
 }

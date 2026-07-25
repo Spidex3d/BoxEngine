@@ -6,6 +6,16 @@ public:
     Framebuffer() = default;
     ~Framebuffer();
 
+    Framebuffer(const Framebuffer&) = delete;
+
+    Framebuffer& operator=(const Framebuffer&) = delete;
+
+    Framebuffer(Framebuffer&&) = delete;
+
+    Framebuffer& operator=(Framebuffer&&) = delete;
+
+
+
     bool Create(int width, int height);
     bool Resize(int width, int height);
 

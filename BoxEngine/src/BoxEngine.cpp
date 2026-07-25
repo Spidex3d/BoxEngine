@@ -401,10 +401,7 @@ void BoxEngine::ResizeSceneViewport(
     int width,
     int height)
 {
-    m_sceneFramebuffer.Resize(
-        width,
-        height
-    );
+    m_sceneFramebuffer.Resize(width, height);
 }
 
 void BoxEngine::RenderScene()
