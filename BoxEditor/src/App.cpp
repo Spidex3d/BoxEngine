@@ -92,6 +92,12 @@ bool App::Init()
         m_imgObjectExplorer.reset();
         return false;
     }
+
+    if (!m_materialBrowser.Initialize())
+    {
+        BOX_LOG_ERROR("Failed to initialize Material Browser");
+        return false;
+    }
     
    
 
@@ -153,6 +159,9 @@ int App::Run()
         {
 			m_imgObjectExplorer->DrawObjectExplorer(*m_engine); // draw the Object Explorer panel for the selected entity
         }
+
+        // In your Draw() or Update() method
+        m_materialBrowser.Draw(*m_engine); // Pass your BoxEngine instance
 
 		m_imgui->RenderImGui();
 

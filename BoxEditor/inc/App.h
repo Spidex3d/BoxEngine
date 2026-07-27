@@ -5,6 +5,7 @@
 #include "panels\SceneViewportPanel.h"
 #include "panels\SceneCollectionPanel.h"
 #include "panels\ObjectExplorerPanel.h"
+#include "panels\MatirialBrowser.h"
 #include <UI/EditorIcons.h>
 
 class BoxWindow;
@@ -44,4 +45,8 @@ private:
 	std::unique_ptr<SceneCollectionPanel> m_imgSceneCollection; // Scene Collection for ImGui
 	std::unique_ptr<SceneViewportPanel> m_sceneViewport; // Scene Viewport panel for ImGui
 	std::unique_ptr<ObjectExplorerPanel> m_imgObjectExplorer; // Object Explorer panel for ImGui
+
+	MaterialBrowser m_materialBrowser;
+
+
 };

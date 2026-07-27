@@ -164,6 +164,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
         " Add Cone", " Add Torus" };
     ImGui::SetNextItemWidth(100.0f);
     ImGui::SameLine();
+
     /*if (ImGui::Combo("##comboAdd", &m_AddObjects, addObj, IM_ARRAYSIZE(addObj))) {
         if (m_AddObjects == 1) {
             if (m_actionCallback) m_actionCallback("AddEditableCube");
