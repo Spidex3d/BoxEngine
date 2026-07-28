@@ -48,4 +48,8 @@ private:
     float m_emissionStrength = 0.0f;
 
     std::shared_ptr<Texture> m_baseColorTexture;
+
+    // Textures 
+
+	
 };

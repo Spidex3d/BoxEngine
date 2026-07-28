@@ -5,7 +5,7 @@
 #include "panels\SceneViewportPanel.h"
 #include "panels\SceneCollectionPanel.h"
 #include "panels\ObjectExplorerPanel.h"
-#include "panels\MatirialBrowser.h"
+#include "panels\MaterialBrowser.h"
 #include <UI/EditorIcons.h>
 
 class BoxWindow;

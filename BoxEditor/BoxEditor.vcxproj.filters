@@ -161,7 +161,7 @@
     <ClInclude Include="inc\preview\MaterialPreview.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="inc\panels\MatirialBrowser.h">
+    <ClInclude Include="inc\panels\MaterialBrowser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

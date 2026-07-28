@@ -176,7 +176,7 @@
     <ClInclude Include="inc\preview\MaterialPreview.h" />
     <ClInclude Include="inc\UI\EditorIcons.h" />
     <ClInclude Include="inc\UI\EditorTexture.h" />
-    <ClInclude Include="inc\panels\MatirialBrowser.h" />
+    <ClInclude Include="inc\panels\MaterialBrowser.h" />
     <ClInclude Include="vendor\imgui\imconfig.h" />
     <ClInclude Include="vendor\imgui\imgui.h" />
     <ClInclude Include="vendor\imgui\ImGuiAF.h" />

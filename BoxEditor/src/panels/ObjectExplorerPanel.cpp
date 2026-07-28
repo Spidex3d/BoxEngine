@@ -9,6 +9,7 @@
 #include <cstring>
 #include <string>
 #include <miniBoxLog.h>
+//#include "MatirialBrowser.h"
 
 ObjectExplorerPanel::ObjectExplorerPanel() = default;
 
@@ -157,6 +158,8 @@ void ObjectExplorerPanel::DrawObjectTab(Entity& entity)
         entity.SetVisible(visible);
     }
 }
+
+
 
 // Textures and Material tab.
 void ObjectExplorerPanel::DrawTexturesTab(Entity& entity)

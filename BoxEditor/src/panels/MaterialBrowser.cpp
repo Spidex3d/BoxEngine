@@ -1,4 +1,4 @@
-#include "panels/MatirialBrowser.h"
+#include "panels/MaterialBrowser.h"
 
 #include "preview/MaterialPreview.h"
 #include "BoxEngine.h"
@@ -19,48 +19,74 @@ bool MaterialBrowser::Initialize()
 {
     BOX_LOG_INFO("MaterialBrowser::Initialize called");
 
-    m_preview = std::make_unique<MaterialPreview>();
+    /*m_preview = std::make_unique<MaterialPreview>();
 
     if (!m_preview->Initialize(256, 256))
     {
         BOX_LOG_ERROR("MaterialPreview initialization failed");
         m_preview.reset();
         return false;
-    }
+    }*/
 
     return true;
 }
 
 void MaterialBrowser::Shutdown()
 {
-    if (m_preview)
+    /*if (m_preview)
     {
         m_preview->Shutdown();
         m_preview.reset();
-    }
+    }*/
 
     m_selectedMaterial = nullptr;
 }
 
 void MaterialBrowser::Draw(BoxEngine& engine)
 {
-    ImGui::Begin("Material Browser");
+    if (ImGui::Begin("Material Browser"))
+    {
+    
 
-    std::vector<MaterialEntry> materials = CollectMaterials(engine);
+    if (ImGui::BeginTabBar("ObjectMaterialsTabs"))
+    {
+        // ####################################################
+        // Materials tab
+        // ####################################################
+        if (ImGui::BeginTabItem("Materials"))
+        {
+            // set this as a base material not a textured material for now, we can add a textured material later
+            std::vector<MaterialEntry> materials = CollectMaterials(engine);
 
-    ImGui::Text("Loaded Materials: %zu", materials.size());
-    ImGui::Separator();
-    ImGui::Spacing();
+            ImGui::Text("Loaded Materials: %zu", materials.size());
+            ImGui::Separator();
+            ImGui::Spacing();
 
-    DrawMaterialList(materials);
+            DrawMaterialList(engine, materials);
 
-    ImGui::End();
+
+
+            ImGui::EndTabItem();
+        }
+        // ####################################################
+        // Textures tab
+        // ####################################################
+        if (ImGui::BeginTabItem("Textures"))
+        {
+            // set this as a textured material 
+
+            ImGui::EndTabItem();
+        }
+        ImGui::EndTabBar();
+    }
 
     // Draw preview in separate window if a material is selected
     /*if (m_showPreview && m_selectedMaterial)
     {
         DrawPreviewWindow();
     }*/
+    }
+    ImGui::End();
 }
 
 std::vector<MaterialEntry> MaterialBrowser::CollectMaterials(
@@ -99,7 +125,10 @@ std::vector<MaterialEntry> MaterialBrowser::CollectMaterials(
     return materials;
 }
 
-void MaterialBrowser::DrawMaterialList(
+
+
+//void MaterialBrowser::DrawMaterialList(const std::vector<MaterialEntry>& materials)
+void MaterialBrowser::DrawMaterialList(BoxEngine& engine,
     const std::vector<MaterialEntry>& materials)
 {
     if (materials.empty())
@@ -123,6 +152,7 @@ void MaterialBrowser::DrawMaterialList(
         bool isSelected = (m_selectedMaterial == entry.material);
 
         // Create selectable with material icon
+		// I would like to use a material icon here, but for now, we can use a palette icon from Font Awesome
         std::string label = std::string(ICON_FA_PALETTE) + " " + entry.displayName;
 
         if (ImGui::Selectable(
@@ -132,8 +162,8 @@ void MaterialBrowser::DrawMaterialList(
             ImVec2(0, 0)))
         {
             m_selectedMaterial = entry.material;
-            m_selectedMaterialName = entry.displayName;
-            m_showPreview = true;
+           // m_selectedMaterialName = entry.displayName;
+           // m_showPreview = true;
         }
 
         // Show context menu
@@ -141,43 +171,44 @@ void MaterialBrowser::DrawMaterialList(
         {
             ImGui::TextDisabled("%s", entry.displayName.c_str());
             ImGui::Separator();
-
+			// not sure if we need this
             if (ImGui::MenuItem(ICON_FA_EYE " Preview"))
             {
                 m_selectedMaterial = entry.material;
-                m_selectedMaterialName = entry.displayName;
-                m_showPreview = true;
+               // m_selectedMaterialName = entry.displayName;
+               // m_showPreview = true;
             }
 
-            //if (ImGui::MenuItem(ICON_FA_SEARCH " Select Entity"))
-            //{
-            //    // Select the entity that owns this material
-            //    if (entry.ownerEntityID >= 0)
-            //    {
-            //        BoxEngine* enginePtr =
-            //            reinterpret_cast<BoxEngine*>(
-            //                ImGui::GetWindowUserData()
-            //                );
+            if (ImGui::MenuItem(ICON_FA_SEARCH " Select Owner"))
+            {
+				// set the selected entity in the engine to the owner of this material
+                engine.SetSelectedEntity(entry.ownerEntityID);
+            }
 
-            //        if (enginePtr)
-            //        {
-            //            enginePtr->SetSelectedEntity(
-            //                entry.ownerEntityID
-            //            );
-            //        }
-            //    }
-            //}
+            if (ImGui::MenuItem(ICON_FA_SEARCH " Use on Selected Entity"))
+            {
+				// use on the Selected entity set this material to the selected entity in the engine
+                Entity* selectedEntity =
+                    engine.GetSelectedEntity();
+
+                if (selectedEntity &&
+                    entry.material)
+                {
+                    selectedEntity->GetMaterial() =
+                        *entry.material;
+                }
+                
+            }
 
             ImGui::EndPopup();
         }
 
-        // Show material properties on hover
+		// Show material properties on hover using the tooltip
         if (ImGui::IsItemHovered())
         {
             ImGui::BeginTooltip();
 
-            const glm::vec4& baseColor =
-                entry.material->GetBaseColor();
+            const glm::vec4& baseColor = entry.material->GetBaseColor();
 
             ImGui::Text("Base Color: (%.2f, %.2f, %.2f, %.2f)",
                 baseColor.r,
@@ -194,9 +225,23 @@ void MaterialBrowser::DrawMaterialList(
                 entry.material->GetRoughness()
             );
 
+            ImGui::Text("Alpha Strength: %.2f",
+                entry.material->GetAlpha()
+            );
+
+            const glm::vec3& emissionColor =
+				entry.material->GetEmissionColor();
+
+            
+            ImGui::Text("Emission Color: (%.2f, %.2f, %.2f)",
+                emissionColor.r,
+                emissionColor.g,
+                emissionColor.b);
+
             ImGui::Text("Emission Strength: %.2f",
                 entry.material->GetEmissionStrength()
             );
+            
 
             ImGui::EndTooltip();
         }
@@ -207,6 +252,21 @@ void MaterialBrowser::DrawMaterialList(
     ImGui::EndChild();
 }
 
+//void MaterialBrowser::DrawMaterialsTab(Entity& entity)
+//{
+//
+//}
+//
+//void DrawTexturesTab(Entity& entity
+//)
+//{
+//    ImGui::TextDisabled("No textures assigned.");
+//    ImGui::Spacing();
+//}
+
+
+
+// leave this in for now, but we can remove it later if we don't need it
 //void MaterialBrowser::DrawPreviewWindow()
 //{
 //    if (!m_selectedMaterial || !m_preview)
