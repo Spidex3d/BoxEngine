@@ -165,16 +165,21 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     ImGui::SetNextItemWidth(100.0f);
     ImGui::SameLine();
 
-    /*if (ImGui::Combo("##comboAdd", &m_AddObjects, addObj, IM_ARRAYSIZE(addObj))) {
-        if (m_AddObjects == 1) {
-            if (m_actionCallback) m_actionCallback("AddEditableCube");
-            LOG_INFO("Add Cube selected");
+    if (ImGui::Combo("##combo_addObj", &m_AddMeshType, addObj, IM_ARRAYSIZE(addObj))) {
+
+        if (m_AddMeshType == 1) {
+            action = ViewportAction::AddEditableCube;
+            BOX_LOG_INFO("Add Cube");
         }
-        else if (m_AddObjects == 2) {
-            if (m_actionCallback) m_actionCallback("AddEditablePlane");
-            LOG_INFO("Add Plane selected");
+        if (m_AddMeshType == 2) {
+            action = ViewportAction::AddEditableCube;
+            BOX_LOG_INFO("Add Plane");
         }
-    }*/
+        else if (m_AddMeshType == 3) {
+            action = ViewportAction::AddEditableSphere;
+            BOX_LOG_INFO("Add Sphere");
+        }
+    }
 
 
     ImGui::PopStyleVar(2);

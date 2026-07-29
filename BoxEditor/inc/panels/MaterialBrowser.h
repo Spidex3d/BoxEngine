@@ -32,16 +32,15 @@ public:
 private:
     //void DrawMaterialList(const std::vector<MaterialEntry>& materials);
     void DrawMaterialList(BoxEngine& engine, const std::vector<MaterialEntry>& materials);
-    //void DrawPreviewWindow(); // leave this in for now
+    void DrawPreviewWindow(); // leave this in for now
 
     std::vector<MaterialEntry> CollectMaterials(BoxEngine& engine);
 
-    Material* m_selectedMaterial = nullptr;
 
-    //std::unique_ptr<MaterialPreview> m_preview;
-    //Material* m_selectedMaterial = nullptr;
-    //std::string m_selectedMaterialName;
-    //bool m_showPreview = false;
+    std::unique_ptr<MaterialPreview> m_preview;
+    Material* m_selectedMaterial = nullptr;
+    std::string m_selectedMaterialName;
+    bool m_showPreview = false;
 
 	
 };

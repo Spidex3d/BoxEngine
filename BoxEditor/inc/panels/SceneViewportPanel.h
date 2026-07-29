@@ -66,6 +66,7 @@ private:
 
 	int m_EditMode = 0;
     int m_editType = 0;
+	int m_AddMeshType = 0;
     		
 	ImVec2 m_sceneViewportPos = ImVec2(0, 0);
 	ImVec2 m_sceneViewportSize = ImVec2(0, 0);

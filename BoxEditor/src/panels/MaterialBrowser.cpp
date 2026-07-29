@@ -19,25 +19,25 @@ bool MaterialBrowser::Initialize()
 {
     BOX_LOG_INFO("MaterialBrowser::Initialize called");
 
-    /*m_preview = std::make_unique<MaterialPreview>();
+    m_preview = std::make_unique<MaterialPreview>();
 
     if (!m_preview->Initialize(256, 256))
     {
         BOX_LOG_ERROR("MaterialPreview initialization failed");
         m_preview.reset();
         return false;
-    }*/
+    }
 
     return true;
 }
 
 void MaterialBrowser::Shutdown()
 {
-    /*if (m_preview)
+    if (m_preview)
     {
         m_preview->Shutdown();
         m_preview.reset();
-    }*/
+    }
 
     m_selectedMaterial = nullptr;
 }
@@ -80,11 +80,13 @@ void MaterialBrowser::Draw(BoxEngine& engine)
         ImGui::EndTabBar();
     }
 
-    // Draw preview in separate window if a material is selected
-    /*if (m_showPreview && m_selectedMaterial)
+    // ###################################################################
+    // Draw preview in separate window if a material is selected which cab be set to a different object in the scene.
+    if (m_showPreview && m_selectedMaterial)
     {
         DrawPreviewWindow();
-    }*/
+    }
+
     }
     ImGui::End();
 }
@@ -162,8 +164,8 @@ void MaterialBrowser::DrawMaterialList(BoxEngine& engine,
             ImVec2(0, 0)))
         {
             m_selectedMaterial = entry.material;
-           // m_selectedMaterialName = entry.displayName;
-           // m_showPreview = true;
+            m_selectedMaterialName = entry.displayName;
+            m_showPreview = true;
         }
 
         // Show context menu
@@ -175,8 +177,11 @@ void MaterialBrowser::DrawMaterialList(BoxEngine& engine,
             if (ImGui::MenuItem(ICON_FA_EYE " Preview"))
             {
                 m_selectedMaterial = entry.material;
-               // m_selectedMaterialName = entry.displayName;
-               // m_showPreview = true;
+                m_selectedMaterialName = entry.displayName;
+                m_showPreview = true;
+
+                              
+
             }
 
             if (ImGui::MenuItem(ICON_FA_SEARCH " Select Owner"))
@@ -244,7 +249,15 @@ void MaterialBrowser::DrawMaterialList(BoxEngine& engine,
             
 
             ImGui::EndTooltip();
+
+            
+
+
+
+
         }
+        
+
 
         ImGui::PopID();
     }
@@ -252,87 +265,73 @@ void MaterialBrowser::DrawMaterialList(BoxEngine& engine,
     ImGui::EndChild();
 }
 
-//void MaterialBrowser::DrawMaterialsTab(Entity& entity)
-//{
-//
-//}
-//
-//void DrawTexturesTab(Entity& entity
-//)
-//{
-//    ImGui::TextDisabled("No textures assigned.");
-//    ImGui::Spacing();
-//}
-
-
-
 // leave this in for now, but we can remove it later if we don't need it
-//void MaterialBrowser::DrawPreviewWindow()
-//{
-//    if (!m_selectedMaterial || !m_preview)
-//    {
-//        return;
-//    }
-//
-//    ImGui::Begin(
-//        "Material Preview",
-//        &m_showPreview,
-//        ImGuiWindowFlags_AlwaysAutoResize
-//    );
-//
-//    ImGui::TextUnformatted(m_selectedMaterialName.c_str());
-//    ImGui::Separator();
-//    ImGui::Spacing();
-//
-//    // Draw the preview
-//    m_preview->Draw(*m_selectedMaterial);
-//
-//    ImGui::Spacing();
-//
-//    // Display material properties
-//    if (ImGui::CollapsingHeader(
-//        "Material Properties",
-//        ImGuiTreeNodeFlags_DefaultOpen))
-//    {
-//        const glm::vec4& baseColor =
-//            m_selectedMaterial->GetBaseColor();
-//
-//        ImGui::ColorEdit4(
-//            "Base Color",
-//            const_cast<float*>(&baseColor[0]),
-//            ImGuiColorEditFlags_NoInputs |
-//            ImGuiColorEditFlags_NoPicker
-//        );
-//
-//        ImGui::Text("Metallic: %.2f",
-//            m_selectedMaterial->GetMetallic()
-//        );
-//
-//        ImGui::Text("Roughness: %.2f",
-//            m_selectedMaterial->GetRoughness()
-//        );
-//
-//        ImGui::Text("Alpha: %.2f",
-//            m_selectedMaterial->GetAlpha()
-//        );
-//
-//        const glm::vec3& emissionColor =
-//            m_selectedMaterial->GetEmissionColor();
-//
-//        if (m_selectedMaterial->GetEmissionStrength() > 0.0f)
-//        {
-//            ImGui::ColorEdit3(
-//                "Emission",
-//                const_cast<float*>(&emissionColor[0]),
-//                ImGuiColorEditFlags_NoInputs |
-//                ImGuiColorEditFlags_NoPicker
-//            );
-//
-//            ImGui::Text("Emission Strength: %.2f",
-//                m_selectedMaterial->GetEmissionStrength()
-//            );
-//        }
-//    }
-//
-//    ImGui::End();
-//}
+void MaterialBrowser::DrawPreviewWindow()
+{
+    if (!m_selectedMaterial || !m_preview)
+    {
+        return;
+    }
+
+    ImGui::Begin(
+        "Material Preview",
+        &m_showPreview,
+        ImGuiWindowFlags_AlwaysAutoResize
+    );
+
+    ImGui::TextUnformatted(m_selectedMaterialName.c_str());
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    // Draw the preview
+    m_preview->Draw(*m_selectedMaterial);
+
+    ImGui::Spacing();
+
+    // Display material properties
+    if (ImGui::CollapsingHeader(
+        "Material Properties",
+        ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        const glm::vec4& baseColor =
+            m_selectedMaterial->GetBaseColor();
+
+        ImGui::ColorEdit4(
+            "Base Color",
+            const_cast<float*>(&baseColor[0]),
+            ImGuiColorEditFlags_NoInputs |
+            ImGuiColorEditFlags_NoPicker
+        );
+
+        ImGui::Text("Metallic: %.2f",
+            m_selectedMaterial->GetMetallic()
+        );
+
+        ImGui::Text("Roughness: %.2f",
+            m_selectedMaterial->GetRoughness()
+        );
+
+        ImGui::Text("Alpha: %.2f",
+            m_selectedMaterial->GetAlpha()
+        );
+
+        const glm::vec3& emissionColor =
+            m_selectedMaterial->GetEmissionColor();
+
+        if (m_selectedMaterial->GetEmissionStrength() > 0.0f)
+        {
+            ImGui::ColorEdit3(
+                "Emission",
+                const_cast<float*>(&emissionColor[0]),
+                ImGuiColorEditFlags_NoInputs |
+                ImGuiColorEditFlags_NoPicker
+            );
+
+            ImGui::Text("Emission Strength: %.2f",
+                m_selectedMaterial->GetEmissionStrength()
+            );
+        }
+    }
+
+    ImGui::End();
+}

@@ -221,25 +221,10 @@ void MaterialPreview::Draw(const Material& material)
         return;
     }
 
-    const ImVec2 previewSize(static_cast<float>(m_width), static_cast<float>(m_height));
+    const ImVec2 previewSize(static_cast<float>(m_width - 100), static_cast<float>(m_height - 100));
     // Flip framebuffer texture vertically.
 	// draw the sphere preview texture in the ImGui window
     ImGui::Image(reinterpret_cast<ImTextureID>(static_cast<intptr_t>(previewTexture)), previewSize, ImVec2(0.0f, 1.0f),ImVec2(1.0f, 0.0f));
-
-	ButtonStyle(); // Apply custom button style
-
-	ImGui::Spacing();
-    if(ImGui::Button("Save Material", ImVec2(90.0f, 0.0f)))
-    {
-		// open a file dialog to save the material to a file, or save it to a default location.
-	}
-	ImGui::SameLine();
-    if (ImGui::Button("Load Material", ImVec2(90.0f, 0.0f))) {
-		// open a file dialog to load a material from a file, or load it from a default location.
-    }
-
-	ButtonStyleEnd(); // End custom button style
-
 
 }
 

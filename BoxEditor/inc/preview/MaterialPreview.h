@@ -20,8 +20,8 @@ public:
         const MaterialPreview&) = delete;
 
     bool Initialize(
-        int width = 200,
-        int height = 200
+        int width = 100,
+        int height = 100
     );
 
     void Render(
