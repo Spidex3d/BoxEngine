@@ -2,9 +2,13 @@
 #include <imgui\imgui.h>
 #include <glm\glm.hpp>
 #include <entity\Entity.h>
+#include <BoxEngine.h>
+#include <FileDialog.h>
 #include <rendering\Material.h>
 #include <preview/MaterialPreview.h>
 #include <miniBoxLog.h>
+
+
 
 MaterialEditor::MaterialEditor() = default;
 
@@ -39,11 +43,8 @@ bool MaterialEditor::Initialize()
 	return true;
 }
 
-
-
-void MaterialEditor::Draw(Entity& entity)
+void MaterialEditor::Draw(BoxEngine& engine, Entity& entity)
 {
-       
 
     if (ImGui::CollapsingHeader(
         "Material Editor"))
@@ -52,8 +53,7 @@ void MaterialEditor::Draw(Entity& entity)
         Material& material = entity.GetMaterial();
 
         ImGui::Spacing();
-
-       
+              
 
         if (m_preview)
         {
@@ -69,14 +69,15 @@ void MaterialEditor::Draw(Entity& entity)
             );
         }
 
-        DrawMaterialProperties(entity);
+        DrawMaterialProperties(engine, entity);
         DrawEmissionControls(material);
         DrawTextureProperties(entity);
     }
 
 }
 
-void MaterialEditor::DrawMaterialProperties(Entity& entity)
+
+void MaterialEditor::DrawMaterialProperties(BoxEngine& engine, Entity& entity)
 {
 
     if (ImGui::CollapsingHeader("Material Properties")) // ImGuiTreeNodeFlags_DefaultOpen
@@ -111,11 +112,52 @@ void MaterialEditor::DrawMaterialProperties(Entity& entity)
         {
             material.SetAlpha(alpha);
         }
+
+        bool useTexture = material.UsesBaseColorTexture();
+		// use this to toggle the use of the base color texture in the material. TEMP
+        if (ImGui::Checkbox("Use Base Color Texture", &useTexture))
+        {
+            material.SetUseBaseColorTexture(useTexture);
+        }
         
+        //std::string path;
+        if (ImGui::Button("Load Texture"))
+        {
+                       
+            const std::string path = FileDialog::OpenTexture();
+
+            if (!path.empty())
+            {
+                const GLuint textureID =  engine.GetSceneTexture();
+
+                if (textureID != 0)
+                {
+                    material.SetBaseColorTexture(
+                        textureID
+                    );
+
+                    material.SetUseBaseColorTexture(
+                        true
+                    );
+
+                    BOX_LOG_INFO(
+                        "Texture loaded for entity: " +
+                        entity.GetName()
+                    );
+                }
+                else
+                {
+                    BOX_LOG_ERROR(
+                        "Failed to load texture: " +
+                        path
+                    );
+                }
+            }
+        }
+
 	}
     
 }
-
 
 
 void MaterialEditor::DrawEmissionControls(Material& material)

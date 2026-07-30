@@ -24,7 +24,7 @@ public:
         int height = 100
     );
 
-    void Render(
+    void RenderPreview(
         const Material& material
     );
 

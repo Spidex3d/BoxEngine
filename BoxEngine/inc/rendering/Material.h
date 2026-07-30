@@ -1,4 +1,5 @@
 #pragma once
+#include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <memory>
 #include <string>
@@ -27,19 +28,28 @@ public:
 
     float GetEmissionStrength() const;
     void SetEmissionStrength(float strength);
+	
+    // Texture management
+    GLuint GetBaseColorTexture() const;
+    
 
     void SetBaseColorTexture(
-        const std::shared_ptr<Texture>& texture);
+        GLuint textureID);
+    
 
-    std::shared_ptr<Texture>
-        GetBaseColorTexture() const;
+    bool UsesBaseColorTexture() const;
+    
+
+    void SetUseBaseColorTexture(bool useTexture);
+    
+
 
 private:
     glm::vec4 m_baseColor = glm::vec4(1.0f);
 
     float m_metallic = 0.0f;
 
-    float m_roughness = 0.5f;
+    float m_roughness = 0.0f;
 
     float m_alpha = 1.0f;
 
@@ -47,9 +57,14 @@ private:
 
     float m_emissionStrength = 0.0f;
 
-    std::shared_ptr<Texture> m_baseColorTexture;
-
     // Textures 
+    GLuint m_baseColorTexture = 0;
+
+    bool m_useBaseColorTexture = false;
+
+
+    
+
 
 	
 };

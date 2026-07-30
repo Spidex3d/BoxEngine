@@ -109,7 +109,7 @@ bool MaterialPreview::Initialize(
     return true;
 }
 
-void MaterialPreview::Render(
+void MaterialPreview::RenderPreview(
     const Material& material)
 {
     if (!m_initialized ||
@@ -187,11 +187,13 @@ void MaterialPreview::Render(
         )
     );
 
-    m_previewSphere->Render(
+    // the new bit 
+    m_previewSphere->RenderPreview(
         *m_shader,
         view,
-        projection
-    );
+        projection,
+        glm::vec3(1.5f, 1.0f, 2.2f)
+	);  
 
     Framebuffer::Unbind();
 }
@@ -205,7 +207,7 @@ void MaterialPreview::Draw(const Material& material)
         return;
     }
 
-    Render(material);
+    RenderPreview(material);
 
 	// i would like to add a list of all the materials that are currently loaded in the editor,
     // and allow the user to select one of them to preview it in the material preview window.

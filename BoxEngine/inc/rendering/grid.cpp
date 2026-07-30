@@ -174,7 +174,7 @@ bool Grid::Create(
     return true;
 }
 
-void Grid::Render(
+void Grid::RenderPreview(
     const Shader& shader,
     const glm::mat4& view,
     const glm::mat4& projection) const

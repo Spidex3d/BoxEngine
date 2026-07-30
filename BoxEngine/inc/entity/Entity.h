@@ -9,6 +9,7 @@
 
 //This is where we are putting together all the components of an entity, such as mesh, material, transform, etc.
 class Shader;
+class Camera;
 
 class Entity
 {
@@ -31,11 +32,14 @@ public:
 
     void DrawMesh() const;
 
-    void Render(
-        const Shader& shader,
-        const glm::mat4& view,
-        const glm::mat4& projection
-    );
+    // ###################################### Rendering #####################################
+
+	// Main render function that takes Shader and Camera objects as parameters
+    void RenderScene(const Shader& shader, const Camera& camera, float aspectRatio);
+
+	// RenderPreview function for materials sphere preview, takes Shader and Camera objects as parameters
+    void RenderPreview(const Shader& shader, const glm::mat4& view, const glm::mat4& projection, const glm::vec3& cameraPosition);
+    
 
     void Destroy();
 
@@ -108,7 +112,11 @@ public:
     {
         return m_material;
     }
-
+private:
+	// ###################################### Rendering #####################################
+    void RenderInternal(const Shader& shader, const glm::mat4& view,
+        const glm::mat4& projection, const glm::vec3& cameraPosition
+    );
 private:
     Material m_material; // Each entity has its own material, which can be modified independently.
 

@@ -69,18 +69,32 @@ void Material::SetEmissionStrength(
     m_emissionStrength =
         std::max(strength, 0.0f);
 }
-
-void Material::SetBaseColorTexture(
-    const std::shared_ptr<Texture>& texture)
-{
-    m_baseColorTexture = texture;
-}
-
-std::shared_ptr<Texture>
-Material::GetBaseColorTexture() const
+// Texture management
+GLuint Material::GetBaseColorTexture() const
 {
     return m_baseColorTexture;
 }
 
+void Material::SetBaseColorTexture(
+    GLuint textureID)
+{
+    m_baseColorTexture = textureID;
+    m_useBaseColorTexture =
+        textureID != 0;
+}
+
+bool Material::UsesBaseColorTexture() const
+{
+    return
+        m_useBaseColorTexture &&
+        m_baseColorTexture != 0;
+}
+
+void Material::SetUseBaseColorTexture(
+    bool useTexture)
+{
+    m_useBaseColorTexture =
+        useTexture;
+}
 
 

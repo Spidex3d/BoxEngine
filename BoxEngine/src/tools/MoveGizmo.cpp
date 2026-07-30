@@ -199,7 +199,7 @@ void MoveGizmo::DrawAxis(
     );
 }
 
-void MoveGizmo::Render(
+void MoveGizmo::RenderPreview(
     Shader& shader,
     const glm::vec3& position,
     float scale,

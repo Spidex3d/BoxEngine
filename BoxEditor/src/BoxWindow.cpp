@@ -4,7 +4,7 @@
 #include <BoxDiffs.h>
 #include <BoxWindow.h>
 #include <miniBoxLog.h>
-
+#include <Windows.h>
 
 // initialize static refcount
 int BoxWindow::s_glfwRefCount = 0;
@@ -93,6 +93,7 @@ void BoxWindow::SetVSync(bool enabled)
     glfwSwapInterval(enabled ? 1 : 0);
     m_config.vsync = enabled;
 }
+
 
 void BoxWindow::Shutdown()
 {

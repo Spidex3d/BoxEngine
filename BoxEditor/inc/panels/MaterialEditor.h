@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 
+class BoxEngine;
 class Entity;
 class MaterialPreview;
 class Material;
@@ -15,11 +16,12 @@ public:
 
     void Shutdown();
 
-    void Draw(Entity& entity);
+    void Draw(BoxEngine& engine, Entity& entity);
+    
 
 private:
 
-    void DrawMaterialProperties(Entity& entity);
+    void DrawMaterialProperties(BoxEngine& engine, Entity& entity);
 
     void DrawEmissionControls(class Material& material);
 

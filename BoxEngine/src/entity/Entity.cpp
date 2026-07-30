@@ -1,5 +1,6 @@
 #include "entity/Entity.h"
 #include <shader/Shader.h>
+#include <camera/Camera.h>
 #include <miniBoxLog.h>
 #include <stb/stb_image.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -86,60 +87,61 @@ bool Entity::CreateCube()
     const float vertices[] =
     {
         // Front face +Z
-        -0.5f, -0.5f,  0.5f,   0.0f,  0.0f,  1.0f,
-         0.5f, -0.5f,  0.5f,   0.0f,  0.0f,  1.0f,
-         0.5f,  0.5f,  0.5f,   0.0f,  0.0f,  1.0f,
+        -0.5f, -0.5f,  0.5f,   0.0f,  0.0f,  1.0f, 0.0f, 0.0f,
+         0.5f, -0.5f,  0.5f,   0.0f,  0.0f,  1.0f, 1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,   0.0f,  0.0f,  1.0f, 1.0f, 1.0f,
 
-        -0.5f, -0.5f,  0.5f,   0.0f,  0.0f,  1.0f,
-         0.5f,  0.5f,  0.5f,   0.0f,  0.0f,  1.0f,
-        -0.5f,  0.5f,  0.5f,   0.0f,  0.0f,  1.0f,
+	    -0.5f, -0.5f,  0.5f,   0.0f,  0.0f,  1.0f, 0.0f, 0.0f,
+	     0.5f,  0.5f,  0.5f,   0.0f,  0.0f,  1.0f, 1.0f, 1.0f,
+	    -0.5f,  0.5f,  0.5f,   0.0f,  0.0f,  1.0f, 0.0f, 1.0f,
 
         // Back face -Z
-         0.5f, -0.5f, -0.5f,   0.0f,  0.0f, -1.0f,
-        -0.5f, -0.5f, -0.5f,   0.0f,  0.0f, -1.0f,
-        -0.5f,  0.5f, -0.5f,   0.0f,  0.0f, -1.0f,
+         0.5f, -0.5f, -0.5f,   0.0f,  0.0f, -1.0f, 1.0f, 0.0f,
+	    -0.5f, -0.5f, -0.5f,   0.0f,  0.0f, -1.0f, 0.0f, 0.0f,
+	    -0.5f,  0.5f, -0.5f,   0.0f,  0.0f, -1.0f, 0.0f, 1.0f,
 
-         0.5f, -0.5f, -0.5f,   0.0f,  0.0f, -1.0f,
-        -0.5f,  0.5f, -0.5f,   0.0f,  0.0f, -1.0f,
-         0.5f,  0.5f, -0.5f,   0.0f,  0.0f, -1.0f,
+	     0.5f, -0.5f, -0.5f,   0.0f,  0.0f, -1.0f, 1.0f, 0.0f,
+	    -0.5f,  0.5f, -0.5f,   0.0f,  0.0f, -1.0f, 0.0f, 1.0f,
+	     0.5f,  0.5f, -0.5f,   0.0f,  0.0f, -1.0f, 1.0f, 1.0f,
 
          // Left face -X
-         -0.5f, -0.5f, -0.5f,  -1.0f,  0.0f,  0.0f,
-         -0.5f, -0.5f,  0.5f,  -1.0f,  0.0f,  0.0f,
-         -0.5f,  0.5f,  0.5f,  -1.0f,  0.0f,  0.0f,
-
-         -0.5f, -0.5f, -0.5f,  -1.0f,  0.0f,  0.0f,
-         -0.5f,  0.5f,  0.5f,  -1.0f,  0.0f,  0.0f,
-         -0.5f,  0.5f, -0.5f,  -1.0f,  0.0f,  0.0f,
-
+         -0.5f, -0.5f, -0.5f,  -1.0f, 0.0f, 0.0f,   0.0f, 0.0f,
+         -0.5f, -0.5f,  0.5f,  -1.0f, 0.0f, 0.0f,   1.0f, 0.0f,
+         -0.5f,  0.5f,  0.5f,  -1.0f, 0.0f, 0.0f,   1.0f, 1.0f,
+         
+         -0.5f, -0.5f, -0.5f,  -1.0f, 0.0f, 0.0f,   0.0f, 0.0f,
+         -0.5f,  0.5f,  0.5f,  -1.0f, 0.0f, 0.0f,   1.0f, 1.0f,
+         -0.5f,  0.5f, -0.5f,  -1.0f, 0.0f, 0.0f,   0.0f, 1.0f,
+         
          // Right face +X
-          0.5f, -0.5f,  0.5f,   1.0f,  0.0f,  0.0f,
-          0.5f, -0.5f, -0.5f,   1.0f,  0.0f,  0.0f,
-          0.5f,  0.5f, -0.5f,   1.0f,  0.0f,  0.0f,
-
-          0.5f, -0.5f,  0.5f,   1.0f,  0.0f,  0.0f,
-          0.5f,  0.5f, -0.5f,   1.0f,  0.0f,  0.0f,
-          0.5f,  0.5f,  0.5f,   1.0f,  0.0f,  0.0f,
+          0.5f, -0.5f,  0.5f,   1.0f, 0.0f, 0.0f,   0.0f, 0.0f,
+          0.5f, -0.5f, -0.5f,   1.0f, 0.0f, 0.0f,   1.0f, 0.0f,
+          0.5f,  0.5f, -0.5f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,
+         
+          0.5f, -0.5f,  0.5f,   1.0f, 0.0f, 0.0f,   0.0f, 0.0f,
+          0.5f,  0.5f, -0.5f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,
+          0.5f,  0.5f,  0.5f,   1.0f, 0.0f, 0.0f,   0.0f, 1.0f,     
 
           // Top face +Y
-          -0.5f,  0.5f,  0.5f,   0.0f,  1.0f,  0.0f,
-           0.5f,  0.5f,  0.5f,   0.0f,  1.0f,  0.0f,
-           0.5f,  0.5f, -0.5f,   0.0f,  1.0f,  0.0f,
+	      -0.5f,  0.5f,  0.5f,   0.0f,  1.0f,  0.0f, 0.0f, 1.0f,
+	       0.5f,  0.5f,  0.5f,   0.0f,  1.0f,  0.0f, 1.0f, 1.0f,
+	       0.5f,  0.5f, -0.5f,   0.0f,  1.0f,  0.0f, 1.0f, 0.0f,
 
-          -0.5f,  0.5f,  0.5f,   0.0f,  1.0f,  0.0f,
-           0.5f,  0.5f, -0.5f,   0.0f,  1.0f,  0.0f,
-          -0.5f,  0.5f, -0.5f,   0.0f,  1.0f,  0.0f,
+	      -0.5f,  0.5f,  0.5f,   0.0f,  1.0f,  0.0f, 0.0f, 1.0f,
+	       0.5f,  0.5f, -0.5f,   0.0f,  1.0f,  0.0f, 1.0f, 0.0f,
+	      -0.5f,  0.5f, -0.5f,   0.0f,  1.0f,  0.0f, 0.0f, 0.0f,
 
           // Bottom face -Y
-          -0.5f, -0.5f, -0.5f,   0.0f, -1.0f,  0.0f,
-           0.5f, -0.5f, -0.5f,   0.0f, -1.0f,  0.0f,
-           0.5f, -0.5f,  0.5f,   0.0f, -1.0f,  0.0f,
+	      -0.5f, -0.5f, -0.5f,   0.0f, -1.0f,  0.0f, 0.0f, 0.0f,
+	       0.5f, -0.5f, -0.5f,   0.0f, -1.0f,  0.0f, 1.0f, 0.0f,
+	       0.5f, -0.5f,  0.5f,   0.0f, -1.0f,  0.0f, 1.0f, 1.0f,
 
-          -0.5f, -0.5f, -0.5f,   0.0f, -1.0f,  0.0f,
-           0.5f, -0.5f,  0.5f,   0.0f, -1.0f,  0.0f,
-          -0.5f, -0.5f,  0.5f,   0.0f, -1.0f,  0.0f
+	      -0.5f, -0.5f, -0.5f,   0.0f, -1.0f,  0.0f, 0.0f, 0.0f,
+	       0.5f, -0.5f,  0.5f,   0.0f, -1.0f,  0.0f, 1.0f, 1.0f,
+	      -0.5f, -0.5f,  0.5f,   0.0f, -1.0f,  0.0f, 0.0f, 1.0f
     };
 
+    
     m_vertexCount = 36;
 
     glGenVertexArrays(1, &m_vao);
@@ -162,7 +164,7 @@ bool Entity::CreateCube()
         3,
         GL_FLOAT,
         GL_FALSE,
-        6 * sizeof(float),
+        8 * sizeof(float),
         reinterpret_cast<void*>(0)
     );
 
@@ -173,9 +175,26 @@ bool Entity::CreateCube()
         3,
         GL_FLOAT,
         GL_FALSE,
-        6 * sizeof(float),
+        8 * sizeof(float),
         reinterpret_cast<void*>(3 * sizeof(float))
     );
+
+    // Texture coordinates
+    glEnableVertexAttribArray(2);
+
+    glVertexAttribPointer(
+        2,
+        2,
+        GL_FLOAT,
+        GL_FALSE,
+        8 * sizeof(float),
+        reinterpret_cast<void*>(
+            6 * sizeof(float)
+            )
+    );
+
+
+
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -237,18 +256,22 @@ void Entity::DrawMesh() const
   
 }
 
+// ##############################################################################################################
+// ############################################### Rendering ####################################################
+// ##############################################################################################################
 
-void Entity::Render(
-    const Shader& shader,
-    const glm::mat4& view,
-    const glm::mat4& projection)
+void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const glm::mat4& projection, const glm::vec3& cameraPosition)
 {
     if (!m_visible || m_vao == 0)
+    {
         return;
-
-    const glm::mat4 model = GetModelMatrix(); // piking
+    }
 
     shader.Use();
+
+    // --------------------------------
+    // Transform
+    // --------------------------------
 
     shader.setMat4(
         "uModel",
@@ -265,6 +288,15 @@ void Entity::Render(
         projection
     );
 
+    shader.setVec3(
+        "uCameraPosition",
+        cameraPosition
+    );
+
+    // --------------------------------
+    // Material
+    // --------------------------------
+
     glm::vec4 renderColor =
         m_material.GetBaseColor();
 
@@ -276,11 +308,98 @@ void Entity::Render(
         renderColor
     );
 
-       
+    shader.SetUniformFloat(
+        "uMetallic",
+        m_material.GetMetallic()
+    );
 
-	DrawMesh();
+    shader.SetUniformFloat(
+        "uRoughness",
+        m_material.GetRoughness()
+    );
+
+    // --------------------------------
+    // Base-colour texture
+    // --------------------------------
+
+    const GLuint textureID =
+        m_material.GetBaseColorTexture();
+
+	// Check if the material uses a base color or has a texture
+    const bool useTexture =
+        m_material.UsesBaseColorTexture();
+
+    shader.SetUniformInt(
+        "uUseBaseColorTexture",
+        useTexture ? 1 : 0
+    );
+
+    shader.SetUniformInt(
+        "uBaseColorTexture",
+        0
+    );
+
+    glActiveTexture(
+        GL_TEXTURE0
+    );
+
+    glBindTexture(
+        GL_TEXTURE_2D,
+        useTexture ? textureID : 0
+    );
 
     
+
+    // --------------------------------
+    // Lighting
+    // --------------------------------
+
+    shader.setVec3(
+        "uLightPosition",
+        glm::vec3(
+            3.0f,
+            4.0f,
+            3.0f
+        )
+    );
+
+    shader.setVec3(
+        "uLightColor",
+        glm::vec3(1.0f)
+    );
+
+    // Cube, sphere, or any other mesh
+    DrawMesh();
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+}
+
+// New RenderPreview function that takes Shader and Camera objects as parameters
+void Entity::RenderScene(const Shader& shader, const Camera& camera, float aspectRatio)
+{
+	
+    RenderInternal(
+        shader,
+        camera.GetViewMatrix(),
+        camera.GetProjectionMatrix(aspectRatio),
+        camera.Position
+	);
+
+    
+
+}
+// revised RenderPreview function that takes view and projection matrices as parameters
+void Entity::RenderPreview(const Shader& shader, const glm::mat4& view, const glm::mat4& projection, const glm::vec3& cameraPosition)
+{
+
+    RenderInternal(
+        shader,
+        view,
+        projection,
+        cameraPosition
+    );
+
 }
 
 bool Entity::CreateSphere(int sectors, int stacks)
@@ -344,6 +463,14 @@ bool Entity::CreateSphere(int sectors, int stacks)
                 xy *
                 std::sin(sectorAngle);
 
+            const float u =
+                static_cast<float>(sector) /
+                static_cast<float>(sectors);
+
+            const float v =
+                static_cast<float>(stack) /
+                static_cast<float>(stacks);
+
             // Position
             vertices.push_back(x);
             vertices.push_back(y);
@@ -358,7 +485,12 @@ bool Entity::CreateSphere(int sectors, int stacks)
             vertices.push_back(normal.x);
             vertices.push_back(normal.y);
             vertices.push_back(normal.z);
+
+            // UV
+            vertices.push_back(u);
+            vertices.push_back(v);
         }
+        
     }
 
     // Build triangle indices.
@@ -439,7 +571,7 @@ bool Entity::CreateSphere(int sectors, int stacks)
         3,
         GL_FLOAT,
         GL_FALSE,
-        6 * sizeof(float),
+        8 * sizeof(float),
         reinterpret_cast<void*>(0)
     );
 
@@ -451,17 +583,30 @@ bool Entity::CreateSphere(int sectors, int stacks)
         3,
         GL_FLOAT,
         GL_FALSE,
-        6 * sizeof(float),
+        8 * sizeof(float),
         reinterpret_cast<void*>(
             3 * sizeof(float)
             )
     );
 
+    // UV
+    glEnableVertexAttribArray(2);
+
+    glVertexAttribPointer(
+        2,
+        2,
+        GL_FLOAT,
+        GL_FALSE,
+        8 * sizeof(float),
+        reinterpret_cast<void*>(
+            6 * sizeof(float)
+            ));
+
     glBindVertexArray(0);
 
     m_vertexCount =
         static_cast<GLsizei>(
-            vertices.size() / 6
+            vertices.size() / 8
             );
 
     m_indexCount =
@@ -555,8 +700,6 @@ const glm::vec3& Entity::GetAABBMax() const
     return m_aabbMax;
 }
 
-
-
 glm::mat4 Entity::CalculateModelMatrix() const
 {
     glm::mat4 model(1.0f);
@@ -617,3 +760,167 @@ void Entity::Destroy()
     m_indexCount = 0;
     m_useIndices = false;
 }
+
+// RenderScene function for rendering the entity in the scene with the provided shader and camera
+/*if (!m_visible || m_vao == 0)
+    {
+        return;
+    }
+
+    shader.Use();
+
+    shader.setMat4(
+        "uModel",
+        GetModelMatrix()
+    );
+
+    shader.setMat4(
+        "uView",
+        camera.GetViewMatrix()
+    );
+
+    shader.setMat4(
+        "uProjection",
+        camera.GetProjectionMatrix(
+            aspectRatio
+        )
+    );
+
+    shader.setVec3(
+        "uCameraPosition",
+        camera.Position
+    );
+
+    glm::vec4 renderColor =
+        m_material.GetBaseColor();
+
+    renderColor.a =
+        m_material.GetAlpha();
+
+    shader.setVec4(
+        "uBaseColor",
+        renderColor
+    );
+
+    shader.SetUniformFloat(
+        "uMetallic",
+        m_material.GetMetallic()
+    );
+
+    shader.SetUniformFloat(
+        "uRoughness",
+        m_material.GetRoughness()
+    );
+
+    shader.setVec3(
+        "uLightPosition",
+        glm::vec3(
+            3.0f,
+            4.0f,
+            3.0f
+        )
+    );
+
+    shader.setVec3(
+        "uLightColor",
+        glm::vec3(1.0f)
+    );
+
+    const bool useTexture =
+        m_material.UsesBaseColorTexture();
+
+    shader.SetUniformInt(
+        "uUseBaseColorTexture",
+        useTexture ? 1 : 0
+    );
+
+    shader.SetUniformInt(
+        "uBaseColorTexture",
+        0
+    );
+
+    if (useTexture)
+    {
+        glActiveTexture(
+            GL_TEXTURE0
+        );
+
+        glBindTexture(
+            GL_TEXTURE_2D,
+            m_material.GetBaseColorTexture()
+        );
+    }*/
+
+    /*DrawMesh();
+
+    glBindTexture(
+        GL_TEXTURE_2D,
+        0
+    );*/
+
+
+
+	// New RenderPreview function that takes Shader and Camera objects as parameters
+    /*if (!m_visible || m_vao == 0)
+    {
+        return;
+    }
+
+    shader.Use();
+
+    shader.setMat4(
+        "uModel",
+        CalculateModelMatrix()
+    );
+
+    shader.setMat4(
+        "uView",
+        view
+    );
+
+    shader.setMat4(
+        "uProjection",
+        projection
+    );
+
+    shader.setVec3(
+        "uCameraPosition",
+        cameraPosition
+    );
+
+    glm::vec4 renderColor =
+        m_material.GetBaseColor();
+
+    renderColor.a =
+        m_material.GetAlpha();
+
+    shader.setVec4(
+        "uBaseColor",
+        renderColor
+    );
+
+    shader.SetUniformFloat(
+        "uMetallic",
+        m_material.GetMetallic()
+    );
+
+    shader.SetUniformFloat(
+        "uRoughness",
+        m_material.GetRoughness()
+    );
+
+    shader.setVec3(
+        "uLightPosition",
+        glm::vec3(
+            3.0f,
+            4.0f,
+            3.0f
+        )
+    );
+
+    shader.setVec3(
+        "uLightColor",
+        glm::vec3(1.0f)
+    );
+
+    DrawMesh();*/

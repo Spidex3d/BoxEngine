@@ -273,8 +273,7 @@ void MaterialBrowser::DrawPreviewWindow()
         return;
     }
 
-    ImGui::Begin(
-        "Material Preview",
+    ImGui::Begin("Material Selected",
         &m_showPreview,
         ImGuiWindowFlags_AlwaysAutoResize
     );

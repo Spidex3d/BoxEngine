@@ -1,90 +1,106 @@
 #version 460 core
 
-in vec3 FragNormal;
+//in vec2 vTexCoord;
+//
+//out vec4 FragColor;
+//
+//uniform vec4 uBaseColor;
+//uniform sampler2D uBaseColorTexture;
+//uniform bool uUseBaseColorTexture;
+//
+//void main()
+//{
+//    if (uUseBaseColorTexture)
+//    {
+//        FragColor =
+//            texture(
+//                uBaseColorTexture,
+//                vTexCoord
+//            );
+//
+//        return;
+//    }
+//
+//    FragColor = uBaseColor;
+//}
+
+
+in vec3 vNormal;
+
+//in vec3 vFragPos;
+in vec3 vWorldPosition;
+
+in vec2 vTexCoord;
 
 out vec4 FragColor;
 
 uniform vec4 uBaseColor;
 uniform vec3 uLightDirection;
+// new
+uniform sampler2D uBaseColorTexture;
+uniform bool uUseBaseColorTexture;
+
+
+uniform float uMetallic;
+uniform float uRoughness;
+uniform vec3 uCameraPosition;
+uniform vec3 uLightPosition;
+uniform vec3 uLightColor;
+
 
 void main()
 {
-    vec3 normal =
-        normalize(FragNormal);
+    
+    vec3 normal = normalize(vNormal);
 
-    vec3 lightDirection =
-        normalize(-uLightDirection);
+    // new
 
-    float diffuse =
-        max(
-            dot(normal, lightDirection),
-            0.0
-        );
+    vec4 materialColor = uBaseColor;
 
-    float ambient = 0.75;
-    float diffuseStrength = 0.35;
+    if (uUseBaseColorTexture)
+    {
+    materialColor *= texture(uBaseColorTexture, vTexCoord);
+    }
 
-    float lighting =
-        ambient +
-        diffuse * diffuseStrength;
+    //vec3 lightDirection = normalize(uLightPosition - vFragPos);
+    vec3 lightDirection = normalize(uLightPosition - vWorldPosition);
+    
+    //vec3 viewDirection =  normalize(uCameraPosition - vFragPos);
+    vec3 viewDirection =  normalize(uCameraPosition - vWorldPosition);
 
-    vec3 finalColor =
-        uBaseColor.rgb * lighting;
+    vec3 reflectDirection = reflect(-lightDirection, normal);
 
-    FragColor =
-        vec4(
-            finalColor,
-            uBaseColor.a
-        );
+    float shininess = mix(128.0, 4.0, uRoughness);
+
+    float specularAmount = pow(max(dot(viewDirection, reflectDirection), 0.0), shininess);
+
+    vec3 dielectricSpecular = vec3(0.04);
+
+   // vec3 specularColor = mix(dielectricSpecular, uBaseColor.rgb, uMetallic);
+    vec3 specularColor = mix(dielectricSpecular, materialColor.rgb, uMetallic);
+
+    //vec3 diffuse = uBaseColor.rgb * max(dot(normal, lightDirection), 0.0);
+    vec3 diffuse = materialColor.rgb * max(dot(normal, lightDirection), 0.0);
+
+    diffuse *= 1.0 - uMetallic;
+
+    vec3 specular = specularColor * specularAmount;
+    
+    float ambientStrength = 0.12;
+
+    //vec3 ambient = uBaseColor.rgb * ambientStrength;
+    vec3 ambient = materialColor.rgb * ambientStrength;
+
+
+    vec3 finalColor = ambient + diffuse + specular;
+
+    
+
+    finalColor *= uLightColor;
+
+    FragColor = vec4(finalColor, materialColor.a);
+    //FragColor = materialColor;
+    // test
+    //FragColor = vec4(vTexCoord, 0.0, 1.0);
+ 
 }
-
-
-//in vec3 FragNormal;
-//
-//out vec4 FragColor;
-//
-//uniform vec4 uBaseColor;
-//uniform vec3 uLightDirection;
-//
-//void main()
-//{
-//    vec3 normal = normalize(FragNormal);
-//
-//    float diffuse = max(dot(normal, normalize(-uLightDirection)), 0.0);
-//
-//    float ambient = 0.85;
-//
-//    float lighting = ambient + diffuse * 0.75;
-//
-//    vec3 finalColor = uBaseColor.rgb * lighting;
-//
-//    FragColor = vec4(finalColor, uBaseColor.a);
-//}
-
-
-//in vec3 vNormal;
-//in vec3 vWorldPosition;
-//
-//out vec4 FragColor;
-//
-////uniform vec3 uObjectColor;
-//uniform vec4 uBaseColor;
-//uniform vec3 uLightDirection;
-//
-//void main()
-//{
-//    vec3 normal = normalize(vNormal);
-//
-//    vec3 lightDirection = normalize(-uLightDirection);
-//
-//    float diffuse = max(dot(normal, lightDirection), 0.0);
-//
-//    float ambient = 0.25;
-//
-//    //vec3 finalColor = uObjectColor * (ambient + diffuse * 0.75);
-//    vec4 finalColor = uBaseColor * (ambient + diffuse * 0.75);
-//
-//    
-//
-//    FragColor = vec4(finalColor, 1.0);
-//}

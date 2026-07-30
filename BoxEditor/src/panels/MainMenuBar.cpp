@@ -68,13 +68,13 @@ MenuAction MainMenuBar::DrawMainMenu()
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("Render"))
+        if (ImGui::BeginMenu("RenderPreview"))
         {
-            if (ImGui::MenuItem("Render Image"))
+            if (ImGui::MenuItem("RenderPreview Image"))
             {
             }
 
-            if (ImGui::MenuItem("Render Animation"))
+            if (ImGui::MenuItem("RenderPreview Animation"))
             {
             }
 

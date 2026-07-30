@@ -18,11 +18,11 @@ public:
 	void Shutdown();
 
 private:
-    void DrawObjectTab(
+    void DrawObjectTab(BoxEngine& engine,
         Entity& entity
     );
 
-    void DrawTexturesTab(
+    void DrawTexturesTab(BoxEngine& engine,
         Entity& entity
     );
 

@@ -2,6 +2,7 @@
 #include <rendering/Framebuffer.h>
 #include <entity\Entity.h>
 #include <glm/glm.hpp>
+#include <rendering/Textures.h>
 
 #include <memory>
 #include <vector>
@@ -11,6 +12,7 @@ class Grid;
 class Entity;
 class Camera;
 class MoveGizmo;
+class Texture;
 
 enum class TransformTool
 {
@@ -70,7 +72,10 @@ public:
 
 
 private:
-    void RenderSelectedEntityOutline(const glm::mat4& view, const glm::mat4& projection); // Render the outline of the selected entity
+    void RenderSelectedEntityOutline(const glm::mat4& view, const glm::mat4& projection); // RenderPreview the outline of the selected entity
+
+	Texture m_testTexture; // for testing the texture loading and rendering
+    //std::vector<std::unique_ptr<Texture>> m_textures;
 
 private:
     Framebuffer m_sceneFramebuffer;

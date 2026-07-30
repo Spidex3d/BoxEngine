@@ -90,7 +90,7 @@ void ObjectExplorerPanel::DrawObjectExplorer(
         // ####################################################
         if (ImGui::BeginTabItem("Object"))
         {
-            DrawObjectTab(*selected);
+            DrawObjectTab(engine, *selected);
 
             ImGui::EndTabItem();
         }
@@ -100,7 +100,7 @@ void ObjectExplorerPanel::DrawObjectExplorer(
         // ####################################################
         if (ImGui::BeginTabItem("Textures"))
         {
-            DrawTexturesTab(*selected);
+            DrawTexturesTab(engine,*selected);
 
             ImGui::EndTabItem();
         }
@@ -122,7 +122,7 @@ void ObjectExplorerPanel::DrawObjectExplorer(
     
 }
 
-void ObjectExplorerPanel::DrawObjectTab(Entity& entity)
+void ObjectExplorerPanel::DrawObjectTab(BoxEngine& engine, Entity& entity)
 {
     char nameBuffer[128]{};
 
@@ -162,7 +162,7 @@ void ObjectExplorerPanel::DrawObjectTab(Entity& entity)
 
 
 // Textures and Material tab.
-void ObjectExplorerPanel::DrawTexturesTab(Entity& entity)
+void ObjectExplorerPanel::DrawTexturesTab(BoxEngine& engine,Entity& entity)
 {
     
 
@@ -174,10 +174,10 @@ void ObjectExplorerPanel::DrawTexturesTab(Entity& entity)
 
     ImGui::Spacing();
     
-	// Draw the material editor for the selected entity.
+    // Draw the material editor for the selected entity.
     if (m_materialEditor)
     {
-        m_materialEditor->Draw(entity);
+        m_materialEditor->Draw(engine, entity);
     }
     else
     {

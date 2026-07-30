@@ -18,7 +18,7 @@ class Grid
 		
 
 		bool Create(int halfSize, float spacing);
-        void Render(const Shader& shader, const glm::mat4& view, const glm::mat4& projection) const;
+        void RenderPreview(const Shader& shader, const glm::mat4& view, const glm::mat4& projection) const;
         
 		void Destroy();
 

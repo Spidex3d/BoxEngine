@@ -4,6 +4,7 @@
 #define GLFW_INCLUDE_NONE
 #endif
 #include <GLFW/glfw3.h> 
+#include <string>
 
 struct WindowConfig {
 	
@@ -32,6 +33,7 @@ public:
 
 	void SetVSync(bool enabled);
 
+	
 
 private:
 

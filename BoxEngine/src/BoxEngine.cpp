@@ -154,6 +154,39 @@ bool BoxEngine::Initialize()
 
     m_camera->OrbitDistance = glm::length(m_camera->Position - m_camera->Target);
 
+
+	// ########################### Texture just for testing ############################################
+    //m_testTexture.LoadFromFile(helpers.GetAssetPath("assets/textures/texture/crate.jpg"));
+  /*  const std::string crateTexturePath = helpers.GetAssetPath(
+            "assets/textures/texture/crate.jpg"
+        );*/
+
+    const std::string crateTexturePath = helpers.GetAssetPath(
+        "assets/textures/texture/checkerboard.jpg"
+    );
+
+    if (!m_testTexture.LoadFromFile(crateTexturePath))
+    {
+        BOX_LOG_ERROR(
+            "Failed to load texture: "
+            << crateTexturePath
+        );
+
+        return false;
+    }
+      
+
+    BOX_LOG_INFO(
+        "Texture loaded: "
+        << crateTexturePath
+        << " ID="
+        << m_testTexture.GetID()
+        << " Size="
+        << m_testTexture.GetWidth()
+        << "x"
+        << m_testTexture.GetHeight()
+    );
+
     
     if (!AddGrid(glm::vec3(0.0f, -0.5f, 0.0f), 20, 1.0f))
     {
@@ -240,12 +273,23 @@ bool BoxEngine::AddEditableCube(
 {
     const int entityID = m_nextEntityID++;
 
+
+
     const std::string entityName =
         "Cube " + std::to_string(entityID);
 
     auto cube = std::make_unique<Entity>(
         entityID,
         entityName
+    );
+
+	// Set the base color of the cube's material to white
+    cube->GetMaterial().SetBaseColor(
+        glm::vec4(1.0f)
+    );
+	// Set the base color texture of the cube's material to the test texture
+    cube->GetMaterial().SetBaseColorTexture(
+        m_testTexture.GetID()
     );
 
     cube->SetPosition(position);
@@ -259,11 +303,16 @@ bool BoxEngine::AddEditableCube(
         return false;
     }
 
+   
+
     m_entities.push_back(
         std::move(cube)
     );
 
 	m_selectedEntityID = entityID; // set the newly added cube as the selected entity
+
+
+	
 
     BOX_LOG_INFO(
         "Added editable cube. Entity count: "
@@ -281,11 +330,17 @@ bool BoxEngine::AddEditableSphere(const glm::vec3& position)
         "Sphere " +
         std::to_string(entityID);
 
-    auto sphere =
-        std::make_unique<Entity>(
-            entityID,
-            name
-        );
+    auto sphere = std::make_unique<Entity>(entityID, name);
+
+	// Set the base color of the sphere's material to white
+    sphere->GetMaterial().SetBaseColor(
+        glm::vec4(1.0f)
+    );
+	// Set the base color texture of the sphere's material to the test texture
+    sphere->GetMaterial().SetBaseColorTexture(
+         m_testTexture.GetID()
+    );
+
 
     sphere->SetPosition(position);
 
@@ -300,10 +355,6 @@ bool BoxEngine::AddEditableSphere(const glm::vec3& position)
 
     return true;
 }
-
-
-
-
 
 // Return a const reference to the vector of unique_ptr<Entity> for the editor panels to access the entities in the scene
 const std::vector<std::unique_ptr<Entity>>&
@@ -479,23 +530,43 @@ void BoxEngine::RenderScene()
                 glm::vec3(0.35f)
             );
 
-            m_grid->Render(*m_gridShader, view, projection);
+            m_grid->RenderPreview(*m_gridShader, view, projection);
         }
         
         RenderSelectedEntityOutline(view, projection);
+		// ############################### new RenderScene ########################################
+        const int viewportWidth =
+            m_sceneFramebuffer.GetWidth();
 
-        // Render entities
+        const int viewportHeight =
+            m_sceneFramebuffer.GetHeight();
+
+        float aspectRatio = 1.0f;
+
+        if (viewportHeight > 0)
+        {
+            aspectRatio =
+                static_cast<float>(viewportWidth) /
+                static_cast<float>(viewportHeight);
+        }
+
         for (const auto& entity : m_entities)
         {
             if (entity)
             {
-                entity->Render(
-                    *m_sceneShader,
-                    view,
-                    projection
-                );
+                entity->RenderScene(*m_sceneShader, *m_camera, aspectRatio);
             }
         }
+
+
+        // RenderPreview entities
+        /*for (const auto& entity : m_entities)
+        {
+            if (entity)
+            {
+                entity->RenderPreview(*m_sceneShader, view, projection);
+            }
+        }*/
 
        
 
@@ -528,7 +599,7 @@ void BoxEngine::RenderScene()
                     0.0f
                 );
 
-            m_moveGizmo->Render(
+            m_moveGizmo->RenderPreview(
                 *m_gizmoShader,
                 gizmoPosition,
                 gizmoScale,

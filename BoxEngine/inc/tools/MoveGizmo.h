@@ -18,7 +18,7 @@ public:
 
     bool Create();
 
-    void Render(
+    void RenderPreview(
         Shader& shader,
         const glm::vec3& position,
         float scale,
