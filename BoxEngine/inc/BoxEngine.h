@@ -70,12 +70,14 @@ public:
 
     TransformTool m_activeTool = TransformTool::Move;
 
+    GLuint LoadTexture(const std::string& path);
 
 private:
     void RenderSelectedEntityOutline(const glm::mat4& view, const glm::mat4& projection); // RenderPreview the outline of the selected entity
 
-	Texture m_testTexture; // for testing the texture loading and rendering
-    //std::vector<std::unique_ptr<Texture>> m_textures;
+	Texture m_defaultTexture; // The Default texture for loading and rendering, checkerboard texture. 
+
+	std::vector<std::unique_ptr<Texture>> m_textures; // the main texture storage for the engine.
 
 private:
     Framebuffer m_sceneFramebuffer;

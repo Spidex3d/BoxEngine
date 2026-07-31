@@ -3,6 +3,7 @@
 #include <entity/Entity.h>
 #include <rendering/Grid.h>
 #include "camera/Camera.h"
+#include <rendering/Textures.h>
 
 #include <Helpers.h>
 #include <miniBoxLog.h>
@@ -145,6 +146,19 @@ bool BoxEngine::Initialize()
     }
 
 	// ################################################# End tools######################################################
+    const std::string crateTexturePath = helpers.GetAssetPath(
+        "assets/textures/texture/checkerboard.jpg"
+    );
+
+    if (!m_defaultTexture.LoadFromFile(crateTexturePath))
+    {
+        BOX_LOG_ERROR(
+            "Failed to load texture: "
+            << crateTexturePath
+        );
+
+        return false;
+    }
 
     m_camera = std::make_unique<Camera>(glm::vec3(6.0f, 5.0f, 8.0f));
 
@@ -154,40 +168,6 @@ bool BoxEngine::Initialize()
 
     m_camera->OrbitDistance = glm::length(m_camera->Position - m_camera->Target);
 
-
-	// ########################### Texture just for testing ############################################
-    //m_testTexture.LoadFromFile(helpers.GetAssetPath("assets/textures/texture/crate.jpg"));
-  /*  const std::string crateTexturePath = helpers.GetAssetPath(
-            "assets/textures/texture/crate.jpg"
-        );*/
-
-    const std::string crateTexturePath = helpers.GetAssetPath(
-        "assets/textures/texture/checkerboard.jpg"
-    );
-
-    if (!m_testTexture.LoadFromFile(crateTexturePath))
-    {
-        BOX_LOG_ERROR(
-            "Failed to load texture: "
-            << crateTexturePath
-        );
-
-        return false;
-    }
-      
-
-    BOX_LOG_INFO(
-        "Texture loaded: "
-        << crateTexturePath
-        << " ID="
-        << m_testTexture.GetID()
-        << " Size="
-        << m_testTexture.GetWidth()
-        << "x"
-        << m_testTexture.GetHeight()
-    );
-
-    
     if (!AddGrid(glm::vec3(0.0f, -0.5f, 0.0f), 20, 1.0f))
     {
         BOX_LOG_ERROR(
@@ -214,6 +194,8 @@ void BoxEngine::Shutdown()
 
     // Entity destructors delete their OpenGL buffers.
     m_entities.clear();
+
+    m_textures.clear();
 
     m_camera.reset();
 
@@ -287,10 +269,11 @@ bool BoxEngine::AddEditableCube(
     cube->GetMaterial().SetBaseColor(
         glm::vec4(1.0f)
     );
-	// Set the base color texture of the cube's material to the test texture
-    cube->GetMaterial().SetBaseColorTexture(
-        m_testTexture.GetID()
-    );
+    
+	// Set the base color texture of the cube's material to the m_defaultTexture checkerboard texture
+    Material& material = cube->GetMaterial();
+    material.SetBaseColorTexture(m_defaultTexture.GetID());
+    material.SetUseBaseColorTexture(true);
 
     cube->SetPosition(position);
 
@@ -336,11 +319,11 @@ bool BoxEngine::AddEditableSphere(const glm::vec3& position)
     sphere->GetMaterial().SetBaseColor(
         glm::vec4(1.0f)
     );
-	// Set the base color texture of the sphere's material to the test texture
-    sphere->GetMaterial().SetBaseColorTexture(
-         m_testTexture.GetID()
-    );
-
+  
+	// Set the base color texture of the sphere's material to the m_defaultTexture checkerboard texture
+    Material& material = sphere->GetMaterial();
+    material.SetBaseColorTexture(m_defaultTexture.GetID());
+    material.SetUseBaseColorTexture(true);
 
     sphere->SetPosition(position);
 
@@ -447,6 +430,51 @@ bool BoxEngine::RemoveEntity(int entityID)
 
     return true;
 }
+GLuint BoxEngine::LoadTexture(const std::string& path)
+{
+    if (path.empty())
+    {
+        BOX_LOG_ERROR(
+            "BoxEngine::LoadTexture received an empty path"
+        );
+
+        return 0;
+    }
+
+    auto texture =
+        std::make_unique<Texture>();
+
+    if (!texture->LoadFromFile(path))
+    {
+        BOX_LOG_ERROR(
+            "Failed to load texture: "
+            << path
+        );
+
+        return 0;
+    }
+
+    const GLuint textureID =
+        texture->GetID();
+
+    BOX_LOG_INFO(
+        "Texture loaded: "
+        << path
+        << " ID="
+        << textureID
+        << " Size="
+        << texture->GetWidth()
+        << "x"
+        << texture->GetHeight()
+    );
+
+    m_textures.push_back(
+        std::move(texture)
+    );
+
+    return textureID;
+}
+
 
 void BoxEngine::ResizeSceneViewport(
     int width,

@@ -125,8 +125,27 @@ void MaterialEditor::DrawMaterialProperties(BoxEngine& engine, Entity& entity)
         {
                        
             const std::string path = FileDialog::OpenTexture();
-
+            
             if (!path.empty())
+            {
+                const GLuint textureID =
+                    engine.LoadTexture(path);
+
+                if (textureID != 0)
+                {
+                    material.SetBaseColorTexture(
+                        textureID
+                    );
+
+                    material.SetUseBaseColorTexture(
+                        true
+                    );
+                }
+            }
+
+
+
+            /*if (!path.empty())
             {
                 const GLuint textureID =  engine.GetSceneTexture();
 
@@ -152,7 +171,7 @@ void MaterialEditor::DrawMaterialProperties(BoxEngine& engine, Entity& entity)
                         path
                     );
                 }
-            }
+            }*/
         }
 
 	}

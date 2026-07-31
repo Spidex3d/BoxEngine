@@ -15,7 +15,7 @@ bool App::Init()
     WindowConfig config;
     config.width = 1280;
     config.height = 720;
-    config.title = "Box Editor Test Window";
+    config.title = "3d Box Editor";
     config.resizable = true;
     config.vsync = true;
 
