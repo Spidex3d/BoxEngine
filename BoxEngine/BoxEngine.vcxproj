@@ -155,7 +155,6 @@
     <ClInclude Include="inc\rendering\Material.h" />
     <ClInclude Include="inc\shader\Shader.h" />
     <ClInclude Include="inc\rendering\Textures.h" />
-    <ClInclude Include="inc\tools\MoveGizmo.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="inc\rendering\grid.cpp" />
@@ -166,7 +165,6 @@
     <ClCompile Include="src\rendering\Material.cpp" />
     <ClCompile Include="src\rendering\Textures.cpp" />
     <ClCompile Include="src\shader\Shader.cpp" />
-    <ClCompile Include="src\tools\MoveGizmo.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

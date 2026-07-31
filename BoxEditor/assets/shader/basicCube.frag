@@ -1,30 +1,5 @@
 #version 460 core
 
-//in vec2 vTexCoord;
-//
-//out vec4 FragColor;
-//
-//uniform vec4 uBaseColor;
-//uniform sampler2D uBaseColorTexture;
-//uniform bool uUseBaseColorTexture;
-//
-//void main()
-//{
-//    if (uUseBaseColorTexture)
-//    {
-//        FragColor =
-//            texture(
-//                uBaseColorTexture,
-//                vTexCoord
-//            );
-//
-//        return;
-//    }
-//
-//    FragColor = uBaseColor;
-//}
-
-
 in vec3 vNormal;
 
 //in vec3 vFragPos;
@@ -99,8 +74,6 @@ void main()
     finalColor *= uLightColor;
 
     FragColor = vec4(finalColor, materialColor.a);
-    //FragColor = materialColor;
-    // test
-    //FragColor = vec4(vTexCoord, 0.0, 1.0);
+   
  
 }
