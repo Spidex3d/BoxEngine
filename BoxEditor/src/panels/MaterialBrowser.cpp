@@ -46,46 +46,21 @@ void MaterialBrowser::Draw(BoxEngine& engine)
 {
     if (ImGui::Begin("Material Browser"))
     {
-    
+          // set this as a base material not a textured material for now, we can add a textured material later
+          std::vector<MaterialEntry> materials = CollectMaterials(engine);
 
-    if (ImGui::BeginTabBar("ObjectMaterialsTabs"))
-    {
-        // ####################################################
-        // Materials tab
-        // ####################################################
-        if (ImGui::BeginTabItem("Materials"))
+          ImGui::Text("Loaded Materials: %zu", materials.size());
+          ImGui::Separator();
+          ImGui::Spacing();
+
+          DrawMaterialList(engine, materials);
+
+
+        // Draw preview in separate window if a material is selected which cab be set to a different object in the scene.
+        if (m_showPreview && m_selectedMaterial)
         {
-            // set this as a base material not a textured material for now, we can add a textured material later
-            std::vector<MaterialEntry> materials = CollectMaterials(engine);
-
-            ImGui::Text("Loaded Materials: %zu", materials.size());
-            ImGui::Separator();
-            ImGui::Spacing();
-
-            DrawMaterialList(engine, materials);
-
-
-
-            ImGui::EndTabItem();
+            DrawPreviewWindow();
         }
-        // ####################################################
-        // Textures tab
-        // ####################################################
-        if (ImGui::BeginTabItem("Textures"))
-        {
-            // set this as a textured material 
-
-            ImGui::EndTabItem();
-        }
-        ImGui::EndTabBar();
-    }
-
-    // ###################################################################
-    // Draw preview in separate window if a material is selected which cab be set to a different object in the scene.
-    if (m_showPreview && m_selectedMaterial)
-    {
-        DrawPreviewWindow();
-    }
 
     }
     ImGui::End();

@@ -12,10 +12,22 @@ bool EditorIcons::Initialize()
     m_faceIcon =
         LoadEditorTexture("assets/textures/icons/face.png");
 
+    // tools
+	m_moveToolIcon = LoadEditorTexture("assets/textures/icons/move.png");
+	m_ScaleToolIcon = LoadEditorTexture("assets/textures/icons/scale.png");
+	m_RotateToolIcon = LoadEditorTexture("assets/textures/icons/rotate.png");
+	m_LocalToolIcon = LoadEditorTexture("assets/textures/icons/local.png");
+	m_SnapToolIcon = LoadEditorTexture("assets/textures/icons/snap.png");
+
     const bool allIconsLoaded =
         m_vertexIcon.IsValid() &&
         m_edgeIcon.IsValid() &&
-        m_faceIcon.IsValid();
+        m_faceIcon.IsValid() &&
+		m_moveToolIcon.IsValid() &&
+		m_ScaleToolIcon.IsValid() &&
+		m_RotateToolIcon.IsValid() &&
+		m_LocalToolIcon.IsValid() &&
+		m_SnapToolIcon.IsValid();
 
     if (!allIconsLoaded)
     {
@@ -33,6 +45,7 @@ void EditorIcons::Shutdown()
     DestroyEditorTexture(m_vertexIcon);
     DestroyEditorTexture(m_edgeIcon);
     DestroyEditorTexture(m_faceIcon);
+	DestroyEditorTexture(m_moveToolIcon);
 }
 
 const EditorTexture& EditorIcons::GetVertexIcon() const
@@ -48,4 +61,29 @@ const EditorTexture& EditorIcons::GetEdgeIcon() const
 const EditorTexture& EditorIcons::GetFaceIcon() const
 {
     return m_faceIcon;
+}
+
+const EditorTexture& EditorIcons::GetMoveToolIcon() const
+{
+    return m_moveToolIcon;
+}
+
+const EditorTexture& EditorIcons::GetScaleToolIcon() const
+{
+	return m_ScaleToolIcon;
+}
+
+const EditorTexture& EditorIcons::GetRotateToolIcon() const
+{
+	return m_RotateToolIcon;
+}
+
+const EditorTexture& EditorIcons::GetLocalToolIcon() const
+{
+	return m_LocalToolIcon;
+}
+
+const EditorTexture& EditorIcons::GetSnapToolIcon() const
+{
+	return m_SnapToolIcon;
 }

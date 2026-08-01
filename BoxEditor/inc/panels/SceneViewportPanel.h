@@ -39,6 +39,14 @@ enum class ViewportAction
     ResetCamera
 };
 
+enum class TransformAxis
+{
+    None,
+    X,
+    Y,
+    Z
+};
+
 class SceneViewportPanel
 {
 
@@ -66,9 +74,43 @@ private:
 
 	int m_EditMode = 0;
     int m_editType = 0;
+
+    // ################################## tools ###############################
+	int m_selectedEditToolType = -1;
+    // Interactive transform state.
+    bool m_isTransforming = false;
+
+    TransformAxis m_transformAxis = TransformAxis::None;
+
+    glm::vec3 m_transformStartPosition = glm::vec3(0.0f);
+
+    ImVec2 m_transformStartMouse = ImVec2(0.0f, 0.0f);
+
+    // World units moved for each screen pixel. NEEDS PUTING SETTINGS LATER
+    float m_moveSensitivity = 0.01f;
+
+    void BeginMoveTransform(BoxEngine& engine, TransformAxis axis);
+
+    void UpdateMoveTransform(BoxEngine& engine);
+
+    void ConfirmTransform();
+
+    void CancelTransform(
+        BoxEngine& engine
+    );
+
+	// end tools
+
 	int m_AddMeshType = 0;
     		
 	ImVec2 m_sceneViewportPos = ImVec2(0, 0);
 	ImVec2 m_sceneViewportSize = ImVec2(0, 0);
+	// ################################## Transform Tool Bar Colors ###############################
+    void TransformToolBarColors()
+    {
+        const ImVec2 min = ImGui::GetItemRectMin();
+        const ImVec2 max = ImGui::GetItemRectMax();
+        ImGui::GetWindowDrawList()->AddRect(min, max, IM_COL32(50, 150, 255, 255), 4.0f, 0, 2.0f);
+    }
 
 };

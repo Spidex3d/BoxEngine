@@ -186,26 +186,6 @@ void ObjectExplorerPanel::DrawTexturesTab(BoxEngine& engine,Entity& entity)
         );
     }
 
-
-	// We can do Textures after we have material working properly, including Save and Load.
-    ImGui::Spacing();
-    ImGui::SeparatorText("Texture settings");
-    ImGui::Spacing();
-
-    if (ImGui::CollapsingHeader("Textures", ImGuiTreeNodeFlags_DefaultOpen))
-    {
-        ImGui::Text("Textures for: %s", entity.GetName().c_str());
-
-        ImGui::TextDisabled(
-            "Add a texture to the object."
-        );
-        if (ImGui::Button(
-            "Add Texture",
-            ImVec2(120.0f, 0.0f))) // change this to an image button with a texture icon later.
-        {
-            // Texture browser or file dialog later.
-        }
-    }
 }
 
 void ObjectExplorerPanel::DrawModifiersTab(Entity& entity)
