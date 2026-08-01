@@ -13,6 +13,7 @@ class EditorIcons;
 class BoxEngine;
 class EditorInput;
 class ObjectExplorerPanel;
+class HelpPanel;
 
 class App
 {
@@ -48,5 +49,6 @@ private:
 
 	MaterialBrowser m_materialBrowser;
 
+	std::unique_ptr<HelpPanel> m_helpPanel; // Help panel for ImGui
 
 };

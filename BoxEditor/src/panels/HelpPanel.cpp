@@ -1,0 +1,427 @@
+#include "panels/HelpPanel.h"
+#include <imgui/imgui.h>
+#include <imgui/ImGuiAF.h>
+void HelpPanel::Open()
+{
+    m_isOpen = true;
+}
+
+void HelpPanel::Close()
+{
+    m_isOpen = false;
+}
+
+bool HelpPanel::IsOpen() const
+{
+    return m_isOpen;
+}
+
+void HelpPanel::Draw()
+{
+    if (!m_isOpen)
+    {
+        return;
+    }
+
+    ImGui::SetNextWindowSize(
+        ImVec2(650.0f, 500.0f),
+        ImGuiCond_FirstUseEver
+    );
+
+    if (!ImGui::Begin(
+        "BoxEditor Help",
+        &m_isOpen))
+    {
+        ImGui::End();
+        return;
+    }
+
+    ImGui::TextUnformatted(
+        "BoxEditor Reference"
+    );
+
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    if (ImGui::BeginTabBar(
+        "##HelpTabs"))
+    {
+        if (ImGui::BeginTabItem(
+            "Getting Started"))
+        {
+            ImGui::TextWrapped(
+                "BoxEditor is a small 3D modelling application. "
+				"To get started right click in the viewport to add a cube. "
+                "Use the Scene Collection to select objects and "
+                "the Object Explorer to edit their properties."
+				"Texture Tab To edit materials and textures."
+            );
+
+            ImGui::Spacing();
+
+            ImGui::BulletText(
+                "Add objects from the Add Object menu."
+            );
+
+            ImGui::BulletText(
+                "Select objects by clicking them in the viewport."
+            );
+
+            ImGui::BulletText(
+                "Use the Object Explorer for precise transforms."
+            );
+
+            //IM_COL32(50, 150, 255, 255);
+            ImGui::SeparatorText(ICON_FA_CAMERA" Camera Controls");
+
+            if (ImGui::BeginTable(
+                "##ShortcutTableCamera",
+                2,
+                ImGuiTableFlags_Borders |
+                ImGuiTableFlags_RowBg))
+            {
+                ImGui::TableSetupColumn(ICON_FA_MOUSE" Mouse");
+
+                ImGui::TableSetupColumn("Camera Action");
+                ImGui::TableHeadersRow();
+
+                const auto AddShortcut =
+                    [](const char* key,
+                        const char* action)
+                {
+                    ImGui::TableNextRow();
+
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::TextUnformatted(key);
+
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::TextUnformatted(action);
+                };
+                AddShortcut(
+                    "Middle Mouse Button Down",
+                    "Orbit Camera"
+                );
+                AddShortcut(
+                    "Middle Mouse Down + Shift",
+                    "Camera Left/Right Up/Down"
+                );
+                AddShortcut(
+                    "Middle Mouse Button Scrole",
+                    "Camera Zoom In/Out"
+                );
+
+                ImGui::EndTable();
+            }
+
+
+
+
+
+
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem(
+            "Modes"))
+        {
+            ImGui::SeparatorText(
+                "Select Mode"
+            );
+
+            ImGui::TextWrapped(
+                "Used for selecting objects without performing "
+                "an active transform."
+            );
+
+            ImGui::SeparatorText(
+                "Object Mode"
+            );
+
+            ImGui::TextWrapped(
+                "Used for moving, rotating and scaling complete objects."
+            );
+
+            ImGui::SeparatorText(
+                "Edit Mode"
+            );
+
+            ImGui::TextWrapped(
+                "Used for editing mesh vertices, edges and faces."
+            );
+
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem(ICON_FA_TOOLS" Tools"))
+        {
+            ImGui::TextWrapped(
+                "Select an object and enter Object Mode."
+            );
+
+            ImGui::Spacing();
+
+            ImGui::BulletText(
+                "Click the Move tool."
+            );
+
+            ImGui::BulletText(
+                "Press X to move along the X axis."
+            );
+
+            ImGui::BulletText(
+                "Press Y to move along the Y axis."
+            );
+
+            ImGui::BulletText(
+                "Press Z to move along the Z axis."
+            );
+
+            ImGui::BulletText(
+                "Move the mouse to reposition the object."
+            );
+
+            ImGui::BulletText(
+                "Left-click to confirm."
+            );
+
+            ImGui::BulletText(
+                "Right-click "
+            );
+
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem(
+            "Materials"))
+        {
+            ImGui::TextWrapped(
+                "Select an object and open the Material Editor "
+                "inside the Object Explorer."
+            );
+
+            ImGui::Spacing();
+
+            ImGui::BulletText(
+                "Base Color changes the material colour."
+            );
+
+            ImGui::BulletText(
+                "Metallic controls whether the material behaves like metal."
+            );
+
+            ImGui::BulletText(
+                "Roughness controls how sharp or soft highlights appear."
+            );
+
+            ImGui::BulletText(
+                "Load Texture opens an image file and assigns it "
+                "to the selected object's material."
+            );
+
+            ImGui::BulletText(
+                "The Base Color can also tint the loaded texture."
+            );
+
+            ImGui::EndTabItem();
+        }
+        if (ImGui::BeginTabItem("Shortcuts"))
+        {
+            ImGui::SeparatorText(ICON_FA_CAMERA" Camera Controls");
+
+            if (ImGui::BeginTable(
+                "##ShortcutTableCamera",
+                2,
+                ImGuiTableFlags_Borders |
+                ImGuiTableFlags_RowBg))
+            {
+                ImGui::TableSetupColumn(ICON_FA_MOUSE" Mouse");
+
+                ImGui::TableSetupColumn("Camera Action");
+                ImGui::TableHeadersRow();
+
+                const auto AddShortcut =
+                    [](const char* key,
+                        const char* action)
+                {
+                    ImGui::TableNextRow();
+
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::TextUnformatted(key);
+
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::TextUnformatted(action);
+                };
+                AddShortcut(
+                    "Middle Mouse Button Down",
+                    "Orbit Camera"
+                );
+                AddShortcut(
+                    "Middle Mouse Down + Shift",
+                    "Camera Left/Right Up/Down"
+                );
+                AddShortcut(
+                    "Middle Mouse Button Scrole",
+                    "Camera Zoom In/Out"
+                );
+
+                ImGui::EndTable();
+            }
+
+            ImGui::SeparatorText(ICON_FA_ARROWS_ALT" Move Controls");
+
+            if (ImGui::BeginTable(
+                "##ShortcutTableMove",
+                2,
+                ImGuiTableFlags_Borders |
+                ImGuiTableFlags_RowBg))
+            {
+                ImGui::TableSetupColumn(ICON_FA_KEYBOARD" Key");
+
+                ImGui::TableSetupColumn(
+                    "Move Action"
+                );
+
+                ImGui::TableHeadersRow();
+
+                const auto AddShortcut =
+                    [](const char* key,
+                        const char* action)
+                {
+                    ImGui::TableNextRow();
+
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::TextUnformatted(key);
+
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::TextUnformatted(action);
+                };
+                AddShortcut(
+                    "In Object Mode",
+                    "Select Move Button"
+                );
+
+                AddShortcut(
+                    "X",
+                    "Move along the X axis"
+                );
+
+                AddShortcut(
+                    "Y",
+                    "Move along the Y axis"
+                );
+
+                AddShortcut(
+                    "Z",
+                    "Move along the Z axis"
+                );
+
+                AddShortcut(
+                    "Left Mouse",
+                    "Confirm transform"
+                );
+
+                AddShortcut(
+                    "Right Mouse",
+                    "Cancel transform"
+                );
+                
+                
+                ImGui::EndTable();
+            }
+			// next table for scale tool
+			ImGui::SeparatorText(ICON_FA_EXPAND" Scale Controls");
+
+            if (ImGui::BeginTable(
+                "##ShortcutTableScale",
+                2,
+                ImGuiTableFlags_Borders |
+                ImGuiTableFlags_RowBg))
+            {
+                ImGui::TableSetupColumn(ICON_FA_KEYBOARD" Key");
+
+                ImGui::TableSetupColumn("Scale Action");
+                ImGui::TableHeadersRow();
+
+                const auto AddShortcut =
+                    [](const char* key,
+                        const char* action)
+                {
+                    ImGui::TableNextRow();
+
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::TextUnformatted(key);
+
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::TextUnformatted(action);
+                };
+                AddShortcut(
+                    "In Object Mode",
+                    "Select Scale Button"
+                );
+
+                AddShortcut(
+                    "X",
+                    "Scale along the X axis"
+                );
+                AddShortcut(
+                    "Y",
+                    "Scale along the Y axis"
+                );
+                AddShortcut(
+                    "Z",
+                    "Scale along the Z axis"
+                );
+                AddShortcut(
+                    "Left Mouse",
+                    "Confirm transform"
+                );
+                AddShortcut(
+                    "Right Mouse",
+                    "Cancel transform"
+                );
+
+                ImGui::EndTable();
+            }
+
+			ImGui::SeparatorText(ICON_FA_COG" Other Shortcuts");
+
+			// Other shortcuts can be added here as needed.
+            if (ImGui::BeginTable(
+                "##ShortcutTableOther",
+                2,
+                ImGuiTableFlags_Borders |
+                ImGuiTableFlags_RowBg))
+            {
+                ImGui::TableSetupColumn(ICON_FA_KEYBOARD" Key");
+
+                ImGui::TableSetupColumn("Other Action");
+                ImGui::TableHeadersRow();
+
+                const auto AddShortcut =
+                    [](const char* key,
+                        const char* action)
+                {
+                    ImGui::TableNextRow();
+
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::TextUnformatted(key);
+
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::TextUnformatted(action);
+                };
+                AddShortcut(
+                    "Escape",
+                    "Close application & go to bed"
+                );
+
+                ImGui::EndTable();
+            }
+
+            ImGui::EndTabItem();
+        }
+
+        ImGui::EndTabBar();
+    }
+
+    ImGui::End();
+}

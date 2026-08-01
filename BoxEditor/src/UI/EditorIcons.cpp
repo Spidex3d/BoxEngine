@@ -18,6 +18,7 @@ bool EditorIcons::Initialize()
 	m_RotateToolIcon = LoadEditorTexture("assets/textures/icons/rotate.png");
 	m_LocalToolIcon = LoadEditorTexture("assets/textures/icons/local.png");
 	m_SnapToolIcon = LoadEditorTexture("assets/textures/icons/snap.png");
+	m_DropToolIcon = LoadEditorTexture("assets/textures/icons/drop.png");
 
     const bool allIconsLoaded =
         m_vertexIcon.IsValid() &&
@@ -27,7 +28,9 @@ bool EditorIcons::Initialize()
 		m_ScaleToolIcon.IsValid() &&
 		m_RotateToolIcon.IsValid() &&
 		m_LocalToolIcon.IsValid() &&
-		m_SnapToolIcon.IsValid();
+		m_SnapToolIcon.IsValid() &&
+		m_DropToolIcon.IsValid();
+
 
     if (!allIconsLoaded)
     {
@@ -86,4 +89,9 @@ const EditorTexture& EditorIcons::GetLocalToolIcon() const
 const EditorTexture& EditorIcons::GetSnapToolIcon() const
 {
 	return m_SnapToolIcon;
+}
+
+const EditorTexture& EditorIcons::GetDropToolIcon() const
+{
+	return m_DropToolIcon;
 }

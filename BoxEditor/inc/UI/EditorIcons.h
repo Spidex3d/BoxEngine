@@ -22,6 +22,7 @@ public:
 	const EditorTexture& GetRotateToolIcon() const;
 	const EditorTexture& GetLocalToolIcon() const;
 	const EditorTexture& GetSnapToolIcon() const;
+	const EditorTexture& GetDropToolIcon() const;
 
 private:
     EditorTexture m_vertexIcon;
@@ -33,5 +34,6 @@ private:
 	EditorTexture m_RotateToolIcon;
 	EditorTexture m_LocalToolIcon;
 	EditorTexture m_SnapToolIcon;
+	EditorTexture m_DropToolIcon;
 
 };

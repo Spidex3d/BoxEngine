@@ -12,7 +12,9 @@ enum class MenuAction
     SaveScene,
 
     AddCube,
-    AddSphere
+    AddSphere,
+    Help,
+	About
 };
 
 

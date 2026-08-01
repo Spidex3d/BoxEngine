@@ -139,6 +139,7 @@
     <ClCompile Include="src\Helpers.cpp" />
     <ClCompile Include="src\ImGuiLayer.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\panels\HelpPanel.cpp" />
     <ClCompile Include="src\panels\MainMenuBar.cpp" />
     <ClCompile Include="src\panels\MaterialBrowser.cpp" />
     <ClCompile Include="src\panels\MaterialEditor.cpp" />
@@ -146,6 +147,7 @@
     <ClCompile Include="src\panels\SceneCollectionPanel.cpp" />
     <ClCompile Include="src\panels\SceneViewportPanel.cpp" />
     <ClCompile Include="src\preview\MaterialPreview.cpp" />
+    <ClCompile Include="src\tools\TransformToolController.cpp" />
     <ClCompile Include="src\UI\EditorIcons.cpp" />
     <ClCompile Include="src\UI\EditorTexture.cpp" />
     <ClCompile Include="vendor\imgui\imgui.cpp" />
@@ -170,12 +172,14 @@
     <ClInclude Include="inc\Helpers.h" />
     <ClInclude Include="inc\ImGuiLayer.h" />
     <ClInclude Include="inc\miniBoxLog.h" />
+    <ClInclude Include="inc\panels\HelpPanel.h" />
     <ClInclude Include="inc\panels\MainMenuBar.h" />
     <ClInclude Include="inc\panels\MaterialEditor.h" />
     <ClInclude Include="inc\panels\ObjectExplorerPanel.h" />
     <ClInclude Include="inc\panels\SceneCollectionPanel.h" />
     <ClInclude Include="inc\panels\SceneViewportPanel.h" />
     <ClInclude Include="inc\preview\MaterialPreview.h" />
+    <ClInclude Include="inc\tools\TransformToolController.h" />
     <ClInclude Include="inc\UI\EditorIcons.h" />
     <ClInclude Include="inc\UI\EditorTexture.h" />
     <ClInclude Include="inc\panels\MaterialBrowser.h" />

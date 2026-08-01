@@ -8,6 +8,7 @@
 #include <UI\EditorIcons.h>
 #include <camera/Camera.h>
 
+
 ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const EditorIcons& icons)
 {
    
@@ -61,10 +62,12 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
         }
         else
         {
-            if (m_isTransforming)
+            if (m_transformTools.IsTransforming())
             {
-                CancelTransform(engine);
+                m_transformTools.CancelTransform(engine);
             }
+
+            action = ViewportAction::SetSelectMode;
 
             BOX_LOG_INFO(
                 "Select mode selected"
@@ -85,6 +88,14 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     const ImVec2 iconSize(18, 18);
     // AddVertexMode AddEdgeMode AddFaceMode
     ImGui::SameLine();
+
+	const bool EditModeActive = m_EditMode == 2; // set it editing mode active if the combo box is set to edit mode
+
+    if (!EditModeActive)
+    {
+        ImGui::BeginDisabled();
+    }
+
     ImGui::PushID("editTargetIcons");
     // ########################
     if (ImGui::ImageButton("##VertexTool", reinterpret_cast<ImTextureID>(static_cast<intptr_t>(vertexIcon.id)),iconSize))
@@ -139,6 +150,11 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
         ImGui::SetTooltip("Face Edit");
     }
    
+    if (!EditModeActive)
+    {
+        ImGui::EndDisabled();
+    }
+
     ImGui::PopID();
     ImGui::SameLine();
 
@@ -152,18 +168,26 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 	const EditorTexture& rotateIcon = icons.GetRotateToolIcon();
 	const EditorTexture& localIcon = icons.GetLocalToolIcon();
 	const EditorTexture& snapIcon = icons.GetSnapToolIcon();
+	const EditorTexture& dropIcon = icons.GetDropToolIcon();
     ImGui::PushID("TransformIcons");
+
+	const bool ObjectModeActive = m_EditMode == 1; // set it object mode active if the combo box is set to object mode
+
+    if (!ObjectModeActive)
+    {
+        ImGui::BeginDisabled();
+    }
+
     // Move
     ImGui::SameLine();
     if (ImGui::ImageButton("##MoveTool", reinterpret_cast<ImTextureID>(static_cast<intptr_t>(moveIcon.id)), iconSize))
     {
-        m_selectedEditToolType = 0;
+        m_transformTools.SetActiveTool(TransformToolType::Move);
         
     }
-    if (m_selectedEditToolType == 0)
+    if (m_transformTools.GetActiveTool() == TransformToolType::Move)
     {
         TransformToolBarColors();
-        
     }
     if (ImGui::IsItemHovered())
     {
@@ -173,9 +197,9 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 	ImGui::SameLine();
     if (ImGui::ImageButton("##ScaleTool", reinterpret_cast<ImTextureID>(static_cast<intptr_t>(scaleIcon.id)), iconSize))
     {
-        m_selectedEditToolType = 1;
+        m_transformTools.SetActiveTool(TransformToolType::Scale);
     }
-    if (m_selectedEditToolType == 1)
+    if (m_transformTools.GetActiveTool() == TransformToolType::Scale)
     {
         TransformToolBarColors();
        
@@ -188,9 +212,9 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     ImGui::SameLine();
     if (ImGui::ImageButton("##RotateTool", reinterpret_cast<ImTextureID>(static_cast<intptr_t>(rotateIcon.id)), iconSize))
     {
-        m_selectedEditToolType = 2;
+		m_transformTools.SetActiveTool(TransformToolType::Rotate);
     }
-    if (m_selectedEditToolType == 2)
+    if (m_transformTools.GetActiveTool() == TransformToolType::Rotate)
     {
         TransformToolBarColors();
         
@@ -203,9 +227,9 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     ImGui::SameLine();
     if (ImGui::ImageButton("##LocalTool", reinterpret_cast<ImTextureID>(static_cast<intptr_t>(localIcon.id)), iconSize))
     {
-        m_selectedEditToolType = 3;
+		m_transformTools.SetActiveTool(TransformToolType::Local);
     }
-    if (m_selectedEditToolType == 3)
+    if (m_transformTools.GetActiveTool() == TransformToolType::Local)
     {
         TransformToolBarColors();
         
@@ -218,9 +242,9 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     ImGui::SameLine();
     if (ImGui::ImageButton("##SnapTool", reinterpret_cast<ImTextureID>(static_cast<intptr_t>(snapIcon.id)), iconSize))
     {
-        m_selectedEditToolType = 4;
+		m_transformTools.SetActiveTool(TransformToolType::Snap);
     }
-    if (m_selectedEditToolType == 4)
+    if (m_transformTools.GetActiveTool() == TransformToolType::Snap)
     {
         TransformToolBarColors();
         
@@ -229,35 +253,30 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     {
         ImGui::SetTooltip("Snap Tool");
     }
+	// Drop the object to the ground plane / grid
+    ImGui::SameLine();
+    if (ImGui::ImageButton("##DropTool", reinterpret_cast<ImTextureID>(static_cast<intptr_t>(dropIcon.id)), iconSize))
+    {
+        m_transformTools.SetActiveTool(TransformToolType::Drop);
+    }
+    if (m_transformTools.GetActiveTool() == TransformToolType::Drop)
+    {
+        TransformToolBarColors();
+
+    }
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::SetTooltip("Drop Tool");
+    }
+
+    if (!ObjectModeActive)
+    {
+        ImGui::EndDisabled();
+    }
 
 	ImGui::PopID();
 
-    // ###############################################################################################################
-	// ################################################ Add Mesh Combo Box ###########################################
-    // ###############################################################################################################
-	// add a combo box to add a new mesh, with options for cube, plane, sphere, ico sphere, cone, torus
-    const char* addObj[] = { "Add Mesh", ICON_FA_CUBE " Add Cube", ICON_FA_SQUARE " Add Plane", ICON_FA_CIRCLE " Add UV Sphere", ICON_FA_CIRCLE " Add ICO Sphere",
-        " Add Cone", " Add Torus" };
-    ImGui::SetNextItemWidth(100.0f);
-    ImGui::SameLine();
-
-    if (ImGui::Combo("##combo_addObj", &m_AddMeshType, addObj, IM_ARRAYSIZE(addObj))) {
-
-        if (m_AddMeshType == 1) {
-            action = ViewportAction::AddEditableCube;
-            BOX_LOG_INFO("Add Cube");
-        }
-        if (m_AddMeshType == 2) {
-            action = ViewportAction::AddEditableCube;
-            BOX_LOG_INFO("Add Plane");
-        }
-        else if (m_AddMeshType == 3) {
-            action = ViewportAction::AddEditableSphere;
-            BOX_LOG_INFO("Add Sphere");
-        }
-    }
-
-
+    
     ImGui::PopStyleVar(2);
     ImGui::PopStyleColor(4); // pop all 4 pushed colors has to match top
     ImGui::PopID();
@@ -386,7 +405,8 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 
         const GLuint sceneTexture = engine.GetSceneTexture();
 
-        const ImVec2 imageTopLeft = ImGui::GetCursorScreenPos(); // piking
+        const ImVec2 imageTopLeft = ImGui::GetCursorScreenPos(); // picking
+
 		// draw the scene texture to the ImGui window from the framebuffer, if the texture is valid
         if (sceneTexture != 0)
         {
@@ -397,17 +417,20 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             m_sceneViewportPos = ImGui::GetItemRectMin();
             m_sceneViewportSize = ImGui::GetItemRectSize();
 
-            // ############ Transforme tools ####################
+            // ############################################################################################
+            // #################################### Transforme tools ######################################
+            // ############################################################################################
             const bool viewportHovered = ImGui::IsItemHovered();
+            const bool objectModeActive = m_EditMode == 1;
+            m_transformTools.HandleInput(engine, viewportHovered, objectModeActive);
+			const bool wasTransforming = m_transformTools.IsTransforming();
 
-            const bool moveToolActive = m_selectedEditToolType == 0;
-           
-
+            //############################################################################################################
             // ################################################ Mouse Picking ############################################
-           
+            //############################################################################################################
             // This prevents the tool confirmation click from performing another picking operation.
-            const bool viewportClicked = !m_isTransforming && viewportHovered &&
-                ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+            
+            const bool viewportClicked = !wasTransforming && viewportHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left);
 
             if (viewportClicked)
             {
@@ -450,63 +473,14 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                 );
             }
 		    // ############################################# Mouse Picking end ############################################
-
-			// ############################################# Transform Tool Update ########################################
-            const bool wasTransforming = m_isTransforming;
-            const bool objectModeActive = m_EditMode == 1;
-            if (!m_isTransforming && viewportHovered && objectModeActive && moveToolActive && engine.GetSelectedEntity())
-            {
-                if (ImGui::IsKeyPressed(ImGuiKey_X, false))
-                {
-                    BeginMoveTransform(engine, TransformAxis::X
-                    );
-                }
-                else if (ImGui::IsKeyPressed(ImGuiKey_Y, false))
-                {
-                    BeginMoveTransform(engine, TransformAxis::Y);
-                }
-                else if (ImGui::IsKeyPressed(ImGuiKey_Z, false))
-                {
-                    BeginMoveTransform(engine, TransformAxis::Z
-                    );
-                }
-            }
-
-            if (m_isTransforming)
-            {
-                UpdateMoveTransform(engine);
-
-                // Left-click accepts the new position.
-                if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-                {
-                    ConfirmTransform();
-                }
-
-                // Escape or right-click restores the old position.
-                //if (ImGui::IsKeyPressed(ImGuiKey_Escape, false) || ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-                if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-                {
-                    CancelTransform(engine); 
-                }
-
-                // Normal object selection.
-                const bool viewportClicked = !wasTransforming && viewportHovered &&
-                    ImGui::IsMouseClicked(ImGuiMouseButton_Left);
-
-            }
-			// ############################################# End Transform Tool Update #####################################
-
+			
         }
    
     }
-    // ################################################################################################
 
     ImGui::End();
     ImGui::PopStyleVar(1);
-    //ImGui::PopStyleColor(4); // pop all 4 pushed colors has to match top
-    //ImGui::PopID();
-
-
+   
     return action;
 }
 
@@ -558,114 +532,6 @@ glm::vec3 SceneViewportPanel::CreateMouseRay(float mouseX, float mouseY, float v
         );
 
     return rayWorld;
-}
-// ################################################################################################################
-// ############################################## Transform Tool Functions ########################################
-// ################################################################################################################
-void SceneViewportPanel::BeginMoveTransform(
-    BoxEngine& engine,
-    TransformAxis axis)
-{
-    Entity* selectedEntity =
-        engine.GetSelectedEntity();
-
-    if (!selectedEntity)
-    {
-        return;
-    }
-
-    m_isTransforming = true;
-    m_transformAxis = axis;
-
-    m_transformStartPosition =
-        selectedEntity->GetPosition();
-
-    m_transformStartMouse =
-        ImGui::GetMousePos();
-}
-
-void SceneViewportPanel::UpdateMoveTransform(BoxEngine& engine)
-{
-    if (!m_isTransforming)
-    {
-        return;
-    }
-
-    Entity* selectedEntity = engine.GetSelectedEntity();
-
-    if (!selectedEntity)
-    {
-        m_isTransforming = false;
-        m_transformAxis = TransformAxis::None;
-
-        return;
-    }
-
-    const ImVec2 currentMouse = ImGui::GetMousePos();
-
-    const float mouseDeltaX = currentMouse.x - m_transformStartMouse.x;
-
-    const float mouseDeltaY = currentMouse.y - m_transformStartMouse.y;
-
-    glm::vec3 newPosition = m_transformStartPosition;
-
-    switch (m_transformAxis)
-    {
-    case TransformAxis::X:
-        newPosition.x +=
-            mouseDeltaX *
-            m_moveSensitivity;
-        break;
-
-    case TransformAxis::Y:
-        newPosition.y -=
-            mouseDeltaY *
-            m_moveSensitivity;
-        break;
-
-    case TransformAxis::Z:
-        /*
-         * For now, horizontal mouse movement
-         * controls world Z as well.
-         */
-        newPosition.z +=
-            mouseDeltaX *
-            m_moveSensitivity;
-        break;
-
-    case TransformAxis::None:
-    default:
-        return;
-    }
-
-    selectedEntity->SetPosition(newPosition);
-}
-
-void SceneViewportPanel::ConfirmTransform()
-{
-    m_isTransforming = false;
-
-    m_transformAxis =
-        TransformAxis::None;
-}
-
-void SceneViewportPanel::CancelTransform(
-    BoxEngine& engine)
-{
-    Entity* selectedEntity =
-        engine.GetSelectedEntity();
-
-    if (selectedEntity)
-    {
-        selectedEntity->SetPosition(
-            m_transformStartPosition
-        );
-    }
-
-    m_isTransforming = false;
-
-    m_transformAxis =
-        TransformAxis::None;
 }
 
 void SceneViewportPanel::Shutdown() {

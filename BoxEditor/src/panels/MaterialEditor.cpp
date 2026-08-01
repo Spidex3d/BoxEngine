@@ -120,7 +120,6 @@ void MaterialEditor::DrawMaterialProperties(BoxEngine& engine, Entity& entity)
             material.SetUseBaseColorTexture(useTexture);
         }
         
-        //std::string path;
         if (ImGui::Button("Load Texture"))
         {
                        
@@ -142,36 +141,18 @@ void MaterialEditor::DrawMaterialProperties(BoxEngine& engine, Entity& entity)
                     );
                 }
             }
+                        
+        }
+		ImGui::SameLine();
+        if (ImGui::Button("Map UVs"))
+        {
 
-
-
-            /*if (!path.empty())
-            {
-                const GLuint textureID =  engine.GetSceneTexture();
-
-                if (textureID != 0)
-                {
-                    material.SetBaseColorTexture(
-                        textureID
-                    );
-
-                    material.SetUseBaseColorTexture(
-                        true
-                    );
-
-                    BOX_LOG_INFO(
-                        "Texture loaded for entity: " +
-                        entity.GetName()
-                    );
-                }
-                else
-                {
-                    BOX_LOG_ERROR(
-                        "Failed to load texture: " +
-                        path
-                    );
-                }
-            }*/
+			// open a panel to map the UVs of the selected entity, this will be a simple UV mapping tool that allows
+            // the user to select a texture and map it to the entity's mesh.
+            // This will be a simple implementation for now, but can be expanded later.
+			// at some point we will need to unwrap the mesh and allow the user to manually adjust the UVs,
+            // but for now we will just use a simple planar mapping.
+			// we need to make this intuitive and easy to use, Blender seems very complex for UV mapping,
         }
 
 	}

@@ -6,7 +6,7 @@
 #include "camera/Camera.h"
 #include <EditorInput.h>
 #include <imgui/imgui.h>
-
+#include "panels/HelpPanel.h"
 App::App() = default;
 App::~App() = default;
 
@@ -99,6 +99,7 @@ bool App::Init()
         return false;
     }
     
+    m_helpPanel = std::make_unique<HelpPanel>();
    
 
     m_isRunning = true;
@@ -160,6 +161,11 @@ int App::Run()
 			m_imgObjectExplorer->DrawObjectExplorer(*m_engine); // draw the Object Explorer panel for the selected entity
         }
 
+        if (m_helpPanel)
+        {
+            m_helpPanel->Draw();
+        }
+
         // In your Draw() or Update() method
         m_materialBrowser.Draw(*m_engine); // Pass your BoxEngine instance
 
@@ -195,7 +201,19 @@ void App::HandleMenuAction(
 		engine.AddEditableSphere(glm::vec3(0.0f));
          
 		 break;
+    case MenuAction::Help:
+        if (m_helpPanel)
+        {
+            m_helpPanel->Open();
+        }
+		BOX_LOG_INFO("Help menu action triggered");
+		break;
+    case MenuAction::About:
 
+        // engine.
+        BOX_LOG_INFO("About menu action triggered");
+        break;
+         
     case MenuAction::None:
     default:
         break;
@@ -334,6 +352,11 @@ void App::Shutdown()
     if (m_imgMenu)
     {
         m_imgMenu.reset();
+    }
+	// Shutdown the Scene help panel
+    if (m_helpPanel)
+    {
+    m_helpPanel.reset();
     }
 
     // ImGui requires a valid GLFW window and OpenGL context during shutdown.

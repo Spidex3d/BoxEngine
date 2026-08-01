@@ -129,6 +129,21 @@ MenuAction MainMenuBar::DrawMainMenu()
             ImGui::EndMenu();
         }
 
+        if (ImGui::BeginMenu("Help"))
+        {
+            if (ImGui::MenuItem("Help"))
+            {
+				action = MenuAction::Help;
+                
+            }
+            if (ImGui::MenuItem("About"))
+            {
+				action = MenuAction::About;
+            }
+
+            ImGui::EndMenu();
+        }
+
         ImGui::EndMainMenuBar();
     }
 
