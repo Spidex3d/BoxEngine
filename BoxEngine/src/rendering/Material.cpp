@@ -75,14 +75,6 @@ GLuint Material::GetBaseColorTexture() const
     return m_baseColorTexture;
 }
 
-void Material::SetBaseColorTexture(
-    GLuint textureID)
-{
-    m_baseColorTexture = textureID;
-    m_useBaseColorTexture =
-        textureID != 0;
-}
-
 bool Material::UsesBaseColorTexture() const
 {
     return

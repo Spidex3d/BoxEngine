@@ -132,8 +132,12 @@ void MaterialEditor::DrawMaterialProperties(BoxEngine& engine, Entity& entity)
 
                 if (textureID != 0)
                 {
-                    material.SetBaseColorTexture(
+                    /*material.SetBaseColorTexture(
                         textureID
+                    );*/ 
+                    material.SetBaseColorTexture(
+                        textureID,
+                        path
                     );
 
                     material.SetUseBaseColorTexture(

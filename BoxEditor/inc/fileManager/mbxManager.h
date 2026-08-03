@@ -6,6 +6,30 @@
 // Import mbx files from a specified directory
 // version 0.1
 class Entity;
+class MeshData;
+
+//struct MBXImportData
+//{
+//	std::string objectName;
+//
+//	MeshData mesh;
+//
+//	glm::vec4 baseColor = glm::vec4(1.0f);
+//
+//	float metallic = 0.0f;
+//	float roughness = 0.5f;
+//	float alpha = 1.0f;
+//
+//	glm::vec3 emissionColor = glm::vec3(0.0f);
+//
+//	float emissionStrength = 0.0f;
+//
+//	std::filesystem::path baseColorTexturePath;
+//};
+
+
+
+
 
 class mbxManager
 {
@@ -20,7 +44,7 @@ public:
 	// we also need to export all the textures used in the mbx file to the same directory as the mbx file.
 	bool ExportMBX(const Entity& entity, const std::filesystem::path& mbxFilePath);
 
-	bool ImportMBX(const std::filesystem::path& mbxFilePath); // Import mbx files from a specified directory
+	//bool ImportMBX(const std::filesystem::path& mbxFilePath, MBXImportData& outData); // Import mbx files from a specified directory
 
 private:
 	// Build the mbx file then call ExportMBX to export it to a specified directory

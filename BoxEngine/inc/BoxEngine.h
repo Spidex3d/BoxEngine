@@ -71,6 +71,8 @@ public:
 
     GLuint LoadTexture(const std::string& path);
 
+	Entity* AddImportedMesh(const std::string& name, const MeshData& meshData); // Add an imported mesh to the scene as an entity
+
 private:
     void RenderSelectedEntityOutline(const glm::mat4& view, const glm::mat4& projection); // RenderPreview the outline of the selected entity
 
@@ -95,7 +97,8 @@ private:
 
 	int m_selectedEntityID = -1; // used to track the selected entity in the editor panels
 
-	//std::string m_defaultTexturePath; // The default texture path for the checkerboard texture for save and load purposes
+    const std::string checkerboardPath = m_defaultTexture.GetSourcePath().string();
+	std::string m_defaultTexturePath; // The default texture path for the checkerboard texture for save and load purposes
 
 	// piking helper function to check if a ray intersects an AABB in world space
     bool RayIntersectsAABB(

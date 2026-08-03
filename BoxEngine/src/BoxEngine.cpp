@@ -106,35 +106,17 @@ bool BoxEngine::Initialize()
     
 
 	// ################################################# Default texture ######################################################
-    const std::string crateTexturePath = helpers.GetAssetPath(
-        "assets/textures/texture/checkerboard.jpg");
+    
+    m_defaultTexturePath = helpers.GetAssetPath("assets/textures/texture/checkerboard.jpg");
 
-   /* m_defaultTexturePath =
-        helpers.GetAssetPath(
-            "assets/textures/texture/checkerboard.jpg"
-        );
-
-    if (!m_defaultTexture.LoadFromFile(
-        m_defaultTexturePath))
+    if (!m_defaultTexture.LoadFromFile(m_defaultTexturePath))
     {
-        BOX_LOG_ERROR(
-            "Failed to load default texture: "
-            << m_defaultTexturePath
-        );
-
-        return false;
-    }*/
-
-    if (!m_defaultTexture.LoadFromFile(crateTexturePath))
-    {
-        BOX_LOG_ERROR(
-            "Failed to load texture: "
-            << crateTexturePath
-        );
+        BOX_LOG_ERROR("Failed to load default texture: " << m_defaultTexturePath);
 
         return false;
     }
 
+   
     m_camera = std::make_unique<Camera>(glm::vec3(6.0f, 5.0f, 8.0f));
 
     m_camera->SetPositionYawPitch(glm::vec3(6.0f, 5.0f, 8.0f), -135.0f, -25.0f);
@@ -233,22 +215,12 @@ bool BoxEngine::AddEditableCube(
         entityName
     );
 
-	 //Set the base color of the cube's material to white
-    cube->GetMaterial().SetBaseColor(
-        glm::vec4(1.0f)
-    );
-    
-    /*const std::string checkerboardPath = m_defaultTexture.GetSourcePath().string();
-	cube->GetMaterial()
-        .SetBaseColorTexture(
-            m_defaultTexture.GetID(),
-            checkerboardPath
-        );*/
+    cube->GetMaterial().SetBaseColorTexture(m_defaultTexture.GetID(), m_defaultTexturePath);
 
 
 	// Set the base color texture of the cube's material to the m_defaultTexture checkerboard texture
     Material& material = cube->GetMaterial();
-    material.SetBaseColorTexture(m_defaultTexture.GetID());
+   
     material.SetUseBaseColorTexture(true);
 
     cube->SetPosition(position);
@@ -291,14 +263,12 @@ bool BoxEngine::AddEditableSphere(const glm::vec3& position)
 
     auto sphere = std::make_unique<Entity>(entityID, name);
 
-	// Set the base color of the sphere's material to white
-    sphere->GetMaterial().SetBaseColor(
-        glm::vec4(1.0f)
-    );
+
+    sphere->GetMaterial().SetBaseColorTexture(m_defaultTexture.GetID(), m_defaultTexturePath);
   
 	// Set the base color texture of the sphere's material to the m_defaultTexture checkerboard texture
     Material& material = sphere->GetMaterial();
-    material.SetBaseColorTexture(m_defaultTexture.GetID());
+   
     material.SetUseBaseColorTexture(true);
 
     sphere->SetPosition(position);
@@ -451,6 +421,43 @@ GLuint BoxEngine::LoadTexture(const std::string& path)
     return textureID;
 }
 
+Entity* BoxEngine::AddImportedMesh(
+    const std::string& name,
+    const MeshData& meshData)
+{
+    const int entityID =
+        m_nextEntityID++;
+
+    auto entity =
+        std::make_unique<Entity>(
+            entityID,
+            name
+        );
+
+    if (!entity->CreateFromMeshData(
+        meshData))
+    {
+        BOX_LOG_ERROR(
+            "Failed to create imported entity"
+        );
+
+        return nullptr;
+    }
+
+    Entity* result =
+        entity.get();
+
+    m_entities.push_back(
+        std::move(entity)
+    );
+
+    m_selectedEntityID =
+        entityID;
+
+    return result;
+}
+
+
 
 void BoxEngine::ResizeSceneViewport(
     int width,
@@ -568,7 +575,6 @@ void BoxEngine::RenderScene()
 
     Framebuffer::Unbind();
 }
-
 
 
 GLuint BoxEngine::GetSceneTexture() const

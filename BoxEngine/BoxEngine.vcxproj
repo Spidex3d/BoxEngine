@@ -162,7 +162,6 @@
     <ClCompile Include="src\BoxEngine.cpp" />
     <ClCompile Include="src\camera\Camera.cpp" />
     <ClCompile Include="src\entity\Entity.cpp" />
-    <ClCompile Include="src\entity\MeshData.cpp" />
     <ClCompile Include="src\rendering\Framebuffer.cpp" />
     <ClCompile Include="src\rendering\Material.cpp" />
     <ClCompile Include="src\rendering\Textures.cpp" />

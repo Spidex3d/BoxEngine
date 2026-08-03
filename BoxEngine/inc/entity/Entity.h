@@ -27,6 +27,8 @@ public:
     Entity(Entity&& other) noexcept;
     Entity& operator=(Entity&& other) noexcept;
 
+	bool CreateFromMeshData(const MeshData& meshData);   // Create an entity from existing .mbx mesh data
+
     bool CreateCube();
     bool CreateSphere(int sectors = 32, int stacks = 16);
 

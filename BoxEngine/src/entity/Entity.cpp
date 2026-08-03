@@ -94,29 +94,187 @@ Entity& Entity::operator=(Entity&& other) noexcept
 
     return *this;
 
-    /*if (this == &other)
-        return *this;
-
+    
+}
+// Create an entity from existing .mbx mesh data
+bool Entity::CreateFromMeshData(const MeshData& meshData)
+{
     Destroy();
 
-    m_id = other.m_id;
-    m_name = std::move(other.m_name);
+    if (!meshData.IsValid())
+    {
+        BOX_LOG_ERROR("Entity::CreateFromMeshData received invalid mesh data");
 
-    m_position = other.m_position;
-    m_rotation = other.m_rotation;
-    m_scale = other.m_scale;
-    m_visible = other.m_visible;
+        return false;
+    }
 
-    m_vao = other.m_vao;
-    m_vbo = other.m_vbo;
-    m_vertexCount = other.m_vertexCount;
+    m_meshData = meshData;
 
-    other.m_vao = 0;
-    other.m_vbo = 0;
-    other.m_vertexCount = 0;
+    std::vector<float> interleavedVertices;
 
-    return *this;*/
+    interleavedVertices.reserve(
+        m_meshData.vertices.size() * 8
+    );
+
+    for (const MeshVertex& vertex :
+        m_meshData.vertices)
+    {
+        // Position
+        interleavedVertices.push_back(
+            vertex.position.x
+        );
+
+        interleavedVertices.push_back(
+            vertex.position.y
+        );
+
+        interleavedVertices.push_back(
+            vertex.position.z
+        );
+
+        // Normal
+        interleavedVertices.push_back(
+            vertex.normal.x
+        );
+
+        interleavedVertices.push_back(
+            vertex.normal.y
+        );
+
+        interleavedVertices.push_back(
+            vertex.normal.z
+        );
+
+        // UV
+        interleavedVertices.push_back(
+            vertex.uv.x
+        );
+
+        interleavedVertices.push_back(
+            vertex.uv.y
+        );
+    }
+
+    glGenVertexArrays(1, &m_vao);
+
+    glGenBuffers(1, &m_vbo);
+
+    glBindVertexArray(m_vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+
+    glBufferData(
+        GL_ARRAY_BUFFER,
+        interleavedVertices.size() *
+        sizeof(float),
+        interleavedVertices.data(),
+        GL_STATIC_DRAW
+    );
+
+    if (m_meshData.HasIndices())
+    {
+        glGenBuffers(1, &m_ebo);
+
+        glBindBuffer(
+            GL_ELEMENT_ARRAY_BUFFER,
+            m_ebo
+        );
+
+        glBufferData(
+            GL_ELEMENT_ARRAY_BUFFER,
+            m_meshData.indices.size() *
+            sizeof(std::uint32_t),
+            m_meshData.indices.data(),
+            GL_STATIC_DRAW
+        );
+
+        m_useIndices = true;
+
+        m_indexCount =
+            static_cast<GLsizei>(
+                m_meshData.indices.size()
+                );
+    }
+    else
+    {
+        m_useIndices = false;
+        m_indexCount = 0;
+    }
+
+    constexpr GLsizei stride =
+        8 * sizeof(float);
+
+    // Position
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(
+        0,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        stride,
+        reinterpret_cast<void*>(0)
+    );
+
+    // Normal
+    glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(
+        1,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        stride,
+        reinterpret_cast<void*>(
+            3 * sizeof(float)
+            )
+    );
+
+    // UV
+    glEnableVertexAttribArray(2);
+
+    glVertexAttribPointer(
+        2,
+        2,
+        GL_FLOAT,
+        GL_FALSE,
+        stride,
+        reinterpret_cast<void*>(
+            6 * sizeof(float)
+            )
+    );
+
+    glBindVertexArray(0);
+
+    m_vertexCount =
+        static_cast<GLsizei>(
+            m_meshData.vertices.size()
+            );
+
+    const bool valid =
+        m_vao != 0 &&
+        m_vbo != 0 &&
+        m_vertexCount > 0;
+
+    if (!valid)
+    {
+        BOX_LOG_ERROR("Entity::CreateFromMeshData failed");
+
+        Destroy();
+        return false;
+    }
+
+    BOX_LOG_INFO("Created entity from imported mesh: "
+        << m_name
+        << " Vertices="
+        << m_vertexCount
+        << " Indices="
+        << m_indexCount
+    );
+
+    return true;
 }
+
 
 bool Entity::CreateCube()
 {
@@ -757,19 +915,13 @@ bool Entity::CreateSphere(int sectors, int stacks)
         static_cast<GLsizei>(
             m_meshData.vertices.size()
             );
-   /* m_vertexCount =
-        static_cast<GLsizei>(
-            vertices.size() / 8
-            );*/
+   
     m_indexCount =
         static_cast<GLsizei>(
             m_meshData.indices.size()
             );
 
-   /* m_indexCount =
-        static_cast<GLsizei>(
-            indices.size()
-            );*/
+   
 
     m_useIndices = true;
 

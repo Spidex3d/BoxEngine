@@ -192,6 +192,7 @@ void App::HandleMenuAction(
 	
     switch (action)
     {
+		// ################################## save and load mbx actions #####################################################
     case MenuAction::Exportmbx:
         {
             Entity* selectedEntity = engine.GetSelectedEntity();
@@ -214,6 +215,87 @@ void App::HandleMenuAction(
             BOX_LOG_INFO("Export .mbx menu action triggered");
             break;
         }
+		// implement import from .mbx file format
+    /*case MenuAction::Importmbx:
+    {
+        const std::string path = FileDialog::OpenMBX("mbx", "MBX Files\0*.mbx\0All Files\0*.*\0\0");
+
+        if (path.empty())
+        {
+            break;
+        }
+
+        MBXImportData importedData;
+
+        if (!m_mbxManager->ImportMBX(
+            path,
+            importedData))
+        {
+            BOX_LOG_ERROR("Failed to import MBX: " << path);
+
+            break;
+        }
+
+        Entity* importedEntity = engine.AddImportedMesh(
+                importedData.objectName, importedData.mesh );
+
+        if (!importedEntity)
+        {
+            break;
+        }
+
+        Material& material = importedEntity->GetMaterial();
+
+        material.SetBaseColor(importedData.baseColor);
+
+        material.SetMetallic(importedData.metallic);
+
+        material.SetRoughness(importedData.roughness);
+
+        material.SetAlpha(importedData.alpha);
+
+        material.SetEmissionColor(importedData.emissionColor);
+
+        material.SetEmissionStrength(importedData.emissionStrength);
+
+        if (!importedData
+            .baseColorTexturePath
+            .empty())
+        {
+            const std::string texturePath =
+                importedData
+                .baseColorTexturePath
+                .string();
+
+            const GLuint textureID =
+                engine.LoadTexture(
+                    texturePath
+                );
+
+            if (textureID != 0)
+            {
+                material.SetBaseColorTexture(
+                    textureID,
+                    texturePath
+                );
+
+                material.SetUseBaseColorTexture(
+                    true
+                );
+            }
+            else
+            {
+                BOX_LOG_WARNING("MBX loaded, but texture failed: " << texturePath);
+            }
+        }
+
+        BOX_LOG_INFO("Imported MBX successfully: " << path);
+
+        break;
+    }*/
+
+	// ############################################ Handle other menu actions #####################################################
+
 
     case MenuAction::Exit:
         glfwSetWindowShouldClose(

@@ -225,14 +225,8 @@ void MaterialBrowser::DrawMaterialList(BoxEngine& engine,
 
             ImGui::EndTooltip();
 
-            
-
-
-
-
         }
         
-
 
         ImGui::PopID();
     }

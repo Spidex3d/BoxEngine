@@ -32,10 +32,6 @@ public:
     // Texture management
     GLuint GetBaseColorTexture() const;
     
-
-    void SetBaseColorTexture(GLuint textureID);
-    
-
     bool UsesBaseColorTexture() const;
     
 
