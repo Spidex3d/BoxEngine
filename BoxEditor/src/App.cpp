@@ -216,7 +216,7 @@ void App::HandleMenuAction(
             break;
         }
 		// implement import from .mbx file format
-    /*case MenuAction::Importmbx:
+    case MenuAction::Importmbx:
     {
         const std::string path = FileDialog::OpenMBX("mbx", "MBX Files\0*.mbx\0All Files\0*.*\0\0");
 
@@ -292,7 +292,7 @@ void App::HandleMenuAction(
         BOX_LOG_INFO("Imported MBX successfully: " << path);
 
         break;
-    }*/
+    }
 
 	// ############################################ Handle other menu actions #####################################################
 

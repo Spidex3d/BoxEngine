@@ -425,8 +425,7 @@ Entity* BoxEngine::AddImportedMesh(
     const std::string& name,
     const MeshData& meshData)
 {
-    const int entityID =
-        m_nextEntityID++;
+    const int entityID = m_nextEntityID++;
 
     auto entity =
         std::make_unique<Entity>(
@@ -437,22 +436,16 @@ Entity* BoxEngine::AddImportedMesh(
     if (!entity->CreateFromMeshData(
         meshData))
     {
-        BOX_LOG_ERROR(
-            "Failed to create imported entity"
-        );
+        BOX_LOG_ERROR("Failed to create imported entity");
 
         return nullptr;
     }
 
-    Entity* result =
-        entity.get();
+    Entity* result = entity.get();
 
-    m_entities.push_back(
-        std::move(entity)
-    );
+    m_entities.push_back(std::move(entity));
 
-    m_selectedEntityID =
-        entityID;
+    m_selectedEntityID = entityID;
 
     return result;
 }

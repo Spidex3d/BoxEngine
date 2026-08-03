@@ -106,283 +106,283 @@ bool mbxManager::ExportMBX(const Entity& entity, const std::filesystem::path& mb
 
 }
 
-//bool mbxManager::ImportMBX(const std::filesystem::path& mbxFilePath, MBXImportData& outData)
-//{
-//    std::ifstream file(mbxFilePath);
-//
-//    if (!file.is_open())
-//    {
-//        BOX_LOG_ERROR("Failed to open MBX file: " << mbxFilePath.string());
-//
-//        return false;
-//    }
-//
-//    outData = MBXImportData{};
-//
-//    std::vector<glm::vec3> positions;
-//    std::vector<glm::vec3> normals;
-//    std::vector<glm::vec2> textureCoordinates;
-//
-//    std::vector<std::uint32_t> positionIndices;
-//
-//    std::vector<std::uint32_t> textureIndices;
-//
-//    std::vector<std::uint32_t> normalIndices;
-//
-//    bool readingMaterial = false;
-//
-//    std::string line;
-//
-//    while (std::getline(file, line))
-//    {
-//        if (line.empty() ||
-//            line[0] == '#')
-//        {
-//            continue;
-//        }
-//
-//        std::istringstream stream(line);
-//
-//        std::string command;
-//        stream >> command;
-//
-//        if (command == "o")
-//        {
-//            stream >> outData.objectName;
-//        }
-//        else if (command == "v")
-//        {
-//            glm::vec3 position;
-//
-//            stream
-//                >> position.x
-//                >> position.y
-//                >> position.z;
-//
-//            positions.push_back(position);
-//        }
-//        else if (command == "vn")
-//        {
-//            glm::vec3 normal;
-//
-//            stream
-//                >> normal.x
-//                >> normal.y
-//                >> normal.z;
-//
-//            normals.push_back(normal);
-//        }
-//        else if (command == "vuv")
-//        {
-//            glm::vec2 uv;
-//
-//            stream
-//                >> uv.x
-//                >> uv.y;
-//
-//            textureCoordinates.push_back(uv);
-//        }
-//        else if (command == "f")
-//        {
-//            std::string faceVertex;
-//
-//            /*
-//             * MBX 0.1 currently exports
-//             * triangles, so read three entries.
-//             */
-//            for (int vertex = 0;
-//                vertex < 3;
-//                ++vertex)
-//            {
-//                if (!(stream >> faceVertex))
-//                {
-//                    BOX_LOG_ERROR("Invalid MBX face line: " << line);
-//
-//                    return false;
-//                }
-//
-//                std::replace(
-//                    faceVertex.begin(),
-//                    faceVertex.end(),
-//                    '/',
-//                    ' '
-//                );
-//
-//                std::istringstream faceStream(faceVertex);
-//
-//                std::uint32_t positionIndex = 0;
-//                std::uint32_t uvIndex = 0;
-//                std::uint32_t normalIndex = 0;
-//
-//                faceStream
-//                    >> positionIndex
-//                    >> uvIndex
-//                    >> normalIndex;
-//
-//                /*
-//                 * Convert MBX's 1-based indices
-//                 * into C++ 0-based indices.
-//                 */
-//                if (positionIndex == 0 ||
-//                    uvIndex == 0 ||
-//                    normalIndex == 0)
-//                {
-//                    BOX_LOG_ERROR("Invalid zero index in MBX face");
-//
-//                    return false;
-//                }
-//
-//                positionIndices.push_back(positionIndex - 1);
-//
-//                textureIndices.push_back(uvIndex - 1);
-//
-//                normalIndices.push_back(normalIndex - 1);
-//            }
-//        }
-//        else if (command == "material")
-//        {
-//            readingMaterial = true;
-//        }
-//        else if (command == "endmaterial")
-//        {
-//            readingMaterial = false;
-//        }
-//        else if (readingMaterial)
-//        {
-//            if (command == "base_color")
-//            {
-//                stream
-//                    >> outData.baseColor.r
-//                    >> outData.baseColor.g
-//                    >> outData.baseColor.b
-//                    >> outData.baseColor.a;
-//            }
-//            else if (command == "metallic")
-//            {
-//                stream >> outData.metallic;
-//            }
-//            else if (command == "roughness")
-//            {
-//                stream >> outData.roughness;
-//            }
-//            else if (command == "alpha")
-//            {
-//                stream >> outData.alpha;
-//            }
-//            else if (
-//                command == "emission_color")
-//            {
-//                stream
-//                    >> outData.emissionColor.r
-//                    >> outData.emissionColor.g
-//                    >> outData.emissionColor.b;
-//            }
-//            else if (
-//                command == "emission_strength")
-//            {
-//                stream
-//                    >> outData.emissionStrength;
-//            }
-//            else if (
-//                command == "base_color_map")
-//            {
-//                std::string textureFilename;
-//
-//                stream >> textureFilename;
-//
-//                outData.baseColorTexturePath =
-//                    mbxFilePath.parent_path() /
-//                    textureFilename;
-//            }
-//        }
-//    }
-//
-//    if (positionIndices.empty())
-//    {
-//        BOX_LOG_ERROR("MBX file contains no faces");
-//
-//        return false;
-//    }
-//
-//    if (positionIndices.size() !=
-//        textureIndices.size() ||
-//        positionIndices.size() !=
-//        normalIndices.size())
-//    {
-//        BOX_LOG_ERROR("MBX face index arrays do not match");
-//
-//        return false;
-//    }
-//
-//    /*
-//     * Rebuild complete MeshVertex entries.
-//     *
-//     * This creates one vertex for every face
-//     * corner. That is simple and preserves
-//     * different UVs or normals at seams.
-//     */
-//    outData.mesh.vertices.reserve(
-//        positionIndices.size()
-//    );
-//
-//    for (std::size_t index = 0;
-//        index < positionIndices.size();
-//        ++index)
-//    {
-//        const std::uint32_t positionIndex =
-//            positionIndices[index];
-//
-//        const std::uint32_t uvIndex =
-//            textureIndices[index];
-//
-//        const std::uint32_t normalIndex =
-//            normalIndices[index];
-//
-//        if (positionIndex >= positions.size() ||
-//            uvIndex >= textureCoordinates.size() ||
-//            normalIndex >= normals.size())
-//        {
-//            BOX_LOG_ERROR(
-//                "MBX face index is outside its array"
-//            );
-//
-//            return false;
-//        }
-//
-//        MeshVertex vertex;
-//
-//        vertex.position = positions[positionIndex];
-//
-//        vertex.normal = normals[normalIndex];
-//
-//        vertex.uv = textureCoordinates[uvIndex];
-//
-//        outData.mesh.vertices.push_back(
-//            vertex
-//        );
-//    }
-//
-//    /*
-//     * This first importer expands all faces
-//     * into non-indexed triangle vertices.
-//     */
-//    outData.mesh.indices.clear();
-//
-//    if (outData.objectName.empty())
-//    {
-//        outData.objectName =
-//            mbxFilePath.stem().string();
-//    }
-//
-//    BOX_LOG_INFO(
-//        "Imported MBX data: "
-//        << outData.objectName
-//        << " Vertices="
-//        << outData.mesh.vertices.size()
-//    );
-//
-//    return outData.mesh.IsValid();
-//}
+bool mbxManager::ImportMBX(const std::filesystem::path& mbxFilePath, MBXImportData& outData)
+{
+    std::ifstream file(mbxFilePath);
+
+    if (!file.is_open())
+    {
+        BOX_LOG_ERROR("Failed to open MBX file: " << mbxFilePath.string());
+
+        return false;
+    }
+
+    outData = MBXImportData{};
+
+    std::vector<glm::vec3> positions;
+    std::vector<glm::vec3> normals;
+    std::vector<glm::vec2> textureCoordinates;
+
+    std::vector<std::uint32_t> positionIndices;
+
+    std::vector<std::uint32_t> textureIndices;
+
+    std::vector<std::uint32_t> normalIndices;
+
+    bool readingMaterial = false;
+
+    std::string line;
+
+    while (std::getline(file, line))
+    {
+        if (line.empty() ||
+            line[0] == '#')
+        {
+            continue;
+        }
+
+        std::istringstream stream(line);
+
+        std::string command;
+        stream >> command;
+
+        if (command == "o")
+        {
+            stream >> outData.objectName;
+        }
+        else if (command == "v")
+        {
+            glm::vec3 position;
+
+            stream
+                >> position.x
+                >> position.y
+                >> position.z;
+
+            positions.push_back(position);
+        }
+        else if (command == "vn")
+        {
+            glm::vec3 normal;
+
+            stream
+                >> normal.x
+                >> normal.y
+                >> normal.z;
+
+            normals.push_back(normal);
+        }
+        else if (command == "vuv")
+        {
+            glm::vec2 uv;
+
+            stream
+                >> uv.x
+                >> uv.y;
+
+            textureCoordinates.push_back(uv);
+        }
+        else if (command == "f")
+        {
+            std::string faceVertex;
+
+            /*
+             * MBX 0.1 currently exports
+             * triangles, so read three entries.
+             */
+            for (int vertex = 0;
+                vertex < 3;
+                ++vertex)
+            {
+                if (!(stream >> faceVertex))
+                {
+                    BOX_LOG_ERROR("Invalid MBX face line: " << line);
+
+                    return false;
+                }
+
+                std::replace(
+                    faceVertex.begin(),
+                    faceVertex.end(),
+                    '/',
+                    ' '
+                );
+
+                std::istringstream faceStream(faceVertex);
+
+                std::uint32_t positionIndex = 0;
+                std::uint32_t uvIndex = 0;
+                std::uint32_t normalIndex = 0;
+
+                faceStream
+                    >> positionIndex
+                    >> uvIndex
+                    >> normalIndex;
+
+                /*
+                 * Convert MBX's 1-based indices
+                 * into C++ 0-based indices.
+                 */
+                if (positionIndex == 0 ||
+                    uvIndex == 0 ||
+                    normalIndex == 0)
+                {
+                    BOX_LOG_ERROR("Invalid zero index in MBX face");
+
+                    return false;
+                }
+
+                positionIndices.push_back(positionIndex - 1);
+
+                textureIndices.push_back(uvIndex - 1);
+
+                normalIndices.push_back(normalIndex - 1);
+            }
+        }
+        else if (command == "material")
+        {
+            readingMaterial = true;
+        }
+        else if (command == "endmaterial")
+        {
+            readingMaterial = false;
+        }
+        else if (readingMaterial)
+        {
+            if (command == "base_color")
+            {
+                stream
+                    >> outData.baseColor.r
+                    >> outData.baseColor.g
+                    >> outData.baseColor.b
+                    >> outData.baseColor.a;
+            }
+            else if (command == "metallic")
+            {
+                stream >> outData.metallic;
+            }
+            else if (command == "roughness")
+            {
+                stream >> outData.roughness;
+            }
+            else if (command == "alpha")
+            {
+                stream >> outData.alpha;
+            }
+            else if (
+                command == "emission_color")
+            {
+                stream
+                    >> outData.emissionColor.r
+                    >> outData.emissionColor.g
+                    >> outData.emissionColor.b;
+            }
+            else if (
+                command == "emission_strength")
+            {
+                stream
+                    >> outData.emissionStrength;
+            }
+            else if (
+                command == "base_color_map")
+            {
+                std::string textureFilename;
+
+                stream >> textureFilename;
+
+                outData.baseColorTexturePath =
+                    mbxFilePath.parent_path() /
+                    textureFilename;
+            }
+        }
+    }
+
+    if (positionIndices.empty())
+    {
+        BOX_LOG_ERROR("MBX file contains no faces");
+
+        return false;
+    }
+
+    if (positionIndices.size() !=
+        textureIndices.size() ||
+        positionIndices.size() !=
+        normalIndices.size())
+    {
+        BOX_LOG_ERROR("MBX face index arrays do not match");
+
+        return false;
+    }
+
+    /*
+     * Rebuild complete MeshVertex entries.
+     *
+     * This creates one vertex for every face
+     * corner. That is simple and preserves
+     * different UVs or normals at seams.
+     */
+    outData.mesh.vertices.reserve(
+        positionIndices.size()
+    );
+
+    for (std::size_t index = 0;
+        index < positionIndices.size();
+        ++index)
+    {
+        const std::uint32_t positionIndex =
+            positionIndices[index];
+
+        const std::uint32_t uvIndex =
+            textureIndices[index];
+
+        const std::uint32_t normalIndex =
+            normalIndices[index];
+
+        if (positionIndex >= positions.size() ||
+            uvIndex >= textureCoordinates.size() ||
+            normalIndex >= normals.size())
+        {
+            BOX_LOG_ERROR(
+                "MBX face index is outside its array"
+            );
+
+            return false;
+        }
+
+        MeshVertex vertex;
+
+        vertex.position = positions[positionIndex];
+
+        vertex.normal = normals[normalIndex];
+
+        vertex.uv = textureCoordinates[uvIndex];
+
+        outData.mesh.vertices.push_back(
+            vertex
+        );
+    }
+
+    /*
+     * This first importer expands all faces
+     * into non-indexed triangle vertices.
+     */
+    outData.mesh.indices.clear();
+
+    if (outData.objectName.empty())
+    {
+        outData.objectName =
+            mbxFilePath.stem().string();
+    }
+
+    BOX_LOG_INFO(
+        "Imported MBX data: "
+        << outData.objectName
+        << " Vertices="
+        << outData.mesh.vertices.size()
+    );
+
+    return outData.mesh.IsValid();
+}
 
 std::string mbxManager::BuildMBX(const Entity& entity, const std::string& copiedTextureName) const
 {
