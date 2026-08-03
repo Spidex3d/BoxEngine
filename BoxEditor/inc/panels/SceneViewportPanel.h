@@ -23,6 +23,7 @@ enum class ViewportAction
 	edgeEditMode,
 	faceEditMode,
 
+	AddMbxModel,
     AddObjModel,
     AddGltfModel,
 

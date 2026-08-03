@@ -298,6 +298,10 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     {
 
         if (ImGui::BeginMenu("Add a model")) {
+            if (ImGui::MenuItem("mbx Model")) {
+                action = ViewportAction::AddMbxModel;
+            }
+
             if (ImGui::MenuItem("Obj Model")) {
 				action = ViewportAction::AddObjModel;
             }

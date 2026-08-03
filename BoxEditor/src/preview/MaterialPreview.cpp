@@ -5,8 +5,6 @@
 #include <Helpers.h>
 #include <miniBoxLog.h>
 
-//#include <imgui/imgui.h>
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 

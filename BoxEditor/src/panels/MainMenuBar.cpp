@@ -20,11 +20,11 @@ MenuAction MainMenuBar::DrawMainMenu()
             {
             }
 
-            if (ImGui::MenuItem("Save"))
+            if (ImGui::MenuItem("Save Scene"))
             {
             }
 
-            if (ImGui::MenuItem("Save As"))
+            if (ImGui::MenuItem("Save Scene As"))
             {
             }
 
@@ -75,19 +75,23 @@ MenuAction MainMenuBar::DrawMainMenu()
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("RenderPreview"))
+        if (ImGui::BeginMenu("Render State"))
         {
-            if (ImGui::MenuItem("RenderPreview Image"))
+            if (ImGui::MenuItem("Render Image"))
             {
             }
 
-            if (ImGui::MenuItem("RenderPreview Animation"))
+            if (ImGui::MenuItem("Render Solid"))
+            {
+            }
+
+            if (ImGui::MenuItem("Render Wireframe"))
             {
             }
 
             ImGui::EndMenu();
         }
-
+		// Not sure if we need this menu,we can do this with the right click context menu in viewport.
         if (ImGui::BeginMenu("Add Object"))
         {
             if (ImGui::MenuItem("Add Cube"))
@@ -127,10 +131,19 @@ MenuAction MainMenuBar::DrawMainMenu()
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("Tools"))
+        if (ImGui::BeginMenu("Modifiers"))
         {
-            if (ImGui::MenuItem("Move"))
+            if (ImGui::MenuItem("Extrude"))
             {
+                
+            }
+            if (ImGui::MenuItem("Inset"))
+            {
+               
+            }
+            if (ImGui::MenuItem("Edge loop"))
+            {
+
             }
 
             ImGui::EndMenu();

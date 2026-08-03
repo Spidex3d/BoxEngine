@@ -52,6 +52,9 @@ void HelpPanel::Draw()
         if (ImGui::BeginTabItem(
             "Getting Started"))
         {
+			// Helper Function to center text with color
+            g_helpers.CenterTextColored(ImVec4(0.0f, 1.0f, 0.5f, 1.0f), ICON_FA_AMBULANCE " Help doc's");
+            ImGui::Spacing();
             ImGui::TextWrapped(
                 "BoxEditor is a small 3D modelling application. "
 				"To get started right click in the viewport to add a cube. "
@@ -63,7 +66,7 @@ void HelpPanel::Draw()
             ImGui::Spacing();
 
             ImGui::BulletText(
-                "Add objects from the Add Object menu."
+                "Add objects right click in the viewport."
             );
 
             ImGui::BulletText(
