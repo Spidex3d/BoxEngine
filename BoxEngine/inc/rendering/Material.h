@@ -33,8 +33,7 @@ public:
     GLuint GetBaseColorTexture() const;
     
 
-    void SetBaseColorTexture(
-        GLuint textureID);
+    void SetBaseColorTexture(GLuint textureID);
     
 
     bool UsesBaseColorTexture() const;
@@ -42,7 +41,10 @@ public:
 
     void SetUseBaseColorTexture(bool useTexture);
     
+	// Set the base color texture and its source path used in the model save and load process
+    void SetBaseColorTexture(GLuint textureID, const std::string& sourcePath);
 
+    const std::string& GetBaseColorTexturePath() const;
 
 private:
     glm::vec4 m_baseColor = glm::vec4(1.0f);
@@ -62,8 +64,9 @@ private:
 
     bool m_useBaseColorTexture = false;
 
-
-    
+    //std::shared_ptr<Texture> m_baseColorTexture;
+	// Store the source path of the base color texture for saving and loading purposes
+    std::string m_baseColorTexturePath;
 
 
 	

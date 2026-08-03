@@ -15,4 +15,8 @@ public:
 
 private:
     bool m_isOpen = false;
+
+
+    
+
 };

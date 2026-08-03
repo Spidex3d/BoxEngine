@@ -1,6 +1,10 @@
 #include "panels/HelpPanel.h"
 #include <imgui/imgui.h>
 #include <imgui/ImGuiAF.h>
+#include "Helpers.h" // for color text and centering text
+
+Helpers g_helpers; // Global instance of Helpers class
+
 void HelpPanel::Open()
 {
     m_isOpen = true;
@@ -35,10 +39,9 @@ void HelpPanel::Draw()
         ImGui::End();
         return;
     }
-
-    ImGui::TextUnformatted(
-        "BoxEditor Reference"
-    );
+	
+    // Helper Function to center text with color
+    g_helpers.CenterTextColored(COLOR_LIGHTBLUE, ICON_FA_EDIT " BoxEditor Reference");
 
     ImGui::Separator();
     ImGui::Spacing();
@@ -70,10 +73,10 @@ void HelpPanel::Draw()
             ImGui::BulletText(
                 "Use the Object Explorer for precise transforms."
             );
+			// Helper Function to center text with color
+            g_helpers.CenterTextColored(COLOR_LIGHTGREEN, ICON_FA_CAMERA" Camera Controls");
 
-            //IM_COL32(50, 150, 255, 255);
-            ImGui::SeparatorText(ICON_FA_CAMERA" Camera Controls");
-
+			ImGui::Separator();
             if (ImGui::BeginTable(
                 "##ShortcutTableCamera",
                 2,
@@ -86,16 +89,18 @@ void HelpPanel::Draw()
                 ImGui::TableHeadersRow();
 
                 const auto AddShortcut =
-                    [](const char* key,
+                    [](const char*  key,
                         const char* action)
                 {
                     ImGui::TableNextRow();
 
                     ImGui::TableSetColumnIndex(0);
-                    ImGui::TextUnformatted(key);
+                    //ImGui::TextUnformatted(key);
+					ImGui::TextColored(COLOR_LIGHTGREEN, key);
 
                     ImGui::TableSetColumnIndex(1);
-                    ImGui::TextUnformatted(action);
+                   // ImGui::TextUnformatted(action);
+                    ImGui::TextColored(COLOR_LIGHTGREEN, action);
                 };
                 AddShortcut(
                     "Middle Mouse Button Down",

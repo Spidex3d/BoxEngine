@@ -39,6 +39,9 @@
     <ClInclude Include="inc\rendering\Textures.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="inc\entity\MeshData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\BoxEngine.cpp">
@@ -63,6 +66,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\rendering\Textures.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\entity\MeshData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

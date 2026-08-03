@@ -5,7 +5,7 @@
 
 #include <string>
 #include <rendering\Material.h>
-
+#include <entity/MeshData.h>
 
 //This is where we are putting together all the components of an entity, such as mesh, material, transform, etc.
 class Shader;
@@ -97,6 +97,13 @@ public:
     {
         return m_visible;
     }
+	// ###################################### Mesh Data ###################################
+	//Material GetMeshData() const;
+    const MeshData& GetMeshData() const
+    {
+        return m_meshData;
+    }
+
     // ###################################### Piking ######################################
     glm::mat4 GetModelMatrix() const;
     const glm::vec3& GetAABBMin() const;
@@ -113,6 +120,9 @@ public:
         return m_material;
     }
 private:
+	// ############################# Mesh data for the entity ###############################
+    MeshData m_meshData;
+
 	// ###################################### Rendering #####################################
     void RenderInternal(const Shader& shader, const glm::mat4& view,
         const glm::mat4& projection, const glm::vec3& cameraPosition

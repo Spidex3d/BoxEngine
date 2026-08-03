@@ -95,6 +95,8 @@ private:
 
 	int m_selectedEntityID = -1; // used to track the selected entity in the editor panels
 
+	//std::string m_defaultTexturePath; // The default texture path for the checkerboard texture for save and load purposes
+
 	// piking helper function to check if a ray intersects an AABB in world space
     bool RayIntersectsAABB(
         const glm::vec3& rayOriginWorld,

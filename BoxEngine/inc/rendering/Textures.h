@@ -1,6 +1,7 @@
 #pragma once
 #include <glad/glad.h>
 #include <string>
+#include <filesystem>
 
 class Texture
 {
@@ -28,6 +29,13 @@ public:
     {
         return m_height;
     }
+	// Get the source path of the texture file used in the model save and load process
+    const std::filesystem::path& GetSourcePath() const
+    {
+        return m_sourcePath;
+    }
+private:
+	std::filesystem::path m_sourcePath; // The source path of the texture file used in the model save and load process
 
 private:
     GLuint m_id = 0;

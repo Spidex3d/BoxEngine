@@ -107,8 +107,23 @@ bool BoxEngine::Initialize()
 
 	// ################################################# Default texture ######################################################
     const std::string crateTexturePath = helpers.GetAssetPath(
-        "assets/textures/texture/checkerboard.jpg"
-    );
+        "assets/textures/texture/checkerboard.jpg");
+
+   /* m_defaultTexturePath =
+        helpers.GetAssetPath(
+            "assets/textures/texture/checkerboard.jpg"
+        );
+
+    if (!m_defaultTexture.LoadFromFile(
+        m_defaultTexturePath))
+    {
+        BOX_LOG_ERROR(
+            "Failed to load default texture: "
+            << m_defaultTexturePath
+        );
+
+        return false;
+    }*/
 
     if (!m_defaultTexture.LoadFromFile(crateTexturePath))
     {
@@ -218,11 +233,19 @@ bool BoxEngine::AddEditableCube(
         entityName
     );
 
-	// Set the base color of the cube's material to white
+	 //Set the base color of the cube's material to white
     cube->GetMaterial().SetBaseColor(
         glm::vec4(1.0f)
     );
     
+    /*const std::string checkerboardPath = m_defaultTexture.GetSourcePath().string();
+	cube->GetMaterial()
+        .SetBaseColorTexture(
+            m_defaultTexture.GetID(),
+            checkerboardPath
+        );*/
+
+
 	// Set the base color texture of the cube's material to the m_defaultTexture checkerboard texture
     Material& material = cube->GetMaterial();
     material.SetBaseColorTexture(m_defaultTexture.GetID());

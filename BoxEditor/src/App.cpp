@@ -7,6 +7,10 @@
 #include <EditorInput.h>
 #include <imgui/imgui.h>
 #include "panels/HelpPanel.h"
+
+
+#include <FileDialog.h>
+
 App::App() = default;
 App::~App() = default;
 
@@ -101,6 +105,7 @@ bool App::Init()
     
     m_helpPanel = std::make_unique<HelpPanel>();
    
+    m_mbxManager = std::make_unique<mbxManager>();
 
     m_isRunning = true;
 
@@ -184,8 +189,32 @@ void App::HandleMenuAction(
     MenuAction action,
     BoxEngine& engine)
 {
+	
     switch (action)
     {
+    case MenuAction::Exportmbx:
+        {
+            Entity* selectedEntity = engine.GetSelectedEntity();
+
+            if (!selectedEntity)
+            {
+                BOX_LOG_ERROR("No entity selected for export");
+
+                break;
+            }
+
+            const std::string path = FileDialog::SaveMBX("mbx", "MBX Files\0*.mbx\0All Files\0*.*\0\0");
+
+            if (!path.empty())
+            {
+                m_mbxManager->ExportMBX(*selectedEntity, path);
+            }
+
+            // implement export to .mbx file format
+            BOX_LOG_INFO("Export .mbx menu action triggered");
+            break;
+        }
+
     case MenuAction::Exit:
         glfwSetWindowShouldClose(
             m_window->GetWindow(),

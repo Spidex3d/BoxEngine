@@ -47,6 +47,18 @@ fs::path Helpers::FindAssetsRoot()
     return fs::current_path();
 }
 
+void Helpers::CenterTextColored(const ImVec4& color, const char* text)
+{
+    // This function centers the text horizontally within the current ImGui window and applies a specified color to it.
+    float windowWidth = ImGui::GetWindowSize().x;
+
+    float textWidth = ImGui::CalcTextSize(text).x;
+
+    ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+
+    ImGui::TextColored(color, "%s", text);
+}
+
 
 
 

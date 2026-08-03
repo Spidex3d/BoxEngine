@@ -17,7 +17,6 @@ public:
     void Shutdown();
 
     void Draw(BoxEngine& engine, Entity& entity);
-    
 
 private:
 

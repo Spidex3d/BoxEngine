@@ -7,6 +7,7 @@
 #include "panels\ObjectExplorerPanel.h"
 #include "panels\MaterialBrowser.h"
 #include <UI/EditorIcons.h>
+#include <fileManager\mbxManager.h> 
 
 class BoxWindow;
 class EditorIcons;
@@ -46,6 +47,8 @@ private:
 	std::unique_ptr<SceneCollectionPanel> m_imgSceneCollection; // Scene Collection for ImGui
 	std::unique_ptr<SceneViewportPanel> m_sceneViewport; // Scene Viewport panel for ImGui
 	std::unique_ptr<ObjectExplorerPanel> m_imgObjectExplorer; // Object Explorer panel for ImGui
+
+	std::unique_ptr<mbxManager>m_mbxManager;
 
 	MaterialBrowser m_materialBrowser;
 

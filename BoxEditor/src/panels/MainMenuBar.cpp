@@ -30,14 +30,21 @@ MenuAction MainMenuBar::DrawMainMenu()
 
             ImGui::Separator();
 
+            if (ImGui::MenuItem("Export .mbx"))
+            {
+                action = MenuAction::Exportmbx;
+            }
+            if (ImGui::MenuItem("Import .mbx"))
+            {
+                action = MenuAction::Importmbx;
+            }
             if (ImGui::MenuItem("Import .obj"))
             {
             }
-
-            if (ImGui::MenuItem("Export .mbx"))
+            if (ImGui::MenuItem("Export .obj"))
             {
             }
-
+			// we can add gltf later if we want to support it.
             ImGui::Separator();
 
             if (ImGui::MenuItem(

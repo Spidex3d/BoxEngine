@@ -97,4 +97,20 @@ void Material::SetUseBaseColorTexture(
         useTexture;
 }
 
+void Material::SetBaseColorTexture(GLuint textureID, const std::string& sourcePath)
+{
+    m_baseColorTexture =
+        textureID;
+
+    m_baseColorTexturePath = sourcePath;
+
+    m_useBaseColorTexture =
+        textureID != 0;
+}
+
+const std::string& Material::GetBaseColorTexturePath() const
+{
+    return m_baseColorTexturePath;
+}
+
 

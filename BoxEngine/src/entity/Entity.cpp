@@ -23,7 +23,8 @@ Entity::~Entity()
 }
 
 Entity::Entity(Entity&& other) noexcept
-    : m_material(std::move(other.m_material)),
+    :m_meshData(std::move(other.m_meshData)),
+    m_material(std::move(other.m_material)),
     m_id(other.m_id),
     m_name(std::move(other.m_name)),
     m_position(other.m_position),
@@ -50,6 +51,50 @@ Entity::Entity(Entity&& other) noexcept
 Entity& Entity::operator=(Entity&& other) noexcept
 {
     if (this == &other)
+    {
+        return *this;
+    }
+
+    Destroy();
+
+    m_meshData =
+        std::move(other.m_meshData);
+
+    m_material =
+        std::move(other.m_material);
+
+    m_id = other.m_id;
+    m_name = std::move(other.m_name);
+
+    m_position = other.m_position;
+    m_rotation = other.m_rotation;
+    m_scale = other.m_scale;
+    m_visible = other.m_visible;
+
+    m_vao = other.m_vao;
+    m_vbo = other.m_vbo;
+    m_ebo = other.m_ebo;
+
+    m_vertexCount =
+        other.m_vertexCount;
+
+    m_indexCount =
+        other.m_indexCount;
+
+    m_useIndices =
+        other.m_useIndices;
+
+    other.m_vao = 0;
+    other.m_vbo = 0;
+    other.m_ebo = 0;
+
+    other.m_vertexCount = 0;
+    other.m_indexCount = 0;
+    other.m_useIndices = false;
+
+    return *this;
+
+    /*if (this == &other)
         return *this;
 
     Destroy();
@@ -70,7 +115,7 @@ Entity& Entity::operator=(Entity&& other) noexcept
     other.m_vbo = 0;
     other.m_vertexCount = 0;
 
-    return *this;
+    return *this;*/
 }
 
 bool Entity::CreateCube()
@@ -85,6 +130,7 @@ bool Entity::CreateCube()
 
     // Position XYZ, Normal XYZ
     const float vertices[] =
+	
     {
         // Front face +Z
         -0.5f, -0.5f,  0.5f,   0.0f,  0.0f,  1.0f, 0.0f, 0.0f,
@@ -141,8 +187,61 @@ bool Entity::CreateCube()
 	      -0.5f, -0.5f,  0.5f,   0.0f, -1.0f,  0.0f, 0.0f, 1.0f
     };
 
+   // m_vertexCount = 36;
+
+	// ############################################### Mesh Data ####################################################
+    m_meshData.vertices.clear();
+    m_meshData.indices.clear();
+
+    constexpr std::size_t floatsPerVertex = 8;
+
+    const std::size_t totalFloatCount =
+        sizeof(vertices) /
+        sizeof(vertices[0]);
+
+    const std::size_t cubeVertexCount =
+        totalFloatCount /
+        floatsPerVertex;
+
+    m_meshData.vertices.reserve(
+        cubeVertexCount
+    );
+
+    for (std::size_t index = 0;
+        index < totalFloatCount;
+        index += floatsPerVertex)
+    {
+        MeshVertex vertex;
+
+        vertex.position =
+            glm::vec3(
+                vertices[index + 0],
+                vertices[index + 1],
+                vertices[index + 2]
+            );
+
+        vertex.normal =
+            glm::vec3(
+                vertices[index + 3],
+                vertices[index + 4],
+                vertices[index + 5]
+            );
+
+        vertex.uv =
+            glm::vec2(
+                vertices[index + 6],
+                vertices[index + 7]
+            );
+
+        m_meshData.vertices.push_back(
+            vertex
+        );
+    }
+
+    m_vertexCount = static_cast<GLsizei>(m_meshData.vertices.size());
+
     
-    m_vertexCount = 36;
+   
 
     glGenVertexArrays(1, &m_vao);
     glGenBuffers(1, &m_vbo);
@@ -216,6 +315,8 @@ bool Entity::CreateCube()
         "Created cube entity: "
         << m_name
         << " ID=" << m_id
+        << " Mesh vertices="
+        << m_meshData.vertices.size()
     );
 
     return true;
@@ -532,6 +633,54 @@ bool Entity::CreateSphere(int sectors, int stacks)
         }
     }
 
+	// ############################################### Mesh Data ####################################################
+    m_meshData.vertices.clear();
+    m_meshData.indices.clear();
+
+    constexpr std::size_t floatsPerVertex = 8;
+
+    m_meshData.vertices.reserve(
+        vertices.size() /
+        floatsPerVertex
+    );
+
+    for (std::size_t index = 0;
+        index < vertices.size();
+        index += floatsPerVertex)
+    {
+        MeshVertex vertex;
+
+        vertex.position =
+            glm::vec3(
+                vertices[index + 0],
+                vertices[index + 1],
+                vertices[index + 2]
+            );
+
+        vertex.normal =
+            glm::vec3(
+                vertices[index + 3],
+                vertices[index + 4],
+                vertices[index + 5]
+            );
+
+        vertex.uv =
+            glm::vec2(
+                vertices[index + 6],
+                vertices[index + 7]
+            );
+
+        m_meshData.vertices.push_back(
+            vertex
+        );
+    }
+
+    m_meshData.indices.assign(
+        indices.begin(),
+        indices.end()
+    );
+
+
     glGenVertexArrays(1, &m_vao);
     glGenBuffers(1, &m_vbo);
     glGenBuffers(1, &m_ebo);
@@ -606,13 +755,21 @@ bool Entity::CreateSphere(int sectors, int stacks)
 
     m_vertexCount =
         static_cast<GLsizei>(
-            vertices.size() / 8
+            m_meshData.vertices.size()
             );
-
+   /* m_vertexCount =
+        static_cast<GLsizei>(
+            vertices.size() / 8
+            );*/
     m_indexCount =
         static_cast<GLsizei>(
-            indices.size()
+            m_meshData.indices.size()
             );
+
+   /* m_indexCount =
+        static_cast<GLsizei>(
+            indices.size()
+            );*/
 
     m_useIndices = true;
 
@@ -644,15 +801,14 @@ bool Entity::CreateSphere(int sectors, int stacks)
         "Created sphere entity: "
         << m_name
         << " ID=" << m_id
-        << " Vertices=" << m_vertexCount
-        << " Indices=" << m_indexCount
+        << " Vertices="
+        << m_meshData.vertices.size()
+        << " Indices="
+        << m_meshData.indices.size()
     );
 
     return true;
 }
-
-
-
 
 glm::mat4 Entity::GetModelMatrix() const
 {
@@ -759,6 +915,9 @@ void Entity::Destroy()
     m_vertexCount = 0;
     m_indexCount = 0;
     m_useIndices = false;
+
+    m_meshData.vertices.clear();
+    m_meshData.indices.clear();
 }
 
 // RenderScene function for rendering the entity in the scene with the provided shader and camera
