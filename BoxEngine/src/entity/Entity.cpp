@@ -515,9 +515,112 @@ void Entity::DrawMesh() const
   
 }
 
-// ##############################################################################################################
-// ############################################### Rendering ####################################################
-// ##############################################################################################################
+// ############################################################################################
+// ####################################### mesh editing functions #############################
+// ############################################################################################
+std::size_t Entity::GetVertexCount() const
+{
+    return m_meshData.vertices.size();
+}
+const MeshVertex* Entity::GetVertex(
+    std::size_t index) const
+{
+    if (index >=
+        m_meshData.vertices.size())
+    {
+        return nullptr;
+    }
+
+    return &m_meshData.vertices[index];
+}
+bool Entity::SetVertexPosition(
+    std::size_t index,
+    const glm::vec3& position)
+{
+    if (index >=
+        m_meshData.vertices.size())
+    {
+        return false;
+    }
+
+    m_meshData.vertices[index].position =
+        position;
+
+    return true;
+}
+bool Entity::UploadMeshData()
+{
+    if (m_vbo == 0 || m_meshData.vertices.empty())
+    {
+        return false;
+    }
+
+    std::vector<float> vertices;
+
+    vertices.reserve(m_meshData.vertices.size() * 8);
+
+    for (const MeshVertex& vertex : m_meshData.vertices)
+    {
+        vertices.push_back(vertex.position.x);
+
+        vertices.push_back(vertex.position.y);
+
+        vertices.push_back(vertex.position.z);
+
+        vertices.push_back(vertex.normal.x);
+
+        vertices.push_back(vertex.normal.y);
+
+        vertices.push_back(vertex.normal.z);
+
+        vertices.push_back(vertex.uv.x);
+
+        vertices.push_back(vertex.uv.y);
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+
+    glBufferSubData(
+        GL_ARRAY_BUFFER,
+        0,
+        vertices.size() *
+        sizeof(float),
+        vertices.data()
+    );
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    return true;
+}
+void Entity::ClearSelectedVertices()
+{
+    m_selectedVertices.clear();
+}
+void Entity::SelectVertex(std::size_t index)
+{
+    if (index >= m_meshData.vertices.size())
+    {
+        return;
+    }
+
+    m_selectedVertices.clear();
+
+    m_selectedVertices.push_back(
+        index
+    );
+}
+bool Entity::IsVertexSelected(std::size_t index) const
+{
+    return std::find(m_selectedVertices.begin(),
+        m_selectedVertices.end(), index) != m_selectedVertices.end();
+}
+const std::vector<std::size_t>&Entity::GetSelectedVertices() const
+{
+    return m_selectedVertices;
+}
+// ############################################################################################
+// ############################################### Rendering ##################################
+// ############################################################################################
 
 void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const glm::mat4& projection, const glm::vec3& cameraPosition)
 {

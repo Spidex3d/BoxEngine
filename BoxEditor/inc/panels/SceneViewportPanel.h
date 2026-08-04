@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 
 #include "tools/TransformToolController.h"
+#include <tools/VertexEditController.h> // Add this at the top if not already included
 
 class BoxEngine;
 class EditorIcons;
@@ -75,6 +76,10 @@ private:
     // ################################## tools ###############################	    
     TransformTools m_transformTools;
 
+	// Add this member to fix the error ######### Edit mode mesh editing controller ##############
+    
+
+    VertexEditController m_vertexEditController;
 
 	int m_AddMeshType = 0;
     		

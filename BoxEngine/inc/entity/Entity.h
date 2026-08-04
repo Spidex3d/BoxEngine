@@ -6,6 +6,8 @@
 #include <string>
 #include <rendering\Material.h>
 #include <entity/MeshData.h>
+#include <vector>
+#include <cstddef>
 
 //This is where we are putting together all the components of an entity, such as mesh, material, transform, etc.
 class Shader;
@@ -14,10 +16,7 @@ class Camera;
 class Entity
 {
 public:
-    Entity(
-        int id,
-        const std::string& name
-    );
+    Entity(int id, const std::string& name);
 
     ~Entity();
 
@@ -33,8 +32,29 @@ public:
     bool CreateSphere(int sectors = 32, int stacks = 16);
 
     void DrawMesh() const;
+    // ##################################################################################
+	// ############################# mesh editing functions #############################
+    // ##################################################################################
+    std::size_t GetVertexCount() const;
 
+    const MeshVertex* GetVertex(std::size_t index) const;
+
+    bool SetVertexPosition(std::size_t index, const glm::vec3& position);
+
+    bool UploadMeshData();
+
+    void ClearSelectedVertices();
+
+    void SelectVertex(std::size_t index);
+
+    bool IsVertexSelected(std::size_t index) const;
+
+    const std::vector<std::size_t>& GetSelectedVertices() const;
+
+
+	// ######################################################################################
     // ###################################### Rendering #####################################
+	// ######################################################################################
 
 	// Main render function that takes Shader and Camera objects as parameters
     void RenderScene(const Shader& shader, const Camera& camera, float aspectRatio);
@@ -122,6 +142,8 @@ public:
         return m_material;
     }
 private:
+	// ############################# Mesh editing data for the entity #############################
+    std::vector<std::size_t>m_selectedVertices;
 	// ############################# Mesh data for the entity ###############################
     MeshData m_meshData;
 

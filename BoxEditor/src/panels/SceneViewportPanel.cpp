@@ -7,6 +7,7 @@
 #include <Helpers.h>
 #include <UI\EditorIcons.h>
 #include <camera/Camera.h>
+#include <tools\VertexEditController.h>
 
 
 ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const EditorIcons& icons)
@@ -426,12 +427,19 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             // ############################################################################################
             const bool viewportHovered = ImGui::IsItemHovered();
             const bool objectModeActive = m_EditMode == 1;
+            const bool editModeActive = m_EditMode == 2;
             m_transformTools.HandleInput(engine, viewportHovered, objectModeActive);
 			const bool wasTransforming = m_transformTools.IsTransforming();
+            // ############################################################################################
+            // #################################### Editing tools #########################################
+            // ############################################################################################
+            m_vertexEditController.HandleInput(engine, viewportHovered, editModeActive);
 
-            //############################################################################################################
+			m_vertexEditController.DrawVertices(engine, m_sceneViewportPos, m_sceneViewportSize, editModeActive);
+          
+            // ###########################################################################################################
             // ################################################ Mouse Picking ############################################
-            //############################################################################################################
+            // ###########################################################################################################
             // This prevents the tool confirmation click from performing another picking operation.
             
             const bool viewportClicked = !wasTransforming && viewportHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left);

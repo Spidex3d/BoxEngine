@@ -391,7 +391,63 @@ void HelpPanel::Draw()
                 ImGui::EndTable();
             }
 
-			ImGui::SeparatorText(ICON_FA_COG" Other Shortcuts");
+            // next table for Rotate tool
+            //ImGui::SeparatorText(ICON_FA_ARROW_ALT_CIRCLE_LEFT" Rotate Controls");
+            ImGui::SeparatorText(ICON_FA_COG" Rotate Controls");
+
+            if (ImGui::BeginTable(
+                "##ShortcutTableRotate",
+                2,
+                ImGuiTableFlags_Borders |
+                ImGuiTableFlags_RowBg))
+            {
+                ImGui::TableSetupColumn(ICON_FA_KEYBOARD" Key");
+
+                ImGui::TableSetupColumn("Scale Action");
+                ImGui::TableHeadersRow();
+
+                const auto AddShortcut =
+                    [](const char* key,
+                        const char* action)
+                {
+                    ImGui::TableNextRow();
+
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::TextUnformatted(key);
+
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::TextUnformatted(action);
+                };
+                AddShortcut(
+                    "In Object Mode",
+                    "Select Rotate Button"
+                );
+
+                AddShortcut(
+                    "X",
+                    "Rotate along the X axis"
+                );
+                AddShortcut(
+                    "Y",
+                    "Rotate along the Y axis"
+                );
+                AddShortcut(
+                    "Z",
+                    "Rotate along the Z axis"
+                );
+                AddShortcut(
+                    "Left Mouse",
+                    "Confirm transform"
+                );
+                AddShortcut(
+                    "Right Mouse",
+                    "Cancel transform"
+                );
+
+                ImGui::EndTable();
+            }
+
+			ImGui::SeparatorText(ICON_FA_MAP_SIGNS" Other Shortcuts");
 
 			// Other shortcuts can be added here as needed.
             if (ImGui::BeginTable(

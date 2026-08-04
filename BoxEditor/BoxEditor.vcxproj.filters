@@ -96,6 +96,9 @@
     <ClCompile Include="src\fileManager\mbxManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\tools\VertexEditController.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\App.h">
@@ -186,6 +189,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="inc\fileManager\mbxManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\tools\VertexEditController.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

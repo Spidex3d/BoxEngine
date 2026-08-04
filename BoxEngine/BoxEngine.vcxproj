@@ -151,6 +151,7 @@
     <ClInclude Include="inc\camera\Camera.h" />
     <ClInclude Include="inc\entity\Entity.h" />
     <ClInclude Include="inc\entity\MeshData.h" />
+    <ClInclude Include="inc\entity\MeshEditing.h" />
     <ClInclude Include="inc\rendering\Framebuffer.h" />
     <ClInclude Include="inc\rendering\grid.h" />
     <ClInclude Include="inc\rendering\Material.h" />
@@ -162,6 +163,7 @@
     <ClCompile Include="src\BoxEngine.cpp" />
     <ClCompile Include="src\camera\Camera.cpp" />
     <ClCompile Include="src\entity\Entity.cpp" />
+    <ClCompile Include="src\entity\MeshEditing.cpp" />
     <ClCompile Include="src\rendering\Framebuffer.cpp" />
     <ClCompile Include="src\rendering\Material.cpp" />
     <ClCompile Include="src\rendering\Textures.cpp" />
