@@ -43,6 +43,8 @@ public:
 
     bool UploadMeshData();
 
+    void AddSelectedVertex(std::size_t index);
+
     void ClearSelectedVertices();
 
     void SelectVertex(std::size_t index);

@@ -437,13 +437,13 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             const bool editModeActive = m_EditMode == 2;
 			const bool vertexModeActive = editModeActive && m_editType == 0; // combine edit mode and vertex edit type
 
-            m_vertexEditController.HandleInput(engine, viewportHovered, vertexModeActive);
+            m_vertexEditController.HandleInput(engine, viewportHovered, vertexModeActive, m_sceneViewportPos, m_sceneViewportSize);
 
             m_vertexEditController.DrawVertices(engine, m_sceneViewportPos, m_sceneViewportSize, vertexModeActive);
 
-            // ###########################################################################################################
-            // ################################################ Mouse Picking ############################################
-            // ###########################################################################################################
+            // ############################################################################################
+            // ################################# Mouse Picking ############################################
+            // ############################################################################################
             // This prevents the tool confirmation click from performing another picking operation.
             
             const bool viewportClicked = !wasTransforming && viewportHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left);

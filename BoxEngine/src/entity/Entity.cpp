@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 #include <cmath>
+#include <algorithm>
 
 Entity::Entity(
     int id,
@@ -592,6 +593,29 @@ bool Entity::UploadMeshData()
 
     return true;
 }
+
+void Entity::AddSelectedVertex(std::size_t index)
+{
+    if (index >=
+        m_meshData.vertices.size())
+    {
+        return;
+    }
+
+    if (std::find(
+        m_selectedVertices.begin(),
+        m_selectedVertices.end(),
+        index) ==
+        m_selectedVertices.end())
+    {
+        m_selectedVertices.push_back(
+            index
+        );
+    }
+}
+
+
+
 void Entity::ClearSelectedVertices()
 {
     m_selectedVertices.clear();
