@@ -77,7 +77,9 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 
     }
     ImGui::SameLine();
+	// ###########################################################################################################
     // ################################################## Editor Buttons #########################################
+	// ###########################################################################################################
     const EditorTexture& vertexIcon = icons.GetVertexIcon();
     const EditorTexture& edgeIcon = icons.GetEdgeIcon();
     const EditorTexture& faceIcon = icons.GetFaceIcon();
@@ -427,16 +429,18 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             // ############################################################################################
             const bool viewportHovered = ImGui::IsItemHovered();
             const bool objectModeActive = m_EditMode == 1;
-            const bool editModeActive = m_EditMode == 2;
             m_transformTools.HandleInput(engine, viewportHovered, objectModeActive);
 			const bool wasTransforming = m_transformTools.IsTransforming();
             // ############################################################################################
             // #################################### Editing tools #########################################
             // ############################################################################################
-            m_vertexEditController.HandleInput(engine, viewportHovered, editModeActive);
+            const bool editModeActive = m_EditMode == 2;
+			const bool vertexModeActive = editModeActive && m_editType == 0; // combine edit mode and vertex edit type
 
-			m_vertexEditController.DrawVertices(engine, m_sceneViewportPos, m_sceneViewportSize, editModeActive);
-          
+            m_vertexEditController.HandleInput(engine, viewportHovered, vertexModeActive);
+
+            m_vertexEditController.DrawVertices(engine, m_sceneViewportPos, m_sceneViewportSize, vertexModeActive);
+
             // ###########################################################################################################
             // ################################################ Mouse Picking ############################################
             // ###########################################################################################################

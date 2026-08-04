@@ -8,9 +8,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 
-void VertexEditController::HandleInput(BoxEngine& engine, bool viewportHovered, bool editModeActive)
+void VertexEditController::HandleInput(BoxEngine& engine, bool viewportHovered, bool vertexModeActive)
 {
-    if (editModeActive)
+    if (vertexModeActive)
     {
         static bool once = false;
 
@@ -28,70 +28,55 @@ void VertexEditController::HandleInput(BoxEngine& engine, bool viewportHovered, 
     }
 
 }
-void VertexEditController::DrawVertices(BoxEngine& engine, const ImVec2& viewportPosition, const ImVec2& viewportSize, bool editModeActive)
+void VertexEditController::DrawVertices(BoxEngine& engine, const ImVec2& viewportPosition, const ImVec2& viewportSize, bool vertexModeActive)
 {
-    if (!editModeActive)
+    if (!vertexModeActive)
     {
         return;
     }
 
-    if (viewportSize.x <= 0.0f ||
-        viewportSize.y <= 0.0f)
+    if (viewportSize.x <= 0.0f || viewportSize.y <= 0.0f)
     {
         return;
     }
 
-    Entity* entity =
-        engine.GetSelectedEntity();
+    Entity* entity = engine.GetSelectedEntity();
 
     if (!entity)
     {
         return;
     }
 
-    const MeshData& mesh =
-        entity->GetMeshData();
+    const MeshData& mesh = entity->GetMeshData();
 
     if (!mesh.IsValid())
     {
         return;
     }
 
-    Camera& camera =
-        engine.GetCamera();
+    Camera& camera = engine.GetCamera();
 
     const float aspectRatio =
         viewportSize.x /
         viewportSize.y;
 
-    const glm::mat4 model =
-        entity->GetModelMatrix();
+    const glm::mat4 model = entity->GetModelMatrix();
 
-    const glm::mat4 view =
-        camera.GetViewMatrix();
+    const glm::mat4 view = camera.GetViewMatrix();
 
-    const glm::mat4 projection =
-        camera.GetProjectionMatrix(
-            aspectRatio
-        );
+    const glm::mat4 projection = camera.GetProjectionMatrix(aspectRatio);
 
-    const glm::mat4 modelViewProjection =
-        projection *
-        view *
-        model;
+    const glm::mat4 modelViewProjection = projection * view * model;
 
-    ImDrawList* drawList =
-        ImGui::GetWindowDrawList();
+    ImDrawList* drawList = ImGui::GetWindowDrawList();
 
-    constexpr float vertexRadius =
-        4.0f;
+    constexpr float vertexRadius = 4.0f;
 
     for (std::size_t index = 0;
         index < mesh.vertices.size();
         ++index)
     {
-        const MeshVertex& vertex =
-            mesh.vertices[index];
+        const MeshVertex& vertex = mesh.vertices[index];
 
         const glm::vec4 clipPosition =
             modelViewProjection *
@@ -141,16 +126,11 @@ void VertexEditController::DrawVertices(BoxEngine& engine, const ImVec2& viewpor
             ((1.0f - ndc.y) * 0.5f) *
             viewportSize.y;
 
-        const ImVec2 screenPosition(
-            screenX,
-            screenY
-        );
+        const ImVec2 screenPosition(screenX, screenY);
 
-        const bool selected =
-            index == m_selectedVertex;
+        const bool selected = index == m_selectedVertex;
 
-        const ImU32 fillColor =
-            selected
+        const ImU32 fillColor = selected
             ? IM_COL32(255, 145, 35, 255)
             : IM_COL32(50, 170, 255, 255);
 

@@ -70,8 +70,9 @@ private:
     glm::vec3 CreateMouseRay(float mouseX, float mouseY, float viewportWidth, float viewportHeight, const glm::mat4& view,
         const glm::mat4& projection) const;
 
-	int m_EditMode = 0; // 1for object mode ans 2 for edit mode
-    int m_editType = 0;
+	int m_EditMode = 0; // 1 for object mode ans 2 for edit mode
+
+	int m_editType = -1; // 0 for vertex, 1 for edge, 2 for face
 
     // ################################## tools ###############################	    
     TransformTools m_transformTools;
