@@ -33,8 +33,74 @@ void VertexEditController::HandleInput(BoxEngine& engine, bool viewportHovered, 
     {
         return;
     }
+    // #############################################################################################################
+	// ############################################### Handle editing vertex movement ##############################
+    // #############################################################################################################
+    Entity* entity = engine.GetSelectedEntity();
 
-    if (!m_isMoving &&
+    if (!entity)
+    {
+        return;
+    }
+
+    /*
+     * Start moving the selected logical vertex
+     * when X, Y or Z is pressed.
+     */
+    if (!m_isMoving && !m_selectedVertices.empty())
+    {
+        if (ImGui::IsKeyPressed(ImGuiKey_X, false))
+        {
+            EditBeginMove(*entity, VertexMoveAxis::X);
+        }
+        else if (ImGui::IsKeyPressed(ImGuiKey_Y, false))
+        {
+            EditBeginMove(*entity, VertexMoveAxis::Y);  
+                
+        }
+        else if (ImGui::IsKeyPressed(ImGuiKey_Z, false))
+            
+        {
+            EditBeginMove(*entity, VertexMoveAxis::Z);
+        }
+    }
+
+    /*
+     * Update, confirm or cancel an active move.
+     */
+    if (m_isMoving)
+    {
+        EditUpdateMove(*entity);
+
+        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        {
+            EditConfirmMove();
+        }
+        else if (
+            ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+        {
+            EditCancelMove(*entity);
+        }
+
+        return;
+    }
+
+    /*
+     * Pick another vertex only when a move is
+     * not currently active.
+     */
+    if (ImGui::IsMouseClicked(
+        ImGuiMouseButton_Left))
+    {
+        PickVertex(
+            engine,
+            viewportPosition,
+            viewportSize
+        );
+    }
+
+
+    /*if (!m_isMoving &&
         ImGui::IsMouseClicked(
             ImGuiMouseButton_Left))
     {
@@ -43,7 +109,7 @@ void VertexEditController::HandleInput(BoxEngine& engine, bool viewportHovered, 
             viewportPosition,
             viewportSize
         );
-    }
+    }*/
 
 
 
@@ -421,8 +487,142 @@ VertexEditController::FindVerticesAtPosition(
 
     return matchingVertices;
 }
+// ##########################################################################################
+// ############################# new functions for moving vertices ##########################
+// ##########################################################################################
+void VertexEditController::EditBeginMove(Entity& entity, VertexMoveAxis axis)
+{
+    if (m_selectedVertices.empty())
+    {
+        return;
+    }
 
+    const MeshData& mesh = entity.GetMeshData();
+
+    m_startVertexPositions.clear();
+
+    m_startVertexPositions.reserve(
+        m_selectedVertices.size()
+    );
+
+    for (const std::size_t index : m_selectedVertices)
+    {
+        if (index >=
+            mesh.vertices.size())
+        {
+            continue;
+        }
+
+        VertexStartPosition start;
+
+        start.index = index;
+
+        start.position = mesh.vertices[index].position;
+
+        m_startVertexPositions.push_back(start);
+    }
+
+    if (m_startVertexPositions.empty())
+    {
+        return;
+    }
+
+    m_moveAxis = axis;
+
+    m_startMouse = ImGui::GetMousePos();
+
+    m_isMoving = true;
+}
+
+
+void VertexEditController::EditUpdateMove(Entity& entity)
+{
+    if (!m_isMoving)
+    {
+        return;
+    }
+
+    const ImVec2 currentMouse =
+        ImGui::GetMousePos();
+
+    const float deltaX =
+        currentMouse.x -
+        m_startMouse.x;
+
+    const float deltaY =
+        currentMouse.y -
+        m_startMouse.y;
+
+    glm::vec3 movement(0.0f);
+
+    switch (m_moveAxis)
+    {
+    case VertexMoveAxis::X:
+        movement.x =
+            deltaX *
+            m_moveSensitivity;
+        break;
+
+    case VertexMoveAxis::Y:
+        movement.y =
+            -deltaY *
+            m_moveSensitivity;
+        break;
+
+    case VertexMoveAxis::Z:
+        movement.z =
+            deltaX *
+            m_moveSensitivity;
+        break;
+
+    case VertexMoveAxis::None:
+    default:
+        return;
+    }
+
+    for (const VertexStartPosition& start :
+        m_startVertexPositions)
+    {
+        entity.SetVertexPosition(
+            start.index,
+            start.position + movement
+        );
+    }
+
+    /*
+     * Send the changed CPU mesh data back
+     * to the existing OpenGL VBO.
+     */
+    entity.UploadMeshData();
+}
+
+void VertexEditController::EditConfirmMove()
+{
+    m_isMoving = false;
+
+    m_moveAxis =
+        VertexMoveAxis::None;
+
+    m_startVertexPositions.clear();
+}
 
 void VertexEditController::EditCancelMove(Entity& entity)
 {
+    for (const VertexStartPosition& start :
+        m_startVertexPositions)
+    {
+        entity.SetVertexPosition(
+            start.index,
+            start.position
+        );
+    }
+
+    entity.UploadMeshData();
+
+    m_isMoving = false;
+
+    m_moveAxis =
+        VertexMoveAxis::None;
+
+    m_startVertexPositions.clear();
 }

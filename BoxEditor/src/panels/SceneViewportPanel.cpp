@@ -260,7 +260,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     ImGui::SameLine();
     if (ImGui::ImageButton("##DropTool", reinterpret_cast<ImTextureID>(static_cast<intptr_t>(dropIcon.id)), iconSize))
     {
-        m_transformTools.SetActiveTool(TransformToolType::Drop);
+        m_transformTools.DropToGrid(engine);
     }
     if (m_transformTools.GetActiveTool() == TransformToolType::Drop)
     {
@@ -304,11 +304,11 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             if (ImGui::MenuItem("mbx Model")) {
                 action = ViewportAction::AddMbxModel;
             }
-
+            ImGui::Separator();
             if (ImGui::MenuItem("Obj Model")) {
 				action = ViewportAction::AddObjModel;
             }
-
+            ImGui::Separator();
             if (ImGui::MenuItem("Gltf Model")) {
 				action = ViewportAction::AddGltfModel;
             }
@@ -355,15 +355,42 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
         // Lighting call to action callback to add a new light to the scene,
         // the type of light will be determined by the menu item clicked and passed as a string argument to the callback
         if (ImGui::BeginMenu("Add a new Light")) {
-            /*if (ImGui::MenuItem("Ambient")) {
-                if (m_actionCallback) m_actionCallback("AddLight:Ambient");
 
-            }*/
+            if (ImGui::MenuItem("Ambient")) {
+                //if (m_actionCallback) m_actionCallback("AddLight:Ambient");
+
+            }
 
             if (ImGui::MenuItem("Spot")) {
             }
 
             if (ImGui::MenuItem("Area")) {
+                //  if (m_actionCallback) m_actionCallback("AddLight:Area");
+            }
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Modifiers")) {
+
+            if (ImGui::MenuItem("Extrude")) {
+                
+
+            }
+
+            if (ImGui::MenuItem("Inset")) {
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Edge loop")) {
+                //  if (m_actionCallback) m_actionCallback("AddLight:Area");
+            }
+            if (ImGui::MenuItem("Bevel")) {
+                //  if (m_actionCallback) m_actionCallback("AddLight:Area");
+            }
+            if (ImGui::MenuItem("Solidify")) {
+                //  if (m_actionCallback) m_actionCallback("AddLight:Area");
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Scatter")) {
                 //  if (m_actionCallback) m_actionCallback("AddLight:Area");
             }
             ImGui::EndMenu();

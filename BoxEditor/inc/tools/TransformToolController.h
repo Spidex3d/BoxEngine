@@ -3,6 +3,14 @@
 #include <imgui/imgui.h>
 
 class BoxEngine;
+// for vertex editing
+/*enum class VertexMoveAxis
+{
+    None,
+    X,
+    Y,
+    Z
+}*/;
 
 enum class TransformAxis
 {
@@ -38,6 +46,7 @@ public:
 
     void CancelTransform(BoxEngine& engine);
 
+    void DropToGrid(BoxEngine& engine);
 private:
 	// Move Transform
     void BeginMoveTransform(BoxEngine& engine, TransformAxis axis);
@@ -49,6 +58,16 @@ private:
 	void BeginRotateTransform(BoxEngine& engine, TransformAxis axis);
 	void UpdateRotateTransform(BoxEngine& engine);
 
+	// ######### vertex editing ############
+    //VertexMoveAxis m_moveAxis = VertexMoveAxis::None;
+
+    //ImVec2 m_startMouse = ImVec2(0.0f, 0.0f);
+
+    //float m_moveSensitivity = 0.01f;
+    
+
+	//void BeginDropTransform(BoxEngine& engine, TransformAxis axis); // drop the entity to the ground or nearest surface
+	//void UpdateDropTransform(BoxEngine& engine); // update the drop transform based on the current mouse position and the scene geometry
 	// Confirm the transform and update the starting values for the next transform
     void ConfirmTransform(BoxEngine& engine);
 
@@ -70,4 +89,5 @@ private:
 	float m_moveSensitivity = 0.01f;    // Sensitivity for moving, adjust as needed
 	float m_scaleSensitivity = 0.01f;   // Sensitivity for scaling, adjust as needed
 	float m_rotateSensitivity = 0.2f;  // Sensitivity for rotation, adjust as needed
+
 };

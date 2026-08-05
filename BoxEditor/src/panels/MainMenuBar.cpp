@@ -141,7 +141,21 @@ MenuAction MainMenuBar::DrawMainMenu()
             {
                
             }
+            ImGui::Separator();
             if (ImGui::MenuItem("Edge loop"))
+            {
+
+            }
+            if (ImGui::MenuItem("Bevel"))
+            {
+
+            }
+            if (ImGui::MenuItem("Solidify"))
+            {
+
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Scatter"))
             {
 
             }

@@ -7,6 +7,15 @@
 class BoxEngine;
 class Entity;
 
+enum class VertexMoveAxis
+{
+    None,
+    X,
+    Y,
+    Z
+};
+
+
 class VertexEditController
 {
 public:
@@ -42,9 +51,10 @@ private:
             const glm::vec3& position
         ) const;
 
+	// new functions for editing and moving vertices
     void EditBeginMove(
         Entity& entity,
-        std::size_t vertexIndex
+        VertexMoveAxis axis
     );
 
     void EditUpdateMove(
@@ -58,15 +68,26 @@ private:
     );
 
 private:
+    struct VertexStartPosition
+    {
+        std::size_t index = 0;
+        glm::vec3 position{ 0.0f };
+    };
+
     static constexpr std::size_t InvalidVertex =
         static_cast<std::size_t>(-1);
 
     bool m_isMoving = false;
 
-    glm::vec3 m_startVertexPosition =
-        glm::vec3(0.0f);
+   
+    VertexMoveAxis m_moveAxis = VertexMoveAxis::None;
+    glm::vec3 m_startVertexPosition = glm::vec3(0.0f);
+    ImVec2 m_startMouse = ImVec2(0.0f, 0.0f);
 
-    std::vector<std::size_t>
-        m_selectedVertices;
+    std::vector<VertexStartPosition>m_startVertexPositions;
+
+    std::vector<std::size_t>m_selectedVertices;
+
+    float m_moveSensitivity = 0.01f;
 };
 

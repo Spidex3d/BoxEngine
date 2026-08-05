@@ -36,11 +36,27 @@ enum class ViewportAction
     AddEditableCone,
     AddEditableTorus,
 
+	AddAmbientLight,
     AddSpotLight,
     AddAreaLight,
+	AddPointLight,
+
+    AddModifierInset,
+	AddModifierExtrude,
+    AddModifierEdgeloop,
+	AddModifierBevel,
+    AddModifierSolidify,
+	AddModifierMirror,
+	AddModifierSubdivision,
+    AddModifierScatter,
 
     AddSkyBox,
     AddSkySphere,
+    AddFog,
+
+	AddFloor,
+	AddTerrain,
+	AddWaterPlane,
 
     ResetCamera
 };

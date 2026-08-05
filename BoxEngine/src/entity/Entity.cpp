@@ -534,6 +534,7 @@ const MeshVertex* Entity::GetVertex(
 
     return &m_meshData.vertices[index];
 }
+
 bool Entity::SetVertexPosition(
     std::size_t index,
     const glm::vec3& position)
@@ -549,6 +550,7 @@ bool Entity::SetVertexPosition(
 
     return true;
 }
+
 bool Entity::UploadMeshData()
 {
     if (m_vbo == 0 || m_meshData.vertices.empty())

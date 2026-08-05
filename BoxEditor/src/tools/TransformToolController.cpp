@@ -95,6 +95,10 @@ void TransformTools::HandleInput(
                     selectedAxis
                 );
 				break;
+
+			/*case TransformToolType::Drop:
+				BeginDropTransform(engine, selectedAxis);*/
+
             default:
                 break;
             }
@@ -116,6 +120,9 @@ void TransformTools::HandleInput(
         case TransformToolType::Rotate:
             UpdateRotateTransform(engine);
 			break;
+        /*case TransformToolType::Drop:
+            UpdateDropTransform(engine);
+			break;*/
         default:
             break;
         }
@@ -338,9 +345,44 @@ void TransformTools::UpdateRotateTransform(BoxEngine& engine)
 // #############################################################################################################################
 // ###################################################### Drop Transform #######################################################
 // #############################################################################################################################
+void TransformTools::DropToGrid(BoxEngine& engine)
+{
+    Entity* entity = engine.GetSelectedEntity();
 
+    if (!entity)
+    {
+        return;
+    }
 
+    glm::vec3 position =
+        entity->GetPosition();
 
+    const glm::vec3 scale =
+        entity->GetScale();
+
+    const glm::vec3 aabbMin =
+        entity->GetAABBMin();
+
+    /*
+     * Example cube:
+     * local minimum Y = -0.5
+     *
+     * Scaled bottom offset:
+     * -0.5 * scale.y
+     */
+    const float scaledBottom = aabbMin.y * scale.y;
+
+    /*
+     * We want:
+     *
+     * position.y + scaledBottom = gridY
+     */
+    constexpr float gridY = -0.5f;
+
+    position.y = gridY - scaledBottom;
+
+    entity->SetPosition(position);
+}
 
 void TransformTools::ConfirmTransform(BoxEngine& engine)
 {
@@ -359,6 +401,9 @@ void TransformTools::ConfirmTransform(BoxEngine& engine)
             break;
         case TransformToolType::Rotate:
             m_startRotation = entity->GetRotation();
+			break;
+		case TransformToolType::Drop:
+            m_startPosition = entity->GetPosition();
 			break;
         default:
             break;
@@ -387,7 +432,9 @@ void TransformTools::CancelTransform(BoxEngine& engine)
 		case TransformToolType::Rotate:
             entity->SetRotation(m_startRotation);
 			break;  
-
+        case TransformToolType::Drop:
+            entity->SetPosition(m_startPosition);
+            break;
         default:
             break;
         }
