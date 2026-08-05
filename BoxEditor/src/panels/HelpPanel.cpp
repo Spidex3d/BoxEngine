@@ -65,16 +65,24 @@ void HelpPanel::Draw()
 
             ImGui::Spacing();
 
-            ImGui::BulletText(
-                "Add objects right click in the viewport."
-            );
+            ImGui::BulletText("Add objects right click in the viewport.");
 
-            ImGui::BulletText(
-                "Select objects by clicking them in the viewport."
-            );
+            ImGui::BulletText("Select objects by clicking them in the viewport.");
 
-            ImGui::BulletText(
-                "Use the Object Explorer for precise transforms."
+            ImGui::BulletText("Use the Object Explorer for precise transforms.");
+
+            ImGui::BulletText("To move the object use object mode press move x,y,z to move.");
+
+            ImGui::BulletText("To Scale the object use object mode press scale x,y,z to scale.");
+
+            ImGui::BulletText("To Rotate the object use object mode press rotate x,y,z to rotate.");
+
+            ImGui::TextWrapped(
+                "To edit an object use edit mode select the vertex button "
+                "select a vertex press x to move on x, press y to move on y, press z to move on z. "
+                " Or use the edge button then select an edge to manipulate it."
+                " Press x to move on x, press y to move on y, press z to move on z."
+                " The face button works the same way."
             );
 			// Helper Function to center text with color
             g_helpers.CenterTextColored(COLOR_LIGHTGREEN, ICON_FA_CAMERA" Camera Controls");

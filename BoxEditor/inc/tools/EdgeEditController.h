@@ -50,18 +50,7 @@ private:
         // The triangles that share this edge.
         std::vector<glm::vec3> adjacentFaceNormals;
     };
-   /* struct LogicalEdge
-    {
-        glm::vec3 positionA{ 0.0f };
-        glm::vec3 positionB{ 0.0f };
-
-        std::vector<std::size_t>
-            verticesAtA;
-
-        std::vector<std::size_t>
-            verticesAtB;
-    };*/
-
+   
     std::vector<LogicalEdge>BuildLogicalEdges(const Entity& entity) const;
 
 
@@ -117,8 +106,8 @@ private:
    // glm::vec3 m_startEdgePosition = glm::vec3(0.0f);
     ImVec2 m_startMouse = ImVec2(0.0f, 0.0f);
 
-    std::vector<EdgeStartPosition>m_startEdgePositions;
-   // std::vector<EdgeStartPosition>m_startVertexPositions;
+   // std::vector<EdgeStartPosition>m_startEdgePositions;
+    std::vector<EdgeStartPosition>m_startVertexPositions;
 
     //std::vector<std::size_t>m_selectedEdge;
 

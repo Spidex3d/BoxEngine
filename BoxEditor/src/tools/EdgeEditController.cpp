@@ -26,6 +26,106 @@ void EdgeEditController::HandleInput(BoxEngine& engine, bool viewportHovered, bo
             }
         }
 
+        return;
+    }
+
+    if (!viewportHovered)
+    {
+        return;
+    }
+
+    Entity* entity =
+        engine.GetSelectedEntity();
+
+    if (!entity)
+    {
+        return;
+    }
+
+    // Start moving the selected edge.
+    if (!m_isMoving &&
+        m_selectedEdge != InvalidEdge)
+    {
+        if (ImGui::IsKeyPressed(
+            ImGuiKey_X,
+            false))
+        {
+            EditBeginMove(
+                *entity,
+                EdgeMoveAxis::X
+            );
+        }
+        else if (ImGui::IsKeyPressed(
+            ImGuiKey_Y,
+            false))
+        {
+            EditBeginMove(
+                *entity,
+                EdgeMoveAxis::Y
+            );
+        }
+        else if (ImGui::IsKeyPressed(
+            ImGuiKey_Z,
+            false))
+        {
+            EditBeginMove(
+                *entity,
+                EdgeMoveAxis::Z
+            );
+        }
+    }
+
+    // Update active edge movement.
+    if (m_isMoving)
+    {
+        EditUpdateMove(*entity);
+
+        if (ImGui::IsMouseClicked(
+            ImGuiMouseButton_Left))
+        {
+            EditConfirmMove();
+        }
+        else if (
+            ImGui::IsKeyPressed(
+                ImGuiKey_Escape,
+                false) ||
+            ImGui::IsMouseClicked(
+                ImGuiMouseButton_Right))
+        {
+            EditCancelMove(*entity);
+        }
+
+        /*
+         * Do not let the confirmation click
+         * select another edge.
+         */
+        return;
+    }
+
+    // Normal edge selection.
+    if (ImGui::IsMouseClicked(
+        ImGuiMouseButton_Left))
+    {
+        PickEdge(
+            engine,
+            viewportPosition,
+            viewportSize
+        );
+    }
+
+    /*if (!edgeModeActive)
+    {
+        if (m_isMoving)
+        {
+            Entity* entity =
+                engine.GetSelectedEntity();
+
+            if (entity)
+            {
+                EditCancelMove(*entity);
+            }
+        }
+
         ClearSelection(engine);
         return;
     }
@@ -44,7 +144,7 @@ void EdgeEditController::HandleInput(BoxEngine& engine, bool viewportHovered, bo
             viewportPosition,
             viewportSize
         );
-    }
+    }*/
 }
 
 void EdgeEditController::DrawEdge(BoxEngine& engine, const ImVec2& viewportPosition, const ImVec2& viewportSize, bool edgeModeActive)
@@ -729,16 +829,172 @@ bool EdgeEditController::PickEdge(BoxEngine& engine, const ImVec2& viewportPosit
 
 void EdgeEditController::EditBeginMove(Entity& entity, EdgeMoveAxis axis)
 {
+
+    if (m_selectedEdge == InvalidEdge)
+    {
+        return;
+    }
+
+    const std::vector<LogicalEdge> edges =
+        BuildLogicalEdges(entity);
+
+    if (m_selectedEdge >= edges.size())
+    {
+        m_selectedEdge = InvalidEdge;
+        return;
+    }
+
+    const LogicalEdge& selectedEdge =
+        edges[m_selectedEdge];
+
+    const MeshData& mesh =
+        entity.GetMeshData();
+
+    m_startVertexPositions.clear();
+
+    /*
+     * Add one render vertex to the movement
+     * list, avoiding duplicate indices.
+     */
+    const auto AddStartVertex =
+        [&](std::size_t index)
+    {
+        if (index >= mesh.vertices.size())
+        {
+            return;
+        }
+
+        for (const EdgeStartPosition& existing :
+            m_startVertexPositions)
+        {
+            if (existing.index == index)
+            {
+                return;
+            }
+        }
+
+        EdgeStartPosition start;
+
+        start.index = index;
+
+        start.position =
+            mesh.vertices[index].position;
+
+        m_startVertexPositions.push_back(
+            start
+        );
+    };
+
+    /*
+     * An edge consists of two logical vertices.
+     * Each logical vertex may have several
+     * duplicated rendering vertices.
+     */
+    for (const std::size_t index :
+    selectedEdge.verticesAtA)
+    {
+        AddStartVertex(index);
+    }
+
+    for (const std::size_t index :
+    selectedEdge.verticesAtB)
+    {
+        AddStartVertex(index);
+    }
+
+    if (m_startVertexPositions.empty())
+    {
+        return;
+    }
+
+    m_moveAxis = axis;
+
+    m_startMouse =
+        ImGui::GetMousePos();
+
+    m_isMoving = true;
+
+}
+
+void EdgeEditController::EditUpdateMove(Entity& entity)
+{
+    if (!m_isMoving)
+    {
+        return;
+    }
+
+    const ImVec2 currentMouse =
+        ImGui::GetMousePos();
+
+    const float deltaX =
+        currentMouse.x -
+        m_startMouse.x;
+
+    const float deltaY =
+        currentMouse.y -
+        m_startMouse.y;
+
+    glm::vec3 movement(0.0f);
+
+    switch (m_moveAxis)
+    {
+    case EdgeMoveAxis::X:
+        movement.x =
+            deltaX *
+            m_moveSensitivity;
+        break;
+
+    case EdgeMoveAxis::Y:
+        movement.y =
+            -deltaY *
+            m_moveSensitivity;
+        break;
+
+    case EdgeMoveAxis::Z:
+        movement.z =
+            deltaX *
+            m_moveSensitivity;
+        break;
+
+    case EdgeMoveAxis::None:
+    default:
+        return;
+    }
+
+    for (const EdgeStartPosition& start :
+        m_startVertexPositions)
+    {
+        entity.SetVertexPosition(
+            start.index,
+            start.position + movement
+        );
+    }
+
+    entity.UploadMeshData();
+}
+
+void EdgeEditController::EditConfirmMove()
+{
+    if (!m_isMoving)
+    {
+        return;
+    }
+    m_isMoving = false;
+    m_moveAxis =
+        EdgeMoveAxis::None;
+    m_startVertexPositions.clear();
 }
 
 void EdgeEditController::EditCancelMove(Entity& entity)
 {
-    for (const EdgeStartPosition& start : m_startEdgePositions)
+   
+    for (const EdgeStartPosition& start :
+        m_startVertexPositions)
     {
-        entity.SetEdgePosition(
+        entity.SetVertexPosition(
             start.index,
-            start.position,
-            start.position);
+            start.position
+        );
     }
 
     entity.UploadMeshData();
@@ -748,5 +1004,5 @@ void EdgeEditController::EditCancelMove(Entity& entity)
     m_moveAxis =
         EdgeMoveAxis::None;
 
-    m_startEdgePositions.clear();
+    m_startVertexPositions.clear();
 }

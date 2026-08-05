@@ -539,6 +539,8 @@ void VertexEditController::EditBeginMove(Entity& entity, VertexMoveAxis axis)
 
 void VertexEditController::EditUpdateMove(Entity& entity)
 {
+    
+
     if (!m_isMoving)
     {
         return;
