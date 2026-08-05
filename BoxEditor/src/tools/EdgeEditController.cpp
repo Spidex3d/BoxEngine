@@ -1,0 +1,752 @@
+#include <tools\EdgeEditController.h>
+#include <BoxEngine.h> // Add this include to resolve incomplete type error
+#include <entity/Entity.h>
+#include <imgui/imgui.h>
+#include <miniBoxLog.h>
+#include <camera/Camera.h>
+#include <limits>
+#include <algorithm>
+#include <cmath>
+#include <glm/gtc/matrix_transform.hpp>
+
+
+void EdgeEditController::HandleInput(BoxEngine& engine, bool viewportHovered, bool edgeModeActive, const ImVec2& viewportPosition,
+	const ImVec2& viewportSize)
+{
+    if (!edgeModeActive)
+    {
+        if (m_isMoving)
+        {
+            Entity* entity =
+                engine.GetSelectedEntity();
+
+            if (entity)
+            {
+                EditCancelMove(*entity);
+            }
+        }
+
+        ClearSelection(engine);
+        return;
+    }
+
+    if (!viewportHovered)
+    {
+        return;
+    }
+
+    if (!m_isMoving &&
+        ImGui::IsMouseClicked(
+            ImGuiMouseButton_Left))
+    {
+        PickEdge(
+            engine,
+            viewportPosition,
+            viewportSize
+        );
+    }
+}
+
+void EdgeEditController::DrawEdge(BoxEngine& engine, const ImVec2& viewportPosition, const ImVec2& viewportSize, bool edgeModeActive)
+{
+    if (!edgeModeActive ||
+        viewportSize.x <= 0.0f ||
+        viewportSize.y <= 0.0f)
+    {
+        return;
+    }
+
+    Entity* entity =
+        engine.GetSelectedEntity();
+
+    if (!entity)
+    {
+        return;
+    }
+
+    const std::vector<LogicalEdge> edges =
+        BuildLogicalEdges(*entity);
+
+    if (edges.empty())
+    {
+        return;
+    }
+
+    Camera& camera = engine.GetCamera();
+
+    const float aspectRatio =
+        viewportSize.x /
+        viewportSize.y;
+
+    const glm::mat4 modelViewProjection =
+        camera.GetProjectionMatrix(
+            aspectRatio
+        ) *
+        camera.GetViewMatrix() *
+        entity->GetModelMatrix();
+
+    ImDrawList* drawList =
+        ImGui::GetWindowDrawList();
+
+    for (std::size_t index = 0;
+        index < edges.size();
+        ++index)
+    {
+        ImVec2 screenA;
+        ImVec2 screenB;
+
+        if (!ProjectToScreen(
+            edges[index].positionA,
+            modelViewProjection,
+            viewportPosition,
+            viewportSize,
+            screenA) ||
+            !ProjectToScreen(
+                edges[index].positionB,
+                modelViewProjection,
+                viewportPosition,
+                viewportSize,
+                screenB))
+        {
+            continue;
+        }
+
+        const bool selected = index == m_selectedEdge;
+
+        const ImU32 color =
+            selected
+            ? IM_COL32(30, 255, 70, 255)
+            : IM_COL32(50, 170, 255, 255);
+
+        const float thickness =
+            selected ? 4.0f : 2.0f;
+
+        drawList->AddLine(
+            screenA,
+            screenB,
+            color,
+            thickness
+        );
+    }
+}
+
+void EdgeEditController::ClearSelection(BoxEngine& engine)
+{
+	// Clear selected edges
+	m_selectedEdge = InvalidEdge;
+	Entity* entity = engine.GetSelectedEntity();
+	if (entity)
+	{
+		entity->ClearSelectedEdges(); // this is in entity
+	}
+}
+
+
+std::vector<EdgeEditController::LogicalEdge> EdgeEditController::BuildLogicalEdges(const Entity& entity) const
+{
+    std::vector<LogicalEdge> candidateEdges;
+
+    const MeshData& mesh =
+        entity.GetMeshData();
+
+    if (!mesh.IsValid())
+    {
+        return {};
+    }
+
+    constexpr float positionEpsilon =
+        0.0001f;
+
+    constexpr float coplanarDotThreshold =
+        0.999f;
+
+    const auto SamePosition =
+        [](const glm::vec3& a,
+            const glm::vec3& b)
+    {
+        constexpr float epsilon =
+            0.0001f;
+
+        return glm::length(a - b) <=
+            epsilon;
+    };
+
+    /*
+     * Adds an edge or records another triangle
+     * using an existing logical edge.
+     */
+    const auto AddEdge =
+        [&](const glm::vec3& a,
+            const glm::vec3& b,
+            const glm::vec3& faceNormal)
+    {
+        if (SamePosition(a, b))
+        {
+            return;
+        }
+
+        for (LogicalEdge& edge :
+            candidateEdges)
+        {
+            const bool sameDirection =
+                SamePosition(
+                    edge.positionA,
+                    a
+                ) &&
+                SamePosition(
+                    edge.positionB,
+                    b
+                );
+
+            const bool reverseDirection =
+                SamePosition(
+                    edge.positionA,
+                    b
+                ) &&
+                SamePosition(
+                    edge.positionB,
+                    a
+                );
+
+            if (sameDirection ||
+                reverseDirection)
+            {
+                edge.adjacentFaceNormals
+                    .push_back(faceNormal);
+
+                return;
+            }
+        }
+
+        LogicalEdge edge;
+
+        edge.positionA = a;
+        edge.positionB = b;
+
+        edge.adjacentFaceNormals.push_back(
+            faceNormal
+        );
+
+        /*
+         * Find all duplicated render vertices
+         * belonging to both logical endpoints.
+         */
+        for (std::size_t index = 0;
+            index < mesh.vertices.size();
+            ++index)
+        {
+            const glm::vec3& position =
+                mesh.vertices[index].position;
+
+            if (SamePosition(position, a))
+            {
+                edge.verticesAtA.push_back(
+                    index
+                );
+            }
+
+            if (SamePosition(position, b))
+            {
+                edge.verticesAtB.push_back(
+                    index
+                );
+            }
+        }
+
+        candidateEdges.push_back(
+            std::move(edge)
+        );
+    };
+
+    /*
+     * Process one triangle.
+     */
+    const auto AddTriangle =
+        [&](const glm::vec3& a,
+            const glm::vec3& b,
+            const glm::vec3& c)
+    {
+        const glm::vec3 crossProduct =
+            glm::cross(
+                b - a,
+                c - a
+            );
+
+        const float length =
+            glm::length(crossProduct);
+
+        /*
+         * Ignore degenerate triangles.
+         */
+        if (length <= positionEpsilon)
+        {
+            return;
+        }
+
+        const glm::vec3 faceNormal =
+            crossProduct / length;
+
+        AddEdge(a, b, faceNormal);
+        AddEdge(b, c, faceNormal);
+        AddEdge(c, a, faceNormal);
+    };
+
+    if (mesh.HasIndices())
+    {
+        for (std::size_t index = 0;
+            index + 2 < mesh.indices.size();
+            index += 3)
+        {
+            const std::uint32_t indexA =
+                mesh.indices[index];
+
+            const std::uint32_t indexB =
+                mesh.indices[index + 1];
+
+            const std::uint32_t indexC =
+                mesh.indices[index + 2];
+
+            if (indexA >= mesh.vertices.size() ||
+                indexB >= mesh.vertices.size() ||
+                indexC >= mesh.vertices.size())
+            {
+                continue;
+            }
+
+            AddTriangle(
+                mesh.vertices[indexA].position,
+                mesh.vertices[indexB].position,
+                mesh.vertices[indexC].position
+            );
+        }
+    }
+    else
+    {
+        for (std::size_t index = 0;
+            index + 2 < mesh.vertices.size();
+            index += 3)
+        {
+            AddTriangle(
+                mesh.vertices[index].position,
+                mesh.vertices[index + 1].position,
+                mesh.vertices[index + 2].position
+            );
+        }
+    }
+
+    /*
+     * Remove edges shared by two coplanar
+     * triangles. These are triangulation
+     * diagonals rather than modelling edges.
+     */
+    std::vector<LogicalEdge> visibleEdges;
+
+    visibleEdges.reserve(
+        candidateEdges.size()
+    );
+
+    for (LogicalEdge& edge :
+        candidateEdges)
+    {
+        bool internalDiagonal = false;
+
+        if (edge.adjacentFaceNormals.size() == 2)
+        {
+            const glm::vec3 normalA =
+                glm::normalize(
+                    edge.adjacentFaceNormals[0]
+                );
+
+            const glm::vec3 normalB =
+                glm::normalize(
+                    edge.adjacentFaceNormals[1]
+                );
+
+            const float normalAgreement =
+                glm::dot(
+                    normalA,
+                    normalB
+                );
+
+            internalDiagonal =
+                normalAgreement >=
+                coplanarDotThreshold;
+        }
+
+        if (!internalDiagonal)
+        {
+            visibleEdges.push_back(
+                std::move(edge)
+            );
+        }
+    }
+
+    return visibleEdges;
+
+
+    //std::vector<LogicalEdge> edges;
+
+    //const MeshData& mesh = entity.GetMeshData();
+
+    //if (!mesh.IsValid())
+    //{
+    //    return edges;
+    //}
+
+    //auto SamePosition =
+    //    [](const glm::vec3& a,
+    //        const glm::vec3& b)
+    //{
+    //    constexpr float epsilon =
+    //        0.0001f;
+
+    //    return glm::length(a - b) <= epsilon;
+    //};
+
+    //auto AddEdge =
+    //    [&](const glm::vec3& a,
+    //        const glm::vec3& b)
+    //{
+    //    /*
+    //     * Ignore zero-length edges.
+    //     */
+    //    if (SamePosition(a, b))
+    //    {
+    //        return;
+    //    }
+
+    //    /*
+    //     * Avoid adding the same logical edge
+    //     * in the opposite direction.
+    //     */
+    //    for (const LogicalEdge& edge : edges)
+    //    {
+    //        const bool sameDirection =
+    //            SamePosition(edge.positionA, a) &&
+    //            SamePosition(edge.positionB, b);
+
+    //        const bool oppositeDirection =
+    //            SamePosition(edge.positionA, b) &&
+    //            SamePosition(edge.positionB, a);
+
+    //        if (sameDirection ||
+    //            oppositeDirection)
+    //        {
+    //            return;
+    //        }
+    //    }
+
+    //    LogicalEdge edge;
+
+    //    edge.positionA = a;
+    //    edge.positionB = b;
+
+    //    for (std::size_t index = 0;
+    //        index < mesh.vertices.size();
+    //        ++index)
+    //    {
+    //        const glm::vec3& position =
+    //            mesh.vertices[index].position;
+
+    //        if (SamePosition(position, a))
+    //        {
+    //            edge.verticesAtA.push_back(index);
+    //        }
+
+    //        if (SamePosition(position, b))
+    //        {
+    //            edge.verticesAtB.push_back(index);
+    //        }
+    //    }
+
+    //    edges.push_back(
+    //        std::move(edge)
+    //    );
+    //};
+
+    //if (mesh.HasIndices())
+    //{
+    //    for (std::size_t index = 0;
+    //        index + 2 < mesh.indices.size();
+    //        index += 3)
+    //    {
+    //        const std::uint32_t ia =
+    //            mesh.indices[index];
+
+    //        const std::uint32_t ib =
+    //            mesh.indices[index + 1];
+
+    //        const std::uint32_t ic =
+    //            mesh.indices[index + 2];
+
+    //        if (ia >= mesh.vertices.size() ||
+    //            ib >= mesh.vertices.size() ||
+    //            ic >= mesh.vertices.size())
+    //        {
+    //            continue;
+    //        }
+
+    //        const glm::vec3& a = mesh.vertices[ia].position;
+
+    //        const glm::vec3& b = mesh.vertices[ib].position;
+
+    //        const glm::vec3& c = mesh.vertices[ic].position;
+
+    //        AddEdge(a, b);
+    //        AddEdge(b, c);
+    //        AddEdge(c, a);
+    //    }
+    //}
+    //else
+    //{
+    //    for (std::size_t index = 0;
+    //        index + 2 < mesh.vertices.size();
+    //        index += 3)
+    //    {
+    //        const glm::vec3& a = mesh.vertices[index].position;
+
+    //        const glm::vec3& b = mesh.vertices[index + 1].position;
+
+    //        const glm::vec3& c = mesh.vertices[index + 2].position;
+
+    //        AddEdge(a, b);
+    //        AddEdge(b, c);
+    //        AddEdge(c, a);
+    //    }
+    //}
+
+    //return edges;
+}
+
+bool EdgeEditController::ProjectToScreen(const glm::vec3& localPosition, const glm::mat4& modelViewProjection, const ImVec2& viewportPosition, const ImVec2& viewportSize, ImVec2& outScreenPosition) const
+{
+    const glm::vec4 clipPosition =
+        modelViewProjection *
+        glm::vec4(localPosition, 1.0f);
+
+    if (clipPosition.w <= 0.0001f)
+    {
+        return false;
+    }
+
+    const glm::vec3 ndc =
+        glm::vec3(clipPosition) /
+        clipPosition.w;
+
+    if (ndc.x < -1.0f ||
+        ndc.x > 1.0f ||
+        ndc.y < -1.0f ||
+        ndc.y > 1.0f ||
+        ndc.z < -1.0f ||
+        ndc.z > 1.0f)
+    {
+        return false;
+    }
+
+    outScreenPosition.x =
+        viewportPosition.x +
+        ((ndc.x + 1.0f) * 0.5f) *
+        viewportSize.x;
+
+    outScreenPosition.y =
+        viewportPosition.y +
+        ((1.0f - ndc.y) * 0.5f) *
+        viewportSize.y;
+
+    return true;
+}
+
+float EdgeEditController::DistanceToLineSegment(const ImVec2& point, const ImVec2& lineStart, const ImVec2& lineEnd)
+{
+    const float lineX = lineEnd.x - lineStart.x;
+
+    const float lineY = lineEnd.y - lineStart.y;
+
+    const float lineLengthSquared =
+        lineX * lineX +
+        lineY * lineY;
+
+    /*
+     * Handle a projected edge whose two
+     * endpoints occupy the same screen point.
+     */
+    if (lineLengthSquared <= 0.000001f)
+    {
+        const float deltaX = point.x - lineStart.x;
+
+        const float deltaY = point.y - lineStart.y;
+
+        return std::sqrt(
+            deltaX * deltaX +
+            deltaY * deltaY
+        );
+    }
+
+    const float pointX = point.x - lineStart.x;
+
+    const float pointY = point.y - lineStart.y;
+
+    float t =
+        (pointX * lineX +
+            pointY * lineY) /
+        lineLengthSquared;
+
+    t = std::clamp(
+        t,
+        0.0f,
+        1.0f
+    );
+
+    const float closestX =
+        lineStart.x +
+        t * lineX;
+
+    const float closestY =
+        lineStart.y +
+        t * lineY;
+
+    const float deltaX =
+        point.x - closestX;
+
+    const float deltaY =
+        point.y - closestY;
+
+    return std::sqrt(
+        deltaX * deltaX +
+        deltaY * deltaY
+    );
+}
+
+bool EdgeEditController::PickEdge(BoxEngine& engine, const ImVec2& viewportPosition, const ImVec2& viewportSize)
+{
+    Entity* entity =
+        engine.GetSelectedEntity();
+
+    if (!entity)
+    {
+        return false;
+    }
+
+    if (viewportSize.x <= 0.0f ||
+        viewportSize.y <= 0.0f)
+    {
+        return false;
+    }
+
+    const std::vector<LogicalEdge> edges =
+        BuildLogicalEdges(*entity);
+
+    if (edges.empty())
+    {
+        return false;
+    }
+
+    Camera& camera =
+        engine.GetCamera();
+
+    const float aspectRatio =
+        viewportSize.x /
+        viewportSize.y;
+
+    const glm::mat4 modelViewProjection =
+        camera.GetProjectionMatrix(
+            aspectRatio
+        ) *
+        camera.GetViewMatrix() *
+        entity->GetModelMatrix();
+
+    const ImVec2 mousePosition =
+        ImGui::GetMousePos();
+
+    constexpr float pickDistance =
+        8.0f;
+
+    float closestDistance =
+        std::numeric_limits<float>::max();
+
+    std::size_t closestEdge =
+        InvalidEdge;
+
+    for (std::size_t index = 0;
+        index < edges.size();
+        ++index)
+    {
+        ImVec2 screenA;
+        ImVec2 screenB;
+
+        if (!ProjectToScreen(
+            edges[index].positionA,
+            modelViewProjection,
+            viewportPosition,
+            viewportSize,
+            screenA) ||
+            !ProjectToScreen(
+                edges[index].positionB,
+                modelViewProjection,
+                viewportPosition,
+                viewportSize,
+                screenB))
+        {
+            continue;
+        }
+
+        const float distance =
+            DistanceToLineSegment(
+                mousePosition,
+                screenA,
+                screenB
+            );
+
+        if (distance <= pickDistance &&
+            distance < closestDistance)
+        {
+            closestDistance =
+                distance;
+
+            closestEdge =
+                index;
+        }
+    }
+
+    if (closestEdge == InvalidEdge)
+    {
+        ClearSelection(engine);
+        return false;
+    }
+
+    m_selectedEdge =
+        closestEdge;
+
+    BOX_LOG_INFO(
+        "Selected edge index: "
+        << m_selectedEdge
+    );
+
+    return true;
+}
+
+
+
+void EdgeEditController::EditBeginMove(Entity& entity, EdgeMoveAxis axis)
+{
+}
+
+void EdgeEditController::EditCancelMove(Entity& entity)
+{
+    for (const EdgeStartPosition& start : m_startEdgePositions)
+    {
+        entity.SetEdgePosition(
+            start.index,
+            start.position,
+            start.position);
+    }
+
+    entity.UploadMeshData();
+
+    m_isMoving = false;
+
+    m_moveAxis =
+        EdgeMoveAxis::None;
+
+    m_startEdgePositions.clear();
+}

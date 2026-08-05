@@ -34,7 +34,7 @@ public:
     void DrawMesh() const;
     // ##################################################################################
 	// ############################# mesh editing functions #############################
-    // ##################################################################################
+    // ##################################### Vertex ########################################
     std::size_t GetVertexCount() const;
 
     const MeshVertex* GetVertex(std::size_t index) const;
@@ -43,7 +43,7 @@ public:
 
     bool UploadMeshData();
 
-    void AddSelectedVertex(std::size_t index);
+	void AddSelectedVertex(std::size_t index); // Add a vertex index to the selected vertices list
 
     void ClearSelectedVertices();
 
@@ -53,6 +53,16 @@ public:
 
     const std::vector<std::size_t>& GetSelectedVertices() const;
 
+    // ##################################### Edge ##########################################
+
+	bool SetEdgePosition(std::size_t index, const glm::vec3& positionA, const glm::vec3& positionB);
+	void ClearSelectedEdges();
+    void SelectEdge(std::size_t index);
+
+    void SelectEdges(std::size_t index);
+    bool IsEdgeSelected(std::size_t index) const;
+
+    // ##################################### Face ##########################################
 
 	// ######################################################################################
     // ###################################### Rendering #####################################
@@ -145,7 +155,8 @@ public:
     }
 private:
 	// ############################# Mesh editing data for the entity #############################
-    std::vector<std::size_t>m_selectedVertices;
+	std::vector<std::size_t>m_selectedVertices; // Store the indices of selected vertices for editing
+	std::vector<std::size_t>m_selectedEdges;    // Store the indices of selected edges for editing
 	// ############################# Mesh data for the entity ###############################
     MeshData m_meshData;
 

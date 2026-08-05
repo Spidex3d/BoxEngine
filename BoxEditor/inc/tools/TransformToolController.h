@@ -3,14 +3,7 @@
 #include <imgui/imgui.h>
 
 class BoxEngine;
-// for vertex editing
-/*enum class VertexMoveAxis
-{
-    None,
-    X,
-    Y,
-    Z
-}*/;
+
 
 enum class TransformAxis
 {
@@ -58,16 +51,7 @@ private:
 	void BeginRotateTransform(BoxEngine& engine, TransformAxis axis);
 	void UpdateRotateTransform(BoxEngine& engine);
 
-	// ######### vertex editing ############
-    //VertexMoveAxis m_moveAxis = VertexMoveAxis::None;
-
-    //ImVec2 m_startMouse = ImVec2(0.0f, 0.0f);
-
-    //float m_moveSensitivity = 0.01f;
-    
-
-	//void BeginDropTransform(BoxEngine& engine, TransformAxis axis); // drop the entity to the ground or nearest surface
-	//void UpdateDropTransform(BoxEngine& engine); // update the drop transform based on the current mouse position and the scene geometry
+	
 	// Confirm the transform and update the starting values for the next transform
     void ConfirmTransform(BoxEngine& engine);
 

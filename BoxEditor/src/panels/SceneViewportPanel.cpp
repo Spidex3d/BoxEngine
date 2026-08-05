@@ -10,6 +10,7 @@
 #include <tools\VertexEditController.h>
 
 
+
 ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const EditorIcons& icons)
 {
    
@@ -462,11 +463,24 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             // #################################### Editing tools #########################################
             // ############################################################################################
             const bool editModeActive = m_EditMode == 2;
-			const bool vertexModeActive = editModeActive && m_editType == 0; // combine edit mode and vertex edit type
+			const bool vertexModeActive = editModeActive && m_editType == 0;    // combine edit mode and vertex edit type
 
+			const bool edgeModeActive = editModeActive && m_editType == 1;      // combine edit mode and edge edit type
+			
+            const bool faceModeActive = editModeActive && m_editType == 2;      // combine edit mode and face edit type
+
+            
+
+
+            // vertex
             m_vertexEditController.HandleInput(engine, viewportHovered, vertexModeActive, m_sceneViewportPos, m_sceneViewportSize);
-
             m_vertexEditController.DrawVertices(engine, m_sceneViewportPos, m_sceneViewportSize, vertexModeActive);
+            // edges
+            m_edgeEditController.HandleInput(engine, viewportHovered, edgeModeActive, m_sceneViewportPos, m_sceneViewportSize);
+            m_edgeEditController.DrawEdge(engine, m_sceneViewportPos, m_sceneViewportSize, edgeModeActive);
+			// faces
+			// m_faceEditController.HandleInput(engine, viewportHovered, faceModeActive, m_sceneViewportPos, m_sceneViewportSize);
+			// m_faceEditController.DrawFaces(engine, m_sceneViewportPos, m_sceneViewportSize, faceModeActive);
 
             // ############################################################################################
             // ################################# Mouse Picking ############################################

@@ -518,7 +518,7 @@ void Entity::DrawMesh() const
 
 // ############################################################################################
 // ####################################### mesh editing functions #############################
-// ############################################################################################
+// ################################################ vertex ####################################
 std::size_t Entity::GetVertexCount() const
 {
     return m_meshData.vertices.size();
@@ -583,13 +583,7 @@ bool Entity::UploadMeshData()
 
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
 
-    glBufferSubData(
-        GL_ARRAY_BUFFER,
-        0,
-        vertices.size() *
-        sizeof(float),
-        vertices.data()
-    );
+    glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(float), vertices.data());
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
@@ -598,8 +592,7 @@ bool Entity::UploadMeshData()
 
 void Entity::AddSelectedVertex(std::size_t index)
 {
-    if (index >=
-        m_meshData.vertices.size())
+    if (index >= m_meshData.vertices.size())
     {
         return;
     }
@@ -615,8 +608,6 @@ void Entity::AddSelectedVertex(std::size_t index)
         );
     }
 }
-
-
 
 void Entity::ClearSelectedVertices()
 {
@@ -644,6 +635,50 @@ const std::vector<std::size_t>&Entity::GetSelectedVertices() const
 {
     return m_selectedVertices;
 }
+// ############################################ Edge ##########################################
+
+bool Entity::SetEdgePosition(std::size_t index, const glm::vec3& positionA, const glm::vec3& positionB)
+{
+    /*if (index >= m_meshData.edges.size())
+    {
+        return false;
+    }
+    m_meshData.edges[index].positionA = positionA;
+    m_meshData.edges[index].positionB = positionB;
+	return true;*/
+	return false; // Edge functionality is not implemented in this version
+}
+
+void Entity::ClearSelectedEdges()
+{
+    m_selectedEdges.clear();
+}
+
+void Entity::SelectEdge(std::size_t index)
+{
+    /*if (index >= m_meshData.edges.size())
+    {
+        return;
+    }*/
+
+    m_selectedEdges.clear();
+
+    m_selectedEdges.push_back(index);
+}
+
+bool Entity::IsEdgeSelected(std::size_t index) const
+{
+    return std::find(m_selectedEdges.begin(),
+        m_selectedEdges.end(), index) != m_selectedEdges.end();
+}
+
+
+
+// ############################################ Face ##########################################
+
+
+
+
 // ############################################################################################
 // ############################################### Rendering ##################################
 // ############################################################################################

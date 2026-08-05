@@ -9,6 +9,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 
+
 void VertexEditController::HandleInput(BoxEngine& engine, bool viewportHovered, bool vertexModeActive, const ImVec2& viewportPosition,
     const ImVec2& viewportSize)
 {
@@ -292,6 +293,7 @@ void VertexEditController::ClearSelection(BoxEngine& engine)
         entity->ClearSelectedVertices();
     }
 }
+
 
 bool VertexEditController::PickVertex(BoxEngine& engine, const ImVec2& viewportPosition, const ImVec2& viewportSize)
 {

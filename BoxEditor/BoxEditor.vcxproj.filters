@@ -99,6 +99,9 @@
     <ClCompile Include="src\tools\VertexEditController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\tools\EdgeEditController.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\App.h">
@@ -192,6 +195,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="inc\tools\VertexEditController.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\tools\EdgeEditController.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

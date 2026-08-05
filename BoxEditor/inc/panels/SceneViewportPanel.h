@@ -7,6 +7,7 @@
 
 #include "tools/TransformToolController.h"
 #include <tools/VertexEditController.h> // Add this at the top if not already included
+#include "tools/EdgeEditController.h"
 
 class BoxEngine;
 class EditorIcons;
@@ -91,12 +92,10 @@ private:
 	int m_editType = -1; // 0 for vertex, 1 for edge, 2 for face
 
     // ################################## tools ###############################	    
-    TransformTools m_transformTools;
-
-	// Add this member to fix the error ######### Edit mode mesh editing controller ##############
-    
-
-    VertexEditController m_vertexEditController;
+	TransformTools m_transformTools;                // move, scale, rotate, local, snap, drop
+    VertexEditController m_vertexEditController;    // vertex
+    EdgeEditController m_edgeEditController;        // edge
+   // FaceEditController m_faceEditController;      // face    
 
 	int m_AddMeshType = 0;
     		
