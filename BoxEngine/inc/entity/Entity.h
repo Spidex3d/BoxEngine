@@ -6,6 +6,7 @@
 #include <string>
 #include <rendering\Material.h>
 #include <mesh/MeshData.h>
+#include <mesh/MeshEditing.h>
 #include <vector>
 #include <cstddef>
 
@@ -70,6 +71,18 @@ public:
     void SelectFace(std::size_t index);
 
     bool IsFaceSelected(std::size_t index) const;
+    // ##################################### Mesh Edit ##########################################
+    MeshEditing& GetEditableMesh()
+    {
+        return m_editableMesh;
+    }
+
+    const MeshEditing& GetEditableMesh() const
+    {
+        return m_editableMesh;
+    }
+
+    bool CreateBuffersFromMeshData();
 
     // ##################################### Normals ##########################################
     void RecalculateNormals();
@@ -171,7 +184,8 @@ private:
 	std::vector<std::size_t>m_selectedFaces;    // Store the indices of selected faces for editing
 	// ############################# Mesh data for the entity ###############################
     MeshData m_meshData;
-
+	// ############################# Mesh Editing ###############################
+    MeshEditing m_editableMesh;
 	// ###################################### Rendering #####################################
     void RenderInternal(const Shader& shader, const glm::mat4& view,
         const glm::mat4& projection, const glm::vec3& cameraPosition

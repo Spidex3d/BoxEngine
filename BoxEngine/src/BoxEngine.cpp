@@ -227,9 +227,7 @@ bool BoxEngine::AddEditableCube(
 
     if (!cube->CreateCube())
     {
-        BOX_LOG_ERROR(
-            "Failed to add editable cube"
-        );
+        BOX_LOG_ERROR("Failed to add editable cube");
 
         return false;
     }
