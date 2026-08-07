@@ -15,6 +15,7 @@ enum class MenuAction
 	Importmbx,  
 
     AddCube,
+	AddPlane,
     AddSphere,
     Help,
 	About

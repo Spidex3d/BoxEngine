@@ -481,7 +481,120 @@ bool Entity::CreateCube()
     return true;
 }
 
+bool Entity::CreatePlane()
+{
+    Destroy();
 
+    m_useIndices = false;
+    m_indexCount = 0;
+    m_aabbMin = glm::vec3(-0.5f, 0.0f, -0.5f);
+    m_aabbMax = glm::vec3(0.5f, 0.0f, 0.5f);
+
+    // Position XYZ, Normal XYZ, UV XY
+    const float vertices[] =
+    {
+        // Positions             // Normals         // UVs
+        // Top face +Y
+          -0.5f,  0.5f,  0.5f,   0.0f,  1.0f, 0.0f,  0.0f, 1.0f,
+           0.5f,  0.5f,  0.5f,   0.0f,  1.0f, 0.0f,  1.0f, 1.0f,
+           0.5f,  0.5f, -0.5f,   0.0f,  1.0f, 0.0f,  1.0f, 0.0f,
+
+          -0.5f,  0.5f,  0.5f,   0.0f,  1.0f, 0.0f,  0.0f, 1.0f,
+           0.5f,  0.5f, -0.5f,   0.0f,  1.0f, 0.0f,  1.0f, 0.0f,
+          -0.5f,  0.5f, -0.5f,   0.0f,  1.0f, 0.0f,  0.0f, 0.0f
+    };
+
+    m_meshData.vertices.clear();
+    m_meshData.indices.clear();
+
+    constexpr std::size_t floatsPerVertex = 8;
+
+    const std::size_t totalFloatCount = sizeof(vertices) / sizeof(vertices[0]);
+
+    const std::size_t planeVertexCount = totalFloatCount / floatsPerVertex;
+
+    m_meshData.vertices.reserve(planeVertexCount);
+
+    for (std::size_t index = 0;
+        index < totalFloatCount;
+        index += floatsPerVertex)
+    {
+        MeshVertex vertex;
+
+        vertex.position =
+            glm::vec3(
+                vertices[index + 0],
+                vertices[index + 1],
+                vertices[index + 2]
+            );
+
+        vertex.normal =
+            glm::vec3(
+                vertices[index + 3],
+                vertices[index + 4],
+                vertices[index + 5]
+            );
+
+        vertex.uv =
+            glm::vec2(
+                vertices[index + 6],
+                vertices[index + 7]
+            );
+
+        m_meshData.vertices.push_back(vertex);
+    }
+
+    m_vertexCount = static_cast<GLsizei>(m_meshData.vertices.size());
+
+    glGenVertexArrays(1, &m_vao);
+    glGenBuffers(1, &m_vbo);
+
+    glBindVertexArray(m_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    // Position
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(0));
+
+    // Normal
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
+        
+
+    // Texture coordinates
+    glEnableVertexAttribArray(2);
+
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(6 * sizeof(float)));
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    const bool valid = m_vao != 0 && m_vbo != 0;
+
+    if (!valid)
+    {
+        BOX_LOG_ERROR(
+            "Entity::CreatePlane failed for entity "
+            << m_name
+        );
+
+        Destroy();
+        return false;
+    }
+
+    BOX_LOG_INFO(
+        "Created plane entity: "
+        << m_name
+        << " ID=" << m_id
+        << " Mesh vertices="
+        << m_meshData.vertices.size()
+    );
+
+    return true;
+
+}
 
 // shader for the selection outline effect
 void Entity::DrawMesh() const
@@ -519,6 +632,7 @@ void Entity::DrawMesh() const
 // ############################################################################################
 // ####################################### mesh editing functions #############################
 // ################################################ vertex ####################################
+
 std::size_t Entity::GetVertexCount() const
 {
     return m_meshData.vertices.size();

@@ -253,6 +253,42 @@ bool BoxEngine::AddEditableCube(
     return true;
 }
 
+bool BoxEngine::AddEditablePlane(const glm::vec3& position)
+{
+    const int entityID = m_nextEntityID++;
+
+    const std::string entityName = "Plane " + std::to_string(entityID);
+
+    auto plane = std::make_unique<Entity>(entityID, entityName);
+
+    plane->GetMaterial().SetBaseColorTexture(m_defaultTexture.GetID(), m_defaultTexturePath);
+
+
+    // Set the base color texture of the cube's material to the m_defaultTexture checkerboard texture
+    Material& material = plane->GetMaterial();
+
+    material.SetUseBaseColorTexture(true);
+
+    plane->SetPosition(position);
+
+    if (!plane->CreatePlane())
+    {
+        BOX_LOG_ERROR("Failed to add editable plane");
+
+        return false;
+    }
+
+    m_entities.push_back(std::move(plane));
+
+    m_selectedEntityID = entityID; // set the newly added cube as the selected entity
+
+    BOX_LOG_INFO(
+        "Added editable plane. Entity count: " << m_entities.size());
+
+    return true;
+       
+}
+
 bool BoxEngine::AddEditableSphere(const glm::vec3& position)
 {
     const int entityID = m_nextEntityID++;

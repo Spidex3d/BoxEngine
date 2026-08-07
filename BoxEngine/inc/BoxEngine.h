@@ -49,6 +49,8 @@ public:
 
     bool AddEditableCube(const glm::vec3& position = glm::vec3(0.0f));
 
+    bool AddEditablePlane(const glm::vec3& position = glm::vec3(0.0f));
+
     bool AddEditableSphere(const glm::vec3& position);
 
 	const std::vector<std::unique_ptr<Entity>>& GetEntities() const; // used to access the entities in the scene from the editor panels

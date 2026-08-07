@@ -5,7 +5,7 @@
 
 #include <string>
 #include <rendering\Material.h>
-#include <entity/MeshData.h>
+#include <mesh/MeshData.h>
 #include <vector>
 #include <cstddef>
 
@@ -29,6 +29,7 @@ public:
 	bool CreateFromMeshData(const MeshData& meshData);   // Create an entity from existing .mbx mesh data
 
     bool CreateCube();
+	bool CreatePlane();
     bool CreateSphere(int sectors = 32, int stacks = 16);
 
     void DrawMesh() const;

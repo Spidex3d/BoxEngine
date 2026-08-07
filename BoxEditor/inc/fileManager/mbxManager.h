@@ -1,7 +1,7 @@
 #pragma once
 #include <filesystem>
 #include <string>
-#include <entity\MeshData.h>
+#include <mesh/MeshData.h>
 
 // Export mbx files to a specified directory
 // Import mbx files from a specified directory

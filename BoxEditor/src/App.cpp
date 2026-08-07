@@ -33,11 +33,11 @@ bool App::Init()
     }
 
 	// ################################### Initialize ImGuiLayer and panels #################################################
-	m_imgui = std::make_unique<ImGuiLayer>();                         // ImGuiLayer for the main window docking and rendering
-	m_imgMenu = std::make_unique<MainMenuBar>();                      // Main Menu Bar panel for the main window
-	m_imgScene = std::make_unique<SceneViewportPanel>();              // Scene Viewport panel for the main window    
-	m_imgSceneCollection = std::make_unique<SceneCollectionPanel>();  // Scene Collection panel for the main window
-    m_imgObjectExplorer = std::make_unique<ObjectExplorerPanel>();
+	m_imgui = std::make_unique<ImGuiLayer>();                           // ImGuiLayer for the main window docking and rendering
+	m_imgMenu = std::make_unique<MainMenuBar>();                        // Main Menu Bar panel for the main window
+	m_imgScene = std::make_unique<SceneViewportPanel>();                // Scene Viewport panel for the main window    
+	m_imgSceneCollection = std::make_unique<SceneCollectionPanel>();    // Scene Collection panel for the main window
+	m_imgObjectExplorer = std::make_unique<ObjectExplorerPanel>();      // Object Explorer panel for the main window
 
     m_imgui->SetEnableDocking(true);
 
@@ -307,6 +307,9 @@ void App::HandleMenuAction(
     case MenuAction::AddCube:
         engine.AddEditableCube();
         break;
+    case MenuAction::AddPlane:
+        engine.AddEditablePlane();
+        break;
 
     case MenuAction::AddSphere:
 		engine.AddEditableSphere(glm::vec3(0.0f));
@@ -418,6 +421,11 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
     case ViewportAction::AddEditableCube:
 
         engine.AddEditableCube();
+
+        break;
+    case ViewportAction::AddEditablePlane:
+
+        engine.AddEditablePlane();
 
         break;
 	case ViewportAction::AddEditableSphere:

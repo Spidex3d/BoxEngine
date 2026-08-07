@@ -101,6 +101,7 @@ MenuAction MainMenuBar::DrawMainMenu()
 
             if (ImGui::MenuItem("Add Plane"))
             {
+                action = MenuAction::AddPlane;
             }
 
             ImGui::Separator();

@@ -150,6 +150,7 @@
     <ClCompile Include="src\preview\MaterialPreview.cpp" />
     <ClCompile Include="src\tools\EdgeEditController.cpp" />
     <ClCompile Include="src\tools\FaceEditController.cpp" />
+    <ClCompile Include="src\tools\modifiers\FaceExtrude.cpp" />
     <ClCompile Include="src\tools\TransformToolController.cpp" />
     <ClCompile Include="src\tools\VertexEditController.cpp" />
     <ClCompile Include="src\UI\EditorIcons.cpp" />
@@ -186,6 +187,7 @@
     <ClInclude Include="inc\preview\MaterialPreview.h" />
     <ClInclude Include="inc\tools\EdgeEditController.h" />
     <ClInclude Include="inc\tools\FaceEditController.h" />
+    <ClInclude Include="inc\tools\modifiers\FaceExtrude.h" />
     <ClInclude Include="inc\tools\TransformToolController.h" />
     <ClInclude Include="inc\tools\VertexEditController.h" />
     <ClInclude Include="inc\UI\EditorIcons.h" />

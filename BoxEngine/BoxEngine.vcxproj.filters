@@ -39,10 +39,10 @@
     <ClInclude Include="inc\rendering\Textures.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="inc\entity\MeshData.h">
+    <ClInclude Include="inc\mesh\MeshData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="inc\entity\MeshEditing.h">
+    <ClInclude Include="inc\mesh\MeshEditing.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -71,7 +71,7 @@
     <ClCompile Include="src\rendering\Textures.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\entity\MeshEditing.cpp">
+    <ClCompile Include="src\mesh\MeshEditing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
