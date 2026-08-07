@@ -58,9 +58,10 @@ void HelpPanel::Draw()
             ImGui::TextWrapped(
                 "BoxEditor is a small 3D modelling application. "
 				"To get started right click in the viewport to add a cube. "
-                "Use the Scene Collection to select objects and "
+                " Use the Scene Collection to select objects and "
                 "the Object Explorer to edit their properties."
-				"Texture Tab To edit materials and textures."
+                " To delete an object select the object in Scene Collection right click press delete."
+				" Texture Tab To edit materials and textures."
             );
 
             ImGui::Spacing();
@@ -70,6 +71,8 @@ void HelpPanel::Draw()
             ImGui::BulletText("Select objects by clicking them in the viewport.");
 
             ImGui::BulletText("Use the Object Explorer for precise transforms.");
+
+            
 
             ImGui::BulletText("To move the object use object mode press move x,y,z to move.");
 

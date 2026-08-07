@@ -59,10 +59,20 @@ public:
 	void ClearSelectedEdges();
     void SelectEdge(std::size_t index);
 
-    void SelectEdges(std::size_t index);
+   // void SelectEdges(std::size_t index);
     bool IsEdgeSelected(std::size_t index) const;
 
     // ##################################### Face ##########################################
+
+    bool SetFacePosition(std::size_t index, const glm::vec3& positionA, const glm::vec3& positionB);
+    void ClearSelectedFace();
+    void SelectFace(std::size_t index);
+
+    bool IsFaceSelected(std::size_t index) const;
+
+    // ##################################### Normals ##########################################
+    void RecalculateNormals();
+
 
 	// ######################################################################################
     // ###################################### Rendering #####################################
@@ -157,6 +167,7 @@ private:
 	// ############################# Mesh editing data for the entity #############################
 	std::vector<std::size_t>m_selectedVertices; // Store the indices of selected vertices for editing
 	std::vector<std::size_t>m_selectedEdges;    // Store the indices of selected edges for editing
+	std::vector<std::size_t>m_selectedFaces;    // Store the indices of selected faces for editing
 	// ############################# Mesh data for the entity ###############################
     MeshData m_meshData;
 

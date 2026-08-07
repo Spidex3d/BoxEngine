@@ -101,15 +101,11 @@ private:
 
     bool m_isMoving = false;
 
-
     EdgeMoveAxis m_moveAxis = EdgeMoveAxis  ::None;
-   // glm::vec3 m_startEdgePosition = glm::vec3(0.0f);
+
     ImVec2 m_startMouse = ImVec2(0.0f, 0.0f);
 
-   // std::vector<EdgeStartPosition>m_startEdgePositions;
     std::vector<EdgeStartPosition>m_startVertexPositions;
-
-    //std::vector<std::size_t>m_selectedEdge;
 
 	float m_moveSensitivity = 0.01f; // Sensitivity for moving, adjust as needed
 

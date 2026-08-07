@@ -618,7 +618,8 @@ std::vector<EdgeEditController::LogicalEdge> EdgeEditController::BuildLogicalEdg
     //return edges;
 }
 
-bool EdgeEditController::ProjectToScreen(const glm::vec3& localPosition, const glm::mat4& modelViewProjection, const ImVec2& viewportPosition, const ImVec2& viewportSize, ImVec2& outScreenPosition) const
+bool EdgeEditController::ProjectToScreen(const glm::vec3& localPosition, const glm::mat4& modelViewProjection,
+    const ImVec2& viewportPosition, const ImVec2& viewportSize, ImVec2& outScreenPosition) const
 {
     const glm::vec4 clipPosition =
         modelViewProjection *
@@ -970,6 +971,8 @@ void EdgeEditController::EditUpdateMove(Entity& entity)
         );
     }
 
+    entity.RecalculateNormals();
+
     entity.UploadMeshData();
 }
 
@@ -996,6 +999,8 @@ void EdgeEditController::EditCancelMove(Entity& entity)
             start.position
         );
     }
+
+    entity.RecalculateNormals();
 
     entity.UploadMeshData();
 

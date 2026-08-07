@@ -8,6 +8,7 @@
 #include "tools/TransformToolController.h"
 #include <tools/VertexEditController.h> // Add this at the top if not already included
 #include "tools/EdgeEditController.h"
+#include "tools/FaceEditController.h"
 
 class BoxEngine;
 class EditorIcons;
@@ -95,12 +96,13 @@ private:
 	TransformTools m_transformTools;                // move, scale, rotate, local, snap, drop
     VertexEditController m_vertexEditController;    // vertex
     EdgeEditController m_edgeEditController;        // edge
-   // FaceEditController m_faceEditController;      // face    
+    FaceEditController m_faceEditController;      // face    
 
 	int m_AddMeshType = 0;
     		
 	ImVec2 m_sceneViewportPos = ImVec2(0, 0);
 	ImVec2 m_sceneViewportSize = ImVec2(0, 0);
+
 	// ################################## Transform Tool Bar Colors ###############################
     void TransformToolBarColors()
     {

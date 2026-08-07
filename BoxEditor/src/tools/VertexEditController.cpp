@@ -597,6 +597,8 @@ void VertexEditController::EditUpdateMove(Entity& entity)
      * Send the changed CPU mesh data back
      * to the existing OpenGL VBO.
      */
+    entity.RecalculateNormals();
+    
     entity.UploadMeshData();
 }
 
@@ -620,6 +622,7 @@ void VertexEditController::EditCancelMove(Entity& entity)
             start.position
         );
     }
+    entity.RecalculateNormals();
 
     entity.UploadMeshData();
 

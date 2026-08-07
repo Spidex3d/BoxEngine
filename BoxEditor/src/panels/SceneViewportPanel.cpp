@@ -468,9 +468,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 			const bool edgeModeActive = editModeActive && m_editType == 1;      // combine edit mode and edge edit type
 			
             const bool faceModeActive = editModeActive && m_editType == 2;      // combine edit mode and face edit type
-
-            
-
+                       
 
             // vertex
             m_vertexEditController.HandleInput(engine, viewportHovered, vertexModeActive, m_sceneViewportPos, m_sceneViewportSize);
@@ -479,8 +477,8 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             m_edgeEditController.HandleInput(engine, viewportHovered, edgeModeActive, m_sceneViewportPos, m_sceneViewportSize);
             m_edgeEditController.DrawEdge(engine, m_sceneViewportPos, m_sceneViewportSize, edgeModeActive);
 			// faces
-			// m_faceEditController.HandleInput(engine, viewportHovered, faceModeActive, m_sceneViewportPos, m_sceneViewportSize);
-			// m_faceEditController.DrawFaces(engine, m_sceneViewportPos, m_sceneViewportSize, faceModeActive);
+			m_faceEditController.HandleInput(engine, viewportHovered, faceModeActive, m_sceneViewportPos, m_sceneViewportSize);
+			m_faceEditController.DrawFace(engine, m_sceneViewportPos, m_sceneViewportSize, faceModeActive);
 
             // ############################################################################################
             // ################################# Mouse Picking ############################################

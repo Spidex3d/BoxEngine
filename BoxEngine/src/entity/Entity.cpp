@@ -639,13 +639,7 @@ const std::vector<std::size_t>&Entity::GetSelectedVertices() const
 
 bool Entity::SetEdgePosition(std::size_t index, const glm::vec3& positionA, const glm::vec3& positionB)
 {
-    /*if (index >= m_meshData.edges.size())
-    {
-        return false;
-    }
-    m_meshData.edges[index].positionA = positionA;
-    m_meshData.edges[index].positionB = positionB;
-	return true;*/
+    
 	return false; // Edge functionality is not implemented in this version
 }
 
@@ -656,11 +650,7 @@ void Entity::ClearSelectedEdges()
 
 void Entity::SelectEdge(std::size_t index)
 {
-    /*if (index >= m_meshData.edges.size())
-    {
-        return;
-    }*/
-
+    
     m_selectedEdges.clear();
 
     m_selectedEdges.push_back(index);
@@ -675,9 +665,139 @@ bool Entity::IsEdgeSelected(std::size_t index) const
 
 
 // ############################################ Face ##########################################
+void Entity::ClearSelectedFace()
+{
+    m_selectedFaces.clear();
+}
+void Entity::SelectFace(std::size_t index)
+{
 
+    m_selectedFaces.clear();
 
+    m_selectedFaces.push_back(index);
+}
 
+bool Entity::IsFaceSelected(std::size_t index) const
+{
+    return std::find(m_selectedFaces.begin(),
+        m_selectedFaces.end(), index) != m_selectedFaces.end();
+}
+
+// ############################################ Normals ##########################################
+
+void Entity::RecalculateNormals()
+{
+    if (m_meshData.vertices.empty())
+    {
+        return;
+    }
+
+    if (!m_meshData.HasIndices())
+    {
+        for (std::size_t index = 0;
+            index + 2 < m_meshData.vertices.size();
+            index += 3)
+        {
+            MeshVertex& a =
+                m_meshData.vertices[index];
+
+            MeshVertex& b =
+                m_meshData.vertices[index + 1];
+
+            MeshVertex& c =
+                m_meshData.vertices[index + 2];
+
+            const glm::vec3 edge1 =
+                b.position - a.position;
+
+            const glm::vec3 edge2 =
+                c.position - a.position;
+
+            const glm::vec3 crossProduct =
+                glm::cross(
+                    edge1,
+                    edge2
+                );
+
+            const float length =
+                glm::length(crossProduct);
+
+            if (length <= 0.000001f)
+            {
+                continue;
+            }
+
+            const glm::vec3 normal =
+                crossProduct / length;
+
+            a.normal = normal;
+            b.normal = normal;
+            c.normal = normal;
+        }
+
+        return;
+    }
+
+    /*
+     * Indexed mesh version.
+     */
+    for (std::size_t index = 0;
+        index + 2 < m_meshData.indices.size();
+        index += 3)
+    {
+        const std::uint32_t ia =
+            m_meshData.indices[index];
+
+        const std::uint32_t ib =
+            m_meshData.indices[index + 1];
+
+        const std::uint32_t ic =
+            m_meshData.indices[index + 2];
+
+        if (ia >= m_meshData.vertices.size() ||
+            ib >= m_meshData.vertices.size() ||
+            ic >= m_meshData.vertices.size())
+        {
+            continue;
+        }
+
+        MeshVertex& a =
+            m_meshData.vertices[ia];
+
+        MeshVertex& b =
+            m_meshData.vertices[ib];
+
+        MeshVertex& c =
+            m_meshData.vertices[ic];
+
+        const glm::vec3 edge1 =
+            b.position - a.position;
+
+        const glm::vec3 edge2 =
+            c.position - a.position;
+
+        const glm::vec3 crossProduct =
+            glm::cross(
+                edge1,
+                edge2
+            );
+
+        const float length =
+            glm::length(crossProduct);
+
+        if (length <= 0.000001f)
+        {
+            continue;
+        }
+
+        const glm::vec3 normal =
+            crossProduct / length;
+
+        a.normal = normal;
+        b.normal = normal;
+        c.normal = normal;
+    }
+}
 
 // ############################################################################################
 // ############################################### Rendering ##################################
@@ -802,26 +922,15 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
 void Entity::RenderScene(const Shader& shader, const Camera& camera, float aspectRatio)
 {
 	
-    RenderInternal(
-        shader,
-        camera.GetViewMatrix(),
-        camera.GetProjectionMatrix(aspectRatio),
-        camera.Position
-	);
-
-    
+    RenderInternal(shader, camera.GetViewMatrix(), camera.GetProjectionMatrix(aspectRatio),
+        camera.Position);   
 
 }
 // revised RenderPreview function that takes view and projection matrices as parameters
 void Entity::RenderPreview(const Shader& shader, const glm::mat4& view, const glm::mat4& projection, const glm::vec3& cameraPosition)
 {
 
-    RenderInternal(
-        shader,
-        view,
-        projection,
-        cameraPosition
-    );
+    RenderInternal(shader, view, projection, cameraPosition);
 
 }
 
@@ -1236,166 +1345,3 @@ void Entity::Destroy()
     m_meshData.indices.clear();
 }
 
-// RenderScene function for rendering the entity in the scene with the provided shader and camera
-/*if (!m_visible || m_vao == 0)
-    {
-        return;
-    }
-
-    shader.Use();
-
-    shader.setMat4(
-        "uModel",
-        GetModelMatrix()
-    );
-
-    shader.setMat4(
-        "uView",
-        camera.GetViewMatrix()
-    );
-
-    shader.setMat4(
-        "uProjection",
-        camera.GetProjectionMatrix(
-            aspectRatio
-        )
-    );
-
-    shader.setVec3(
-        "uCameraPosition",
-        camera.Position
-    );
-
-    glm::vec4 renderColor =
-        m_material.GetBaseColor();
-
-    renderColor.a =
-        m_material.GetAlpha();
-
-    shader.setVec4(
-        "uBaseColor",
-        renderColor
-    );
-
-    shader.SetUniformFloat(
-        "uMetallic",
-        m_material.GetMetallic()
-    );
-
-    shader.SetUniformFloat(
-        "uRoughness",
-        m_material.GetRoughness()
-    );
-
-    shader.setVec3(
-        "uLightPosition",
-        glm::vec3(
-            3.0f,
-            4.0f,
-            3.0f
-        )
-    );
-
-    shader.setVec3(
-        "uLightColor",
-        glm::vec3(1.0f)
-    );
-
-    const bool useTexture =
-        m_material.UsesBaseColorTexture();
-
-    shader.SetUniformInt(
-        "uUseBaseColorTexture",
-        useTexture ? 1 : 0
-    );
-
-    shader.SetUniformInt(
-        "uBaseColorTexture",
-        0
-    );
-
-    if (useTexture)
-    {
-        glActiveTexture(
-            GL_TEXTURE0
-        );
-
-        glBindTexture(
-            GL_TEXTURE_2D,
-            m_material.GetBaseColorTexture()
-        );
-    }*/
-
-    /*DrawMesh();
-
-    glBindTexture(
-        GL_TEXTURE_2D,
-        0
-    );*/
-
-
-
-	// New RenderPreview function that takes Shader and Camera objects as parameters
-    /*if (!m_visible || m_vao == 0)
-    {
-        return;
-    }
-
-    shader.Use();
-
-    shader.setMat4(
-        "uModel",
-        CalculateModelMatrix()
-    );
-
-    shader.setMat4(
-        "uView",
-        view
-    );
-
-    shader.setMat4(
-        "uProjection",
-        projection
-    );
-
-    shader.setVec3(
-        "uCameraPosition",
-        cameraPosition
-    );
-
-    glm::vec4 renderColor =
-        m_material.GetBaseColor();
-
-    renderColor.a =
-        m_material.GetAlpha();
-
-    shader.setVec4(
-        "uBaseColor",
-        renderColor
-    );
-
-    shader.SetUniformFloat(
-        "uMetallic",
-        m_material.GetMetallic()
-    );
-
-    shader.SetUniformFloat(
-        "uRoughness",
-        m_material.GetRoughness()
-    );
-
-    shader.setVec3(
-        "uLightPosition",
-        glm::vec3(
-            3.0f,
-            4.0f,
-            3.0f
-        )
-    );
-
-    shader.setVec3(
-        "uLightColor",
-        glm::vec3(1.0f)
-    );
-
-    DrawMesh();*/
