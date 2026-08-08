@@ -114,6 +114,10 @@ MenuAction MainMenuBar::DrawMainMenu()
             {
 				action = MenuAction::AddSphere;
             }
+            if (ImGui::MenuItem("Add Sphere"))
+            {
+                action = MenuAction::AddPyramid;
+            }
 
             ImGui::Separator();
 

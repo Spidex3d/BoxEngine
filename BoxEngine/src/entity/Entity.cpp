@@ -108,6 +108,10 @@ bool Entity::CreateFromMeshData(const MeshData& meshData)
 
         return false;
     }
+	
+
+
+
 
     m_meshData = meshData;
 
@@ -305,356 +309,66 @@ bool Entity::CreateCube()
 
     return true;
 
-
-
-
- //   Destroy();
-
- //   m_useIndices = false;
- //   m_indexCount = 0;
-
- //   m_aabbMin = glm::vec3(-0.5f);
- //   m_aabbMax = glm::vec3(0.5f);
-
- //   // Position XYZ, Normal XYZ
- //   const float vertices[] =
-	//
- //   {
- //       // Front face +Z
- //       -0.5f, -0.5f,  0.5f,   0.0f,  0.0f,  1.0f, 0.0f, 0.0f,
- //        0.5f, -0.5f,  0.5f,   0.0f,  0.0f,  1.0f, 1.0f, 0.0f,
- //        0.5f,  0.5f,  0.5f,   0.0f,  0.0f,  1.0f, 1.0f, 1.0f,
-
-	//    -0.5f, -0.5f,  0.5f,   0.0f,  0.0f,  1.0f, 0.0f, 0.0f,
-	//     0.5f,  0.5f,  0.5f,   0.0f,  0.0f,  1.0f, 1.0f, 1.0f,
-	//    -0.5f,  0.5f,  0.5f,   0.0f,  0.0f,  1.0f, 0.0f, 1.0f,
-
- //       // Back face -Z
- //        0.5f, -0.5f, -0.5f,   0.0f,  0.0f, -1.0f, 1.0f, 0.0f,
-	//    -0.5f, -0.5f, -0.5f,   0.0f,  0.0f, -1.0f, 0.0f, 0.0f,
-	//    -0.5f,  0.5f, -0.5f,   0.0f,  0.0f, -1.0f, 0.0f, 1.0f,
-
-	//     0.5f, -0.5f, -0.5f,   0.0f,  0.0f, -1.0f, 1.0f, 0.0f,
-	//    -0.5f,  0.5f, -0.5f,   0.0f,  0.0f, -1.0f, 0.0f, 1.0f,
-	//     0.5f,  0.5f, -0.5f,   0.0f,  0.0f, -1.0f, 1.0f, 1.0f,
-
- //        // Left face -X
- //        -0.5f, -0.5f, -0.5f,  -1.0f, 0.0f, 0.0f,   0.0f, 0.0f,
- //        -0.5f, -0.5f,  0.5f,  -1.0f, 0.0f, 0.0f,   1.0f, 0.0f,
- //        -0.5f,  0.5f,  0.5f,  -1.0f, 0.0f, 0.0f,   1.0f, 1.0f,
- //        
- //        -0.5f, -0.5f, -0.5f,  -1.0f, 0.0f, 0.0f,   0.0f, 0.0f,
- //        -0.5f,  0.5f,  0.5f,  -1.0f, 0.0f, 0.0f,   1.0f, 1.0f,
- //        -0.5f,  0.5f, -0.5f,  -1.0f, 0.0f, 0.0f,   0.0f, 1.0f,
- //        
- //        // Right face +X
- //         0.5f, -0.5f,  0.5f,   1.0f, 0.0f, 0.0f,   0.0f, 0.0f,
- //         0.5f, -0.5f, -0.5f,   1.0f, 0.0f, 0.0f,   1.0f, 0.0f,
- //         0.5f,  0.5f, -0.5f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,
- //        
- //         0.5f, -0.5f,  0.5f,   1.0f, 0.0f, 0.0f,   0.0f, 0.0f,
- //         0.5f,  0.5f, -0.5f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,
- //         0.5f,  0.5f,  0.5f,   1.0f, 0.0f, 0.0f,   0.0f, 1.0f,     
-
- //         // Top face +Y
-	//      -0.5f,  0.5f,  0.5f,   0.0f,  1.0f,  0.0f, 0.0f, 1.0f,
-	//       0.5f,  0.5f,  0.5f,   0.0f,  1.0f,  0.0f, 1.0f, 1.0f,
-	//       0.5f,  0.5f, -0.5f,   0.0f,  1.0f,  0.0f, 1.0f, 0.0f,
-
-	//      -0.5f,  0.5f,  0.5f,   0.0f,  1.0f,  0.0f, 0.0f, 1.0f,
-	//       0.5f,  0.5f, -0.5f,   0.0f,  1.0f,  0.0f, 1.0f, 0.0f,
-	//      -0.5f,  0.5f, -0.5f,   0.0f,  1.0f,  0.0f, 0.0f, 0.0f,
-
- //         // Bottom face -Y
-	//      -0.5f, -0.5f, -0.5f,   0.0f, -1.0f,  0.0f, 0.0f, 0.0f,
-	//       0.5f, -0.5f, -0.5f,   0.0f, -1.0f,  0.0f, 1.0f, 0.0f,
-	//       0.5f, -0.5f,  0.5f,   0.0f, -1.0f,  0.0f, 1.0f, 1.0f,
-
-	//      -0.5f, -0.5f, -0.5f,   0.0f, -1.0f,  0.0f, 0.0f, 0.0f,
-	//       0.5f, -0.5f,  0.5f,   0.0f, -1.0f,  0.0f, 1.0f, 1.0f,
-	//      -0.5f, -0.5f,  0.5f,   0.0f, -1.0f,  0.0f, 0.0f, 1.0f
- //   };
-
- //  // m_vertexCount = 36;
-
-	//// ############################################### Mesh Data ####################################################
- //   m_meshData.vertices.clear();
- //   m_meshData.indices.clear();
-
- //   constexpr std::size_t floatsPerVertex = 8;
-
- //   const std::size_t totalFloatCount =
- //       sizeof(vertices) /
- //       sizeof(vertices[0]);
-
- //   const std::size_t cubeVertexCount =
- //       totalFloatCount /
- //       floatsPerVertex;
-
- //   m_meshData.vertices.reserve(
- //       cubeVertexCount
- //   );
-
- //   for (std::size_t index = 0;
- //       index < totalFloatCount;
- //       index += floatsPerVertex)
- //   {
- //       MeshVertex vertex;
-
- //       vertex.position =
- //           glm::vec3(
- //               vertices[index + 0],
- //               vertices[index + 1],
- //               vertices[index + 2]
- //           );
-
- //       vertex.normal =
- //           glm::vec3(
- //               vertices[index + 3],
- //               vertices[index + 4],
- //               vertices[index + 5]
- //           );
-
- //       vertex.uv =
- //           glm::vec2(
- //               vertices[index + 6],
- //               vertices[index + 7]
- //           );
-
- //       m_meshData.vertices.push_back(
- //           vertex 
- //       );
- //   }
-
- //   m_vertexCount = static_cast<GLsizei>(m_meshData.vertices.size());
-
- //   // ##############################
-
- //   if (!m_editableMesh.CreateCube())
- //   {
- //       BOX_LOG_ERROR("Failed to create editable cube topology");
-
- //       return false;
- //   }
- //   MeshData testMesh;
-
- //   if (m_editableMesh.BuildRenderMesh(
- //       testMesh))
- //   {
- //       BOX_LOG_INFO(
- //           "Editable render mesh: "
- //           << testMesh.vertices.size()
- //           << " vertices, "
- //           << testMesh.indices.size()
- //           << " indices"
- //       );
- //   }
- //   // ##############################
- //  
-
- //   glGenVertexArrays(1, &m_vao);
- //   glGenBuffers(1, &m_vbo);
-
- //   glBindVertexArray(m_vao);
- //   glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-
- //   glBufferData(
- //       GL_ARRAY_BUFFER,
- //       sizeof(vertices),
- //       vertices,
- //       GL_STATIC_DRAW
- //   );
-
- //   // Position
- //   glEnableVertexAttribArray(0);
- //   glVertexAttribPointer(
- //       0,
- //       3,
- //       GL_FLOAT,
- //       GL_FALSE,
- //       8 * sizeof(float),
- //       reinterpret_cast<void*>(0)
- //   );
-
- //   // Normal
- //   glEnableVertexAttribArray(1);
- //   glVertexAttribPointer(
- //       1,
- //       3,
- //       GL_FLOAT,
- //       GL_FALSE,
- //       8 * sizeof(float),
- //       reinterpret_cast<void*>(3 * sizeof(float))
- //   );
-
- //   // Texture coordinates
- //   glEnableVertexAttribArray(2);
-
- //   glVertexAttribPointer(
- //       2,
- //       2,
- //       GL_FLOAT,
- //       GL_FALSE,
- //       8 * sizeof(float),
- //       reinterpret_cast<void*>(
- //           6 * sizeof(float)
- //           )
- //   );
-
-
-
-
- //   glBindBuffer(GL_ARRAY_BUFFER, 0);
- //   glBindVertexArray(0);
-
- //   const bool valid = m_vao != 0 && m_vbo != 0;
-
- //   if (!valid)
- //   {
- //       BOX_LOG_ERROR(
- //           "Entity::CreateCube failed for entity "
- //           << m_name
- //       );
-
- //       Destroy();
- //       return false;
- //   }
-
- //   BOX_LOG_INFO(
- //       "Created cube entity: "
- //       << m_name
- //       << " ID=" << m_id
- //       << " Mesh vertices="
- //       << m_meshData.vertices.size()
- //   );
-	//// Log the editable mesh information 8, 12, 6
- //   BOX_LOG_INFO(
- //       "Editable cube: "
- //       << m_editableMesh.GetVertexCount()
- //       << " vertices, "
- //       << m_editableMesh.GetEdgeCount()
- //       << " edges, "
- //       << m_editableMesh.GetFaceCount()
- //       << " faces"
- //   );
-
- //   return true;
 }
 
 bool Entity::CreatePlane()
 {
     Destroy();
 
-    m_useIndices = false;
-    m_indexCount = 0;
-    m_aabbMin = glm::vec3(-0.5f, 0.0f, -0.5f);
-    m_aabbMax = glm::vec3(0.5f, 0.0f, 0.5f);
-
-    // Position XYZ, Normal XYZ, UV XY
-    const float vertices[] =
+    if (!m_editableMesh.CreatePlane())
     {
-        // Positions             // Normals         // UVs
-        // Top face +Y
-          -0.5f,  0.5f,  0.5f,   0.0f,  1.0f, 0.0f,  0.0f, 1.0f,
-           0.5f,  0.5f,  0.5f,   0.0f,  1.0f, 0.0f,  1.0f, 1.0f,
-           0.5f,  0.5f, -0.5f,   0.0f,  1.0f, 0.0f,  1.0f, 0.0f,
-
-          -0.5f,  0.5f,  0.5f,   0.0f,  1.0f, 0.0f,  0.0f, 1.0f,
-           0.5f,  0.5f, -0.5f,   0.0f,  1.0f, 0.0f,  1.0f, 0.0f,
-          -0.5f,  0.5f, -0.5f,   0.0f,  1.0f, 0.0f,  0.0f, 0.0f
-    };
-
-    m_meshData.vertices.clear();
-    m_meshData.indices.clear();
-
-    constexpr std::size_t floatsPerVertex = 8;
-
-    const std::size_t totalFloatCount = sizeof(vertices) / sizeof(vertices[0]);
-
-    const std::size_t planeVertexCount = totalFloatCount / floatsPerVertex;
-
-    m_meshData.vertices.reserve(planeVertexCount);
-
-    for (std::size_t index = 0;
-        index < totalFloatCount;
-        index += floatsPerVertex)
-    {
-        MeshVertex vertex;
-
-        vertex.position =
-            glm::vec3(
-                vertices[index + 0],
-                vertices[index + 1],
-                vertices[index + 2]
-            );
-
-        vertex.normal =
-            glm::vec3(
-                vertices[index + 3],
-                vertices[index + 4],
-                vertices[index + 5]
-            );
-
-        vertex.uv =
-            glm::vec2(
-                vertices[index + 6],
-                vertices[index + 7]
-            );
-
-        m_meshData.vertices.push_back(vertex);
-    }
-
-    m_vertexCount = static_cast<GLsizei>(m_meshData.vertices.size());
-
-    glGenVertexArrays(1, &m_vao);
-    glGenBuffers(1, &m_vbo);
-
-    glBindVertexArray(m_vao);
-    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    // Position
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(0));
-
-    // Normal
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
-        
-
-    // Texture coordinates
-    glEnableVertexAttribArray(2);
-
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(6 * sizeof(float)));
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
-    const bool valid = m_vao != 0 && m_vbo != 0;
-
-    if (!valid)
-    {
-        BOX_LOG_ERROR(
-            "Entity::CreatePlane failed for entity "
-            << m_name
-        );
-
-        Destroy();
         return false;
     }
 
-    BOX_LOG_INFO(
-        "Created plane entity: "
-        << m_name
-        << " ID=" << m_id
-        << " Mesh vertices="
-        << m_meshData.vertices.size()
-    );
+    if (!m_editableMesh.BuildRenderMesh(
+        m_meshData))
+    {
+        return false;
+    }
+
+    if (!CreateBuffersFromMeshData())
+    {
+        return false;
+    }
+
+    m_aabbMin =
+        glm::vec3(-0.5f);
+
+    m_aabbMax =
+        glm::vec3(0.5f);
 
     return true;
 
 }
+bool Entity::CreatePyramid()
+{
+    Destroy();
+
+    if (!m_editableMesh.CreatePyramid())
+    {
+        return false;
+    }
+
+    if (!m_editableMesh.BuildRenderMesh(
+        m_meshData))
+    {
+        return false;
+    }
+
+    if (!CreateBuffersFromMeshData())
+    {
+        return false;
+    }
+
+    m_aabbMin = glm::vec3(-0.5f);
+
+    m_aabbMax = glm::vec3(0.5f);
+
+    return true;
+
+}
+
+
 
 // shader for the selection outline effect
 void Entity::DrawMesh() const
@@ -668,20 +382,11 @@ void Entity::DrawMesh() const
 
     if (m_useIndices)
     {
-        glDrawElements(
-            GL_TRIANGLES,
-            m_indexCount,
-            GL_UNSIGNED_INT,
-            nullptr
-        );
+        glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, nullptr);
     }
     else
     {
-        glDrawArrays(
-            GL_TRIANGLES,
-            0,
-            m_vertexCount
-        );
+        glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
     }
 
     glBindVertexArray(0);
@@ -856,14 +561,12 @@ bool Entity::IsFaceSelected(std::size_t index) const
     return std::find(m_selectedFaces.begin(),
         m_selectedFaces.end(), index) != m_selectedFaces.end();
 }
-// ############################################# Mesh Data##########################################
+// ############################################# Mesh Data ##########################################
 bool Entity::CreateBuffersFromMeshData()
 {
     if (m_meshData.vertices.empty())
     {
-        BOX_LOG_ERROR(
-            "CreateBuffersFromMeshData: No vertices"
-        );
+        BOX_LOG_ERROR("CreateBuffersFromMeshData: No vertices");
 
         return false;
     }
@@ -1080,9 +783,7 @@ bool Entity::CreateBuffersFromMeshData()
 
     if (!valid)
     {
-        BOX_LOG_ERROR(
-            "Entity::CreateBuffersFromMeshData failed"
-        );
+        BOX_LOG_ERROR("Entity::CreateBuffersFromMeshData failed");
 
         Destroy();
 

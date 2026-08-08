@@ -319,6 +319,41 @@ bool BoxEngine::AddEditableSphere(const glm::vec3& position)
     return true;
 }
 
+bool BoxEngine::AddEditablePyramid(const glm::vec3& position)
+{
+    const int entityID = m_nextEntityID++;
+
+    const std::string entityName = "Pyramid " + std::to_string(entityID);
+
+    auto pyramid = std::make_unique<Entity>(entityID, entityName);
+
+    pyramid->GetMaterial().SetBaseColorTexture(m_defaultTexture.GetID(), m_defaultTexturePath);
+
+
+    // Set the base color texture of the cube's material to the m_defaultTexture checkerboard texture
+    Material& material = pyramid->GetMaterial();
+
+    material.SetUseBaseColorTexture(true);
+
+    pyramid->SetPosition(position);
+
+    if (!pyramid->CreatePyramid())
+    {
+        BOX_LOG_ERROR("Failed to add editable pyramid");
+
+        return false;
+    }
+
+    m_entities.push_back(std::move(pyramid));
+
+    m_selectedEntityID = entityID; // set the newly added cube as the selected entity
+
+    BOX_LOG_INFO(
+        "Added editable pyramid. Entity count: " << m_entities.size());
+
+    return true;
+}
+
 // Return a const reference to the vector of unique_ptr<Entity> for the editor panels to access the entities in the scene
 const std::vector<std::unique_ptr<Entity>>&
 BoxEngine::GetEntities() const

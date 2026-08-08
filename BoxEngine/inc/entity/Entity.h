@@ -29,9 +29,13 @@ public:
 
 	bool CreateFromMeshData(const MeshData& meshData);   // Create an entity from existing .mbx mesh data
 
-    bool CreateCube();
-	bool CreatePlane();
+	bool CreateCube();  // Create a cube from the new editable mesh data, buffers for rendering.
+	bool CreatePlane(); // Create a Plane from the new editable mesh data, buffers for rendering.
     bool CreateSphere(int sectors = 32, int stacks = 16);
+	// bool CreateCylinder(int sectors = 32, int stacks = 16, float radius = 0.5f, float height = 1.0f);
+	// bool CreateCone(int sectors = 32, float radius = 0.5f, float height = 1.0f);
+	// bool CreateTorus(int sides = 16, int rings = 32, float innerRadius = 0.2f, float outerRadius = 0.5f);
+     bool CreatePyramid();
 
     void DrawMesh() const;
     // ##################################################################################

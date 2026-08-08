@@ -315,6 +315,17 @@ void App::HandleMenuAction(
 		engine.AddEditableSphere(glm::vec3(0.0f));
          
 		 break;
+    case MenuAction::AddPyramid:
+        engine.AddEditablePyramid(glm::vec3(0.0f));
+
+         break;
+    // ###################### Modifiers
+    case MenuAction::UseExtrudeModifier:
+           // Implement the logic to apply the extrude modifier to the selected entity
+         BOX_LOG_INFO("Use Extrude Modifier menu action triggered");
+           
+		break;
+
     case MenuAction::Help:
         if (m_helpPanel)
         {
@@ -431,6 +442,11 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
 	case ViewportAction::AddEditableSphere:
 		engine.AddEditableSphere(glm::vec3(0.0f));
 		break;
+    case ViewportAction::AddEditablePyramid:
+
+		engine.AddEditablePyramid(glm::vec3(0.0f, -0.5f, 0.0f)); // -0.5f on y to sit it on the ground plane
+
+        break;
 
 
     case ViewportAction::None:

@@ -345,6 +345,11 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                 // Request engine to add a plane via action callback
                // if (m_actionCallback) m_actionCallback("AddEditableCone");
             }
+            // Pyramid
+            if (ImGui::MenuItem("Editable Pyramid")) {
+                // Request engine to add a plane via action callback
+				action = ViewportAction::AddEditablePyramid;
+            }
 
             if (ImGui::MenuItem("Editable Torus")) {
                 // Request engine to add a plane via action callback
@@ -375,8 +380,46 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 
             if (ImGui::MenuItem("Extrude")) {
                 
+                Entity* selectedEntity =
+                    engine.GetSelectedEntity();
 
+                if (!selectedEntity)
+                {
+                    BOX_LOG_WARNING(
+                        "Extrude: no entity selected"
+                    );
+                }
+                else if (
+                    !m_faceEditController.HasSelectedFace())
+                {
+                    BOX_LOG_WARNING("Extrude: no face selected");
+                }
+                else
+                {
+                    const std::size_t selectedFace =
+                        m_faceEditController.GetSelectedFace();
+
+                    BOX_LOG_INFO("Trying to extrude face " << selectedFace);
+
+                    if (m_faceExtrudeModifier.Use(
+                        *selectedEntity,
+                        selectedFace,
+                        0.5f))
+                    {
+                        BOX_LOG_INFO("Face extrusion successful");
+                    }
+                    else
+                    {
+                        BOX_LOG_ERROR("Face extrusion failed");
+                    }
+                }
             }
+
+
+
+
+
+        
 
             if (ImGui::MenuItem("Inset")) {
             }
@@ -458,6 +501,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             const bool viewportHovered = ImGui::IsItemHovered();
             const bool objectModeActive = m_EditMode == 1;
             m_transformTools.HandleInput(engine, viewportHovered, objectModeActive);
+
 			const bool wasTransforming = m_transformTools.IsTransforming();
             // ############################################################################################
             // #################################### Editing tools #########################################
@@ -479,6 +523,12 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 			// faces
 			m_faceEditController.HandleInput(engine, viewportHovered, faceModeActive, m_sceneViewportPos, m_sceneViewportSize);
 			m_faceEditController.DrawFace(engine, m_sceneViewportPos, m_sceneViewportSize, faceModeActive);
+
+            // ############################################################################################
+            // ################################# Modifiers ############################################
+            // ############################################################################################
+			//m_faceExtrudeModifier.Use(engine, m_faceEditController.GetSelectedFaceIndex(), 0.1f); // Example distance for extrusion
+
 
             // ############################################################################################
             // ################################# Mouse Picking ############################################

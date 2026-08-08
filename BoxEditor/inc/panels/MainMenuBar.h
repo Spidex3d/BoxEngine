@@ -17,6 +17,10 @@ enum class MenuAction
     AddCube,
 	AddPlane,
     AddSphere,
+	AddPyramid,
+
+	UseExtrudeModifier,
+
     Help,
 	About
 };

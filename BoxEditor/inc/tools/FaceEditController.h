@@ -27,6 +27,20 @@ public:
 
     void ClearSelection(BoxEngine& engine);
 
+
+    // ############################## for modifying the selected face ##############################
+        std::size_t GetSelectedFace() const
+    {
+        return m_selectedFace;
+    }
+
+    bool HasSelectedFace() const
+    {
+        return m_selectedFace != InvalidFace;
+    }
+
+    // #################################################################################################
+
 private:
     struct LogicalFace
     {
@@ -59,12 +73,7 @@ private:
     bool ProjectToScreen(const glm::vec3& localPosition, const glm::mat4& modelViewProjection,
         const ImVec2& viewportPosition, const ImVec2& viewportSize, ImVec2& outScreenPosition) const;
 
-	// dont think we will need this function, but keeping it here for now in case we do
-    /*static float DistanceToLineSegment(
-        const ImVec2& point,
-        const ImVec2& lineStart,
-        const ImVec2& lineEnd
-    );*/
+	
 
     bool PickFace(BoxEngine& engine, const ImVec2& viewportPosition,
         const ImVec2& viewportSize);

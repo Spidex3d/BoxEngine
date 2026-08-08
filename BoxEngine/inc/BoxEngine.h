@@ -53,6 +53,8 @@ public:
 
     bool AddEditableSphere(const glm::vec3& position);
 
+	bool AddEditablePyramid(const glm::vec3& position = glm::vec3(0.0f));
+
 	const std::vector<std::unique_ptr<Entity>>& GetEntities() const; // used to access the entities in the scene from the editor panels
     
     void SetSelectedEntity(int entityID);

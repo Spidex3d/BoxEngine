@@ -12,7 +12,7 @@ class FaceExtrude
 {
 public:
 
-    bool ExtrudeUse(Entity& entity, std::size_t faceIndex, float distance);
+    bool Use(Entity& entity, std::size_t faceIndex, float distance);
 
 private:
 

@@ -29,6 +29,8 @@ public:
     void Clear();
 
     bool CreateCube();
+    bool CreatePlane();
+	bool CreatePyramid();
 
     std::size_t GetVertexCount() const;
     std::size_t GetEdgeCount() const;
@@ -42,6 +44,17 @@ public:
 
     EditFace& GetFace(std::size_t index);
     const EditFace& GetFace(std::size_t index) const;
+	// ########################################## Mesh Editing add vertex, face,  #########################################
+    std::size_t AddVertex(const glm::vec3& position);
+
+    std::size_t AddFace(const std::vector<std::size_t>& vertices);
+
+    bool SetFace(std::size_t faceIndex, const std::vector<std::size_t>& vertices);
+
+    void RebuildEdges();
+
+   
+
 
     bool BuildRenderMesh(MeshData& meshData) const;
 

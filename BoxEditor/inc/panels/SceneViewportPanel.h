@@ -9,6 +9,7 @@
 #include <tools/VertexEditController.h> // Add this at the top if not already included
 #include "tools/EdgeEditController.h"
 #include "tools/FaceEditController.h"
+#include <mesh\modifiers\FaceExtrude.h>
 
 class BoxEngine;
 class EditorIcons;
@@ -35,6 +36,7 @@ enum class ViewportAction
     AddEditableSphere,
     AddEditableICOSphere,
     AddEditableCylinder,
+	AddEditablePyramid,
     AddEditableCone,
     AddEditableTorus,
 
@@ -97,6 +99,10 @@ private:
     VertexEditController m_vertexEditController;    // vertex
     EdgeEditController m_edgeEditController;        // edge
     FaceEditController m_faceEditController;      // face    
+
+	// ################################# modifiers ###############################
+	FaceExtrude m_faceExtrudeModifier; // face extrude modifier
+    
 
 	int m_AddMeshType = 0;
     		

@@ -8,11 +8,49 @@
 #include <algorithm>
 #include <cmath>
 #include <glm/gtc/matrix_transform.hpp>
+#include <mesh/modifiers/FaceExtrude.h>
 
 
 void FaceEditController::HandleInput(BoxEngine& engine, bool viewportHovered, bool faceModeActive,
     const ImVec2& viewportPosition, const ImVec2& viewportSize)
 {
+
+    Entity* entity = engine.GetSelectedEntity();
+
+
+    // ####################### Temporary Face Extrude test
+    /*if (!m_isMoving &&
+        m_selectedFace != InvalidFace &&
+        ImGui::IsKeyPressed(ImGuiKey_E, false))
+    {
+        BOX_LOG_INFO(
+            "E pressed for Face Extrude. Face="
+            << m_selectedFace
+        );
+
+        FaceExtrude extrude;
+
+        if (extrude.Use(
+            *entity,
+            m_selectedFace,
+            0.5f))
+        {
+            BOX_LOG_INFO("Face extrusion successful");
+        }
+        else
+        {
+            BOX_LOG_ERROR(
+                "Face extrusion failed"
+            );
+        }
+
+        return;
+    }*/
+
+    // ##################################################
+
+
+
     if (!faceModeActive)
     {
         if (m_isMoving)
@@ -34,8 +72,10 @@ void FaceEditController::HandleInput(BoxEngine& engine, bool viewportHovered, bo
         return;
     }
 
-    Entity* entity =
-        engine.GetSelectedEntity();
+  
+    
+    // unresolved external symbol "public: struct EditFace & __cdecl MeshEditing::GetFace(unsigned __int64)" (? GetFace@MeshEditing@@QEAAAEAUEditFace@@_K@Z) referenced in function "public: bool __cdecl FaceExtrude::Use(class Entity &,unsigned __int64,float)" (? Use@FaceExtrude@@QEAA_NAEAVEntity@@_KM@Z)
+
 
     if (!entity)
     {
