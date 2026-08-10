@@ -113,38 +113,6 @@ void EdgeEditController::HandleInput(BoxEngine& engine, bool viewportHovered, bo
         );
     }
 
-    /*if (!edgeModeActive)
-    {
-        if (m_isMoving)
-        {
-            Entity* entity =
-                engine.GetSelectedEntity();
-
-            if (entity)
-            {
-                EditCancelMove(*entity);
-            }
-        }
-
-        ClearSelection(engine);
-        return;
-    }
-
-    if (!viewportHovered)
-    {
-        return;
-    }
-
-    if (!m_isMoving &&
-        ImGui::IsMouseClicked(
-            ImGuiMouseButton_Left))
-    {
-        PickEdge(
-            engine,
-            viewportPosition,
-            viewportSize
-        );
-    }*/
 }
 
 void EdgeEditController::DrawEdge(BoxEngine& engine, const ImVec2& viewportPosition, const ImVec2& viewportSize, bool edgeModeActive)
@@ -211,7 +179,8 @@ void EdgeEditController::DrawEdge(BoxEngine& engine, const ImVec2& viewportPosit
             continue;
         }
 
-        const bool selected = index == m_selectedEdge;
+       // const bool selected = index == m_selectedEdge;
+        const bool selected = edges[index].editableEdgeIndex == m_selectedEdge;
 
         const ImU32 color =
             selected
@@ -244,378 +213,67 @@ void EdgeEditController::ClearSelection(BoxEngine& engine)
 
 std::vector<EdgeEditController::LogicalEdge> EdgeEditController::BuildLogicalEdges(const Entity& entity) const
 {
-    std::vector<LogicalEdge> candidateEdges;
 
-    const MeshData& mesh =
-        entity.GetMeshData();
+    std::vector<LogicalEdge> edges;
 
-    if (!mesh.IsValid())
+    const MeshEditing& editableMesh =
+        entity.GetEditableMesh();
+
+    const auto& editableEdges =
+        editableMesh.GetEdges();
+
+    if (editableEdges.empty())
     {
-        return {};
+        return edges;
     }
 
-    constexpr float positionEpsilon =
-        0.0001f;
+    edges.reserve(
+        editableEdges.size()
+    );
 
-    constexpr float coplanarDotThreshold =
-        0.999f;
-
-    const auto SamePosition =
-        [](const glm::vec3& a,
-            const glm::vec3& b)
+    for (std::size_t edgeIndex = 0;
+        edgeIndex < editableEdges.size();
+        ++edgeIndex)
     {
-        constexpr float epsilon =
-            0.0001f;
+        const EditEdge& editEdge =
+            editableEdges[edgeIndex];
 
-        return glm::length(a - b) <=
-            epsilon;
-    };
-
-    /*
-     * Adds an edge or records another triangle
-     * using an existing logical edge.
-     */
-    const auto AddEdge =
-        [&](const glm::vec3& a,
-            const glm::vec3& b,
-            const glm::vec3& faceNormal)
-    {
-        if (SamePosition(a, b))
+        if (editEdge.vertexA >=
+            editableMesh.GetVertexCount() ||
+            editEdge.vertexB >=
+            editableMesh.GetVertexCount())
         {
-            return;
-        }
-
-        for (LogicalEdge& edge :
-            candidateEdges)
-        {
-            const bool sameDirection =
-                SamePosition(
-                    edge.positionA,
-                    a
-                ) &&
-                SamePosition(
-                    edge.positionB,
-                    b
-                );
-
-            const bool reverseDirection =
-                SamePosition(
-                    edge.positionA,
-                    b
-                ) &&
-                SamePosition(
-                    edge.positionB,
-                    a
-                );
-
-            if (sameDirection ||
-                reverseDirection)
-            {
-                edge.adjacentFaceNormals
-                    .push_back(faceNormal);
-
-                return;
-            }
+            continue;
         }
 
         LogicalEdge edge;
 
-        edge.positionA = a;
-        edge.positionB = b;
+        edge.editableEdgeIndex =
+            edgeIndex;
 
-        edge.adjacentFaceNormals.push_back(
-            faceNormal
+        edge.vertexA =
+            editEdge.vertexA;
+
+        edge.vertexB =
+            editEdge.vertexB;
+
+        edge.positionA =
+            editableMesh
+            .GetVertex(editEdge.vertexA)
+            .position;
+
+        edge.positionB =
+            editableMesh
+            .GetVertex(editEdge.vertexB)
+            .position;
+
+        edges.push_back(
+            edge
         );
-
-        /*
-         * Find all duplicated render vertices
-         * belonging to both logical endpoints.
-         */
-        for (std::size_t index = 0;
-            index < mesh.vertices.size();
-            ++index)
-        {
-            const glm::vec3& position =
-                mesh.vertices[index].position;
-
-            if (SamePosition(position, a))
-            {
-                edge.verticesAtA.push_back(
-                    index
-                );
-            }
-
-            if (SamePosition(position, b))
-            {
-                edge.verticesAtB.push_back(
-                    index
-                );
-            }
-        }
-
-        candidateEdges.push_back(
-            std::move(edge)
-        );
-    };
-
-    /*
-     * Process one triangle.
-     */
-    const auto AddTriangle =
-        [&](const glm::vec3& a,
-            const glm::vec3& b,
-            const glm::vec3& c)
-    {
-        const glm::vec3 crossProduct =
-            glm::cross(
-                b - a,
-                c - a
-            );
-
-        const float length =
-            glm::length(crossProduct);
-
-        /*
-         * Ignore degenerate triangles.
-         */
-        if (length <= positionEpsilon)
-        {
-            return;
-        }
-
-        const glm::vec3 faceNormal =
-            crossProduct / length;
-
-        AddEdge(a, b, faceNormal);
-        AddEdge(b, c, faceNormal);
-        AddEdge(c, a, faceNormal);
-    };
-
-    if (mesh.HasIndices())
-    {
-        for (std::size_t index = 0;
-            index + 2 < mesh.indices.size();
-            index += 3)
-        {
-            const std::uint32_t indexA =
-                mesh.indices[index];
-
-            const std::uint32_t indexB =
-                mesh.indices[index + 1];
-
-            const std::uint32_t indexC =
-                mesh.indices[index + 2];
-
-            if (indexA >= mesh.vertices.size() ||
-                indexB >= mesh.vertices.size() ||
-                indexC >= mesh.vertices.size())
-            {
-                continue;
-            }
-
-            AddTriangle(
-                mesh.vertices[indexA].position,
-                mesh.vertices[indexB].position,
-                mesh.vertices[indexC].position
-            );
-        }
-    }
-    else
-    {
-        for (std::size_t index = 0;
-            index + 2 < mesh.vertices.size();
-            index += 3)
-        {
-            AddTriangle(
-                mesh.vertices[index].position,
-                mesh.vertices[index + 1].position,
-                mesh.vertices[index + 2].position
-            );
-        }
     }
 
-    /*
-     * Remove edges shared by two coplanar
-     * triangles. These are triangulation
-     * diagonals rather than modelling edges.
-     */
-    std::vector<LogicalEdge> visibleEdges;
+    return edges;
 
-    visibleEdges.reserve(
-        candidateEdges.size()
-    );
-
-    for (LogicalEdge& edge :
-        candidateEdges)
-    {
-        bool internalDiagonal = false;
-
-        if (edge.adjacentFaceNormals.size() == 2)
-        {
-            const glm::vec3 normalA =
-                glm::normalize(
-                    edge.adjacentFaceNormals[0]
-                );
-
-            const glm::vec3 normalB =
-                glm::normalize(
-                    edge.adjacentFaceNormals[1]
-                );
-
-            const float normalAgreement =
-                glm::dot(
-                    normalA,
-                    normalB
-                );
-
-            internalDiagonal =
-                normalAgreement >=
-                coplanarDotThreshold;
-        }
-
-        if (!internalDiagonal)
-        {
-            visibleEdges.push_back(
-                std::move(edge)
-            );
-        }
-    }
-
-    return visibleEdges;
-
-
-    //std::vector<LogicalEdge> edges;
-
-    //const MeshData& mesh = entity.GetMeshData();
-
-    //if (!mesh.IsValid())
-    //{
-    //    return edges;
-    //}
-
-    //auto SamePosition =
-    //    [](const glm::vec3& a,
-    //        const glm::vec3& b)
-    //{
-    //    constexpr float epsilon =
-    //        0.0001f;
-
-    //    return glm::length(a - b) <= epsilon;
-    //};
-
-    //auto AddEdge =
-    //    [&](const glm::vec3& a,
-    //        const glm::vec3& b)
-    //{
-    //    /*
-    //     * Ignore zero-length edges.
-    //     */
-    //    if (SamePosition(a, b))
-    //    {
-    //        return;
-    //    }
-
-    //    /*
-    //     * Avoid adding the same logical edge
-    //     * in the opposite direction.
-    //     */
-    //    for (const LogicalEdge& edge : edges)
-    //    {
-    //        const bool sameDirection =
-    //            SamePosition(edge.positionA, a) &&
-    //            SamePosition(edge.positionB, b);
-
-    //        const bool oppositeDirection =
-    //            SamePosition(edge.positionA, b) &&
-    //            SamePosition(edge.positionB, a);
-
-    //        if (sameDirection ||
-    //            oppositeDirection)
-    //        {
-    //            return;
-    //        }
-    //    }
-
-    //    LogicalEdge edge;
-
-    //    edge.positionA = a;
-    //    edge.positionB = b;
-
-    //    for (std::size_t index = 0;
-    //        index < mesh.vertices.size();
-    //        ++index)
-    //    {
-    //        const glm::vec3& position =
-    //            mesh.vertices[index].position;
-
-    //        if (SamePosition(position, a))
-    //        {
-    //            edge.verticesAtA.push_back(index);
-    //        }
-
-    //        if (SamePosition(position, b))
-    //        {
-    //            edge.verticesAtB.push_back(index);
-    //        }
-    //    }
-
-    //    edges.push_back(
-    //        std::move(edge)
-    //    );
-    //};
-
-    //if (mesh.HasIndices())
-    //{
-    //    for (std::size_t index = 0;
-    //        index + 2 < mesh.indices.size();
-    //        index += 3)
-    //    {
-    //        const std::uint32_t ia =
-    //            mesh.indices[index];
-
-    //        const std::uint32_t ib =
-    //            mesh.indices[index + 1];
-
-    //        const std::uint32_t ic =
-    //            mesh.indices[index + 2];
-
-    //        if (ia >= mesh.vertices.size() ||
-    //            ib >= mesh.vertices.size() ||
-    //            ic >= mesh.vertices.size())
-    //        {
-    //            continue;
-    //        }
-
-    //        const glm::vec3& a = mesh.vertices[ia].position;
-
-    //        const glm::vec3& b = mesh.vertices[ib].position;
-
-    //        const glm::vec3& c = mesh.vertices[ic].position;
-
-    //        AddEdge(a, b);
-    //        AddEdge(b, c);
-    //        AddEdge(c, a);
-    //    }
-    //}
-    //else
-    //{
-    //    for (std::size_t index = 0;
-    //        index + 2 < mesh.vertices.size();
-    //        index += 3)
-    //    {
-    //        const glm::vec3& a = mesh.vertices[index].position;
-
-    //        const glm::vec3& b = mesh.vertices[index + 1].position;
-
-    //        const glm::vec3& c = mesh.vertices[index + 2].position;
-
-    //        AddEdge(a, b);
-    //        AddEdge(b, c);
-    //        AddEdge(c, a);
-    //    }
-    //}
-
-    //return edges;
 }
 
 bool EdgeEditController::ProjectToScreen(const glm::vec3& localPosition, const glm::mat4& modelViewProjection,
@@ -815,8 +473,9 @@ bool EdgeEditController::PickEdge(BoxEngine& engine, const ImVec2& viewportPosit
         return false;
     }
 
-    m_selectedEdge =
-        closestEdge;
+    // m_selectedEdge = closestEdge;
+
+    m_selectedEdge = edges[closestEdge].editableEdgeIndex;
 
     BOX_LOG_INFO(
         "Selected edge index: "
@@ -826,8 +485,6 @@ bool EdgeEditController::PickEdge(BoxEngine& engine, const ImVec2& viewportPosit
     return true;
 }
 
-
-
 void EdgeEditController::EditBeginMove(Entity& entity, EdgeMoveAxis axis)
 {
 
@@ -836,79 +493,52 @@ void EdgeEditController::EditBeginMove(Entity& entity, EdgeMoveAxis axis)
         return;
     }
 
-    const std::vector<LogicalEdge> edges =
-        BuildLogicalEdges(entity);
+    MeshEditing& editableMesh =
+        entity.GetEditableMesh();
 
-    if (m_selectedEdge >= edges.size())
+    if (m_selectedEdge >=
+        editableMesh.GetEdgeCount())
     {
-        m_selectedEdge = InvalidEdge;
+        m_selectedEdge =
+            InvalidEdge;
+
         return;
     }
 
-    const LogicalEdge& selectedEdge =
-        edges[m_selectedEdge];
-
-    const MeshData& mesh =
-        entity.GetMeshData();
-
-    m_startVertexPositions.clear();
-
-    /*
-     * Add one render vertex to the movement
-     * list, avoiding duplicate indices.
-     */
-    const auto AddStartVertex =
-        [&](std::size_t index)
-    {
-        if (index >= mesh.vertices.size())
-        {
-            return;
-        }
-
-        for (const EdgeStartPosition& existing :
-            m_startVertexPositions)
-        {
-            if (existing.index == index)
-            {
-                return;
-            }
-        }
-
-        EdgeStartPosition start;
-
-        start.index = index;
-
-        start.position =
-            mesh.vertices[index].position;
-
-        m_startVertexPositions.push_back(
-            start
+    const EditEdge& edge =
+        editableMesh.GetEdge(
+            m_selectedEdge
         );
-    };
 
-    /*
-     * An edge consists of two logical vertices.
-     * Each logical vertex may have several
-     * duplicated rendering vertices.
-     */
-    for (const std::size_t index :
-    selectedEdge.verticesAtA)
-    {
-        AddStartVertex(index);
-    }
-
-    for (const std::size_t index :
-    selectedEdge.verticesAtB)
-    {
-        AddStartVertex(index);
-    }
-
-    if (m_startVertexPositions.empty())
+    if (edge.vertexA >=
+        editableMesh.GetVertexCount() ||
+        edge.vertexB >=
+        editableMesh.GetVertexCount())
     {
         return;
     }
 
-    m_moveAxis = axis;
+    // Remember which logical vertices
+    // belong to the selected edge.
+    m_moveVertexA =
+        edge.vertexA;
+
+    m_moveVertexB =
+        edge.vertexB;
+
+    // Store their original positions.
+    m_startPositionA =
+        editableMesh
+        .GetVertex(m_moveVertexA)
+        .position;
+
+    m_startPositionB =
+        editableMesh
+        .GetVertex(m_moveVertexB)
+        .position;
+
+    m_moveAxis =
+        axis;
 
     m_startMouse =
         ImGui::GetMousePos();
@@ -962,52 +592,91 @@ void EdgeEditController::EditUpdateMove(Entity& entity)
         return;
     }
 
-    for (const EdgeStartPosition& start :
-        m_startVertexPositions)
+    MeshEditing& editableMesh =
+        entity.GetEditableMesh();
+
+    // Move both logical endpoints.
+    editableMesh
+        .GetVertex(m_moveVertexA)
+        .position =
+        m_startPositionA +
+        movement;
+
+    editableMesh
+        .GetVertex(m_moveVertexB)
+        .position =
+        m_startPositionB +
+        movement;
+
+
+    // Rebuild the render mesh.
+    MeshData renderMesh;
+
+    if (!editableMesh.BuildRenderMesh(
+        renderMesh))
     {
-        entity.SetVertexPosition(
-            start.index,
-            start.position + movement
+        BOX_LOG_ERROR(
+            "Edge move: failed to rebuild render mesh"
         );
+
+        return;
     }
 
-    entity.RecalculateNormals();
+    if (!entity.CreateFromMeshData(
+        renderMesh))
+    {
+        BOX_LOG_ERROR(
+            "Edge move: failed to update GPU mesh"
+        );
 
-    entity.UploadMeshData();
+        return;
+
+    }
 }
 
 void EdgeEditController::EditConfirmMove()
 {
+
     if (!m_isMoving)
     {
         return;
     }
+
     m_isMoving = false;
-    m_moveAxis =
-        EdgeMoveAxis::None;
-    m_startVertexPositions.clear();
+
+    m_moveAxis = EdgeMoveAxis::None;
 }
 
 void EdgeEditController::EditCancelMove(Entity& entity)
 {
-   
-    for (const EdgeStartPosition& start :
-        m_startVertexPositions)
+
+    if (!m_isMoving)
     {
-        entity.SetVertexPosition(
-            start.index,
-            start.position
-        );
+        return;
     }
 
-    entity.RecalculateNormals();
+    MeshEditing& editableMesh =
+        entity.GetEditableMesh();
 
-    entity.UploadMeshData();
+    editableMesh
+        .GetVertex(m_moveVertexA)
+        .position =
+        m_startPositionA;
+
+    editableMesh
+        .GetVertex(m_moveVertexB)
+        .position =
+        m_startPositionB;
+
+    MeshData renderMesh;
+
+    if (editableMesh.BuildRenderMesh(renderMesh))
+    {
+        entity.CreateFromMeshData(renderMesh);
+    }
 
     m_isMoving = false;
 
-    m_moveAxis =
-        EdgeMoveAxis::None;
+    m_moveAxis = EdgeMoveAxis::None;
 
-    m_startVertexPositions.clear();
-}
+ }

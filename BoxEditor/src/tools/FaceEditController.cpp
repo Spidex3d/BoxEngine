@@ -17,40 +17,6 @@ void FaceEditController::HandleInput(BoxEngine& engine, bool viewportHovered, bo
 
     Entity* entity = engine.GetSelectedEntity();
 
-
-    // ####################### Temporary Face Extrude test
-    /*if (!m_isMoving &&
-        m_selectedFace != InvalidFace &&
-        ImGui::IsKeyPressed(ImGuiKey_E, false))
-    {
-        BOX_LOG_INFO(
-            "E pressed for Face Extrude. Face="
-            << m_selectedFace
-        );
-
-        FaceExtrude extrude;
-
-        if (extrude.Use(
-            *entity,
-            m_selectedFace,
-            0.5f))
-        {
-            BOX_LOG_INFO("Face extrusion successful");
-        }
-        else
-        {
-            BOX_LOG_ERROR(
-                "Face extrusion failed"
-            );
-        }
-
-        return;
-    }*/
-
-    // ##################################################
-
-
-
     if (!faceModeActive)
     {
         if (m_isMoving)
@@ -71,10 +37,6 @@ void FaceEditController::HandleInput(BoxEngine& engine, bool viewportHovered, bo
     {
         return;
     }
-
-  
-    
-    // unresolved external symbol "public: struct EditFace & __cdecl MeshEditing::GetFace(unsigned __int64)" (? GetFace@MeshEditing@@QEAAAEAUEditFace@@_K@Z) referenced in function "public: bool __cdecl FaceExtrude::Use(class Entity &,unsigned __int64,float)" (? Use@FaceExtrude@@QEAA_NAEAVEntity@@_KM@Z)
 
 
     if (!entity)
@@ -244,14 +206,30 @@ void FaceEditController::DrawFace(BoxEngine& engine, const ImVec2& viewportPosit
             continue;
         }
 
-        const bool selected =
-            index == m_selectedFace;
+        //const bool selected = index == m_selectedFace;
+
+        const bool selected = faces[index].editableFaceIndex == m_selectedFace;
 
         if (selected)
         {
-            drawList->AddQuadFilled(
+            // Same triangulation used by BuildRenderMesh:
+            // A-B-C
+            // A-C-D
+
+            drawList->AddTriangleFilled(
                 screenA,
                 screenB,
+                screenC,
+                IM_COL32(
+                    30,
+                    255,
+                    70,
+                    70
+                )
+            );
+
+            drawList->AddTriangleFilled(
+                screenA,
                 screenC,
                 screenD,
                 IM_COL32(
@@ -262,42 +240,48 @@ void FaceEditController::DrawFace(BoxEngine& engine, const ImVec2& viewportPosit
                 )
             );
 
-            drawList->AddQuad(
-                screenA,
-                screenB,
-                screenC,
-                screenD,
+            // Draw the real outside boundary.
+            const ImU32 outline =
                 IM_COL32(
                     30,
                     255,
                     70,
                     255
-                ),
-                3.0f
+                );
+
+            constexpr float thickness =
+                3.0f;
+
+            drawList->AddLine(
+                screenA,
+                screenB,
+                outline,
+                thickness
+            );
+
+            drawList->AddLine(
+                screenB,
+                screenC,
+                outline,
+                thickness
+            );
+
+            drawList->AddLine(
+                screenC,
+                screenD,
+                outline,
+                thickness
+            );
+
+            drawList->AddLine(
+                screenD,
+                screenA,
+                outline,
+                thickness
             );
         }
 
-        /*const ImU32 color =
-            selected
-            ? IM_COL32(30, 255, 70, 255)
-            : IM_COL32(255, 165, 40, 255);*/
-
-        /*const float radius =
-            selected ? 8.0f : 6.0f;
-
-        drawList->AddCircleFilled(
-            screenCentre,
-            radius,
-            color
-        );
-
-        drawList->AddCircle(
-            screenCentre,
-            radius,
-            IM_COL32(20, 20, 20, 255),
-            0,
-            1.0f
-        );*/
+       
     }
   
 }
@@ -364,280 +348,182 @@ bool FaceEditController::PointInTriangle(const ImVec2& point, const ImVec2& a, c
 
 std::vector<FaceEditController::LogicalFace>FaceEditController::BuildLogicalFace(const Entity& entity) const
 {
-    std::vector<LogicalFace> logicalFaces;
+    std::vector<LogicalFace> faces;
 
-    const MeshData& mesh = entity.GetMeshData();
+    const MeshEditing& editableMesh =
+        entity.GetEditableMesh();
 
-    if (!mesh.IsValid())
+    const auto& editFaces =
+        editableMesh.GetFaces();
+
+    if (editFaces.empty())
     {
-        return logicalFaces;
+        return faces;
     }
 
-    constexpr float epsilon = 0.0001f;
-
-    constexpr float coplanarThreshold = 0.999f;
-
-    const auto SamePosition =
-        [](const glm::vec3& a,
-            const glm::vec3& b)
+    for (std::size_t faceIndex = 0;
+        faceIndex < editFaces.size();
+        ++faceIndex)
     {
-        constexpr float positionEpsilon = 0.0001f;
+        const EditFace& editFace =
+            editFaces[faceIndex];
 
-        return glm::length(a - b) <= positionEpsilon;
-    };
-
-    std::vector<TriangleData> triangles;
-
-    const auto AddTriangle =
-        [&](const glm::vec3& a,
-            const glm::vec3& b,
-            const glm::vec3& c)
-    {
-        const glm::vec3 crossProduct =
-            glm::cross(
-                b - a,
-                c - a
-            );
-
-        const float crossLength = glm::length(crossProduct);
-
-        if (crossLength <= epsilon)
-        {
-            return;
-        }
-
-        TriangleData triangle;
-
-        triangle.a = a;
-        triangle.b = b;
-        triangle.c = c;
-
-        triangle.normal =
-            crossProduct /
-            crossLength;
-
-        triangles.push_back(triangle);
-    };
-
-    if (mesh.HasIndices())
-    {
-        for (std::size_t index = 0;
-            index + 2 < mesh.indices.size();
-            index += 3)
-        {
-            const std::uint32_t ia =
-                mesh.indices[index];
-
-            const std::uint32_t ib =
-                mesh.indices[index + 1];
-
-            const std::uint32_t ic =
-                mesh.indices[index + 2];
-
-            if (ia >= mesh.vertices.size() ||
-                ib >= mesh.vertices.size() ||
-                ic >= mesh.vertices.size())
-            {
-                continue;
-            }
-
-            AddTriangle(
-                mesh.vertices[ia].position,
-                mesh.vertices[ib].position,
-                mesh.vertices[ic].position
-            );
-        }
-    }
-    else
-    {
-        for (std::size_t index = 0;
-            index + 2 < mesh.vertices.size();
-            index += 3)
-        {
-            AddTriangle(
-                mesh.vertices[index].position,
-                mesh.vertices[index + 1].position,
-                mesh.vertices[index + 2].position
-            );
-        }
-    }
-
-    std::vector<bool> triangleUsed(triangles.size(), false);
-
-    for (std::size_t first = 0;
-        first < triangles.size();
-        ++first)
-    {
-        if (triangleUsed[first])
+        // For now we are handling quad faces.
+        if (editFace.vertices.size() != 4)
         {
             continue;
         }
 
-        const TriangleData& triangleA = triangles[first];
+        const std::size_t ia =
+            editFace.vertices[0];
 
-        for (std::size_t second = first + 1;
-            second < triangles.size();
-            ++second)
+        const std::size_t ib =
+            editFace.vertices[1];
+
+        const std::size_t ic =
+            editFace.vertices[2];
+
+        const std::size_t id =
+            editFace.vertices[3];
+
+        if (ia >= editableMesh.GetVertexCount() ||
+            ib >= editableMesh.GetVertexCount() ||
+            ic >= editableMesh.GetVertexCount() ||
+            id >= editableMesh.GetVertexCount())
         {
-            if (triangleUsed[second])
+            continue;
+        }
+
+        LogicalFace face;
+
+        // This is the REAL MeshEditing face index.
+        face.editableFaceIndex =
+            faceIndex;
+
+        // Get the four logical corner positions.
+        face.positionA =
+            editableMesh.GetVertex(ia).position;
+
+        face.positionB =
+            editableMesh.GetVertex(ib).position;
+
+        face.positionC =
+            editableMesh.GetVertex(ic).position;
+
+        face.positionD =
+            editableMesh.GetVertex(id).position;
+
+
+        // ==================================================
+        // ADD THE CODE HERE
+        // ==================================================
+
+        const MeshData& renderMesh =
+            entity.GetMeshData();
+
+        constexpr float epsilon =
+            0.0001f;
+
+        for (std::size_t renderIndex = 0;
+            renderIndex < renderMesh.vertices.size();
+            ++renderIndex)
+        {
+            const glm::vec3& position =
+                renderMesh.vertices[
+                    renderIndex
+                ].position;
+
+            if (glm::length(
+                position -
+                face.positionA) <= epsilon)
             {
-                continue;
-            }
-
-            const TriangleData& triangleB = triangles[second];
-
-            const float normalAgreement =
-                glm::dot(
-                    triangleA.normal,
-                    triangleB.normal
+                face.verticesAtA.push_back(
+                    renderIndex
                 );
-
-            if (normalAgreement <
-                coplanarThreshold)
-            {
-                continue;
             }
 
-            std::vector<glm::vec3> uniquePositions;
-
-            const auto AddUniquePosition =
-                [&](const glm::vec3& position)
+            if (glm::length(
+                position -
+                face.positionB) <= epsilon)
             {
-                for (const glm::vec3& existing :
-                    uniquePositions)
-                {
-                    if (SamePosition(
-                        existing,
-                        position))
-                    {
-                        return;
-                    }
-                }
-
-                uniquePositions.push_back(position);
-            };
-
-            AddUniquePosition(triangleA.a);
-            AddUniquePosition(triangleA.b);
-            AddUniquePosition(triangleA.c);
-
-            AddUniquePosition(triangleB.a);
-            AddUniquePosition(triangleB.b);
-            AddUniquePosition(triangleB.c);
-
-            /*
-             * Two triangles forming a quad
-             * have exactly four unique corners.
-             */
-            if (uniquePositions.size() != 4)
-            {
-                continue;
-            }
-
-            /*
-             * Ensure both triangles are on the
-             * same plane, not merely parallel.
-             */
-            const float planeDistance =
-                glm::dot(
-                    triangleA.normal,
-                    triangleB.a -
-                    triangleA.a
+                face.verticesAtB.push_back(
+                    renderIndex
                 );
-
-            if (std::abs(planeDistance) >
-                epsilon)
-            {
-                continue;
             }
 
-            LogicalFace face;
-
-            face.positionA =
-                uniquePositions[0];
-
-            face.positionB =
-                uniquePositions[1];
-
-            face.positionC =
-                uniquePositions[2];
-
-            face.positionD =
-                uniquePositions[3];
-
-            face.normal =
-                triangleA.normal;
-
-            face.centre =
-                (
-                    face.positionA +
-                    face.positionB +
-                    face.positionC +
-                    face.positionD
-                    ) * 0.25f;
-
-            /*
-             * Store all duplicated rendering
-             * vertices for each logical corner.
-             */
-            for (std::size_t vertexIndex = 0;
-                vertexIndex < mesh.vertices.size();
-                ++vertexIndex)
+            if (glm::length(
+                position -
+                face.positionC) <= epsilon)
             {
-                const glm::vec3& position =
-                    mesh.vertices[
-                        vertexIndex
-                    ].position;
-
-                if (SamePosition(
-                    position,
-                    face.positionA))
-                {
-                    face.verticesAtA.push_back(
-                        vertexIndex
-                    );
-                }
-
-                if (SamePosition(
-                    position,
-                    face.positionB))
-                {
-                    face.verticesAtB.push_back(
-                        vertexIndex
-                    );
-                }
-
-                if (SamePosition(
-                    position,
-                    face.positionC))
-                {
-                    face.verticesAtC.push_back(
-                        vertexIndex
-                    );
-                }
-
-                if (SamePosition(
-                    position,
-                    face.positionD))
-                {
-                    face.verticesAtD.push_back(
-                        vertexIndex
-                    );
-                }
+                face.verticesAtC.push_back(
+                    renderIndex
+                );
             }
 
-            logicalFaces.push_back(
-                std::move(face)
+            if (glm::length(
+                position -
+                face.positionD) <= epsilon)
+            {
+                face.verticesAtD.push_back(
+                    renderIndex
+                );
+            }
+        }
+
+        // ==================================================
+        // END OF NEW CODE
+        // ==================================================
+
+
+        // Calculate face centre.
+        face.centre =
+            (
+                face.positionA +
+                face.positionB +
+                face.positionC +
+                face.positionD
+                ) * 0.25f;
+
+
+        // Calculate face normal.
+        const glm::vec3 edgeAB =
+            face.positionB -
+            face.positionA;
+
+        const glm::vec3 edgeAC =
+            face.positionC -
+            face.positionA;
+
+        const glm::vec3 crossProduct =
+            glm::cross(
+                edgeAB,
+                edgeAC
             );
 
-            triangleUsed[first] = true;
-            triangleUsed[second] = true;
+        const float length =
+            glm::length(
+                crossProduct
+            );
 
-            break;
+        if (length <= 0.000001f)
+        {
+            continue;
         }
+
+        face.normal =
+            crossProduct / length;
+
+
+        // Completed face.
+        faces.push_back(
+            std::move(face)
+        );
     }
 
-    return logicalFaces;
+    return faces;
+    
+
+    
 }
 
 bool FaceEditController::ProjectToScreen(const glm::vec3& localPosition, const glm::mat4& modelViewProjection,
@@ -808,8 +694,29 @@ bool FaceEditController::PickFace(BoxEngine& engine, const ImVec2& viewportPosit
         return false;
     }
 
-    m_selectedFace =
-        closestFace;
+    m_selectedFace = faces[closestFace].editableFaceIndex;
+
+    /*const LogicalFace& selected = faces[closestFace];
+
+    BOX_LOG_INFO(
+        "Selected editable face: "
+        << selected.editableFaceIndex
+        << " A=("
+        << selected.positionA.x << ", "
+        << selected.positionA.y << ", "
+        << selected.positionA.z << ")"
+        << " B=("
+        << selected.positionB.x << ", "
+        << selected.positionB.y << ", "
+        << selected.positionB.z << ")"
+        << " C=("
+        << selected.positionC.x << ", "
+        << selected.positionC.y << ", "
+        << selected.positionC.z << ")"
+        << " D=("
+        << selected.positionD.x << ", "
+        << selected.positionD.y << ", "
+        << selected.positionD.z << ")" );*/
 
     BOX_LOG_INFO(
         "Selected face index: "
@@ -822,6 +729,7 @@ bool FaceEditController::PickFace(BoxEngine& engine, const ImVec2& viewportPosit
 
 void FaceEditController::EditBeginMove(Entity& entity, FaceMoveAxis axis)
 {
+
     if (m_selectedFace == InvalidFace)
     {
         return;
@@ -830,15 +738,72 @@ void FaceEditController::EditBeginMove(Entity& entity, FaceMoveAxis axis)
     const std::vector<LogicalFace> faces =
         BuildLogicalFace(entity);
 
-    if (m_selectedFace >= faces.size())
+    /*
+     * m_selectedFace is now the real
+     * MeshEditing face index.
+     *
+     * Find the LogicalFace that represents
+     * that editable face.
+     */
+    const LogicalFace* selectedFace =
+        nullptr;
+
+    for (const LogicalFace& face : faces)
     {
-        m_selectedFace = InvalidFace;
+        if (face.editableFaceIndex ==
+            m_selectedFace)
+        {
+            selectedFace =
+                &face;
+
+            break;
+        }
+    }
+
+    if (!selectedFace)
+    {
+        BOX_LOG_WARNING(
+            "EditBeginMove: selected editable face "
+            << m_selectedFace
+            << " was not found"
+        );
+
         return;
     }
 
-    const LogicalFace& selectedFace =
-        faces[m_selectedFace];
+    MeshEditing& editableMesh =
+        entity.GetEditableMesh();
 
+    if (m_selectedFace >=
+        editableMesh.GetFaceCount())
+    {
+        return;
+    }
+
+    const EditFace& editFace =
+        editableMesh.GetFace(
+            m_selectedFace
+        );
+
+    m_editableFaceVertices =
+        editFace.vertices;
+
+    m_editableStartPositions.clear();
+
+    for (const std::size_t vertexIndex :
+    m_editableFaceVertices)
+    {
+        m_editableStartPositions.push_back(
+            editableMesh
+            .GetVertex(vertexIndex)
+            .position
+        );
+    }
+
+    /*
+     * We can still keep the render-index data
+     * temporarily while converting the system.
+     */
     const MeshData& mesh =
         entity.GetMeshData();
 
@@ -864,7 +829,6 @@ void FaceEditController::EditBeginMove(Entity& entity, FaceMoveAxis axis)
         FaceStartPosition start;
 
         start.index = index;
-
         start.position =
             mesh.vertices[index].position;
 
@@ -874,40 +838,35 @@ void FaceEditController::EditBeginMove(Entity& entity, FaceMoveAxis axis)
     };
 
     for (const std::size_t index :
-    selectedFace.verticesAtA)
+    selectedFace->verticesAtA)
     {
         AddStartVertex(index);
     }
 
     for (const std::size_t index :
-    selectedFace.verticesAtB)
+    selectedFace->verticesAtB)
     {
         AddStartVertex(index);
     }
 
     for (const std::size_t index :
-    selectedFace.verticesAtC)
+    selectedFace->verticesAtC)
     {
         AddStartVertex(index);
     }
 
     for (const std::size_t index :
-    selectedFace.verticesAtD)
+    selectedFace->verticesAtD)
     {
         AddStartVertex(index);
-    }
-
-    if (m_startVertexPositions.empty())
-    {
-        return;
     }
 
     m_moveAxis = axis;
 
-    m_startMouse =
-        ImGui::GetMousePos();
+    m_startMouse = ImGui::GetMousePos();
 
-    m_isMoving = true;
+    m_isMoving = !m_editableFaceVertices.empty();
+
 }
 
 void FaceEditController::EditUpdateMove(Entity& entity)
@@ -955,46 +914,89 @@ void FaceEditController::EditUpdateMove(Entity& entity)
         return;
     }
 
-    for (const FaceStartPosition& start :
-        m_startVertexPositions)
+
+    MeshEditing& editableMesh = entity.GetEditableMesh();
+
+    for (std::size_t i = 0;
+        i < m_editableFaceVertices.size();
+        ++i)
     {
-        entity.SetVertexPosition(
-            start.index,
-            start.position + movement
-        );
+        const std::size_t vertexIndex =
+            m_editableFaceVertices[i];
+
+        editableMesh
+            .GetVertex(vertexIndex)
+            .position =
+            m_editableStartPositions[i] +
+            movement;
     }
 
-    entity.RecalculateNormals();
+    /*
+     * MeshEditing is now the source of truth.
+     * Regenerate the render mesh from it.
+     */
+    MeshData renderMesh;
 
-    entity.UploadMeshData();
+    if (!editableMesh.BuildRenderMesh(
+        renderMesh))
+    {
+        BOX_LOG_ERROR("Face move: failed to rebuild render mesh");
+
+        return;
+    }
+
+    if (!entity.CreateFromMeshData(
+        renderMesh))
+    {
+        BOX_LOG_ERROR("Face move: failed to update GPU mesh");
+
+        return;
+    }
 
 }
 // confirm the move operation and finalize the face's new position
 void FaceEditController::EditConfirmMove()
 {
+
     m_isMoving = false;
 
     m_moveAxis =
         FaceMoveAxis::None;
 
     m_startVertexPositions.clear();
+
+    m_editableFaceVertices.clear();
+    m_editableStartPositions.clear();
 
 }
 // cancel the move operation and revert the face to its original position
 void FaceEditController::EditCancelMove(Entity& entity)
 {
-    for (const FaceStartPosition& start :
-        m_startVertexPositions)
+
+    MeshEditing& editableMesh =
+        entity.GetEditableMesh();
+
+    for (std::size_t i = 0;
+        i < m_editableFaceVertices.size();
+        ++i)
     {
-        entity.SetVertexPosition(
-            start.index,
-            start.position
-        );
+        editableMesh
+            .GetVertex(
+                m_editableFaceVertices[i]
+            )
+            .position =
+            m_editableStartPositions[i];
     }
 
-    entity.RecalculateNormals();
+    MeshData renderMesh;
 
-    entity.UploadMeshData();
+    if (editableMesh.BuildRenderMesh(
+        renderMesh))
+    {
+        entity.CreateFromMeshData(
+            renderMesh
+        );
+    }
 
     m_isMoving = false;
 
@@ -1002,5 +1004,7 @@ void FaceEditController::EditCancelMove(Entity& entity)
         FaceMoveAxis::None;
 
     m_startVertexPositions.clear();
+    m_editableFaceVertices.clear();
+    m_editableStartPositions.clear();
 
 }

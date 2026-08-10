@@ -44,11 +44,16 @@ public:
 private:
     struct LogicalFace
     {
+
+        std::size_t editableFaceIndex = static_cast<std::size_t>(-1);
+
 		// The positions of the four vertices of the face.
         glm::vec3 positionA{ 0.0f };
         glm::vec3 positionB{ 0.0f };
         glm::vec3 positionC{ 0.0f };
         glm::vec3 positionD{ 0.0f };
+
+        
 		// The indices of the vertices in the mesh that correspond to the face's vertices.
         std::vector<std::size_t> verticesAtA;
         std::vector<std::size_t> verticesAtB;
@@ -69,6 +74,10 @@ private:
 
     std::vector<LogicalFace>BuildLogicalFace(const Entity& entity) const;
 
+
+    std::vector<std::size_t>m_editableFaceVertices;
+
+    std::vector<glm::vec3>m_editableStartPositions;
 
     bool ProjectToScreen(const glm::vec3& localPosition, const glm::mat4& modelViewProjection,
         const ImVec2& viewportPosition, const ImVec2& viewportSize, ImVec2& outScreenPosition) const;

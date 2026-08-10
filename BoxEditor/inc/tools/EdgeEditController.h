@@ -41,14 +41,17 @@ public:
 private:
     struct LogicalEdge
     {
+        // Actual edge index inside MeshEditing.
+        std::size_t editableEdgeIndex = static_cast<std::size_t>(-1);
+
+        // Logical endpoint vertex indices.
+        std::size_t vertexA = 0;
+        std::size_t vertexB = 0;
+
+        // Current logical positions.
         glm::vec3 positionA{ 0.0f };
         glm::vec3 positionB{ 0.0f };
 
-        std::vector<std::size_t> verticesAtA;
-        std::vector<std::size_t> verticesAtB;
-
-        // The triangles that share this edge.
-        std::vector<glm::vec3> adjacentFaceNormals;
     };
    
     std::vector<LogicalEdge>BuildLogicalEdges(const Entity& entity) const;
@@ -88,14 +91,15 @@ private:
     );
 
 private:
-    struct EdgeStartPosition
-    {
-        std::size_t index = 0;
-        glm::vec3 position{ 0.0f };
-    };
+    // Edge Start Position
+    std::size_t m_moveVertexA = 0;
+    std::size_t m_moveVertexB = 0;
 
-    static constexpr std::size_t InvalidEdge =
-        static_cast<std::size_t>(-1);
+    glm::vec3 m_startPositionA{ 0.0f };
+    glm::vec3 m_startPositionB{ 0.0f };
+
+    static constexpr std::size_t InvalidEdge = static_cast<std::size_t>(-1);
+	// ##################################################################################################
 
     std::size_t m_selectedEdge = InvalidEdge;
 
@@ -105,13 +109,6 @@ private:
 
     ImVec2 m_startMouse = ImVec2(0.0f, 0.0f);
 
-    std::vector<EdgeStartPosition>m_startVertexPositions;
-
 	float m_moveSensitivity = 0.01f; // Sensitivity for moving, adjust as needed
-
-   
-
-
-
 
 };
