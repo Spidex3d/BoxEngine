@@ -48,6 +48,9 @@
     <ClInclude Include="inc\mesh\modifiers\FaceExtrude.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="inc\mesh\modifiers\ModifierData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\BoxEngine.cpp">

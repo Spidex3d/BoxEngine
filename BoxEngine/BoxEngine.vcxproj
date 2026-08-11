@@ -153,6 +153,7 @@
     <ClInclude Include="inc\mesh\MeshData.h" />
     <ClInclude Include="inc\mesh\MeshEditing.h" />
     <ClInclude Include="inc\mesh\modifiers\FaceExtrude.h" />
+    <ClInclude Include="inc\mesh\modifiers\ModifierData.h" />
     <ClInclude Include="inc\rendering\Framebuffer.h" />
     <ClInclude Include="inc\rendering\grid.h" />
     <ClInclude Include="inc\rendering\Material.h" />

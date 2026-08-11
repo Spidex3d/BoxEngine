@@ -5,6 +5,8 @@ class BoxEngine;
 class Entity;
 class MaterialEditor;
 
+
+
 class ObjectExplorerPanel
 {
 public:
@@ -18,6 +20,8 @@ public:
 	void Shutdown();
 
 private:
+    char nameBuffer[128]{};
+
     void DrawObjectTab(BoxEngine& engine,
         Entity& entity
     );
@@ -25,8 +29,9 @@ private:
     void DrawTexturesTab(BoxEngine& engine,
         Entity& entity
     );
+    
 
-    void DrawModifiersTab(
+    void DrawModifiersTab(BoxEngine& engine,
         Entity& entity
     );
 

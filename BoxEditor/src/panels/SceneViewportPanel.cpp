@@ -396,11 +396,10 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                 }
                 else
                 {
-                    const std::size_t selectedFace =
-                        m_faceEditController.GetSelectedFace();
+                    const std::size_t selectedFace = m_faceEditController.GetSelectedFace();
 
                     BOX_LOG_INFO("Trying to extrude face " << selectedFace);
-
+					// this is the amount to extrude, you can change it or make it a parameter
                     if (m_faceExtrudeModifier.Use(
                         *selectedEntity,
                         selectedFace,

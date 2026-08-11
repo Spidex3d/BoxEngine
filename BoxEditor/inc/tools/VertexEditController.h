@@ -45,12 +45,6 @@ private:
         const ImVec2& viewportSize
     );
 
-    std::vector<std::size_t>
-        FindVerticesAtPosition(
-            const Entity& entity,
-            const glm::vec3& position
-        ) const;
-
 	// new functions for editing and moving vertices
     void EditBeginMove(
         Entity& entity,
@@ -68,25 +62,18 @@ private:
     );
 
 private:
-    struct VertexStartPosition
-    {
-        std::size_t index = 0;
-        glm::vec3 position{ 0.0f };
-    };
+    
+    static constexpr std::size_t InvalidVertex = static_cast<std::size_t>(-1);
 
-    static constexpr std::size_t InvalidVertex =
-        static_cast<std::size_t>(-1);
+    std::size_t m_selectedVertex = InvalidVertex;
 
     bool m_isMoving = false;
 
-   
     VertexMoveAxis m_moveAxis = VertexMoveAxis::None;
-    glm::vec3 m_startVertexPosition = glm::vec3(0.0f);
+
+    glm::vec3 m_startVertexPosition{ 0.0f };
+
     ImVec2 m_startMouse = ImVec2(0.0f, 0.0f);
-
-    std::vector<VertexStartPosition>m_startVertexPositions;
-
-    std::vector<std::size_t>m_selectedVertices;
 
     float m_moveSensitivity = 0.01f;
 };

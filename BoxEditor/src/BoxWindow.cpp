@@ -12,7 +12,6 @@ int BoxWindow::s_glfwRefCount = 0;
 void BoxWindow::SetIcon(GLFWwindow* window)
 {
     Helpers helpers;
-
     std::string iconPath = helpers.GetAssetPath(ICON_PATH);
     GLFWimage images[1];
     images[0].pixels = stbi_load(iconPath.c_str(), &images[0].width, &images[0].height, 0, 4); // rgba = png

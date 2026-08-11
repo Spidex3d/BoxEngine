@@ -8,8 +8,6 @@
 #include <algorithm>
 #include <glm/gtc/matrix_transform.hpp>
 
-
-
 void VertexEditController::HandleInput(BoxEngine& engine, bool viewportHovered, bool vertexModeActive, const ImVec2& viewportPosition,
     const ImVec2& viewportSize)
 {
@@ -48,7 +46,7 @@ void VertexEditController::HandleInput(BoxEngine& engine, bool viewportHovered, 
      * Start moving the selected logical vertex
      * when X, Y or Z is pressed.
      */
-    if (!m_isMoving && !m_selectedVertices.empty())
+    if (!m_isMoving && m_selectedVertex != InvalidVertex)
     {
         if (ImGui::IsKeyPressed(ImGuiKey_X, false))
         {
@@ -100,21 +98,6 @@ void VertexEditController::HandleInput(BoxEngine& engine, bool viewportHovered, 
         );
     }
 
-
-    /*if (!m_isMoving &&
-        ImGui::IsMouseClicked(
-            ImGuiMouseButton_Left))
-    {
-        PickVertex(
-            engine,
-            viewportPosition,
-            viewportSize
-        );
-    }*/
-
-
-
-
 }
 void VertexEditController::DrawVertices(BoxEngine& engine, const ImVec2& viewportPosition, const ImVec2& viewportSize, bool vertexModeActive)
 {
@@ -135,9 +118,10 @@ void VertexEditController::DrawVertices(BoxEngine& engine, const ImVec2& viewpor
         return;
     }
 
-    const MeshData& mesh = entity->GetMeshData();
+    const MeshEditing& editableMesh =
+        entity->GetEditableMesh();
 
-    if (!mesh.IsValid())
+    if (editableMesh.GetVertexCount() == 0)
     {
         return;
     }
@@ -162,22 +146,21 @@ void VertexEditController::DrawVertices(BoxEngine& engine, const ImVec2& viewpor
     std::vector<glm::vec3>drawnPositions;
 
     for (std::size_t index = 0;
-        index < mesh.vertices.size();
+        index < editableMesh.GetVertexCount();
         ++index)
     {
-        const MeshVertex& vertex = mesh.vertices[index];
+        const glm::vec3& position =
+            editableMesh
+            .GetVertex(index)
+            .position;
 
         const glm::vec4 clipPosition =
             modelViewProjection *
             glm::vec4(
-                vertex.position,
+                position,
                 1.0f
             );
 
-        /*
-         * Behind the camera or too close to
-         * the projection plane.
-         */
         if (clipPosition.w <= 0.0001f)
         {
             continue;
@@ -187,10 +170,6 @@ void VertexEditController::DrawVertices(BoxEngine& engine, const ImVec2& viewpor
             glm::vec3(clipPosition) /
             clipPosition.w;
 
-        /*
-         * Skip points outside the visible
-         * clip-space range.
-         */
         if (ndc.x < -1.0f ||
             ndc.x > 1.0f ||
             ndc.y < -1.0f ||
@@ -206,87 +185,52 @@ void VertexEditController::DrawVertices(BoxEngine& engine, const ImVec2& viewpor
             ((ndc.x + 1.0f) * 0.5f) *
             viewportSize.x;
 
-        /*
-         * ImGui screen Y increases downward,
-         * so the projected Y must be inverted.
-         */
         const float screenY =
             viewportPosition.y +
             ((1.0f - ndc.y) * 0.5f) *
             viewportSize.y;
-        // ############################# new
-        bool alreadyDrawn = false;
 
-        constexpr float epsilon =
-            0.0001f;
+        const ImVec2 screenPosition(
+            screenX,
+            screenY
+        );
 
-        for (const glm::vec3& position : drawnPositions)
-        {
-            if (glm::length(
-                position -
-                vertex.position) <=
-                epsilon)
-            {
-                alreadyDrawn = true;
-                break;
-            }
-        }
+        const bool selected =
+            index == m_selectedVertex;
 
-        if (alreadyDrawn)
-        {
-            continue;
-        }
+        const ImU32 fillColor =
+            selected
+            ? IM_COL32(
+                0,
+                255,
+                35,
+                255
+            )
+            : IM_COL32(
+                50,
+                170,
+                255,
+                255
+            );
 
-        drawnPositions.push_back(vertex.position);
-
-        bool selected = false;
-
-        for (const std::size_t selectedIndex : m_selectedVertices)
-        {
-            if (selectedIndex <
-                mesh.vertices.size())
-            {
-                const glm::vec3& selectedPosition =
-                    mesh.vertices[
-                        selectedIndex
-                    ].position;
-
-                if (glm::length(
-                    selectedPosition -
-                    vertex.position) <=
-                    epsilon)
-                {
-                    selected = true;
-                    break;
-                }
-            }
-        }
-
-
-        // ############################# new end
-        const ImVec2 screenPosition(screenX, screenY);
-
-		// draw a blue circle for unselected vertices and an orange circle for the selected vertex
-        const ImU32 fillColor = selected
-            ? IM_COL32(0, 255, 35, 255)
-            : IM_COL32(50, 170, 255, 255); //IM_COL32(255, 145, 35, 255) orange
-		
-        const float radius = selected ? 6.0f : 4.0f;
+        const float radius =
+            selected ? 6.0f : 4.0f;
 
         drawList->AddCircleFilled(
             screenPosition,
             radius,
             fillColor
         );
-    }
 
+    }
 }
 
 
 
 void VertexEditController::ClearSelection(BoxEngine& engine)
 {
-    m_selectedVertices.clear();
+    m_selectedVertex = InvalidVertex;
+
     Entity* entity = engine.GetSelectedEntity();
     if (entity)
     {
@@ -297,6 +241,7 @@ void VertexEditController::ClearSelection(BoxEngine& engine)
 
 bool VertexEditController::PickVertex(BoxEngine& engine, const ImVec2& viewportPosition, const ImVec2& viewportSize)
 {
+
     Entity* entity =
         engine.GetSelectedEntity();
 
@@ -305,16 +250,10 @@ bool VertexEditController::PickVertex(BoxEngine& engine, const ImVec2& viewportP
         return false;
     }
 
-    if (viewportSize.x <= 0.0f ||
-        viewportSize.y <= 0.0f)
-    {
-        return false;
-    }
+    const MeshEditing& editableMesh =
+        entity->GetEditableMesh();
 
-    const MeshData& mesh =
-        entity->GetMeshData();
-
-    if (!mesh.IsValid())
+    if (editableMesh.GetVertexCount() == 0)
     {
         return false;
     }
@@ -340,22 +279,27 @@ bool VertexEditController::PickVertex(BoxEngine& engine, const ImVec2& viewportP
         10.0f;
 
     const float pickRadiusSquared =
-        pickRadius *
-        pickRadius;
+        pickRadius * pickRadius;
 
     float closestDistanceSquared =
         std::numeric_limits<float>::max();
 
-    std::size_t closestVertex = InvalidVertex;
+    std::size_t closestVertex =
+        InvalidVertex;
 
     for (std::size_t index = 0;
-        index < mesh.vertices.size();
+        index < editableMesh.GetVertexCount();
         ++index)
     {
+        const glm::vec3& position =
+            editableMesh
+            .GetVertex(index)
+            .position;
+
         const glm::vec4 clipPosition =
             modelViewProjection *
             glm::vec4(
-                mesh.vertices[index].position,
+                position,
                 1.0f
             );
 
@@ -388,17 +332,17 @@ bool VertexEditController::PickVertex(BoxEngine& engine, const ImVec2& viewportP
             ((1.0f - ndc.y) * 0.5f) *
             viewportSize.y;
 
-        const float differenceX =
+        const float dx =
             mousePosition.x -
             screenX;
 
-        const float differenceY =
+        const float dy =
             mousePosition.y -
             screenY;
 
         const float distanceSquared =
-            differenceX * differenceX +
-            differenceY * differenceY;
+            dx * dx +
+            dy * dy;
 
         if (distanceSquared <=
             pickRadiusSquared &&
@@ -415,127 +359,71 @@ bool VertexEditController::PickVertex(BoxEngine& engine, const ImVec2& viewportP
 
     if (closestVertex == InvalidVertex)
     {
-       
-        m_selectedVertices.clear();
+        m_selectedVertex =
+            InvalidVertex;
 
         entity->ClearSelectedVertices();
 
         return false;
     }
 
-    const glm::vec3 selectedPosition =
-        mesh.vertices[
-            closestVertex
-        ].position;
-
-    m_selectedVertices =
-        FindVerticesAtPosition(
-            *entity,
-            selectedPosition
-        );
+    m_selectedVertex =
+        closestVertex;
 
     entity->ClearSelectedVertices();
 
-    for (const std::size_t index :
-    m_selectedVertices)
-    {
-        entity->AddSelectedVertex(
-            index
-        );
-    }
+    entity->AddSelectedVertex(
+        closestVertex
+    );
 
     BOX_LOG_INFO(
-        "Selected vertex index: "
-        << closestVertex
+        "Selected editable vertex index: "
+        << m_selectedVertex
     );
 
     return true;
+    
 }
 
-std::vector<std::size_t>
-VertexEditController::FindVerticesAtPosition(
-    const Entity& entity,
-    const glm::vec3& position) const
-{
-    std::vector<std::size_t>
-        matchingVertices;
 
-    const MeshData& mesh =
-        entity.GetMeshData();
-
-    constexpr float epsilon =
-        0.0001f;
-
-    for (std::size_t index = 0;
-        index < mesh.vertices.size();
-        ++index)
-    {
-        const glm::vec3& candidate =
-            mesh.vertices[index].position;
-
-        const bool samePosition =
-            glm::length(
-                candidate -
-                position
-            ) <= epsilon;
-
-        if (samePosition)
-        {
-            matchingVertices.push_back(
-                index
-            );
-        }
-    }
-
-    return matchingVertices;
-}
 // ##########################################################################################
 // ############################# new functions for moving vertices ##########################
 // ##########################################################################################
 void VertexEditController::EditBeginMove(Entity& entity, VertexMoveAxis axis)
 {
-    if (m_selectedVertices.empty())
+
+    if (m_selectedVertex ==
+        InvalidVertex)
     {
         return;
     }
 
-    const MeshData& mesh = entity.GetMeshData();
+    MeshEditing& editableMesh =
+        entity.GetEditableMesh();
 
-    m_startVertexPositions.clear();
-
-    m_startVertexPositions.reserve(
-        m_selectedVertices.size()
-    );
-
-    for (const std::size_t index : m_selectedVertices)
+    if (m_selectedVertex >=
+        editableMesh.GetVertexCount())
     {
-        if (index >=
-            mesh.vertices.size())
-        {
-            continue;
-        }
+        m_selectedVertex =
+            InvalidVertex;
 
-        VertexStartPosition start;
-
-        start.index = index;
-
-        start.position = mesh.vertices[index].position;
-
-        m_startVertexPositions.push_back(start);
-    }
-
-    if (m_startVertexPositions.empty())
-    {
         return;
     }
 
-    m_moveAxis = axis;
+    m_startVertexPosition =
+        editableMesh
+        .GetVertex(m_selectedVertex)
+        .position;
 
-    m_startMouse = ImGui::GetMousePos();
+    m_moveAxis =
+        axis;
+
+    m_startMouse =
+        ImGui::GetMousePos();
 
     m_isMoving = true;
-}
 
+}
 
 void VertexEditController::EditUpdateMove(Entity& entity)
 {
@@ -584,22 +472,40 @@ void VertexEditController::EditUpdateMove(Entity& entity)
         return;
     }
 
-    for (const VertexStartPosition& start :
-        m_startVertexPositions)
+    MeshEditing& editableMesh =
+        entity.GetEditableMesh();
+
+    editableMesh
+        .GetVertex(m_selectedVertex)
+        .position =
+        m_startVertexPosition +
+        movement;
+
+
+    // Rebuild render mesh from the
+    // modelling topology.
+    MeshData renderMesh;
+
+    if (!editableMesh.BuildRenderMesh(
+        renderMesh))
     {
-        entity.SetVertexPosition(
-            start.index,
-            start.position + movement
+        BOX_LOG_ERROR(
+            "Vertex move: failed to rebuild render mesh"
         );
+
+        return;
     }
 
-    /*
-     * Send the changed CPU mesh data back
-     * to the existing OpenGL VBO.
-     */
-    entity.RecalculateNormals();
+    if (!entity.CreateFromMeshData(
+        renderMesh))
+    {
+        BOX_LOG_ERROR(
+            "Vertex move: failed to update GPU mesh"
+        );
+
+        return;
+    }
     
-    entity.UploadMeshData();
 }
 
 void VertexEditController::EditConfirmMove()
@@ -609,27 +515,41 @@ void VertexEditController::EditConfirmMove()
     m_moveAxis =
         VertexMoveAxis::None;
 
-    m_startVertexPositions.clear();
 }
 
 void VertexEditController::EditCancelMove(Entity& entity)
 {
-    for (const VertexStartPosition& start :
-        m_startVertexPositions)
+
+    if (!m_isMoving)
     {
-        entity.SetVertexPosition(
-            start.index,
-            start.position
+        return;
+    }
+
+    MeshEditing& editableMesh =
+        entity.GetEditableMesh();
+
+    if (m_selectedVertex <
+        editableMesh.GetVertexCount())
+    {
+        editableMesh
+            .GetVertex(m_selectedVertex)
+            .position =
+            m_startVertexPosition;
+    }
+
+    MeshData renderMesh;
+
+    if (editableMesh.BuildRenderMesh(
+        renderMesh))
+    {
+        entity.CreateFromMeshData(
+            renderMesh
         );
     }
-    entity.RecalculateNormals();
-
-    entity.UploadMeshData();
 
     m_isMoving = false;
 
     m_moveAxis =
         VertexMoveAxis::None;
 
-    m_startVertexPositions.clear();
 }

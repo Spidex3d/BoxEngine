@@ -110,7 +110,7 @@ void ObjectExplorerPanel::DrawObjectExplorer(
         // ####################################################
         if (ImGui::BeginTabItem("Modifiers"))
         {
-            DrawModifiersTab(*selected);
+            DrawModifiersTab(engine, *selected);
 
             ImGui::EndTabItem();
         }
@@ -124,7 +124,7 @@ void ObjectExplorerPanel::DrawObjectExplorer(
 
 void ObjectExplorerPanel::DrawObjectTab(BoxEngine& engine, Entity& entity)
 {
-    char nameBuffer[128]{};
+   // char nameBuffer[128]{};
 
     strncpy_s(nameBuffer, sizeof(nameBuffer), entity.GetName().c_str(), _TRUNCATE);
 
@@ -188,12 +188,33 @@ void ObjectExplorerPanel::DrawTexturesTab(BoxEngine& engine,Entity& entity)
 
 }
 
-void ObjectExplorerPanel::DrawModifiersTab(Entity& entity)
+void ObjectExplorerPanel::DrawModifiersTab(BoxEngine& engine, Entity& entity)
 {
-    ImGui::Text(
-        "Modifiers for: %s",
-        entity.GetName().c_str()
-    );
+	// the name of the entity is displayed at the top of the modifiers tab.
+    ImGui::Text("Modifiers for: %s", entity.GetName().c_str());
+
+    Entity* selectedEntity = engine.GetSelectedEntity();
+
+	// Example of handling a specific modifier type (Extrude) for the selected entity.
+    // Handle Extrude modifier logic here.
+    if (selectedEntity)
+    {
+		// Example: Check if the selected entity has a modifier applied. then display the modifier controls.
+        // This is a placeholder for actual modifier logic.
+        bool hasExtrudeModifier = true; // Replace with actual check.
+        if (hasExtrudeModifier)
+        {
+            ImGui::Text("Extrude modifier is applied.");
+            // Add controls for the Extrude modifier here.
+            float fex = 0.0f;
+
+                if (ImGui::InputFloat("Extrude", &fex)) {
+					// this is where you would update the extrude value to the selected entity's mesh data.  
+                    
+                }
+
+        }
+	}
 
     ImGui::Separator();
 
@@ -204,10 +225,9 @@ void ObjectExplorerPanel::DrawModifiersTab(Entity& entity)
     ImGui::Spacing();
 
     if (ImGui::Button(
-        "Add Modifier",
-        ImVec2(120.0f, 0.0f)))
+        "Update Modifier", ImVec2(120.0f, 0.0f)))
     {
-        // Modifier popup later.
+        
     }
 }
 
