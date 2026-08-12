@@ -163,7 +163,7 @@ int App::Run()
          
         if (m_imgObjectExplorer)
         {
-			m_imgObjectExplorer->DrawObjectExplorer(*m_engine); // draw the Object Explorer panel for the selected entity
+            m_imgObjectExplorer->DrawObjectExplorer(*m_engine, m_sceneViewport->GetFaceEditController());
         }
 
         if (m_helpPanel)

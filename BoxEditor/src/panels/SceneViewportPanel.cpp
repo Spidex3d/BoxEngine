@@ -378,8 +378,9 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 
         if (ImGui::BeginMenu("Modifiers")) {
 
-            if (ImGui::MenuItem("Extrude")) {
-                
+            if (ImGui::MenuItem("Extrude"))
+            {
+
                 Entity* selectedEntity =
                     engine.GetSelectedEntity();
 
@@ -392,33 +393,20 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                 else if (
                     !m_faceEditController.HasSelectedFace())
                 {
-                    BOX_LOG_WARNING("Extrude: no face selected");
+                    BOX_LOG_WARNING(
+                        "Extrude: no face selected"
+                    );
                 }
                 else
                 {
-                    const std::size_t selectedFace = m_faceEditController.GetSelectedFace();
-
-                    BOX_LOG_INFO("Trying to extrude face " << selectedFace);
-					// this is the amount to extrude, you can change it or make it a parameter
-                    if (m_faceExtrudeModifier.Use(
-                        *selectedEntity,
-                        selectedFace,
-                        0.5f))
-                    {
-                        BOX_LOG_INFO("Face extrusion successful");
-                    }
-                    else
-                    {
-                        BOX_LOG_ERROR("Face extrusion failed");
-                    }
+                    m_faceEditController.BeginExtrude(
+                        *selectedEntity
+                    );
                 }
+
+
             }
-
-
-
-
-
-        
+                   
 
             if (ImGui::MenuItem("Inset")) {
             }
@@ -526,7 +514,6 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             // ############################################################################################
             // ################################# Modifiers ############################################
             // ############################################################################################
-			//m_faceExtrudeModifier.Use(engine, m_faceEditController.GetSelectedFaceIndex(), 0.1f); // Example distance for extrusion
 
 
             // ############################################################################################

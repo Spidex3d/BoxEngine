@@ -11,23 +11,23 @@
 #include <mesh/modifiers/FaceExtrude.h>
 
 
-void FaceEditController::HandleInput(BoxEngine& engine, bool viewportHovered, bool faceModeActive,
-    const ImVec2& viewportPosition, const ImVec2& viewportSize)
+void FaceEditController::HandleInput(
+    BoxEngine& engine,
+    bool viewportHovered,
+    bool faceModeActive,
+    const ImVec2& viewportPosition,
+    const ImVec2& viewportSize)
 {
-
     Entity* entity = engine.GetSelectedEntity();
 
+    // -------------------------------------------------
+    // Face mode is not active
+    // -------------------------------------------------
     if (!faceModeActive)
     {
-        if (m_isMoving)
+        if (m_isMoving && entity)
         {
-            Entity* entity =
-                engine.GetSelectedEntity();
-
-            if (entity)
-            {
-                EditCancelMove(*entity);
-            }
+            EditCancelMove(*entity);
         }
 
         return;
@@ -38,11 +38,221 @@ void FaceEditController::HandleInput(BoxEngine& engine, bool viewportHovered, bo
         return;
     }
 
-
     if (!entity)
     {
         return;
     }
+
+
+    // =================================================
+    // ACTIVE EXTRUSION
+    // =================================================
+    if (m_isExtruding)
+    {
+        // Choose extrusion axis.
+        if (ImGui::IsKeyPressed(
+            ImGuiKey_X,
+            false))
+        {
+            m_extrudeAxis =
+                ExtrudeAxis::X;
+
+            m_extrudeStartMouse =
+                ImGui::GetMousePos();
+
+            BOX_LOG_INFO(
+                "Extrude axis X"
+            );
+        }
+        else if (ImGui::IsKeyPressed(
+            ImGuiKey_Y,
+            false))
+        {
+            m_extrudeAxis =
+                ExtrudeAxis::Y;
+
+            m_extrudeStartMouse =
+                ImGui::GetMousePos();
+
+            BOX_LOG_INFO(
+                "Extrude axis Y"
+            );
+        }
+        else if (ImGui::IsKeyPressed(
+            ImGuiKey_Z,
+            false))
+        {
+            m_extrudeAxis =
+                ExtrudeAxis::Z;
+
+            m_extrudeStartMouse =
+                ImGui::GetMousePos();
+
+            BOX_LOG_INFO(
+                "Extrude axis Z"
+            );
+        }
+
+
+        // ---------------------------------------------
+        // Update extrusion after an axis is selected.
+        // ---------------------------------------------
+        if (m_extrudeAxis !=
+            ExtrudeAxis::None)
+        {
+            const ImVec2 currentMouse =
+                ImGui::GetMousePos();
+
+            const float deltaX =
+                currentMouse.x -
+                m_extrudeStartMouse.x;
+
+            const float deltaY =
+                currentMouse.y -
+                m_extrudeStartMouse.y;
+
+            /*
+             * X and Z use horizontal mouse movement.
+             * Y uses vertical mouse movement.
+             */
+            switch (m_extrudeAxis)
+            {
+            case ExtrudeAxis::X:
+                m_extrudeAmount =
+                    deltaX *
+                    m_moveSensitivity;
+                break;
+
+            case ExtrudeAxis::Y:
+                m_extrudeAmount =
+                    -deltaY *
+                    m_moveSensitivity;
+                break;
+
+            case ExtrudeAxis::Z:
+                m_extrudeAmount =
+                    deltaX *
+                    m_moveSensitivity;
+                break;
+
+            case ExtrudeAxis::None:
+            default:
+                break;
+            }
+
+
+            // -----------------------------------------
+            // Restore the mesh to the exact state it
+            // had before THIS extrusion.
+            // -----------------------------------------
+            MeshEditing& editableMesh =
+                entity->GetEditableMesh();
+
+            editableMesh =
+                m_meshBeforeExtrude;
+
+
+            // -----------------------------------------
+            // Work out extrusion direction.
+            // -----------------------------------------
+            glm::vec3 direction(0.0f);
+
+            switch (m_extrudeAxis)
+            {
+            case ExtrudeAxis::X:
+                direction =
+                    glm::vec3(
+                        1.0f,
+                        0.0f,
+                        0.0f
+                    );
+                break;
+
+            case ExtrudeAxis::Y:
+                direction =
+                    glm::vec3(
+                        0.0f,
+                        1.0f,
+                        0.0f
+                    );
+                break;
+
+            case ExtrudeAxis::Z:
+                direction =
+                    glm::vec3(
+                        0.0f,
+                        0.0f,
+                        1.0f
+                    );
+                break;
+
+            case ExtrudeAxis::None:
+            default:
+                break;
+            }
+
+
+            // -----------------------------------------
+            // Apply THIS extrusion to the restored
+            // pre-extrusion mesh.
+            // -----------------------------------------
+            FaceExtrude extrude;
+
+            if (extrude.Use(
+                editableMesh,
+                m_extrudeFace,
+                direction,
+                m_extrudeAmount))
+            {
+                MeshData renderMesh;
+
+                if (editableMesh.BuildRenderMesh(
+                    renderMesh))
+                {
+                    entity->CreateFromMeshData(
+                        renderMesh
+                    );
+                }
+            }
+        }
+
+
+        // ---------------------------------------------
+        // Confirm extrusion
+        // ---------------------------------------------
+
+        if (ImGui::IsMouseClicked(
+            ImGuiMouseButton_Left))
+        {
+            ConfirmExtrude(*entity);
+
+            return;
+        }
+
+        // ---------------------------------------------
+        // Cancel extrusion
+        // ---------------------------------------------
+        
+        if (ImGui::IsKeyPressed(
+            ImGuiKey_Escape,
+            false) ||
+            ImGui::IsMouseClicked(
+                ImGuiMouseButton_Right))
+        {
+            CancelExtrude(
+                *entity
+            );
+
+            return;
+        }
+
+        return;
+    }
+
+
+    // =================================================
+    // NORMAL FACE MOVE
+    // =================================================
 
     if (!m_isMoving &&
         m_selectedFace != InvalidFace)
@@ -76,9 +286,16 @@ void FaceEditController::HandleInput(BoxEngine& engine, bool viewportHovered, bo
         }
     }
 
+
+    // =================================================
+    // UPDATE ACTIVE NORMAL FACE MOVE
+    // =================================================
+
     if (m_isMoving)
     {
-        EditUpdateMove(*entity);
+        EditUpdateMove(
+            *entity
+        );
 
         if (ImGui::IsMouseClicked(
             ImGuiMouseButton_Left))
@@ -92,11 +309,18 @@ void FaceEditController::HandleInput(BoxEngine& engine, bool viewportHovered, bo
             ImGui::IsMouseClicked(
                 ImGuiMouseButton_Right))
         {
-            EditCancelMove(*entity);
+            EditCancelMove(
+                *entity
+            );
         }
 
         return;
     }
+
+
+    // =================================================
+    // NORMAL FACE PICKING
+    // =================================================
 
     if (ImGui::IsMouseClicked(
         ImGuiMouseButton_Left))
@@ -107,8 +331,8 @@ void FaceEditController::HandleInput(BoxEngine& engine, bool viewportHovered, bo
             viewportSize
         );
     }
-
 }
+
 
 void FaceEditController::DrawFace(BoxEngine& engine, const ImVec2& viewportPosition,
     const ImVec2& viewportSize, bool faceModeActive)
@@ -285,6 +509,236 @@ void FaceEditController::DrawFace(BoxEngine& engine, const ImVec2& viewportPosit
     }
   
 }
+
+void FaceEditController::BeginExtrude(Entity& entity)
+{
+    if (m_selectedFace == InvalidFace)
+    {
+        return;
+    }
+
+    MeshEditing& mesh = entity.GetEditableMesh();
+
+    if (m_selectedFace >= mesh.GetFaceCount())
+    {
+        return;
+    }
+
+    // Save the mesh BEFORE this extrusion.
+    m_meshBeforeExtrude = mesh;
+
+    m_extrudeFace = m_selectedFace;
+
+    m_extrudeAxis = ExtrudeAxis::None;
+
+    m_extrudeAmount = 0.0f;
+
+    m_extrudeStartMouse = ImGui::GetMousePos();
+
+    m_isExtruding = true;
+
+    BOX_LOG_INFO("Started extrusion on face " << m_extrudeFace);
+}
+
+// ##########################################################################################################
+// ############################################ Object Explorer #############################################
+// ##########################################################################################################
+
+void FaceEditController::SetExtrudeAmount(Entity& entity, float amount)
+{
+    if (!m_isExtruding)
+    {
+        return;
+    }
+
+    m_extrudeAmount =
+        amount;
+
+    UpdateExtrudeMesh(
+        entity
+    );
+}
+
+void FaceEditController::SetExtrudeAxis(Entity& entity, ExtrudeAxis axis)
+{
+    if (!m_isExtruding)
+    {
+        return;
+    }
+
+    m_extrudeAxis =
+        axis;
+
+    UpdateExtrudeMesh(
+        entity
+    );
+}
+
+void FaceEditController::ConfirmExtrude(Entity& entity)
+{
+    if (!m_isExtruding)
+    {
+        return;
+    }
+
+    ModifierAxis storedAxis =
+        ModifierAxis::Y;
+
+    switch (m_extrudeAxis)
+    {
+    case ExtrudeAxis::X:
+        storedAxis =
+            ModifierAxis::X;
+        break;
+
+    case ExtrudeAxis::Y:
+        storedAxis =
+            ModifierAxis::Y;
+        break;
+
+    case ExtrudeAxis::Z:
+        storedAxis =
+            ModifierAxis::Z;
+        break;
+
+    case ExtrudeAxis::None:
+    default:
+        break;
+    }
+
+    entity.SetLastExtrude(
+        m_extrudeFace,
+        storedAxis,
+        m_extrudeAmount,
+        m_meshBeforeExtrude
+    );
+
+    m_isExtruding =
+        false;
+
+    m_extrudeAxis =
+        ExtrudeAxis::None;
+
+    BOX_LOG_INFO(
+        "Extrude confirmed. Amount="
+        << m_extrudeAmount
+    );
+
+}
+
+void FaceEditController::CancelExtrude(Entity& entity)
+{
+    if (!m_isExtruding)
+    {
+        return;
+    }
+
+    entity.GetEditableMesh() =
+        m_meshBeforeExtrude;
+
+    MeshData renderMesh;
+
+    if (entity
+        .GetEditableMesh()
+        .BuildRenderMesh(renderMesh))
+    {
+        entity.CreateFromMeshData(
+            renderMesh
+        );
+    }
+
+    m_isExtruding = false;
+
+    m_extrudeAxis =
+        ExtrudeAxis::None;
+
+    m_extrudeAmount =
+        0.0f;
+
+    BOX_LOG_INFO(
+        "Extrude cancelled"
+    );
+}
+
+
+void FaceEditController::UpdateExtrudeMesh(Entity& entity)
+{
+    if (!m_isExtruding ||
+        m_extrudeAxis == ExtrudeAxis::None)
+    {
+        return;
+    }
+
+    // Always restore the mesh to the state
+    // before this extrusion.
+    MeshEditing& editableMesh =
+        entity.GetEditableMesh();
+
+    editableMesh =
+        m_meshBeforeExtrude;
+
+
+    glm::vec3 direction(0.0f);
+
+    switch (m_extrudeAxis)
+    {
+    case ExtrudeAxis::X:
+        direction =
+            glm::vec3(
+                1.0f,
+                0.0f,
+                0.0f
+            );
+        break;
+
+    case ExtrudeAxis::Y:
+        direction =
+            glm::vec3(
+                0.0f,
+                1.0f,
+                0.0f
+            );
+        break;
+
+    case ExtrudeAxis::Z:
+        direction =
+            glm::vec3(
+                0.0f,
+                0.0f,
+                1.0f
+            );
+        break;
+
+    case ExtrudeAxis::None:
+    default:
+        return;
+    }
+
+    FaceExtrude extrude;
+
+    if (!extrude.Use(
+        editableMesh,
+        m_extrudeFace,
+        direction,
+        m_extrudeAmount))
+    {
+        return;
+    }
+
+    MeshData renderMesh;
+
+    if (!editableMesh.BuildRenderMesh(
+        renderMesh))
+    {
+        return;
+    }
+
+    entity.CreateFromMeshData(
+        renderMesh
+    );
+}
+// #################################### End Object Explorer ###########################################
+
 
 void FaceEditController::ClearSelection(BoxEngine& engine)
 {

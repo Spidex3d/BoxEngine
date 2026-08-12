@@ -9,7 +9,7 @@
 #include <cstring>
 #include <string>
 #include <miniBoxLog.h>
-//#include "MatirialBrowser.h"
+#include <tools/FaceEditController.h>
 
 ObjectExplorerPanel::ObjectExplorerPanel() = default;
 
@@ -37,8 +37,7 @@ bool ObjectExplorerPanel::Initialize()
 }
 
 
-void ObjectExplorerPanel::DrawObjectExplorer(
-    BoxEngine& engine)
+void ObjectExplorerPanel::DrawObjectExplorer(BoxEngine& engine, FaceEditController& faceEditController)
 {
 
     Entity* selected =
@@ -110,7 +109,7 @@ void ObjectExplorerPanel::DrawObjectExplorer(
         // ####################################################
         if (ImGui::BeginTabItem("Modifiers"))
         {
-            DrawModifiersTab(engine, *selected);
+            DrawModifiersTab(engine, *selected, faceEditController);
 
             ImGui::EndTabItem();
         }
@@ -188,47 +187,260 @@ void ObjectExplorerPanel::DrawTexturesTab(BoxEngine& engine,Entity& entity)
 
 }
 
-void ObjectExplorerPanel::DrawModifiersTab(BoxEngine& engine, Entity& entity)
+void ObjectExplorerPanel::DrawModifiersTab(BoxEngine& engine, Entity& entity, FaceEditController& faceEditController)
 {
-	// the name of the entity is displayed at the top of the modifiers tab.
+
     ImGui::Text("Modifiers for: %s", entity.GetName().c_str());
-
-    Entity* selectedEntity = engine.GetSelectedEntity();
-
-	// Example of handling a specific modifier type (Extrude) for the selected entity.
-    // Handle Extrude modifier logic here.
-    if (selectedEntity)
-    {
-		// Example: Check if the selected entity has a modifier applied. then display the modifier controls.
-        // This is a placeholder for actual modifier logic.
-        bool hasExtrudeModifier = true; // Replace with actual check.
-        if (hasExtrudeModifier)
-        {
-            ImGui::Text("Extrude modifier is applied.");
-            // Add controls for the Extrude modifier here.
-            float fex = 0.0f;
-
-                if (ImGui::InputFloat("Extrude", &fex)) {
-					// this is where you would update the extrude value to the selected entity's mesh data.  
-                    
-                }
-
-        }
-	}
 
     ImGui::Separator();
 
-    ImGui::TextDisabled(
-        "No modifiers applied."
-    );
 
-    ImGui::Spacing();
+    // =================================================
+    // Active modelling operation
+    // =================================================
 
-    if (ImGui::Button(
-        "Update Modifier", ImVec2(120.0f, 0.0f)))
+    if (faceEditController.IsExtruding())
     {
-        
+        ImGui::SeparatorText("Active Operation");
+
+        ImGui::Text("Face Extrude");
+
+        ImGui::Spacing();
+
+
+        // ---------------------------------------------
+        // Axis
+        // ---------------------------------------------
+
+        int axis = 0;
+
+        switch (
+            faceEditController.GetExtrudeAxis())
+        {
+        case ExtrudeAxis::X:
+            axis = 1;
+            break;
+
+        case ExtrudeAxis::Y:
+            axis = 2;
+            break;
+
+        case ExtrudeAxis::Z:
+            axis = 3;
+            break;
+
+        case ExtrudeAxis::None:
+        default:
+            axis = 0;
+            break;
+        }
+
+        const char* axisItems[] =
+        {
+            "None",
+            "X",
+            "Y",
+            "Z"
+        };
+
+        if (ImGui::Combo(
+            "Axis",
+            &axis,
+            axisItems,
+            IM_ARRAYSIZE(axisItems)))
+        {
+            ExtrudeAxis newAxis =
+                ExtrudeAxis::None;
+
+            switch (axis)
+            {
+            case 1:
+                newAxis =
+                    ExtrudeAxis::X;
+                break;
+
+            case 2:
+                newAxis =
+                    ExtrudeAxis::Y;
+                break;
+
+            case 3:
+                newAxis =
+                    ExtrudeAxis::Z;
+                break;
+
+            case 0:
+            default:
+                newAxis =
+                    ExtrudeAxis::None;
+                break;
+            }
+
+            faceEditController
+                .SetExtrudeAxis(
+                    entity,
+                    newAxis
+                );
+        }
+
+
+        // ---------------------------------------------
+        // Amount
+        // ---------------------------------------------
+
+        float amount =
+            faceEditController
+            .GetExtrudeAmount();
+
+        if (ImGui::DragFloat(
+            "Amount",
+            &amount,
+            0.01f))
+        {
+            faceEditController
+                .SetExtrudeAmount(
+                    entity,
+                    amount
+                );
+        }
+
+
+        ImGui::Spacing();
+
+        // ---------------------------------------------
+        // Confirm / Cancel
+        // ---------------------------------------------
+
+        if (ImGui::Button(
+            "Confirm",
+            ImVec2(90.0f, 0.0f)))
+        {
+            faceEditController.ConfirmExtrude(entity);
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button(
+            "Cancel",
+            ImVec2(90.0f, 0.0f)))
+        {
+            faceEditController.CancelExtrude(entity);
+        }
+
+        return;
     }
+
+    // =================================================
+    // Nothing currently active
+    // =================================================
+
+    
+
+    if (entity.HasLastExtrude())
+    {
+        ImGui::SeparatorText("Last Operation");
+
+        ImGui::Text("Face Extrude");
+
+        ExtrudeModifierData lastExtrude =
+            entity.GetLastExtrude();
+
+
+        // ---------------------------------
+        // Axis
+        // ---------------------------------
+
+        int axis = 0;
+
+        switch (lastExtrude.axis)
+        {
+        case ModifierAxis::X:
+            axis = 0;
+            break;
+
+        case ModifierAxis::Y:
+            axis = 1;
+            break;
+
+        case ModifierAxis::Z:
+            axis = 2;
+            break;
+        }
+
+        const char* axisItems[] =
+        {
+            "X",
+            "Y",
+            "Z"
+        };
+
+        bool changed =
+            false;
+
+        if (ImGui::Combo(
+            "Extrude Axis",
+            &axis,
+            axisItems,
+            IM_ARRAYSIZE(axisItems)))
+        {
+            switch (axis)
+            {
+            case 0:
+                lastExtrude.axis =
+                    ModifierAxis::X;
+                break;
+
+            case 1:
+                lastExtrude.axis =
+                    ModifierAxis::Y;
+                break;
+
+            case 2:
+                lastExtrude.axis =
+                    ModifierAxis::Z;
+                break;
+            }
+
+            changed =
+                true;
+        }
+
+
+        // ---------------------------------
+        // Amount
+        // ---------------------------------
+
+        if (ImGui::DragFloat(
+            "Extrude Amount",
+            &lastExtrude.amount,
+            0.01f))
+        {
+            changed =
+                true;
+        }
+
+
+        // ---------------------------------
+        // Update geometry
+        // ---------------------------------
+
+        if (changed)
+        {
+            entity.UpdateLastExtrude(
+                lastExtrude.axis,
+                lastExtrude.amount
+            );
+        }
+
+        ImGui::TextDisabled("No active modelling operation.");
+
+        ImGui::Spacing();
+
+        ImGui::TextDisabled("Select a face and choose " "Modifiers > Extrude.");
+
+        return;
+    }
+
 }
 
 void ObjectExplorerPanel::Shutdown()

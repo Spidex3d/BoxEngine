@@ -7,12 +7,14 @@
 #include <rendering\Material.h>
 #include <mesh/MeshData.h>
 #include <mesh/MeshEditing.h>
+#include <mesh/modifiers/ModifierData.h>
 #include <vector>
 #include <cstddef>
 
 //This is where we are putting together all the components of an entity, such as mesh, material, transform, etc.
 class Shader;
 class Camera;
+class FaceExtrude;
 
 class Entity
 {
@@ -80,17 +82,71 @@ public:
     {
         return m_editableMesh;
     }
+    // ###
+    MeshEditing& GetBaseEditableMesh()
+    {
+        return m_baseEditableMesh;
+    }
 
+    const MeshEditing& GetBaseEditableMesh() const
+    {
+        return m_baseEditableMesh;
+    }
+    // ###
     const MeshEditing& GetEditableMesh() const
     {
         return m_editableMesh;
     }
 
     bool CreateBuffersFromMeshData();
+    // ##################################### last Extrude  ##########################################
+    void SetLastExtrude(std::size_t faceIndex, ModifierAxis axis, float amount,
+        const MeshEditing& meshBeforeExtrude);
+
+    bool HasLastExtrude() const
+    {
+        return m_hasLastExtrude;
+    }
+
+    const ExtrudeModifierData& GetLastExtrude() const
+    {
+        return m_lastExtrude;
+    }
+
+    bool UpdateLastExtrude(ModifierAxis axis, float amount);
+
+    // ##################################### End last Extrude  ##########################################
+
 
     // ##################################### Normals ##########################################
     void RecalculateNormals();
 
+    // ##################################### Modifiers ##########################################
+    std::vector<ModifierData>&
+        GetModifiers()
+    {
+        return m_modifiers;
+    }
+
+    const std::vector<ModifierData>&
+        GetModifiers() const
+    {
+        return m_modifiers;
+    }
+
+    int GetSelectedModifierIndex() const
+    {
+        return m_selectedModifierIndex;
+    }
+
+    void SetSelectedModifierIndex(
+        int index)
+    {
+        m_selectedModifierIndex =
+            index;
+    }
+
+    bool RebuildModifiers();
 
 	// ######################################################################################
     // ###################################### Rendering #####################################
@@ -160,7 +216,6 @@ public:
         return m_visible;
     }
 	// ###################################### Mesh Data ###################################
-	//Material GetMeshData() const;
     const MeshData& GetMeshData() const
     {
         return m_meshData;
@@ -182,6 +237,14 @@ public:
         return m_material;
     }
 private:
+    // LastExtrude
+        bool m_hasLastExtrude = false;
+
+        ExtrudeModifierData m_lastExtrude;
+
+        MeshEditing m_lastExtrudeBaseMesh;
+
+private:
 	// ############################# Mesh editing data for the entity #############################
 	std::vector<std::size_t>m_selectedVertices; // Store the indices of selected vertices for editing
 	std::vector<std::size_t>m_selectedEdges;    // Store the indices of selected edges for editing
@@ -189,7 +252,8 @@ private:
 	// ############################# Mesh data for the entity ###############################
     MeshData m_meshData;
 	// ############################# Mesh Editing ###############################
-    MeshEditing m_editableMesh;
+    MeshEditing m_baseEditableMesh; // this is the untouched starting topology.
+    MeshEditing m_editableMesh;     // this is what you currently display/edit.
 	// ###################################### Rendering #####################################
     void RenderInternal(const Shader& shader, const glm::mat4& view,
         const glm::mat4& projection, const glm::vec3& cameraPosition
@@ -197,6 +261,11 @@ private:
 private:
     Material m_material; // Each entity has its own material, which can be modified independently.
 
+	// ###################################### Modifiers #####################################
+    std::vector<ModifierData>m_modifiers;
+
+    int m_selectedModifierIndex = -1;
+	// ###################################### Modifiers end #####################################
 
 
     glm::mat4 CalculateModelMatrix() const;

@@ -6,13 +6,10 @@
 
 #include <glm/glm.hpp>
 
-bool FaceExtrude::Use(Entity& entity, std::size_t faceIndex, float distance)
+//bool FaceExtrude::Use(Entity& entity, std::size_t faceIndex, float distance)
+bool FaceExtrude::Use(MeshEditing& mesh, std::size_t faceIndex, const glm::vec3& direction, float distance)
 {
     // Implementation of face extrusion goes here
-   
-    MeshEditing& mesh =
-        entity.GetEditableMesh();
-
     if (faceIndex >=
         mesh.GetFaceCount())
     {
@@ -35,48 +32,28 @@ bool FaceExtrude::Use(Entity& entity, std::size_t faceIndex, float distance)
         return false;
     }
 
-    const EditVertex& vertexA =
-        mesh.GetVertex(
-            originalFace.vertices[0]
-        );
+    // ------------------------------------------
+    // Validate direction
+    // ------------------------------------------
 
-    const EditVertex& vertexB =
-        mesh.GetVertex(
-            originalFace.vertices[1]
-        );
+    const float directionLength =
+        glm::length(direction);
 
-    const EditVertex& vertexC =
-        mesh.GetVertex(
-            originalFace.vertices[2]
-        );
-
-    const glm::vec3 edgeAB =
-        vertexB.position -
-        vertexA.position;
-
-    const glm::vec3 edgeAC =
-        vertexC.position -
-        vertexA.position;
-
-    glm::vec3 normal =
-        glm::cross(
-            edgeAB,
-            edgeAC
-        );
-
-    const float normalLength =
-        glm::length(normal);
-
-    if (normalLength <= 0.000001f)
+    if (directionLength <= 0.000001f)
     {
         BOX_LOG_ERROR(
-            "FaceExtrude: Degenerate face"
+            "FaceExtrude: Invalid extrusion direction"
         );
 
         return false;
     }
 
-    normal /= normalLength;
+    const glm::vec3 extrusionDirection =
+        glm::normalize(direction);
+
+    // ------------------------------------------
+    // Create duplicated outer face vertices
+    // ------------------------------------------
 
     std::vector<std::size_t>
         newFaceVertices;
@@ -85,10 +62,6 @@ bool FaceExtrude::Use(Entity& entity, std::size_t faceIndex, float distance)
         originalFace.vertices.size()
     );
 
-    /*
-     * Duplicate each logical vertex and move
-     * it along the face normal.
-     */
     for (const std::size_t oldIndex :
     originalFace.vertices)
     {
@@ -99,7 +72,8 @@ bool FaceExtrude::Use(Entity& entity, std::size_t faceIndex, float distance)
 
         const glm::vec3 newPosition =
             oldPosition +
-            normal * distance;
+            extrusionDirection *
+            distance;
 
         const std::size_t newIndex =
             mesh.AddVertex(
@@ -111,19 +85,25 @@ bool FaceExtrude::Use(Entity& entity, std::size_t faceIndex, float distance)
         );
     }
 
-    /*
-     * Replace the original face with the new
-     * outer face.
-     */
-    mesh.SetFace(
-        faceIndex,
-        newFaceVertices
-    );
+    // ------------------------------------------
+    // Replace original face with new outer face
+    // ------------------------------------------
 
-    /*
-     * Create one side face for each original
-     * face edge.
-     */
+    if (!mesh.SetFace(
+        faceIndex,
+        newFaceVertices))
+    {
+        BOX_LOG_ERROR(
+            "FaceExtrude: Failed to replace face"
+        );
+
+        return false;
+    }
+
+    // ------------------------------------------
+    // Create side faces
+    // ------------------------------------------
+
     const std::size_t vertexCount =
         originalFace.vertices.size();
 
@@ -157,29 +137,11 @@ bool FaceExtrude::Use(Entity& entity, std::size_t faceIndex, float distance)
         );
     }
 
+    // ------------------------------------------
+    // Rebuild modelling edges
+    // ------------------------------------------
+
     mesh.RebuildEdges();
-
-    MeshData renderMesh;
-
-    if (!mesh.BuildRenderMesh(
-        renderMesh))
-    {
-        BOX_LOG_ERROR(
-            "FaceExtrude: Failed to rebuild render mesh"
-        );
-
-        return false;
-    }
-
-    if (!entity.CreateFromMeshData(
-        renderMesh))
-    {
-        BOX_LOG_ERROR(
-            "FaceExtrude: Failed to rebuild entity GPU mesh"
-        );
-
-        return false;
-    }
 
     BOX_LOG_INFO(
         "Face extruded. "

@@ -10,6 +10,8 @@
 #include <cmath>
 #include <algorithm>
 
+#include <mesh\modifiers\FaceExtrude.h>
+
 Entity::Entity(
     int id,
     const std::string& name)
@@ -109,10 +111,6 @@ bool Entity::CreateFromMeshData(const MeshData& meshData)
         return false;
     }
 	
-
-
-
-
     m_meshData = meshData;
 
     std::vector<float> interleavedVertices;
@@ -290,8 +288,9 @@ bool Entity::CreateCube()
         return false;
     }
 
-    if (!m_editableMesh.BuildRenderMesh(
-        m_meshData))
+    m_baseEditableMesh = m_editableMesh;
+
+    if (!m_editableMesh.BuildRenderMesh(m_meshData))
     {
         return false;
     }
@@ -301,11 +300,9 @@ bool Entity::CreateCube()
         return false;
     }
 
-    m_aabbMin =
-        glm::vec3(-0.5f);
+    m_aabbMin = glm::vec3(-0.5f);
 
-    m_aabbMax =
-        glm::vec3(0.5f);
+    m_aabbMax = glm::vec3(0.5f);
 
     return true;
 
@@ -319,6 +316,8 @@ bool Entity::CreatePlane()
     {
         return false;
     }
+
+    m_baseEditableMesh = m_editableMesh;
 
     if (!m_editableMesh.BuildRenderMesh(
         m_meshData))
@@ -348,6 +347,8 @@ bool Entity::CreatePyramid()
     {
         return false;
     }
+
+    m_baseEditableMesh = m_editableMesh;
 
     if (!m_editableMesh.BuildRenderMesh(
         m_meshData))
@@ -801,6 +802,110 @@ bool Entity::CreateBuffersFromMeshData()
     return true;
 }
 
+// #####################################################################################################################
+// ################################################### Last Extrude ####################################################
+// #####################################################################################################################
+void Entity::SetLastExtrude(
+    std::size_t faceIndex,
+    ModifierAxis axis,
+    float amount,
+    const MeshEditing& meshBeforeExtrude)
+{
+    m_lastExtrude.faceIndex =
+        faceIndex;
+
+    m_lastExtrude.axis =
+        axis;
+
+    m_lastExtrude.amount =
+        amount;
+
+    m_lastExtrudeBaseMesh =
+        meshBeforeExtrude;
+
+    m_hasLastExtrude =
+        true;
+}
+
+bool Entity::UpdateLastExtrude(
+    ModifierAxis axis,
+    float amount)
+{
+    if (!m_hasLastExtrude)
+    {
+        return false;
+    }
+
+    // Restore the mesh from immediately
+    // before the last extrusion.
+    m_editableMesh =
+        m_lastExtrudeBaseMesh;
+
+    glm::vec3 direction(0.0f);
+
+    switch (axis)
+    {
+    case ModifierAxis::X:
+        direction =
+            glm::vec3(
+                1.0f,
+                0.0f,
+                0.0f
+            );
+        break;
+
+    case ModifierAxis::Y:
+        direction =
+            glm::vec3(
+                0.0f,
+                1.0f,
+                0.0f
+            );
+        break;
+
+    case ModifierAxis::Z:
+        direction =
+            glm::vec3(
+                0.0f,
+                0.0f,
+                1.0f
+            );
+        break;
+    }
+
+    FaceExtrude extrude;
+
+    if (!extrude.Use(
+        m_editableMesh,
+        m_lastExtrude.faceIndex,
+        direction,
+        amount))
+    {
+        return false;
+    }
+
+    MeshData renderMesh;
+
+    if (!m_editableMesh.BuildRenderMesh(
+        renderMesh))
+    {
+        return false;
+    }
+
+    if (!CreateFromMeshData(
+        renderMesh))
+    {
+        return false;
+    }
+
+    m_lastExtrude.axis =
+        axis;
+
+    m_lastExtrude.amount =
+        amount;
+
+    return true;
+}
 
 
 
@@ -919,6 +1024,79 @@ void Entity::RecalculateNormals()
         c.normal = normal;
     }
 }
+// ########################################## Rebuild Modifiers ##################################################
+bool Entity::RebuildModifiers()
+{
+    // Always restart from untouched topology.
+    m_editableMesh =
+        m_baseEditableMesh;
+
+    FaceExtrude extrude;
+
+    for (const ModifierData& modifier :
+        m_modifiers)
+    {
+        if (!modifier.enabled)
+        {
+            continue;
+        }
+
+        switch (modifier.type)
+        {
+        case ModifierType::Extrude:
+        {
+            glm::vec3 direction(0.0f);
+
+            switch (
+                modifier.extrude.axis)
+            {
+            case ModifierAxis::X:
+                direction =
+                    glm::vec3(1, 0, 0);
+                break;
+
+            case ModifierAxis::Y:
+                direction =
+                    glm::vec3(0, 1, 0);
+                break;
+
+            case ModifierAxis::Z:
+                direction =
+                    glm::vec3(0, 0, 1);
+                break;
+            }
+
+            if (!extrude.Use(
+                m_editableMesh,
+                modifier.extrude.faceIndex,
+                direction,
+                modifier.extrude.amount))
+            {
+                return false;
+            }
+
+            break;
+        }
+
+        default:
+            break;
+        }
+    }
+
+    MeshData renderMesh;
+
+    if (!m_editableMesh.BuildRenderMesh(
+        renderMesh))
+    {
+        return false;
+    }
+
+    return CreateFromMeshData(
+        renderMesh
+    );
+}
+
+
 
 // ############################################################################################
 // ############################################### Rendering ##################################

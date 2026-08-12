@@ -4,8 +4,19 @@
 #include <vector>
 #include <cstddef>
 
+#include <mesh/MeshEditing.h>
+
 class BoxEngine;
 class Entity;
+
+enum class ExtrudeAxis
+{
+    None,
+    X,
+    Y,
+    Z
+};
+
 
 enum class FaceMoveAxis
 {
@@ -26,6 +37,51 @@ public:
         const ImVec2& viewportSize, bool faceModeActive);
 
     void ClearSelection(BoxEngine& engine);
+
+	// ############################## for extruding the selected face ##############################
+    void BeginExtrude(Entity& entity);
+
+
+    bool m_isExtruding = false;
+
+    std::size_t m_extrudeFace =
+        InvalidFace;
+
+    ExtrudeAxis m_extrudeAxis =
+        ExtrudeAxis::None;
+
+    float m_extrudeAmount =
+        0.0f;
+
+    ImVec2 m_extrudeStartMouse =
+        ImVec2(0.0f, 0.0f);
+
+    MeshEditing m_meshBeforeExtrude;
+
+	// ######################################## useful for our Object Explorer ############################
+    
+    bool IsExtruding() const
+    {
+        return m_isExtruding;
+    }
+
+    float GetExtrudeAmount() const
+    {
+        return m_extrudeAmount;
+    }
+
+    ExtrudeAxis GetExtrudeAxis() const
+    {
+        return m_extrudeAxis;
+    }
+	// ######## Object Explorer ###########################
+    void SetExtrudeAmount(Entity& entity, float amount);
+
+    void SetExtrudeAxis(Entity& entity, ExtrudeAxis axis);
+
+    void ConfirmExtrude(Entity& entity);
+
+    void CancelExtrude(Entity& entity);
 
 
     // ############################## for modifying the selected face ##############################
@@ -95,6 +151,9 @@ private:
     void EditConfirmMove();
 
     void EditCancelMove(Entity& entity);
+
+    // ######## Object Explorer ###########################
+    void UpdateExtrudeMesh(Entity& entity);
 
 private:
     struct FaceStartPosition

@@ -83,6 +83,11 @@ public:
     }	
 	
 
+    FaceEditController& GetFaceEditController()
+    {
+        return m_faceEditController;
+    }
+
 	void Shutdown();
 
 private:

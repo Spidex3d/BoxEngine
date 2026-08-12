@@ -4,7 +4,7 @@
 class BoxEngine;
 class Entity;
 class MaterialEditor;
-
+class FaceEditController;
 
 
 class ObjectExplorerPanel
@@ -15,7 +15,7 @@ public:
 
     bool Initialize();
 
-	void DrawObjectExplorer(BoxEngine& engine); // dedicated panel classes once they grow.
+    void DrawObjectExplorer(BoxEngine& engine, FaceEditController& faceEditController);
 
 	void Shutdown();
 
@@ -31,9 +31,7 @@ private:
     );
     
 
-    void DrawModifiersTab(BoxEngine& engine,
-        Entity& entity
-    );
+    void DrawModifiersTab(BoxEngine& engine, Entity& entity, FaceEditController& faceEditController);
 
     std::unique_ptr<MaterialEditor> m_materialEditor;
 
