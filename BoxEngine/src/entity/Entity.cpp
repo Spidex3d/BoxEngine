@@ -11,6 +11,7 @@
 #include <algorithm>
 
 #include <mesh\modifiers\FaceExtrude.h>
+#include <mesh\modifiers\FaceInset.h>
 
 Entity::Entity(
     int id,
@@ -805,8 +806,7 @@ bool Entity::CreateBuffersFromMeshData()
 // #####################################################################################################################
 // ################################################### Last Extrude ####################################################
 // #####################################################################################################################
-void Entity::SetLastExtrude(
-    std::size_t faceIndex,
+void Entity::SetLastExtrude(std::size_t faceIndex,
     ModifierAxis axis,
     float amount,
     const MeshEditing& meshBeforeExtrude)
@@ -817,14 +817,15 @@ void Entity::SetLastExtrude(
     m_lastExtrude.axis =
         axis;
 
-    m_lastExtrude.amount =
+    m_lastExtrude.extrudeAmount =
         amount;
 
     m_lastExtrudeBaseMesh =
         meshBeforeExtrude;
 
-    m_hasLastExtrude =
-        true;
+    m_hasLastExtrude = true;
+
+	m_lastOperationType = LastOperationType::Extrude; // so we know the last operation was an extrusion
 }
 
 bool Entity::UpdateLastExtrude(
@@ -901,7 +902,68 @@ bool Entity::UpdateLastExtrude(
     m_lastExtrude.axis =
         axis;
 
-    m_lastExtrude.amount =
+    m_lastExtrude.extrudeAmount =
+        amount;
+
+    return true;
+}
+// ###############################################################################################################
+// ############################################ Inset ##########################################################
+// ###############################################################################################################
+void Entity::SetLastInset(std::size_t faceIndex, float amount, const MeshEditing& meshBeforeInset)
+{
+    m_lastInset.faceIndex = faceIndex;
+
+    m_lastInset.insetAmount = amount;
+
+    m_lastInsetBaseMesh = meshBeforeInset;
+
+    m_hasLastInset = true;
+
+	m_lastOperationType = LastOperationType::Inset; // so we know the last operation was an inset
+}
+
+bool Entity::UpdateLastInset(float amount)
+{
+    if (!m_hasLastInset)
+    {
+        return false;
+    }
+
+    // Restore mesh immediately before
+    // the last inset operation.
+    m_editableMesh =
+        m_lastInsetBaseMesh;
+
+    FaceInset inset;
+
+    if (!inset.Use(
+        m_editableMesh,
+        m_lastInset.faceIndex,
+        amount))
+    {
+        BOX_LOG_ERROR(
+            "Failed to update last inset"
+        );
+
+        return false;
+    }
+
+    MeshData renderMesh;
+
+    if (!m_editableMesh.BuildRenderMesh(
+        renderMesh))
+    {
+        return false;
+    }
+
+    if (!CreateFromMeshData(
+        renderMesh))
+    {
+        return false;
+    }
+
+    m_lastInset.insetAmount =
         amount;
 
     return true;
@@ -909,7 +971,9 @@ bool Entity::UpdateLastExtrude(
 
 
 
-// ############################################ Normals ##########################################
+// ###############################################################################################################
+// ############################################ Normals ##########################################################
+// ###############################################################################################################
 
 void Entity::RecalculateNormals()
 {
@@ -1024,19 +1088,23 @@ void Entity::RecalculateNormals()
         c.normal = normal;
     }
 }
+
+// ###############################################################################################################
 // ########################################## Rebuild Modifiers ##################################################
+// ###############################################################################################################
 bool Entity::RebuildModifiers()
 {
     // Always restart from untouched topology.
-    m_editableMesh =
-        m_baseEditableMesh;
+    m_editableMesh = m_baseEditableMesh;
 
     FaceExtrude extrude;
 
-    for (const ModifierData& modifier :
-        m_modifiers)
+	// I would like to test which modifiers is enabled.
+    
+
+    for (const ModifierData& modifier : m_modifiers)
     {
-        if (!modifier.enabled)
+        if (!modifier.modEnabled)
         {
             continue;
         }
@@ -1070,7 +1138,7 @@ bool Entity::RebuildModifiers()
                 m_editableMesh,
                 modifier.extrude.faceIndex,
                 direction,
-                modifier.extrude.amount))
+                modifier.extrude.extrudeAmount))
             {
                 return false;
             }
@@ -1098,9 +1166,9 @@ bool Entity::RebuildModifiers()
 
 
 
-// ############################################################################################
-// ############################################### Rendering ##################################
-// ############################################################################################
+// ########################################################################################################
+// ############################################### Rendering ##############################################
+// ########################################################################################################
 
 void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const glm::mat4& projection, const glm::vec3& cameraPosition)
 {

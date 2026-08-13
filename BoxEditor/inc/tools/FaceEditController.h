@@ -17,7 +17,6 @@ enum class ExtrudeAxis
     Z
 };
 
-
 enum class FaceMoveAxis
 {
     None,
@@ -47,14 +46,11 @@ public:
     std::size_t m_extrudeFace =
         InvalidFace;
 
-    ExtrudeAxis m_extrudeAxis =
-        ExtrudeAxis::None;
+    ExtrudeAxis m_extrudeAxis = ExtrudeAxis::None;
 
-    float m_extrudeAmount =
-        0.0f;
+    float m_extrudeAmount = 0.0f;
 
-    ImVec2 m_extrudeStartMouse =
-        ImVec2(0.0f, 0.0f);
+    ImVec2 m_extrudeStartMouse = ImVec2(0.0f, 0.0f);
 
     MeshEditing m_meshBeforeExtrude;
 
@@ -83,6 +79,42 @@ public:
 
     void CancelExtrude(Entity& entity);
 
+	// ##########################################################################################################
+    // ################################################### Inset Face ###########################################
+	// ##########################################################################################################
+
+    // 4 original vertices, 4 new inset vertices, 1 new centre face, 4 surrounding faces
+    // 4 surrounding faces, RebuildEdges(), BuildRenderMesh()
+   
+    void BeginInset(Entity& entity);
+
+    bool m_isInsetting = false;
+
+    std::size_t m_insetFace = InvalidFace;
+
+    float m_insetAmount = 0.0f;
+
+    ImVec2 m_insetStartMouse = ImVec2(0.0f, 0.0f);
+
+    MeshEditing m_meshBeforeInset;
+
+    // ######## Object Explorer ###########################
+	void SetInsetAmount(Entity& entity, float amount); // Set the amount of inset for the selected face
+
+
+    void ConfirmInset(Entity& entity);
+
+    void CancelInset(Entity& entity);
+   
+
+    bool IsInsetting() const
+    {
+        return m_isInsetting;
+    }
+    float GetInsetAmount() const
+    {
+        return m_insetAmount;
+    }
 
     // ############################## for modifying the selected face ##############################
         std::size_t GetSelectedFace() const
@@ -152,8 +184,11 @@ private:
 
     void EditCancelMove(Entity& entity);
 
-    // ######## Object Explorer ###########################
+    // ######## Object Explorer Extrude ###########################
     void UpdateExtrudeMesh(Entity& entity);
+
+    // ######### Object Explorer Inset ############################
+	void UpdateInsetMesh(Entity& entity);
 
 private:
     struct FaceStartPosition

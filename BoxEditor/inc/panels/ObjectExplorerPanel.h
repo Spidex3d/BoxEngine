@@ -30,8 +30,14 @@ private:
         Entity& entity
     );
     
-
+	// modifiers tab for extrude and inset ect. controls, with the ability to confirm or cancel the operation.
     void DrawModifiersTab(BoxEngine& engine, Entity& entity, FaceEditController& faceEditController);
+
+    void ExtrudeControls(Entity& entity, FaceEditController& faceEditController);
+    void InsetControls(Entity& entity, FaceEditController& faceEditController);
+
+
+
 
     std::unique_ptr<MaterialEditor> m_materialEditor;
 

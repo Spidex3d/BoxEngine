@@ -9,6 +9,7 @@
 #include <cmath>
 #include <glm/gtc/matrix_transform.hpp>
 #include <mesh/modifiers/FaceExtrude.h>
+#include <mesh/modifiers/FaceInset.h>
 
 
 void FaceEditController::HandleInput(
@@ -240,6 +241,65 @@ void FaceEditController::HandleInput(
                 ImGuiMouseButton_Right))
         {
             CancelExtrude(
+                *entity
+            );
+
+            return;
+        }
+
+        return;
+    }
+
+    // =================================================
+    // ACTIVE INSET
+    // =================================================
+
+    if (m_isInsetting)
+    {
+        const ImVec2 currentMouse =
+            ImGui::GetMousePos();
+
+        const float deltaX =
+            currentMouse.x -
+            m_insetStartMouse.x;
+
+        m_insetAmount =
+            deltaX *
+            m_moveSensitivity;
+
+        // Keep the inset in a sensible range.
+        m_insetAmount =
+            glm::clamp(
+                m_insetAmount,
+                0.0f,
+                0.95f
+            );
+
+        UpdateInsetMesh(
+            *entity
+        );
+
+
+        // Confirm
+        if (ImGui::IsMouseClicked(
+            ImGuiMouseButton_Left))
+        {
+            ConfirmInset(
+                *entity
+            );
+
+            return;
+        }
+
+
+        // Cancel
+        if (ImGui::IsKeyPressed(
+            ImGuiKey_Escape,
+            false) ||
+            ImGui::IsMouseClicked(
+                ImGuiMouseButton_Right))
+        {
+            CancelInset(
                 *entity
             );
 
@@ -739,6 +799,129 @@ void FaceEditController::UpdateExtrudeMesh(Entity& entity)
 }
 // #################################### End Object Explorer ###########################################
 
+// ####################################################################################################
+// ######################################## Inset Face ################################################
+// ####################################################################################################
+void FaceEditController::BeginInset(Entity& entity)
+{
+    if (m_selectedFace == InvalidFace)
+    {
+        return;
+    }
+
+    MeshEditing& mesh = entity.GetEditableMesh();
+
+    if (m_selectedFace >= mesh.GetFaceCount())
+    {
+        return;
+    }
+
+    m_meshBeforeInset = mesh;
+
+    m_insetFace = m_selectedFace;
+
+    m_insetAmount = 0.0f;
+
+    m_insetStartMouse = ImGui::GetMousePos();
+
+    m_isInsetting = true;
+
+    BOX_LOG_INFO("Started inset on face " << m_insetFace);
+
+
+}
+
+void FaceEditController::SetInsetAmount(Entity& entity, float amount)
+{
+    if (!m_isInsetting)
+    {
+        return;
+    }
+
+    m_insetAmount = amount;
+
+    UpdateInsetMesh(entity);
+}
+
+
+
+void FaceEditController::ConfirmInset(Entity& entity)
+{
+    if (!m_isInsetting)
+    {
+        return;
+    }
+
+    entity.SetLastInset(m_insetFace, m_insetAmount, m_meshBeforeInset);
+
+    m_isInsetting = false;
+
+    BOX_LOG_INFO("Inset confirmed. Amount=" << m_insetAmount);
+
+}
+
+void FaceEditController::CancelInset(Entity& entity)
+{
+    if (!m_isInsetting)
+    {
+        return;
+    }
+
+    entity.GetEditableMesh() = m_meshBeforeInset;
+
+    MeshData renderMesh;
+
+    if (entity.GetEditableMesh().BuildRenderMesh(renderMesh))
+    {
+        entity.CreateFromMeshData(renderMesh);
+    }
+
+    m_isInsetting = false;
+
+    m_insetAmount = 0.0f;
+
+    BOX_LOG_INFO("Inset cancelled");
+}
+
+void FaceEditController::UpdateInsetMesh(Entity& entity)
+{
+    if (!m_isInsetting)
+    {
+        return;
+    }
+
+    MeshEditing& editableMesh = entity.GetEditableMesh();
+
+    // Always go back to the mesh before
+    // THIS inset operation.
+    editableMesh = m_meshBeforeInset;
+
+    FaceInset inset;
+
+    if (!inset.Use(editableMesh, m_insetFace, m_insetAmount))
+    {
+        BOX_LOG_ERROR("Inset: failed to apply inset");
+
+        return;
+    }
+
+    MeshData renderMesh;
+
+    if (!editableMesh.BuildRenderMesh(renderMesh))
+    {
+        BOX_LOG_ERROR("Inset: failed to build render mesh");
+
+        return;
+    }
+
+    entity.CreateFromMeshData(renderMesh);
+
+}
+
+
+// #####################################################################################################
+// ######################################## End Inset Face #############################################
+// #####################################################################################################
 
 void FaceEditController::ClearSelection(BoxEngine& engine)
 {

@@ -8,6 +8,7 @@
 #include <UI\EditorIcons.h>
 #include <camera/Camera.h>
 #include <tools\VertexEditController.h>
+#include <mesh\modifiers\FaceInset.h>
 
 
 
@@ -408,21 +409,45 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             }
                    
 
-            if (ImGui::MenuItem("Inset")) {
+            if (ImGui::MenuItem("Inset"))
+            {
+
+                Entity* selectedEntity = engine.GetSelectedEntity();
+
+                if (!selectedEntity)
+                {
+                    BOX_LOG_WARNING(
+                        "Inset: no entity selected"
+                    );
+                }
+                else if (
+                    !m_faceEditController.HasSelectedFace())
+                {
+                    BOX_LOG_WARNING(
+                        "Inset: no face selected"
+                    );
+                }
+                else
+                {
+                    m_faceEditController.BeginInset(*selectedEntity);
+                }
+
+            }
+
+            ImGui::Separator();
+
+            if (ImGui::MenuItem("Edge loop"))
+            {
+            }
+            if (ImGui::MenuItem("Bevel"))
+            {
+            }
+            if (ImGui::MenuItem("Solidify"))
+            {
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Edge loop")) {
-                //  if (m_actionCallback) m_actionCallback("AddLight:Area");
-            }
-            if (ImGui::MenuItem("Bevel")) {
-                //  if (m_actionCallback) m_actionCallback("AddLight:Area");
-            }
-            if (ImGui::MenuItem("Solidify")) {
-                //  if (m_actionCallback) m_actionCallback("AddLight:Area");
-            }
-            ImGui::Separator();
-            if (ImGui::MenuItem("Scatter")) {
-                //  if (m_actionCallback) m_actionCallback("AddLight:Area");
+            if (ImGui::MenuItem("Scatter"))
+            {
             }
             ImGui::EndMenu();
         }

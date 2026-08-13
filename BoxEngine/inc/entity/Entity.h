@@ -116,6 +116,31 @@ public:
     bool UpdateLastExtrude(ModifierAxis axis, float amount);
 
     // ##################################### End last Extrude  ##########################################
+    // ##################################################################################################
+    // ##################################### last Inset  ################################################
+
+    void SetLastInset(std::size_t faceIndex, float amount, const MeshEditing& meshBeforeInset);
+
+    bool UpdateLastInset(float amount);
+
+    bool HasLastInset() const
+    {
+        return m_hasLastInset;
+    }
+
+    const InsetModifierData& GetLastInset() const
+    {
+        return m_lastInset;
+    }
+
+
+    // ##################################### End last Inset  ##########################################
+
+	// so we know which operation was last performed, for the Object Explorer panel to display the correct information.
+    LastOperationType GetLastOperationType() const
+    {
+        return m_lastOperationType;
+    }
 
 
     // ##################################### Normals ##########################################
@@ -139,8 +164,7 @@ public:
         return m_selectedModifierIndex;
     }
 
-    void SetSelectedModifierIndex(
-        int index)
+    void SetSelectedModifierIndex(int index)
     {
         m_selectedModifierIndex =
             index;
@@ -236,13 +260,18 @@ public:
     {
         return m_material;
     }
-private:
+private: // modifiers
     // LastExtrude
         bool m_hasLastExtrude = false;
-
         ExtrudeModifierData m_lastExtrude;
-
         MeshEditing m_lastExtrudeBaseMesh;
+    // LastInset
+        bool m_hasLastInset = false;
+        InsetModifierData m_lastInset;
+		MeshEditing m_lastInsetBaseMesh;
+
+		// This variable keeps track of the last operation performed on the mesh, which can be either extrusion or inset ect:
+        LastOperationType m_lastOperationType = LastOperationType::None;
 
 private:
 	// ############################# Mesh editing data for the entity #############################

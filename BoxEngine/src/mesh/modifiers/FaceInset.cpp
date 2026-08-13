@@ -1,4 +1,4 @@
-#include "mesh/modifiers/FaceExtrude.h"
+#include "mesh/modifiers/FaceInset.h"
 #include <entity/Entity.h>
 
 #include <mesh/MeshEditing.h>
@@ -6,58 +6,61 @@
 
 #include <glm/glm.hpp>
 
-//bool FaceExtrude::Use(Entity& entity, std::size_t faceIndex, float distance)
-bool FaceExtrude::Use(MeshEditing& mesh, std::size_t faceIndex, const glm::vec3& direction, float distance)
+//bool FaceInset::Use(MeshEditing& mesh, std::size_t faceIndex, const glm::vec3& direction, float distance)
+bool FaceInset::Use(MeshEditing& mesh, std::size_t faceIndex, float amount)
 {
-    // Implementation of face extrusion goes here
     if (faceIndex >=
         mesh.GetFaceCount())
     {
         BOX_LOG_ERROR(
-            "FaceExtrude: Invalid face index"
+            "FaceInset: Invalid face index"
         );
 
         return false;
     }
 
-    const EditFace originalFace = mesh.GetFace(faceIndex);
+    amount = glm::clamp(amount, 0.0f, 0.95f);
+
+    const EditFace originalFace =
+        mesh.GetFace(faceIndex);
 
     if (originalFace.vertices.size() < 3)
     {
         BOX_LOG_ERROR(
-            "FaceExtrude: Face has fewer than 3 vertices"
+            "FaceInset: Face has fewer than 3 vertices"
         );
 
         return false;
     }
 
     // ------------------------------------------
-    // Validate direction
+    // Calculate face centre
     // ------------------------------------------
 
-    const float directionLength =
-        glm::length(direction);
+    glm::vec3 centre(0.0f);
 
-    if (directionLength <= 0.000001f)
+    for (const std::size_t vertexIndex :
+    originalFace.vertices)
     {
-        BOX_LOG_ERROR(
-            "FaceExtrude: Invalid extrusion direction"
-        );
-
-        return false;
+        centre +=
+            mesh.GetVertex(
+                vertexIndex
+            ).position;
     }
 
-    const glm::vec3 extrusionDirection =
-        glm::normalize(direction);
+    centre /=
+        static_cast<float>(
+            originalFace.vertices.size()
+            );
 
     // ------------------------------------------
-    // Create duplicated outer face vertices
+    // Create new inset vertices
     // ------------------------------------------
 
     std::vector<std::size_t>
-        newFaceVertices;
+        insetVertices;
 
-    newFaceVertices.reserve(
+    insetVertices.reserve(
         originalFace.vertices.size()
     );
 
@@ -70,37 +73,40 @@ bool FaceExtrude::Use(MeshEditing& mesh, std::size_t faceIndex, const glm::vec3&
             ).position;
 
         const glm::vec3 newPosition =
-            oldPosition +
-            extrusionDirection *
-            distance;
+            glm::mix(
+                oldPosition,
+                centre,
+                amount
+            );
 
         const std::size_t newIndex =
             mesh.AddVertex(
                 newPosition
             );
 
-        newFaceVertices.push_back(
+        insetVertices.push_back(
             newIndex
         );
     }
 
     // ------------------------------------------
-    // Replace original face with new outer face
+    // Replace original face with
+    // the new inset centre face
     // ------------------------------------------
 
     if (!mesh.SetFace(
         faceIndex,
-        newFaceVertices))
+        insetVertices))
     {
         BOX_LOG_ERROR(
-            "FaceExtrude: Failed to replace face"
+            "FaceInset: Failed to replace face"
         );
 
         return false;
     }
 
     // ------------------------------------------
-    // Create side faces
+    // Create surrounding ring faces
     // ------------------------------------------
 
     const std::size_t vertexCount =
@@ -121,10 +127,10 @@ bool FaceExtrude::Use(MeshEditing& mesh, std::size_t faceIndex, const glm::vec3&
             originalFace.vertices[next];
 
         const std::size_t newA =
-            newFaceVertices[i];
+            insetVertices[i];
 
         const std::size_t newB =
-            newFaceVertices[next];
+            insetVertices[next];
 
         mesh.AddFace(
             {
@@ -136,14 +142,10 @@ bool FaceExtrude::Use(MeshEditing& mesh, std::size_t faceIndex, const glm::vec3&
         );
     }
 
-    // ------------------------------------------
-    // Rebuild modelling edges
-    // ------------------------------------------
-
     mesh.RebuildEdges();
 
     BOX_LOG_INFO(
-        "Face extruded. "
+        "Face inset. "
         << "Vertices="
         << mesh.GetVertexCount()
         << " Edges="
@@ -153,4 +155,5 @@ bool FaceExtrude::Use(MeshEditing& mesh, std::size_t faceIndex, const glm::vec3&
     );
 
     return true;
+
 }

@@ -189,15 +189,75 @@ void ObjectExplorerPanel::DrawTexturesTab(BoxEngine& engine,Entity& entity)
 
 void ObjectExplorerPanel::DrawModifiersTab(BoxEngine& engine, Entity& entity, FaceEditController& faceEditController)
 {
-
     ImGui::Text("Modifiers for: %s", entity.GetName().c_str());
 
     ImGui::Separator();
 
+    // =================================================
+    // ACTIVE OPERATION ALWAYS HAS PRIORITY
+    // =================================================
+
+    if (faceEditController.IsExtruding())
+    {
+        ExtrudeControls(entity, faceEditController);
+
+        return;
+    }
+
+
+    if (faceEditController.IsInsetting())
+    {
+        InsetControls(entity, faceEditController);
+
+        return;
+    }
+
 
     // =================================================
-    // Active modelling operation
+    // NO ACTIVE OPERATION
+    // Show the last confirmed operation.
     // =================================================
+
+    switch (entity.GetLastOperationType())
+    {
+        case LastOperationType::Extrude:
+        {
+            ExtrudeControls(entity, faceEditController);
+            
+            break;
+        }
+
+        case LastOperationType::Inset:
+        {
+            InsetControls(entity, faceEditController);
+            
+            break;
+        }
+
+        case LastOperationType::None:
+        default:
+        {
+            ImGui::TextDisabled("No modelling operations.");
+
+            break;
+        }
+    }
+
+
+}
+
+void ObjectExplorerPanel::Shutdown()
+{
+    if (m_materialEditor)
+    {
+        m_materialEditor->Shutdown();
+        m_materialEditor.reset();
+    }
+}
+
+
+void ObjectExplorerPanel::ExtrudeControls(Entity& entity, FaceEditController& faceEditController)
+{
 
     if (faceEditController.IsExtruding())
     {
@@ -277,10 +337,7 @@ void ObjectExplorerPanel::DrawModifiersTab(BoxEngine& engine, Entity& entity, Fa
             }
 
             faceEditController
-                .SetExtrudeAxis(
-                    entity,
-                    newAxis
-                );
+                .SetExtrudeAxis(entity, newAxis);
         }
 
 
@@ -334,7 +391,7 @@ void ObjectExplorerPanel::DrawModifiersTab(BoxEngine& engine, Entity& entity, Fa
     // Nothing currently active
     // =================================================
 
-    
+
 
     if (entity.HasLastExtrude())
     {
@@ -342,8 +399,7 @@ void ObjectExplorerPanel::DrawModifiersTab(BoxEngine& engine, Entity& entity, Fa
 
         ImGui::Text("Face Extrude");
 
-        ExtrudeModifierData lastExtrude =
-            entity.GetLastExtrude();
+        ExtrudeModifierData lastExtrude = entity.GetLastExtrude();
 
 
         // ---------------------------------
@@ -412,7 +468,7 @@ void ObjectExplorerPanel::DrawModifiersTab(BoxEngine& engine, Entity& entity, Fa
 
         if (ImGui::DragFloat(
             "Extrude Amount",
-            &lastExtrude.amount,
+            &lastExtrude.extrudeAmount,
             0.01f))
         {
             changed =
@@ -428,7 +484,7 @@ void ObjectExplorerPanel::DrawModifiersTab(BoxEngine& engine, Entity& entity, Fa
         {
             entity.UpdateLastExtrude(
                 lastExtrude.axis,
-                lastExtrude.amount
+                lastExtrude.extrudeAmount
             );
         }
 
@@ -443,13 +499,100 @@ void ObjectExplorerPanel::DrawModifiersTab(BoxEngine& engine, Entity& entity, Fa
 
 }
 
-void ObjectExplorerPanel::Shutdown()
+void ObjectExplorerPanel::InsetControls(Entity& entity, FaceEditController& faceEditController)
 {
-    if (m_materialEditor)
+    // =================================================
+   // ACTIVE INSET
+   // =================================================
+
+    if (faceEditController.IsInsetting())
     {
-        m_materialEditor->Shutdown();
-        m_materialEditor.reset();
+        ImGui::SeparatorText(
+            "Active Operation"
+        );
+
+        ImGui::Text(
+            "Face Inset"
+        );
+
+        ImGui::Spacing();
+
+        float amount =
+            faceEditController
+            .GetInsetAmount();
+
+        if (ImGui::DragFloat(
+            "Inset Amount",
+            &amount,
+            0.01f,
+            0.0f,
+            0.95f))
+        {
+            faceEditController
+                .SetInsetAmount(
+                    entity,
+                    amount
+                );
+        }
+
+        ImGui::Spacing();
+
+        if (ImGui::Button(
+            "Confirm",
+            ImVec2(90.0f, 0.0f)))
+        {
+            faceEditController
+                .ConfirmInset(
+                    entity
+                );
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button(
+            "Cancel",
+            ImVec2(90.0f, 0.0f)))
+        {
+            faceEditController
+                .CancelInset(
+                    entity
+                );
+        }
+
+        return;
     }
+
+
+    // =================================================
+    // LAST CONFIRMED INSET
+    // =================================================
+
+    if (entity.HasLastInset())
+    {
+        ImGui::SeparatorText(
+            "Last Operation"
+        );
+
+        ImGui::Text(
+            "Face Inset"
+        );
+
+        InsetModifierData lastInset =
+            entity.GetLastInset();
+
+        if (ImGui::DragFloat(
+            "Inset Amount",
+            &lastInset.insetAmount,
+            0.01f,
+            0.0f,
+            0.95f))
+        {
+            entity.UpdateLastInset(
+                lastInset.insetAmount
+            );
+        }
+
+        return;
+    }
+
 }
-
-

@@ -153,6 +153,7 @@
     <ClInclude Include="inc\mesh\MeshData.h" />
     <ClInclude Include="inc\mesh\MeshEditing.h" />
     <ClInclude Include="inc\mesh\modifiers\FaceExtrude.h" />
+    <ClInclude Include="inc\mesh\modifiers\FaceInset.h" />
     <ClInclude Include="inc\mesh\modifiers\ModifierData.h" />
     <ClInclude Include="inc\rendering\Framebuffer.h" />
     <ClInclude Include="inc\rendering\grid.h" />
@@ -167,6 +168,7 @@
     <ClCompile Include="src\entity\Entity.cpp" />
     <ClCompile Include="src\mesh\MeshEditing.cpp" />
     <ClCompile Include="src\mesh\modifiers\FaceExtrude.cpp" />
+    <ClCompile Include="src\mesh\modifiers\FaceInset.cpp" />
     <ClCompile Include="src\rendering\Framebuffer.cpp" />
     <ClCompile Include="src\rendering\Material.cpp" />
     <ClCompile Include="src\rendering\Textures.cpp" />
