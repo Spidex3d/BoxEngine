@@ -10,6 +10,7 @@
 #include <tools\VertexEditController.h>
 #include <mesh\modifiers\FaceInset.h>
 #include <mesh\modifiers\LoopCut.h>
+#include <mesh\modifiers\FaceCut.h>
 
 
 
@@ -437,6 +438,30 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             }
 
             ImGui::Separator();
+			// ############################################ Face Cut Modifier ############################################
+            if (ImGui::MenuItem("Face Cut"))
+            {
+                Entity* selectedEntity = engine.GetSelectedEntity();
+
+                const std::size_t selectedEdge = m_edgeEditController.GetSelectedEdge();
+
+                FaceCut faceCut;
+
+                if (faceCut.Use(selectedEntity->GetEditableMesh(), selectedEdge, 0.5f))
+                {
+                    MeshData renderMesh;
+
+                    if (selectedEntity
+                        ->GetEditableMesh()
+                        .BuildRenderMesh(renderMesh))
+                    {
+                        selectedEntity
+                            ->CreateFromMeshData(
+                                renderMesh
+                            );
+                    }
+                }
+			}
 
 			// ############################################ Loop Cut Modifier ############################################
             if (ImGui::MenuItem("Loop Cut"))

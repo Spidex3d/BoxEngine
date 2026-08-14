@@ -39,6 +39,12 @@ public:
     void ClearSelection(
         BoxEngine& engine
     );
+    // ###################################################################################################
+    // ########################################### FaceCut ###############################################
+    // ###################################################################################################
+    void BeginFaceCut(Entity& entity);
+
+    MeshEditing m_meshBeforeFaceCut; // Store the mesh state before the face cut operation
 
 	// ###################################################################################################
 	// ########################################### LoopCut ###############################################
@@ -52,27 +58,31 @@ public:
 
 	MeshEditing m_meshBeforeLoopCut; // Store the mesh state before the loop cut operation
 
+	// this function is a shared function for both loop cut and face cut, it will be called when the user confirms the cut operation.
     std::size_t GetSelectedEdge() const
     {
         return m_selectedEdge;
     }
 
+	// this function is a shared function for both loop cut and face cut, it will be called when the user confirms the cut operation.
     bool HasSelectedEdge() const
     {
         return m_selectedEdge != InvalidEdge;
     }
 
-private: // loopcuts
-
+private: // loopcuts - facecut
+    // face cut variables
+    std::size_t m_faceCutEdge = InvalidEdge;
+    float m_faceCutAmount = 0.5f;
+    ImVec2 m_faceCutStartMouse = ImVec2(0.0f, 0.0f);
+    bool m_isFaceCutting = false;
+	// loop cut variables
     std::size_t m_loopCutEdge = InvalidEdge;
-
     float m_loopCutAmount = 0.5f;
-
     ImVec2 m_loopCutStartMouse = ImVec2(0.0f, 0.0f);
-
     bool m_isLoopCutting = false;
 
-
+	
 
 private:
     struct LogicalEdge
