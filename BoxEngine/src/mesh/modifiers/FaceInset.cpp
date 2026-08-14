@@ -6,11 +6,9 @@
 
 #include <glm/glm.hpp>
 
-//bool FaceInset::Use(MeshEditing& mesh, std::size_t faceIndex, const glm::vec3& direction, float distance)
 bool FaceInset::Use(MeshEditing& mesh, std::size_t faceIndex, float amount)
 {
-    if (faceIndex >=
-        mesh.GetFaceCount())
+    if (faceIndex >= mesh.GetFaceCount())
     {
         BOX_LOG_ERROR(
             "FaceInset: Invalid face index"

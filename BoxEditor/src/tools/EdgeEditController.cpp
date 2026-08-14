@@ -210,6 +210,57 @@ void EdgeEditController::ClearSelection(BoxEngine& engine)
 	}
 }
 
+   // ###################################################################################################
+   // ########################################### LoopCut ###############################################
+   // ###################################################################################################
+
+//void EdgeEditController::BeginLoopCut(Entity& entity, std::size_t edgeIndex, const ImVec2& viewportPosition, const ImVec2& viewportSize)
+//{
+//    if (edgeIndex == InvalidEdge)
+//    {
+//        return;
+//    }
+//    MeshEditing& mesh =
+//        entity.GetEditableMesh();
+//    if (edgeIndex >=
+//        mesh.GetEdgeCount())
+//    {
+//        return;
+//    }
+//    m_meshBeforeLoopCut = mesh;
+//    m_loopCutEdge = edgeIndex;
+//    m_loopCutAmount = 0.5f;
+//    m_loopCutStartMouse = ImGui::GetMousePos();
+//	m_isLoopCutting = true;
+//}
+
+void EdgeEditController::BeginLoopCut(Entity& entity)
+{
+    if (m_selectedEdge == InvalidEdge)
+    {
+        return;
+    }
+
+    MeshEditing& mesh =
+        entity.GetEditableMesh();
+
+    if (m_selectedEdge >=
+        mesh.GetEdgeCount())
+    {
+        return;
+    }
+
+    m_meshBeforeLoopCut = mesh;
+
+    m_loopCutEdge = m_selectedEdge;
+
+    m_loopCutAmount = 0.5f;
+
+    m_loopCutStartMouse = ImGui::GetMousePos();
+
+    m_isLoopCutting = true;
+}
+
 
 std::vector<EdgeEditController::LogicalEdge> EdgeEditController::BuildLogicalEdges(const Entity& entity) const
 {

@@ -32,7 +32,8 @@ enum class LastOperationType
 {
     None,
     Extrude,
-    Inset
+    Inset,
+	LoopCut
 };
 
 
@@ -73,10 +74,19 @@ struct InsetModifierData
 {
     std::size_t faceIndex = 0;
 
-    float insetAmount =
-        0.0f;
+    float insetAmount = 0.0f;
 };
 
+// ====================================================
+// LoopCut
+// ====================================================
+
+struct LoopCutModifierData
+{
+    std::size_t edgeIndex = 0;
+
+    float cutAmount = 0.0f;
+};
 
 // =====================================================
 // Generic modifier / operation data
@@ -92,62 +102,4 @@ struct ModifierData
 
     InsetModifierData inset;
 };
-
-
-//enum class ModifierType
-//{
-//    //DESTRUCTIVE MODIFIERS
-//    Extrude,
-//    Inset,
-//    Bevel,
-//    LoopCut,
-//    Bridge,
-//    Merge,
-//    DeleteFace
-//};
-//
-//enum class ModifierTypeNoneD
-//{
-//    //NON - DESTRUCTIVE MODIFIERS
-//    Mirror,
-//    Subdivision,
-//    Solidify,
-//    Array,
-//    Scatter
-//};
-//
-//enum class ModifierAxis
-//{
-//	None,
-//    X,
-//    Y,
-//    Z
-//};
-//
-//struct ExtrudeModifierData
-//{
-//    std::size_t faceIndex = 0;
-//    ModifierAxis axis = ModifierAxis::Y;
-//	float extrudeAmount = 0.0f; // changed from amount to extrudeAmount to be more specific
-//};
-//
-//struct InsetModifierData
-//{
-//    std::size_t faceIndex = 0;
-//    ModifierAxis axis = ModifierAxis::Y;
-//    float insetAmount = 0.0f;
-//};
-//
-//struct ModifierData
-//{
-//	ModifierType type = ModifierType::Extrude; // type of modifier, default to Extrude
-//    ExtrudeModifierData extrude;
-//	bool extrudeEnabled = true; // changed from enabled to extrudeEnabled to be more specific
-//
-//	ModifierType type1 = ModifierType::Inset; // type1 of modifier, default to Inset
-//	InsetModifierData inset;
-//	bool insetEnabled = true; // changed from enabled to insetEnabled to be more specific
-//
-//
-//};
 

@@ -4,6 +4,8 @@
 #include <vector>
 #include <cstddef>
 
+#include <mesh/MeshEditing.h>
+
 class BoxEngine;
 class Entity;
 
@@ -37,6 +39,40 @@ public:
     void ClearSelection(
         BoxEngine& engine
     );
+
+	// ###################################################################################################
+	// ########################################### LoopCut ###############################################
+	// ###################################################################################################
+    /*void BeginLoopCut(Entity& entity, std::size_t edgeIndex, const ImVec2& viewportPosition,
+        const ImVec2& viewportSize);  */
+
+	void EdgeMove(Entity& entity, const ImVec2& viewportPosition, const ImVec2& viewportSize);
+
+    void BeginLoopCut(Entity& entity);
+
+	MeshEditing m_meshBeforeLoopCut; // Store the mesh state before the loop cut operation
+
+    std::size_t GetSelectedEdge() const
+    {
+        return m_selectedEdge;
+    }
+
+    bool HasSelectedEdge() const
+    {
+        return m_selectedEdge != InvalidEdge;
+    }
+
+private: // loopcuts
+
+    std::size_t m_loopCutEdge = InvalidEdge;
+
+    float m_loopCutAmount = 0.5f;
+
+    ImVec2 m_loopCutStartMouse = ImVec2(0.0f, 0.0f);
+
+    bool m_isLoopCutting = false;
+
+
 
 private:
     struct LogicalEdge

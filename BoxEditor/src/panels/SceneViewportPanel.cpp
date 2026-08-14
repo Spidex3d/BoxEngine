@@ -9,6 +9,7 @@
 #include <camera/Camera.h>
 #include <tools\VertexEditController.h>
 #include <mesh\modifiers\FaceInset.h>
+#include <mesh\modifiers\LoopCut.h>
 
 
 
@@ -379,6 +380,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 
         if (ImGui::BeginMenu("Modifiers")) {
 
+			// ############################################ Extrude Modifier ############################################
             if (ImGui::MenuItem("Extrude"))
             {
 
@@ -408,7 +410,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 
             }
                    
-
+			// ############################################ Inset Modifier ############################################
             if (ImGui::MenuItem("Inset"))
             {
 
@@ -436,8 +438,30 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 
             ImGui::Separator();
 
-            if (ImGui::MenuItem("Edge loop"))
+			// ############################################ Loop Cut Modifier ############################################
+            if (ImGui::MenuItem("Loop Cut"))
             {
+                Entity* selectedEntity = engine.GetSelectedEntity();
+
+                const std::size_t selectedEdge = m_edgeEditController .GetSelectedEdge();
+
+                LoopCut loopCut;
+
+                if (loopCut.Use(selectedEntity->GetEditableMesh(), selectedEdge, 0.5f))
+                {
+                    MeshData renderMesh;
+
+                    if (selectedEntity
+                        ->GetEditableMesh()
+                        .BuildRenderMesh(renderMesh))
+                    {
+                        selectedEntity
+                            ->CreateFromMeshData(
+                                renderMesh
+                            );
+                    }
+                }
+
             }
             if (ImGui::MenuItem("Bevel"))
             {

@@ -13,8 +13,6 @@ class FaceInset
 {
 public:
 
-
-   // bool Use(MeshEditing& mesh, std::size_t faceIndex, const glm::vec3& direction, float distance);
     bool Use(MeshEditing& mesh, std::size_t faceIndex, float amount);
 
 private:
