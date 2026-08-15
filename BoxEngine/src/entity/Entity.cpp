@@ -12,6 +12,7 @@
 
 #include <mesh\modifiers\FaceExtrude.h>
 #include <mesh\modifiers\FaceInset.h>
+#include <mesh/modifiers/LoopCut.h>
 
 Entity::Entity(
     int id,
@@ -968,6 +969,77 @@ bool Entity::UpdateLastInset(float amount)
 
     return true;
 }
+
+// ###############################################################################################################
+// ############################################ Loop Cut #########################################################
+// ###############################################################################################################
+void Entity::SetLastLoopCut(std::size_t edgeIndex, float amount,
+    const MeshEditing& meshBeforeLoopCut)
+{
+    m_lastLoopCut.edgeIndex = edgeIndex;
+    m_lastLoopCut.cutAmount = amount;
+    m_lastLoopCutBaseMesh = meshBeforeLoopCut;
+    m_hasLastLoopCut = true;
+	m_lastOperationType = LastOperationType::LoopCut; // so we know the last operation was a loop cut
+}
+
+bool Entity::UpdateLastLoopCut(float amount)
+{
+    if (!m_hasLastLoopCut)
+    {
+        return false;
+    }
+
+    // Restore the topology to exactly
+    // how it was before this Loop Cut.
+    m_editableMesh =
+        m_lastLoopCutBaseMesh;
+
+    LoopCut loopCut;
+
+    if (!loopCut.Use(
+        m_editableMesh,
+        m_lastLoopCut.edgeIndex,
+        amount))
+    {
+        BOX_LOG_ERROR(
+            "UpdateLastLoopCut: "
+            "Loop Cut failed"
+        );
+
+        return false;
+    }
+
+    MeshData renderMesh;
+
+    if (!m_editableMesh.BuildRenderMesh(
+        renderMesh))
+    {
+        BOX_LOG_ERROR(
+            "UpdateLastLoopCut: "
+            "Failed to build render mesh"
+        );
+
+        return false;
+    }
+
+    if (!CreateFromMeshData(
+        renderMesh))
+    {
+        BOX_LOG_ERROR(
+            "UpdateLastLoopCut: "
+            "Failed to update entity mesh"
+        );
+
+        return false;
+    }
+
+    m_lastLoopCut.cutAmount =
+        amount;
+
+    return true;
+}
+
 
 
 

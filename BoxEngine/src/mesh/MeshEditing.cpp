@@ -387,10 +387,8 @@ bool MeshEditing::BuildRenderMesh(MeshData& meshData) const
 
         if (normalLength <= 0.000001f)
         {
-            BOX_LOG_WARNING(
-                "MeshEditing::BuildRenderMesh: "
-                "Skipping degenerate face"
-            );
+            BOX_LOG_WARNING("MeshEditing::BuildRenderMesh: "
+                "Skipping degenerate face");
 
             continue;
         }

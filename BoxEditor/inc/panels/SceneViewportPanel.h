@@ -87,6 +87,10 @@ public:
     {
         return m_faceEditController;
     }
+    EdgeEditController& GetEdgeEditController()
+    {
+        return m_edgeEditController;
+    }
 
 	void Shutdown();
 

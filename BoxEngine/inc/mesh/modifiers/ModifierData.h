@@ -85,7 +85,7 @@ struct LoopCutModifierData
 {
     std::size_t edgeIndex = 0;
 
-    float cutAmount = 0.0f;
+    float cutAmount = 0.5f;
 };
 
 // =====================================================

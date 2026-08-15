@@ -8,11 +8,19 @@
 #include <algorithm>
 #include <cmath>
 #include <glm/gtc/matrix_transform.hpp>
+#include <mesh/modifiers/LoopCut.h>
 
-
-void EdgeEditController::HandleInput(BoxEngine& engine, bool viewportHovered, bool edgeModeActive, const ImVec2& viewportPosition,
-	const ImVec2& viewportSize)
+void EdgeEditController::HandleInput(
+    BoxEngine& engine,
+    bool viewportHovered,
+    bool edgeModeActive,
+    const ImVec2& viewportPosition,
+    const ImVec2& viewportSize)
 {
+    // -------------------------------------------------
+    // Edge mode inactive
+    // -------------------------------------------------
+
     if (!edgeModeActive)
     {
         if (m_isMoving)
@@ -22,17 +30,21 @@ void EdgeEditController::HandleInput(BoxEngine& engine, bool viewportHovered, bo
 
             if (entity)
             {
-                EditCancelMove(*entity);
+                EditCancelMove(
+                    *entity
+                );
             }
         }
 
         return;
     }
 
+
     if (!viewportHovered)
     {
         return;
     }
+
 
     Entity* entity =
         engine.GetSelectedEntity();
@@ -42,7 +54,54 @@ void EdgeEditController::HandleInput(BoxEngine& engine, bool viewportHovered, bo
         return;
     }
 
-    // Start moving the selected edge.
+
+    // =================================================
+    // ACTIVE LOOP CUT
+    // =================================================
+
+    if (m_isLoopCutting)
+    {
+        EdgeLoopCutMove(
+            *entity
+        );
+
+
+        // Confirm Loop Cut.
+        if (ImGui::IsMouseClicked(
+            ImGuiMouseButton_Left))
+        {
+            ConfirmLoopCut();
+
+            return;
+        }
+
+
+        // Cancel Loop Cut.
+        if (ImGui::IsKeyPressed(
+            ImGuiKey_Escape,
+            false) ||
+            ImGui::IsMouseClicked(
+                ImGuiMouseButton_Right))
+        {
+            CancelLoopCut(
+                *entity
+            );
+
+            return;
+        }
+
+
+        // Very important:
+        // Don't allow normal edge editing
+        // while Loop Cut is active.
+        return;
+    }
+
+
+    // =================================================
+    // NORMAL EDGE MOVE
+    // =================================================
+
     if (!m_isMoving &&
         m_selectedEdge != InvalidEdge)
     {
@@ -75,10 +134,17 @@ void EdgeEditController::HandleInput(BoxEngine& engine, bool viewportHovered, bo
         }
     }
 
-    // Update active edge movement.
+
+    // =================================================
+    // UPDATE EDGE MOVE
+    // =================================================
+
     if (m_isMoving)
     {
-        EditUpdateMove(*entity);
+        EditUpdateMove(
+            *entity
+        );
+
 
         if (ImGui::IsMouseClicked(
             ImGuiMouseButton_Left))
@@ -92,17 +158,22 @@ void EdgeEditController::HandleInput(BoxEngine& engine, bool viewportHovered, bo
             ImGui::IsMouseClicked(
                 ImGuiMouseButton_Right))
         {
-            EditCancelMove(*entity);
+            EditCancelMove(
+                *entity
+            );
         }
 
-        /*
-         * Do not let the confirmation click
-         * select another edge.
-         */
+
+        // Do not allow the confirmation click
+        // to select another edge.
         return;
     }
 
-    // Normal edge selection.
+
+    // =================================================
+    // NORMAL EDGE SELECTION
+    // =================================================
+
     if (ImGui::IsMouseClicked(
         ImGuiMouseButton_Left))
     {
@@ -112,8 +183,153 @@ void EdgeEditController::HandleInput(BoxEngine& engine, bool viewportHovered, bo
             viewportSize
         );
     }
-
 }
+
+//void EdgeEditController::HandleInput(BoxEngine& engine, bool viewportHovered, bool edgeModeActive, const ImVec2& viewportPosition,
+//	const ImVec2& viewportSize)
+//{
+//    if (!edgeModeActive)
+//    {
+//        if (m_isMoving)
+//        {
+//            Entity* entity = engine.GetSelectedEntity();
+//
+//            if (entity)
+//            {
+//                EditCancelMove(*entity);
+//            }
+//        }
+//
+//        return;
+//    }
+//
+//    if (!viewportHovered)
+//    {
+//        return;
+//    }
+//
+//    Entity* entity = engine.GetSelectedEntity();
+//
+//    if (!entity)
+//    {
+//        return;
+//    }
+//
+//    if (!m_isLoopCutting)
+//    {
+//        return;
+//    }
+//
+//    // =================================================
+//    // ACTIVE LOOP CUT
+//    // =================================================
+//
+//    if (m_isLoopCutting)
+//    {
+//        EdgeLoopCutMove(
+//            *entity
+//        );
+//
+//        // Confirm
+//        if (ImGui::IsMouseClicked(
+//            ImGuiMouseButton_Left))
+//        {
+//            ConfirmLoopCut();
+//
+//            return;
+//        }
+//
+//        // Cancel
+//        if (ImGui::IsKeyPressed(
+//            ImGuiKey_Escape,
+//            false) ||
+//            ImGui::IsMouseClicked(
+//                ImGuiMouseButton_Right))
+//        {
+//            CancelLoopCut(
+//                *entity
+//            );
+//
+//            return;
+//        }
+//
+//        return;
+//    }
+//
+//	// ####################################################################################################
+//
+//    // Start moving the selected edge.
+//    if (!m_isMoving &&
+//        m_selectedEdge != InvalidEdge)
+//    {
+//        if (ImGui::IsKeyPressed(
+//            ImGuiKey_X,
+//            false))
+//        {
+//            EditBeginMove(
+//                *entity,
+//                EdgeMoveAxis::X
+//            );
+//        }
+//        else if (ImGui::IsKeyPressed(
+//            ImGuiKey_Y,
+//            false))
+//        {
+//            EditBeginMove(
+//                *entity,
+//                EdgeMoveAxis::Y
+//            );
+//        }
+//        else if (ImGui::IsKeyPressed(
+//            ImGuiKey_Z,
+//            false))
+//        {
+//            EditBeginMove(
+//                *entity,
+//                EdgeMoveAxis::Z
+//            );
+//        }
+//    }
+//
+//    // Update active edge movement.
+//    if (m_isMoving)
+//    {
+//        EditUpdateMove(*entity);
+//
+//        if (ImGui::IsMouseClicked(
+//            ImGuiMouseButton_Left))
+//        {
+//            EditConfirmMove();
+//        }
+//        else if (
+//            ImGui::IsKeyPressed(
+//                ImGuiKey_Escape,
+//                false) ||
+//            ImGui::IsMouseClicked(
+//                ImGuiMouseButton_Right))
+//        {
+//            EditCancelMove(*entity);
+//        }
+//
+//        /*
+//         * Do not let the confirmation click
+//         * select another edge.
+//         */
+//        return;
+//    }
+//
+//    // Normal edge selection.
+//    if (ImGui::IsMouseClicked(
+//        ImGuiMouseButton_Left))
+//    {
+//        PickEdge(
+//            engine,
+//            viewportPosition,
+//            viewportSize
+//        );
+//    }
+//
+//}
 
 void EdgeEditController::DrawEdge(BoxEngine& engine, const ImVec2& viewportPosition, const ImVec2& viewportSize, bool edgeModeActive)
 {
@@ -240,9 +456,140 @@ void EdgeEditController::BeginFaceCut(Entity& entity)
 }
 
 
+
    // ###################################################################################################
    // ########################################### LoopCut ###############################################
    // ###################################################################################################
+
+
+void EdgeEditController::EdgeLoopCutMove(Entity& entity)
+{
+    if (!m_isLoopCutting)
+    {
+        return;
+    }
+
+    const ImVec2 currentMouse =
+        ImGui::GetMousePos();
+
+    const float deltaX =
+        currentMouse.x -
+        m_loopCutStartMouse.x;
+
+    // Start at the centre and slide left/right.
+    m_loopCutAmount =
+        0.5f +
+        deltaX *
+        m_moveSensitivity;
+
+    m_loopCutAmount =
+        glm::clamp(
+            m_loopCutAmount,
+            0.01f,
+            0.99f
+        );
+
+
+    // -----------------------------------------
+    // Always restore the mesh from BEFORE
+    // this loop cut.
+    // -----------------------------------------
+
+    MeshEditing& editableMesh =
+        entity.GetEditableMesh();
+
+    editableMesh =
+        m_meshBeforeLoopCut;
+
+
+    // -----------------------------------------
+    // Reapply the full loop cut at the
+    // current mouse position.
+    // -----------------------------------------
+
+    LoopCut loopCut;
+
+    if (!loopCut.Use(
+        editableMesh,
+        m_loopCutEdge,
+        m_loopCutAmount))
+    {
+        BOX_LOG_ERROR(
+            "LoopCut: live update failed"
+        );
+
+        return;
+    }
+
+
+    // -----------------------------------------
+    // Rebuild render mesh.
+    // -----------------------------------------
+
+    MeshData renderMesh;
+
+    if (!editableMesh.BuildRenderMesh(
+        renderMesh))
+    {
+        BOX_LOG_ERROR(
+            "LoopCut: failed to rebuild render mesh"
+        );
+
+        return;
+    }
+
+    entity.CreateFromMeshData(renderMesh);
+}
+
+void EdgeEditController::ConfirmLoopCut()
+{
+    if (!m_isLoopCutting)
+    {
+        return;
+    }
+
+    m_isLoopCutting =
+        false;
+
+    BOX_LOG_INFO(
+        "LoopCut confirmed. Amount="
+        << m_loopCutAmount
+    );
+}
+
+void EdgeEditController::CancelLoopCut(Entity& entity)
+{
+    if (!m_isLoopCutting)
+    {
+        return;
+    }
+
+    entity.GetEditableMesh() =
+        m_meshBeforeLoopCut;
+
+    MeshData renderMesh;
+
+    if (entity
+        .GetEditableMesh()
+        .BuildRenderMesh(
+            renderMesh))
+    {
+        entity.CreateFromMeshData(
+            renderMesh
+        );
+    }
+
+    m_isLoopCutting =
+        false;
+
+    m_loopCutAmount =
+        0.5f;
+
+    BOX_LOG_INFO(
+        "LoopCut cancelled"
+    );
+}
+
 
 
 
@@ -271,6 +618,64 @@ void EdgeEditController::BeginLoopCut(Entity& entity)
     m_loopCutStartMouse = ImGui::GetMousePos();
 
     m_isLoopCutting = true;
+}
+
+void EdgeEditController::SetLoopCutAmount(Entity& entity, float amount)
+{
+    if (!m_isLoopCutting)
+    {
+        return;
+    }
+
+    m_loopCutAmount = glm::clamp(amount, 0.01f, 0.99f);
+
+    // Reset mouse origin so the UI value
+    // isn't immediately overwritten badly.
+    m_loopCutStartMouse = ImGui::GetMousePos();
+
+    // Rebuild from saved topology.
+    MeshEditing& editableMesh =
+        entity.GetEditableMesh();
+
+    editableMesh =
+        m_meshBeforeLoopCut;
+
+    LoopCut loopCut;
+
+    if (loopCut.Use(
+        editableMesh,
+        m_loopCutEdge,
+        m_loopCutAmount))
+    {
+        MeshData renderMesh;
+
+        if (editableMesh.BuildRenderMesh(
+            renderMesh))
+        {
+            entity.CreateFromMeshData(
+                renderMesh
+            );
+        }
+    }
+}
+
+void EdgeEditController::ConfirmLoopCut(Entity& entity)
+{
+    if (!m_isLoopCutting)
+    {
+        return;
+    }
+    m_isLoopCutting =
+        false;
+    entity.SetLastLoopCut(
+        m_loopCutEdge,
+        m_loopCutAmount,
+        m_meshBeforeLoopCut
+    );
+    BOX_LOG_INFO(
+        "LoopCut confirmed. Amount="
+        << m_loopCutAmount
+	);
 }
 
    // ###################################################################################################

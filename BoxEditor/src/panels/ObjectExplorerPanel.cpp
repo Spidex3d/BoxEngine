@@ -10,6 +10,8 @@
 #include <string>
 #include <miniBoxLog.h>
 #include <tools/FaceEditController.h>
+#include <tools/EdgeEditController.h>
+
 
 ObjectExplorerPanel::ObjectExplorerPanel() = default;
 
@@ -37,7 +39,8 @@ bool ObjectExplorerPanel::Initialize()
 }
 
 
-void ObjectExplorerPanel::DrawObjectExplorer(BoxEngine& engine, FaceEditController& faceEditController)
+void ObjectExplorerPanel::DrawObjectExplorer(BoxEngine& engine, FaceEditController& faceEditController,
+    EdgeEditController& edgeEditController)
 {
 
     Entity* selected =
@@ -109,7 +112,7 @@ void ObjectExplorerPanel::DrawObjectExplorer(BoxEngine& engine, FaceEditControll
         // ####################################################
         if (ImGui::BeginTabItem("Modifiers"))
         {
-            DrawModifiersTab(engine, *selected, faceEditController);
+            DrawModifiersTab(engine, *selected, faceEditController, edgeEditController);
 
             ImGui::EndTabItem();
         }
@@ -187,7 +190,8 @@ void ObjectExplorerPanel::DrawTexturesTab(BoxEngine& engine,Entity& entity)
 
 }
 
-void ObjectExplorerPanel::DrawModifiersTab(BoxEngine& engine, Entity& entity, FaceEditController& faceEditController)
+void ObjectExplorerPanel::DrawModifiersTab(BoxEngine& engine, Entity& entity, FaceEditController& faceEditController,
+    EdgeEditController& edgeEditController)
 {
     ImGui::Text("Modifiers for: %s", entity.GetName().c_str());
 
@@ -197,6 +201,7 @@ void ObjectExplorerPanel::DrawModifiersTab(BoxEngine& engine, Entity& entity, Fa
     // ACTIVE OPERATION ALWAYS HAS PRIORITY
     // =================================================
 
+    // Extrude
     if (faceEditController.IsExtruding())
     {
         ExtrudeControls(entity, faceEditController);
@@ -204,13 +209,19 @@ void ObjectExplorerPanel::DrawModifiersTab(BoxEngine& engine, Entity& entity, Fa
         return;
     }
 
-
+	// Inset
     if (faceEditController.IsInsetting())
     {
         InsetControls(entity, faceEditController);
 
         return;
     }
+	// Loop Cut
+    if (edgeEditController.IsLoopCutting())
+    {
+        LoopCutControls(entity, edgeEditController);
+        return;
+	}
 
 
     // =================================================
@@ -233,6 +244,11 @@ void ObjectExplorerPanel::DrawModifiersTab(BoxEngine& engine, Entity& entity, Fa
             
             break;
         }
+        case LastOperationType::LoopCut:
+        {
+            LoopCutControls(entity, edgeEditController);
+            break;
+		}
 
         case LastOperationType::None:
         default:
@@ -589,6 +605,100 @@ void ObjectExplorerPanel::InsetControls(Entity& entity, FaceEditController& face
         {
             entity.UpdateLastInset(
                 lastInset.insetAmount
+            );
+        }
+
+        return;
+    }
+
+}
+
+void ObjectExplorerPanel::LoopCutControls(Entity& entity, EdgeEditController& edgeEditController)
+{
+    // =================================================
+   // ACTIVE INSET
+   // =================================================
+
+    if (edgeEditController.IsLoopCutting())
+    {
+        ImGui::SeparatorText(
+            "Active Operation"
+        );
+
+        ImGui::Text(
+            "Loop Cut"
+        );
+
+        ImGui::Spacing();
+
+        float amount =
+            edgeEditController
+            .GetLoopCutAmount();
+        if (ImGui::DragFloat(
+            "Loop Cut Amount",
+            &amount,
+            0.01f,
+            0.0f,
+            0.95f))
+        {
+            edgeEditController
+                .SetLoopCutAmount(
+                    entity,
+                    amount
+                );
+        }
+
+        ImGui::Spacing();
+
+        if (ImGui::Button(
+            "Confirm",
+            ImVec2(90.0f, 0.0f)))
+        {
+            edgeEditController.ConfirmLoopCut();
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button(
+            "Cancel",
+            ImVec2(90.0f, 0.0f)))
+        {
+            edgeEditController
+                .CancelLoopCut(
+                    entity
+                );
+        }
+
+        return;
+    }
+
+
+    // =================================================
+    // LAST CONFIRMED LOOP CUT
+    // =================================================
+
+    if (entity.HasLastLoopCut())
+    {
+        ImGui::SeparatorText(
+            "Last Operation"
+        );
+
+        ImGui::Text(
+            "Loop Cut"
+        );
+
+        LoopCutModifierData lastLoopCut =
+            entity.GetLastLoopCut();
+
+        if (ImGui::DragFloat(
+            "Loop Cut Amount",
+            &lastLoopCut.cutAmount,
+            0.01f,
+            0.01f,
+            0.99f))
+        {
+            entity.UpdateLastLoopCut(
+                lastLoopCut.cutAmount
             );
         }
 

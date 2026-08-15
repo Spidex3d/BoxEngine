@@ -49,10 +49,11 @@ public:
 	// ###################################################################################################
 	// ########################################### LoopCut ###############################################
 	// ###################################################################################################
-    /*void BeginLoopCut(Entity& entity, std::size_t edgeIndex, const ImVec2& viewportPosition,
-        const ImVec2& viewportSize);  */
+    void EdgeLoopCutMove(Entity& entity);
 
-	void EdgeMove(Entity& entity, const ImVec2& viewportPosition, const ImVec2& viewportSize);
+    void ConfirmLoopCut();
+
+    void CancelLoopCut(Entity& entity);
 
     void BeginLoopCut(Entity& entity);
 
@@ -69,6 +70,23 @@ public:
     {
         return m_selectedEdge != InvalidEdge;
     }
+	// ###################################### Getters for loop cut and face cut variables ######################################
+    bool IsLoopCutting() const
+    {
+        return m_isLoopCutting;
+    }
+
+    float GetLoopCutAmount() const
+    {
+        return m_loopCutAmount;
+    }
+
+    void SetLoopCutAmount(Entity& entity, float amount);
+
+    
+    void ConfirmLoopCut(Entity& entity);
+
+
 
 private: // loopcuts - facecut
     // face cut variables

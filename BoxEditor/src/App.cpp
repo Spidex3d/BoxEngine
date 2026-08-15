@@ -163,7 +163,8 @@ int App::Run()
          
         if (m_imgObjectExplorer)
         {
-            m_imgObjectExplorer->DrawObjectExplorer(*m_engine, m_sceneViewport->GetFaceEditController());
+            m_imgObjectExplorer->DrawObjectExplorer(*m_engine, m_sceneViewport->GetFaceEditController(),
+                m_sceneViewport->GetEdgeEditController());
         }
 
         if (m_helpPanel)

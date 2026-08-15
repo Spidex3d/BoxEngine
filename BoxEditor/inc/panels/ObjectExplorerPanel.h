@@ -5,6 +5,7 @@ class BoxEngine;
 class Entity;
 class MaterialEditor;
 class FaceEditController;
+class EdgeEditController;
 
 
 class ObjectExplorerPanel
@@ -15,7 +16,7 @@ public:
 
     bool Initialize();
 
-    void DrawObjectExplorer(BoxEngine& engine, FaceEditController& faceEditController);
+    void DrawObjectExplorer(BoxEngine& engine, FaceEditController& faceEditController, EdgeEditController& edgeEditController);
 
 	void Shutdown();
 
@@ -31,10 +32,11 @@ private:
     );
     
 	// modifiers tab for extrude and inset ect. controls, with the ability to confirm or cancel the operation.
-    void DrawModifiersTab(BoxEngine& engine, Entity& entity, FaceEditController& faceEditController);
+    void DrawModifiersTab(BoxEngine& engine, Entity& entity, FaceEditController& faceEditController, EdgeEditController& edgeEditController);
 
     void ExtrudeControls(Entity& entity, FaceEditController& faceEditController);
     void InsetControls(Entity& entity, FaceEditController& faceEditController);
+	void LoopCutControls(Entity& entity, EdgeEditController& edgeEditController);
 
 
 

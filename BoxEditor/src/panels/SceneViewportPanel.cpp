@@ -466,7 +466,29 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 			// ############################################ Loop Cut Modifier ############################################
             if (ImGui::MenuItem("Loop Cut"))
             {
-                Entity* selectedEntity = engine.GetSelectedEntity();
+
+                Entity* selectedEntity =
+                    engine.GetSelectedEntity();
+
+                if (!selectedEntity)
+                {
+                    BOX_LOG_WARNING("Loop Cut: no entity selected");
+                }
+                else if (
+                    !m_edgeEditController.HasSelectedEdge())
+                {
+                    BOX_LOG_WARNING("Loop Cut: no edge selected");
+                }
+                else
+                {
+                    m_edgeEditController.BeginLoopCut(
+                        *selectedEntity
+                    );
+
+                    BOX_LOG_INFO("Loop Cut started");
+                }
+                
+                /*Entity* selectedEntity = engine.GetSelectedEntity();
 
                 const std::size_t selectedEdge = m_edgeEditController .GetSelectedEdge();
 
@@ -485,9 +507,11 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                                 renderMesh
                             );
                     }
-                }
+                }*/
 
             }
+            ImGui::Separator();
+
             if (ImGui::MenuItem("Bevel"))
             {
             }
@@ -504,11 +528,12 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 
         if (ImGui::BeginMenu("Sky")) {
 
-            if (ImGui::MenuItem("Add Sky Box")) {
+            if (ImGui::MenuItem("Add Sky Box"))
+            {
 
             }
-            if (ImGui::MenuItem("Add Sky Sphere ")) {
-                // if (m_actionCallback) m_actionCallback("AddSkySpere");
+            if (ImGui::MenuItem("Add Sky Sphere "))
+            {
             }
             ImGui::EndMenu();
         }
@@ -516,6 +541,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
         if (ImGui::BeginMenu("Reset Camera")) {
             if (ImGui::MenuItem("Reset Camera Position")) {
                 // reset camera position
+				//engine.GetCamera()
 
             }
             ImGui::EndMenu();

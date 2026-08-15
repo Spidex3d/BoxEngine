@@ -133,8 +133,29 @@ public:
         return m_lastInset;
     }
 
+	// ##################################### End last Inset  ##########################################
+	// ##################################################################################################
+	// ##################################### last LoopCut  ##########################################
 
-    // ##################################### End last Inset  ##########################################
+    void SetLastLoopCut(std::size_t edgeIndex, float amount,
+        const MeshEditing& meshBeforeLoopCut
+    );
+
+    bool HasLastLoopCut() const
+    {
+        return m_hasLastLoopCut;
+    }
+
+    const LoopCutModifierData&
+        GetLastLoopCut() const
+    {
+        return m_lastLoopCut;
+    }
+
+    bool UpdateLastLoopCut(float amount);
+
+
+    
 
 	// so we know which operation was last performed, for the Object Explorer panel to display the correct information.
     LastOperationType GetLastOperationType() const
@@ -261,14 +282,18 @@ public:
         return m_material;
     }
 private: // modifiers
-    // LastExtrude
+        // LastExtrude
         bool m_hasLastExtrude = false;
         ExtrudeModifierData m_lastExtrude;
         MeshEditing m_lastExtrudeBaseMesh;
-    // LastInset
+        // LastInset
         bool m_hasLastInset = false;
         InsetModifierData m_lastInset;
 		MeshEditing m_lastInsetBaseMesh;
+        // LastLoopCut
+        bool m_hasLastLoopCut = false;
+        LoopCutModifierData m_lastLoopCut;
+		MeshEditing m_lastLoopCutBaseMesh;
 
 		// This variable keeps track of the last operation performed on the mesh, which can be either extrusion or inset ect:
         LastOperationType m_lastOperationType = LastOperationType::None;
