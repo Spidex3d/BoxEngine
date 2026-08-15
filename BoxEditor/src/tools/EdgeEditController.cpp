@@ -70,7 +70,7 @@ void EdgeEditController::HandleInput(
         if (ImGui::IsMouseClicked(
             ImGuiMouseButton_Left))
         {
-            ConfirmLoopCut();
+            ConfirmLoopCut(*entity);
 
             return;
         }
@@ -539,22 +539,6 @@ void EdgeEditController::EdgeLoopCutMove(Entity& entity)
     }
 
     entity.CreateFromMeshData(renderMesh);
-}
-
-void EdgeEditController::ConfirmLoopCut()
-{
-    if (!m_isLoopCutting)
-    {
-        return;
-    }
-
-    m_isLoopCutting =
-        false;
-
-    BOX_LOG_INFO(
-        "LoopCut confirmed. Amount="
-        << m_loopCutAmount
-    );
 }
 
 void EdgeEditController::CancelLoopCut(Entity& entity)

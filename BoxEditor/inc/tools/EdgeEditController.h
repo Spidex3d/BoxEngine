@@ -51,7 +51,7 @@ public:
 	// ###################################################################################################
     void EdgeLoopCutMove(Entity& entity);
 
-    void ConfirmLoopCut();
+    
 
     void CancelLoopCut(Entity& entity);
 

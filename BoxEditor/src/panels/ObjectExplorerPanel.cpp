@@ -654,7 +654,7 @@ void ObjectExplorerPanel::LoopCutControls(Entity& entity, EdgeEditController& ed
             "Confirm",
             ImVec2(90.0f, 0.0f)))
         {
-            edgeEditController.ConfirmLoopCut();
+            edgeEditController.ConfirmLoopCut(entity);
         }
 
         ImGui::SameLine();
