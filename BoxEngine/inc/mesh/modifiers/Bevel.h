@@ -10,7 +10,6 @@ class Bevel
 
 public:
 
-    bool Use(MeshEditing& mesh, std::size_t edgeIndex, float width, int segments);
-    //bool Use(MeshEditing& mesh, std::size_t edgeIndex, float width, int segments, float profile);
+    bool Use(MeshEditing& mesh, std::size_t edgeIndex, float width, int segments, float profile);
 
 };

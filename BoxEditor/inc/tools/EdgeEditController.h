@@ -129,7 +129,7 @@ private: // loopcuts - facecut
     bool m_isLoopCutting = false;
 	// bevel variables
     std::size_t m_bevelEdge = InvalidEdge;
-    int m_bevelSegments = 1.0f;
+    int m_bevelSegments = 1;
     float m_bevelWidth = 0.1f;
 	float m_bevelProfile = 0.5f; // default profile value, can be adjusted as needed
     ImVec2 m_bevelStartMouse = ImVec2(0.0f, 0.0f);

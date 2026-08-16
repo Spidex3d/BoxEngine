@@ -1043,23 +1043,20 @@ bool Entity::UpdateLastLoopCut(float amount)
 // ############################################ Bevel ############################################################
 // ###############################################################################################################
 
-//void Entity::SetLastBevel(std::size_t edgeIndex, int Segments, float Width, float Profile,
-//    const MeshEditing& meshBeforeBevel)
-
-void Entity::SetLastBevel(std::size_t edgeIndex, float Width, int Segments,
+void Entity::SetLastBevel(std::size_t edgeIndex, float Width, int Segments, float Profile,
     const MeshEditing& meshBeforeBevel)
 {
     m_lastBevel.edgeIndex = edgeIndex;
     m_lastBevel.segments = Segments;
     m_lastBevel.width = Width;
-   // m_lastBevel.profile = Profile;
+    m_lastBevel.profile = Profile;
     m_lastBevelBaseMesh = meshBeforeBevel;
     m_hasLastBevel = true;
 	m_lastOperationType = LastOperationType::Bevel; // so we know the last operation was a bevel
 }
 
 //bool Entity::UpdateLastBevel(int segments, float width, float profile)
-bool Entity::UpdateLastBevel(float width, int segments)
+bool Entity::UpdateLastBevel(float width, int segments, float profile)
 {
     if (!m_hasLastBevel)
     {
@@ -1072,7 +1069,7 @@ bool Entity::UpdateLastBevel(float width, int segments)
     if (!bevel.Use(
         m_editableMesh,
         m_lastBevel.edgeIndex,
-        width, segments))
+        width, segments, profile))
         //segments,
         //profile))
     {
@@ -1102,10 +1099,11 @@ bool Entity::UpdateLastBevel(float width, int segments)
     }
     m_lastBevel.width =
         width;
-   /* m_lastBevel.segments =
+    m_lastBevel.segments =
         segments;
     m_lastBevel.profile =
-        profile;*/
+        profile;
+
 	return true;
 }
 

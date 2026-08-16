@@ -542,8 +542,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                     if (bevel.Use(
                         selectedEntity
                         ->GetEditableMesh(),
-                        selectedEdge,
-                        0.10f, 3))
+                        selectedEdge, 0.10f, 5, 0.5f))
                     {
                         MeshData renderMesh;
 

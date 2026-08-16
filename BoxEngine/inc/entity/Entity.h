@@ -157,11 +157,7 @@ public:
     // ##################################### last Bevel  #################################################
     // ###################################################################################################
 
-    /*void SetLastBevel(std::size_t edgeIndex, float Width, int Segments, float Profile,
-        const MeshEditing& meshBeforeBevel
-    );*/
-
-    void SetLastBevel(std::size_t edgeIndex, float Width, int Segments,
+	void SetLastBevel(std::size_t edgeIndex, float Width, int Segments, float Profile,
         const MeshEditing& meshBeforeBevel
     );
 
@@ -176,7 +172,7 @@ public:
     }
 
     //bool UpdateLastBevel(float width, int segments, float profile);
-    bool UpdateLastBevel(float width, int segments);
+    bool UpdateLastBevel(float width, int segments, float profile);
 
     
 

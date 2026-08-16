@@ -87,8 +87,9 @@ namespace
 bool Bevel::Use(
     MeshEditing& mesh,
     std::size_t edgeIndex,
-    float width, int segments)
+    float width, int segments, float profile)
 {
+   
     // -------------------------------------------------
     // Validate edge
     // -------------------------------------------------
@@ -106,7 +107,7 @@ bool Bevel::Use(
 
     width = glm::clamp(width, 0.001f, 0.49f);
 	segments = glm::clamp(segments, 1, 6);
-
+    profile = glm::clamp(profile, 0.01f, 0.99f);
 
     const EditEdge selectedEdge =
         mesh.GetEdge(edgeIndex);
@@ -740,11 +741,192 @@ bool Bevel::Use(
     bevelRowA.push_back(face1CutA);
 
     bevelRowB.push_back(face1CutB);
+    
+    const glm::vec3 originalA =
+        mesh.GetVertex(
+            edgeA
+        ).position;
+
+    const glm::vec3 originalB =
+        mesh.GetVertex(
+            edgeB
+        ).position;
+
+    const glm::vec3 straightMidA =
+        (startA + endA) * 0.5f;
+
+    const glm::vec3 straightMidB =
+        (startB + endB) * 0.5f;
+
+   /* const float profileStrength =
+        (profile - 0.5f) * 2.0f;*/
+
     // =========================================
     for (int segment = 1;
         segment < segments;
         ++segment)
     {
+        glm::vec3 controlA;
+        glm::vec3 controlB;
+
+        if (profile <= 0.5f)
+        {
+            const float amount =
+                profile * 2.0f;
+
+            controlA =
+                glm::mix(
+                    straightMidA,
+                    originalA,
+                    amount
+                );
+
+            controlB =
+                glm::mix(
+                    straightMidB,
+                    originalB,
+                    amount
+                );
+        }
+        else
+        {
+            const float amount =
+                (profile - 0.5f) * 2.0f;
+
+            const glm::vec3 awayA =
+                straightMidA +
+                (straightMidA - originalA);
+
+            const glm::vec3 awayB =
+                straightMidB +
+                (straightMidB - originalB);
+
+            controlA =
+                glm::mix(
+                    originalA,
+                    awayA,
+                    amount
+                );
+
+            controlB =
+                glm::mix(
+                    originalB,
+                    awayB,
+                    amount
+                );
+        }
+
+
+        const float t =
+            static_cast<float>(segment) /
+            static_cast<float>(segments);
+
+        const float oneMinusT =
+            1.0f - t;
+
+
+        // Quadratic Bezier curve.
+        const glm::vec3 positionA =
+            oneMinusT *
+            oneMinusT *
+            startA
+            +
+            2.0f *
+            oneMinusT *
+            t *
+            controlA
+            +
+            t *
+            t *
+            endA;
+
+        const glm::vec3 positionB =
+            oneMinusT *
+            oneMinusT *
+            startB
+            +
+            2.0f *
+            oneMinusT *
+            t *
+            controlB
+            +
+            t *
+            t *
+            endB;
+
+
+        const std::size_t newA =
+            mesh.AddVertex(
+                positionA
+            );
+
+        const std::size_t newB =
+            mesh.AddVertex(
+                positionB
+            );
+
+        bevelRowA.push_back(
+            newA
+        );
+
+        bevelRowB.push_back(
+            newB
+        );
+    }
+    /*for (int segment = 1; segment < segments; ++segment)
+    {
+
+        glm::vec3 controlA;
+        glm::vec3 controlB;
+
+        if (profile <= 0.5f)
+        {
+            const float amount =
+                profile * 2.0f;
+
+            controlA =
+                glm::mix(
+                    straightMidA,
+                    originalA,
+                    amount
+                );
+
+            controlB =
+                glm::mix(
+                    straightMidB,
+                    originalB,
+                    amount
+                );
+        }
+        else
+        {
+            const float amount =
+                (profile - 0.5f) * 2.0f;
+
+            const glm::vec3 awayA =
+                straightMidA +
+                (straightMidA - originalA);
+
+            const glm::vec3 awayB =
+                straightMidB +
+                (straightMidB - originalB);
+
+            controlA =
+                glm::mix(
+                    originalA,
+                    awayA,
+                    amount
+                );
+
+            controlB =
+                glm::mix(
+                    originalB,
+                    awayB,
+                    amount
+                );
+        }
+
+
         const float t =
             static_cast<float>(segment) /
             static_cast<float>(segments);
@@ -780,7 +962,7 @@ bool Bevel::Use(
         bevelRowB.push_back(
             newB
         );
-    }
+    }*/
     // =================================================
     bevelRowA.push_back(face0CutA);
 
