@@ -7,13 +7,6 @@
 #include <glm/glm.hpp>
 
 
-#include "mesh/modifiers/LoopCut.h"
-
-#include <mesh/MeshEditing.h>
-#include <miniBoxLog.h>
-
-#include <glm/glm.hpp>
-
 bool FaceCut::Use(MeshEditing& mesh, std::size_t edgeIndex, float amount)
 {
     if (edgeIndex >= mesh.GetEdgeCount())

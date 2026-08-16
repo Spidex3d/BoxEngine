@@ -137,23 +137,46 @@ public:
 	// ##################################################################################################
 	// ##################################### last LoopCut  ##########################################
 
-    void SetLastLoopCut(std::size_t edgeIndex, float amount,
-        const MeshEditing& meshBeforeLoopCut
-    );
+    void SetLastLoopCut(std::size_t edgeIndex, float amount, const MeshEditing& meshBeforeLoopCut);
 
     bool HasLastLoopCut() const
     {
         return m_hasLastLoopCut;
     }
 
-    const LoopCutModifierData&
-        GetLastLoopCut() const
+    const LoopCutModifierData& GetLastLoopCut() const
     {
         return m_lastLoopCut;
     }
 
     bool UpdateLastLoopCut(float amount);
 
+    // ##################################### End last loop cut  ##########################################
+    
+    // ###################################################################################################
+    // ##################################### last Bevel  #################################################
+    // ###################################################################################################
+
+    /*void SetLastBevel(std::size_t edgeIndex, float Width, int Segments, float Profile,
+        const MeshEditing& meshBeforeBevel
+    );*/
+
+    void SetLastBevel(std::size_t edgeIndex, float Width, int Segments,
+        const MeshEditing& meshBeforeBevel
+    );
+
+    bool HasLastBevel() const
+    {
+        return m_hasLastBevel;
+    }
+
+    const BevelModifierData& GetLastBevel() const
+    {
+        return m_lastBevel;
+    }
+
+    //bool UpdateLastBevel(float width, int segments, float profile);
+    bool UpdateLastBevel(float width, int segments);
 
     
 
@@ -163,8 +186,9 @@ public:
         return m_lastOperationType;
     }
 
-
+    // ########################################################################################
     // ##################################### Normals ##########################################
+	// ########### recalculate normals for the mesh, useful after editing operations. #########
     void RecalculateNormals();
 
     // ##################################### Modifiers ##########################################
@@ -294,6 +318,10 @@ private: // modifiers
         bool m_hasLastLoopCut = false;
         LoopCutModifierData m_lastLoopCut;
 		MeshEditing m_lastLoopCutBaseMesh;
+        // LastBevel
+        bool m_hasLastBevel = false;
+        BevelModifierData m_lastBevel;
+		MeshEditing m_lastBevelBaseMesh;
 
 		// This variable keeps track of the last operation performed on the mesh, which can be either extrusion or inset ect:
         LastOperationType m_lastOperationType = LastOperationType::None;

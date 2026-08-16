@@ -37,7 +37,7 @@ private:
     void ExtrudeControls(Entity& entity, FaceEditController& faceEditController);
     void InsetControls(Entity& entity, FaceEditController& faceEditController);
 	void LoopCutControls(Entity& entity, EdgeEditController& edgeEditController);
-
+	void BevelControls(Entity& entity, EdgeEditController& edgeEditController);
 
 
 

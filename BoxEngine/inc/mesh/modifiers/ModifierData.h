@@ -33,7 +33,8 @@ enum class LastOperationType
     None,
     Extrude,
     Inset,
-	LoopCut
+	LoopCut,
+    Bevel
 };
 
 
@@ -86,6 +87,18 @@ struct LoopCutModifierData
     std::size_t edgeIndex = 0;
 
     float cutAmount = 0.5f;
+};
+
+// ====================================================
+// Bevel
+// ====================================================
+
+struct BevelModifierData
+{
+    std::size_t edgeIndex = 0;
+    float width = 0.1f;
+    std::size_t segments = 1;
+    float profile = 0.5f;
 };
 
 // =====================================================

@@ -249,6 +249,11 @@ void ObjectExplorerPanel::DrawModifiersTab(BoxEngine& engine, Entity& entity, Fa
             LoopCutControls(entity, edgeEditController);
             break;
 		}
+        case LastOperationType::Bevel:
+        {
+            BevelControls(entity, edgeEditController);
+            break;
+		}
 
         case LastOperationType::None:
         default:
@@ -271,7 +276,9 @@ void ObjectExplorerPanel::Shutdown()
     }
 }
 
-
+// =================================================
+// Extrude Controls
+// =================================================
 void ObjectExplorerPanel::ExtrudeControls(Entity& entity, FaceEditController& faceEditController)
 {
 
@@ -514,7 +521,9 @@ void ObjectExplorerPanel::ExtrudeControls(Entity& entity, FaceEditController& fa
     }
 
 }
-
+// =================================================
+// Inset Controls
+// =================================================
 void ObjectExplorerPanel::InsetControls(Entity& entity, FaceEditController& faceEditController)
 {
     // =================================================
@@ -612,11 +621,14 @@ void ObjectExplorerPanel::InsetControls(Entity& entity, FaceEditController& face
     }
 
 }
+// =================================================
+// Loop Cut Controls
+// =================================================
 
 void ObjectExplorerPanel::LoopCutControls(Entity& entity, EdgeEditController& edgeEditController)
 {
     // =================================================
-   // ACTIVE INSET
+   // ACTIVE Loop CUT
    // =================================================
 
     if (edgeEditController.IsLoopCutting())
@@ -687,8 +699,7 @@ void ObjectExplorerPanel::LoopCutControls(Entity& entity, EdgeEditController& ed
             "Loop Cut"
         );
 
-        LoopCutModifierData lastLoopCut =
-            entity.GetLastLoopCut();
+        LoopCutModifierData lastLoopCut = entity.GetLastLoopCut();
 
         if (ImGui::DragFloat(
             "Loop Cut Amount",
@@ -704,5 +715,25 @@ void ObjectExplorerPanel::LoopCutControls(Entity& entity, EdgeEditController& ed
 
         return;
     }
+
+}
+// =================================================
+// Bevel Controls
+// =================================================
+void ObjectExplorerPanel::BevelControls(Entity& entity, EdgeEditController& edgeEditController)
+{
+    if (entity.HasLastBevel())
+    {
+        ImGui::SeparatorText("Last Operation");
+
+        ImGui::Text("Face Bevel");
+
+        ImGui::Spacing();
+
+       // float amount = edgeEditController.GetLoopBevel();
+    }
+
+
+    return;
 
 }

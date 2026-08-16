@@ -11,6 +11,7 @@
 #include <mesh\modifiers\FaceInset.h>
 #include <mesh\modifiers\LoopCut.h>
 #include <mesh\modifiers\FaceCut.h>
+#include <mesh\modifiers\Bevel.h>
 
 
 
@@ -511,9 +512,53 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 
             }
             ImGui::Separator();
-
+            // ############################################ Bevel Modifier ############################################
             if (ImGui::MenuItem("Bevel"))
             {
+                Entity* selectedEntity =
+                    engine.GetSelectedEntity();
+
+                if (!selectedEntity)
+                {
+                    BOX_LOG_WARNING(
+                        "Bevel: no entity selected"
+                    );
+                }
+                else if (
+                    !m_edgeEditController.HasSelectedEdge())
+                {
+                    BOX_LOG_WARNING(
+                        "Bevel: no edge selected"
+                    );
+                }
+                else
+                {
+                    const std::size_t selectedEdge =
+                        m_edgeEditController
+                        .GetSelectedEdge();
+
+                    Bevel bevel;
+
+                    if (bevel.Use(
+                        selectedEntity
+                        ->GetEditableMesh(),
+                        selectedEdge,
+                        0.10f, 3))
+                    {
+                        MeshData renderMesh;
+
+                        if (selectedEntity
+                            ->GetEditableMesh()
+                            .BuildRenderMesh(
+                                renderMesh))
+                        {
+                            selectedEntity
+                                ->CreateFromMeshData(
+                                    renderMesh
+                                );
+                        }
+                    }
+                }
             }
             if (ImGui::MenuItem("Solidify"))
             {

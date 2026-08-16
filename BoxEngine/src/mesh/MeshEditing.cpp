@@ -290,13 +290,6 @@ void MeshEditing::RebuildEdges()
 // ############################################ Mesh Editing add edge LoopCut #########################################
 // ####################################################################################################################
 
-std::size_t MeshEditing::AddEdge(std::size_t vertexA, std::size_t vertexB)
-{
-    return std::size_t();
-}
-
-
-
 
 bool MeshEditing::BuildRenderMesh(MeshData& meshData) const
 {

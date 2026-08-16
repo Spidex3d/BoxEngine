@@ -152,6 +152,7 @@
     <ClInclude Include="inc\entity\Entity.h" />
     <ClInclude Include="inc\mesh\MeshData.h" />
     <ClInclude Include="inc\mesh\MeshEditing.h" />
+    <ClInclude Include="inc\mesh\modifiers\Bevel.h" />
     <ClInclude Include="inc\mesh\modifiers\FaceCut.h" />
     <ClInclude Include="inc\mesh\modifiers\FaceExtrude.h" />
     <ClInclude Include="inc\mesh\modifiers\FaceInset.h" />
@@ -169,6 +170,7 @@
     <ClCompile Include="src\camera\Camera.cpp" />
     <ClCompile Include="src\entity\Entity.cpp" />
     <ClCompile Include="src\mesh\MeshEditing.cpp" />
+    <ClCompile Include="src\mesh\modifiers\Bevel.cpp" />
     <ClCompile Include="src\mesh\modifiers\FaceCut.cpp" />
     <ClCompile Include="src\mesh\modifiers\FaceExtrude.cpp" />
     <ClCompile Include="src\mesh\modifiers\FaceInset.cpp" />

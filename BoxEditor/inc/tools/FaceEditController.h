@@ -129,23 +129,18 @@ public:
 private:
     struct LogicalFace
     {
+        std::size_t editableFaceIndex =
+            static_cast<std::size_t>(-1);
 
-        std::size_t editableFaceIndex = static_cast<std::size_t>(-1);
+        // Logical MeshEditing vertices belonging
+        // to this face.
+        std::vector<std::size_t> vertexIndices;
 
-		// The positions of the four vertices of the face.
-        glm::vec3 positionA{ 0.0f };
-        glm::vec3 positionB{ 0.0f };
-        glm::vec3 positionC{ 0.0f };
-        glm::vec3 positionD{ 0.0f };
-
-        
-		// The indices of the vertices in the mesh that correspond to the face's vertices.
-        std::vector<std::size_t> verticesAtA;
-        std::vector<std::size_t> verticesAtB;
-		std::vector<std::size_t> verticesAtC;
-		std::vector<std::size_t> verticesAtD;
+        // Current positions of those vertices.
+        std::vector<glm::vec3> positions;
 
         glm::vec3 normal{ 0.0f };
+
         glm::vec3 centre{ 0.0f };
     };
 

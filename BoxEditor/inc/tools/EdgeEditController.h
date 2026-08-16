@@ -49,9 +49,7 @@ public:
 	// ###################################################################################################
 	// ########################################### LoopCut ###############################################
 	// ###################################################################################################
-    void EdgeLoopCutMove(Entity& entity);
-
-    
+    void EdgeLoopCutMove(Entity& entity);   
 
     void CancelLoopCut(Entity& entity);
 
@@ -86,6 +84,36 @@ public:
     
     void ConfirmLoopCut(Entity& entity);
 
+    // ###################################################################################################
+    // ########################################## Bevel ##################################################
+    // ###################################################################################################
+    void EdgeBevelMove(Entity& entity);
+
+    void CancelBevel(Entity& entity);
+
+    void BeginBevel(Entity& entity);
+
+    MeshEditing m_meshBeforeBevel;
+
+    bool IsBeveling() const
+    {
+        return m_isBeveling;
+    }
+
+    int GetBevelSegments() const
+    {
+        return m_bevelSegments;
+    }
+    float GetBevelProfile() const
+    {
+        return m_bevelProfile;
+    }
+    float GetBevelWidth() const
+    {
+        return m_bevelWidth;
+	}
+
+    void ConfirmBevel(Entity& entity);
 
 
 private: // loopcuts - facecut
@@ -99,7 +127,13 @@ private: // loopcuts - facecut
     float m_loopCutAmount = 0.5f;
     ImVec2 m_loopCutStartMouse = ImVec2(0.0f, 0.0f);
     bool m_isLoopCutting = false;
-
+	// bevel variables
+    std::size_t m_bevelEdge = InvalidEdge;
+    int m_bevelSegments = 1.0f;
+    float m_bevelWidth = 0.1f;
+	float m_bevelProfile = 0.5f; // default profile value, can be adjusted as needed
+    ImVec2 m_bevelStartMouse = ImVec2(0.0f, 0.0f);
+	bool m_isBeveling = false;
 	
 
 private:

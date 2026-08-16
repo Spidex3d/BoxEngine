@@ -13,6 +13,7 @@
 #include <mesh\modifiers\FaceExtrude.h>
 #include <mesh\modifiers\FaceInset.h>
 #include <mesh/modifiers/LoopCut.h>
+#include <mesh/modifiers/Bevel.h>
 
 Entity::Entity(
     int id,
@@ -1012,8 +1013,7 @@ bool Entity::UpdateLastLoopCut(float amount)
 
     MeshData renderMesh;
 
-    if (!m_editableMesh.BuildRenderMesh(
-        renderMesh))
+    if (!m_editableMesh.BuildRenderMesh(renderMesh))
     {
         BOX_LOG_ERROR(
             "UpdateLastLoopCut: "
@@ -1039,8 +1039,75 @@ bool Entity::UpdateLastLoopCut(float amount)
 
     return true;
 }
+// ###############################################################################################################
+// ############################################ Bevel ############################################################
+// ###############################################################################################################
 
+//void Entity::SetLastBevel(std::size_t edgeIndex, int Segments, float Width, float Profile,
+//    const MeshEditing& meshBeforeBevel)
 
+void Entity::SetLastBevel(std::size_t edgeIndex, float Width, int Segments,
+    const MeshEditing& meshBeforeBevel)
+{
+    m_lastBevel.edgeIndex = edgeIndex;
+    m_lastBevel.segments = Segments;
+    m_lastBevel.width = Width;
+   // m_lastBevel.profile = Profile;
+    m_lastBevelBaseMesh = meshBeforeBevel;
+    m_hasLastBevel = true;
+	m_lastOperationType = LastOperationType::Bevel; // so we know the last operation was a bevel
+}
+
+//bool Entity::UpdateLastBevel(int segments, float width, float profile)
+bool Entity::UpdateLastBevel(float width, int segments)
+{
+    if (!m_hasLastBevel)
+    {
+        return false;
+    }
+    // Restore the mesh to exactly how it was
+    // before the last bevel operation.
+    m_editableMesh = m_lastBevelBaseMesh;
+    Bevel bevel;
+    if (!bevel.Use(
+        m_editableMesh,
+        m_lastBevel.edgeIndex,
+        width, segments))
+        //segments,
+        //profile))
+    {
+        BOX_LOG_ERROR(
+            "UpdateLastBevel: "
+            "Bevel failed"
+        );
+        return false;
+    }
+    MeshData renderMesh;
+    if (!m_editableMesh.BuildRenderMesh(renderMesh))
+    {
+        BOX_LOG_ERROR(
+            "UpdateLastBevel: "
+            "Failed to build render mesh"
+        );
+        return false;
+    }
+    if (!CreateFromMeshData(
+        renderMesh))
+    {
+        BOX_LOG_ERROR(
+            "UpdateLastBevel: "
+            "Failed to update entity mesh"
+        );
+        return false;
+    }
+    m_lastBevel.width =
+        width;
+   /* m_lastBevel.segments =
+        segments;
+    m_lastBevel.profile =
+        profile;*/
+	return true;
+}
 
 
 // ###############################################################################################################

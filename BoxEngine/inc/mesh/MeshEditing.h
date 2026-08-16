@@ -53,10 +53,7 @@ public:
 
     void RebuildEdges();
 
-	// Add an edge between two vertices, if it doesn't already exist. Returns the index of the edge.
-	// loop cut will use this to add edges between vertices.
-    std::size_t AddEdge(std::size_t vertexA, std::size_t vertexB);
-
+	
     bool BuildRenderMesh(MeshData& meshData) const;
 
     const std::vector<EditVertex>& GetVertices() const;
