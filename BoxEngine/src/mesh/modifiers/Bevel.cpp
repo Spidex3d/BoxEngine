@@ -77,6 +77,153 @@ namespace
 
         return InvalidIndex;
     }
+	// fix endpoint face by inserting the bevel chain into the face containing the two endpoint cut vertices as one edge
+    bool InsertBevelChainIntoEndpointFace(
+        MeshEditing& mesh,
+        const std::vector<std::size_t>& chain)
+    {
+        if (chain.size() < 2)
+        {
+            return false;
+        }
+
+        const std::size_t chainStart =
+            chain.front();
+
+        const std::size_t chainEnd =
+            chain.back();
+
+
+        // Find the face containing the two
+        // endpoint cut vertices as one edge.
+        for (std::size_t faceIndex = 0;
+            faceIndex < mesh.GetFaceCount();
+            ++faceIndex)
+        {
+            const EditFace originalFace =
+                mesh.GetFace(faceIndex);
+
+            const std::size_t count =
+                originalFace.vertices.size();
+
+            if (count < 3)
+            {
+                continue;
+            }
+
+
+            for (std::size_t i = 0;
+                i < count;
+                ++i)
+            {
+                const std::size_t next =
+                    (i + 1) % count;
+
+                const std::size_t a =
+                    originalFace.vertices[i];
+
+                const std::size_t b =
+                    originalFace.vertices[next];
+
+
+                if (!SameEdge(
+                    a,
+                    b,
+                    chainStart,
+                    chainEnd))
+                {
+                    continue;
+                }
+
+
+                std::vector<std::size_t>
+                    newFaceVertices;
+
+                newFaceVertices.reserve(
+                    originalFace.vertices.size() +
+                    chain.size() - 2
+                );
+
+
+                // -----------------------------------------
+                // Rebuild the endpoint polygon.
+                // -----------------------------------------
+
+                for (std::size_t vertexPos = 0;
+                    vertexPos < count;
+                    ++vertexPos)
+                {
+                    const std::size_t vertex =
+                        originalFace.vertices[
+                            vertexPos
+                        ];
+
+                    newFaceVertices.push_back(
+                        vertex
+                    );
+
+
+                    /*
+                     * When we reach the original
+                     * short bevel edge, insert all
+                     * intermediate curved vertices.
+                     */
+                    if (vertexPos == i)
+                    {
+                        // Face follows chain start -> end.
+                        if (a == chainStart &&
+                            b == chainEnd)
+                        {
+                            for (std::size_t c = 1;
+                                c + 1 < chain.size();
+                                ++c)
+                            {
+                                newFaceVertices.push_back(
+                                    chain[c]
+                                );
+                            }
+                        }
+                        // Face follows chain end -> start.
+                        else
+                        {
+                            for (std::size_t c =
+                                chain.size() - 1;
+                                c > 1;
+                                --c)
+                            {
+                                newFaceVertices.push_back(
+                                    chain[c - 1]
+                                );
+                            }
+                        }
+                    }
+                }
+
+
+                if (!mesh.SetFace(
+                    faceIndex,
+                    newFaceVertices))
+                {
+                    BOX_LOG_ERROR(
+                        "Bevel: Failed to rebuild endpoint face"
+                    );
+
+                    return false;
+                }
+
+
+                return true;
+            }
+        }
+
+
+        BOX_LOG_ERROR(
+            "Bevel: Could not find endpoint face"
+        );
+
+        return false;
+    }
+
 }
 
 
@@ -695,22 +842,6 @@ bool Bevel::Use(
     // A1 -------- B1
     // =================================================
 
-   /* mesh.AddFace(
-        {
-            face0CutA,
-            face0CutB,
-            face1CutB,
-            face1CutA
-        }
-    );*/
-    /*mesh.AddFace(
-        {
-            face1CutA,
-            face1CutB,
-            face0CutB,
-            face0CutA
-        }
-    );*/
     //=========================================================================================
 	// ============================ New code for multiple segments ============================
     //=========================================================================================
@@ -758,13 +889,10 @@ bool Bevel::Use(
     const glm::vec3 straightMidB =
         (startB + endB) * 0.5f;
 
-   /* const float profileStrength =
-        (profile - 0.5f) * 2.0f;*/
+ 
 
     // =========================================
-    for (int segment = 1;
-        segment < segments;
-        ++segment)
+    for (int segment = 1; segment < segments; ++segment)
     {
         glm::vec3 controlA;
         glm::vec3 controlB;
@@ -873,104 +1001,56 @@ bool Bevel::Use(
             newB
         );
     }
-    /*for (int segment = 1; segment < segments; ++segment)
-    {
-
-        glm::vec3 controlA;
-        glm::vec3 controlB;
-
-        if (profile <= 0.5f)
-        {
-            const float amount =
-                profile * 2.0f;
-
-            controlA =
-                glm::mix(
-                    straightMidA,
-                    originalA,
-                    amount
-                );
-
-            controlB =
-                glm::mix(
-                    straightMidB,
-                    originalB,
-                    amount
-                );
-        }
-        else
-        {
-            const float amount =
-                (profile - 0.5f) * 2.0f;
-
-            const glm::vec3 awayA =
-                straightMidA +
-                (straightMidA - originalA);
-
-            const glm::vec3 awayB =
-                straightMidB +
-                (straightMidB - originalB);
-
-            controlA =
-                glm::mix(
-                    originalA,
-                    awayA,
-                    amount
-                );
-
-            controlB =
-                glm::mix(
-                    originalB,
-                    awayB,
-                    amount
-                );
-        }
-
-
-        const float t =
-            static_cast<float>(segment) /
-            static_cast<float>(segments);
-
-        const glm::vec3 positionA =
-            glm::mix(
-                startA,
-                endA,
-                t
-            );
-
-        const glm::vec3 positionB =
-            glm::mix(
-                startB,
-                endB,
-                t
-            );
-
-        const std::size_t newA =
-            mesh.AddVertex(
-                positionA
-            );
-
-        const std::size_t newB =
-            mesh.AddVertex(
-                positionB
-            );
-
-        bevelRowA.push_back(
-            newA
-        );
-
-        bevelRowB.push_back(
-            newB
-        );
-    }*/
+   
     // =================================================
     bevelRowA.push_back(face0CutA);
 
     bevelRowB.push_back(face0CutB);
+
     // =================================================
-    for (std::size_t row = 0;
-        row + 1 < bevelRowA.size();
-        ++row)
+// PHASE 5A
+// Close the bevel at both endpoints.
+//
+// Phase 4 created a short straight edge on
+// each endpoint face:
+//
+// face1CutA ---- face0CutA
+//
+// and
+//
+// face1CutB ---- face0CutB
+//
+// The curved bevel now contains intermediate
+// vertices between those points, so those
+// vertices must also become part of the
+// endpoint faces.
+// =================================================
+
+    if (!InsertBevelChainIntoEndpointFace(
+        mesh,
+        bevelRowA))
+    {
+        BOX_LOG_ERROR(
+            "Bevel: Failed to close endpoint A"
+        );
+
+        return false;
+    }
+
+
+    if (!InsertBevelChainIntoEndpointFace(
+        mesh,
+        bevelRowB))
+    {
+        BOX_LOG_ERROR(
+            "Bevel: Failed to close endpoint B"
+        );
+
+        return false;
+    }
+
+    // =================================================
+    for (std::size_t row = 0; row + 1 < bevelRowA.size(); ++row)
     {
         mesh.AddFace(
             {

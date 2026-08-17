@@ -482,17 +482,64 @@ bool MeshEditing::BuildRenderMesh(MeshData& meshData) const
             }
             else
             {
-                renderVertex.uv = glm::vec2(0.0f);
-            }
-            //else
-            //{
-            //    /*
-            //     * Temporary fallback for
-            //     * non-quad faces.
-            //     */
-            //    renderVertex.uv = glm::vec2(0.0f);
-            //}
+                //renderVertex.uv = glm::vec2(0.0f);
+                const glm::vec3& p =
+                    renderVertex.position;
 
+                /*
+                 * Temporary planar UV projection
+                 * for n-gons.
+                 *
+                 * Choose projection plane from the
+                 * dominant face-normal direction.
+                 */
+
+                const glm::vec3 absNormal =
+                    glm::abs(faceNormal);
+
+                if (absNormal.y >= absNormal.x &&
+                    absNormal.y >= absNormal.z)
+                {
+                    // Mostly horizontal face:
+                    // project X/Z.
+                    renderVertex.uv =
+                        glm::vec2(
+                            p.x + 0.5f,
+                            p.z + 0.5f
+                        );
+                }
+                else if (
+                    absNormal.x >= absNormal.y &&
+                    absNormal.x >= absNormal.z)
+                {
+                    // Mostly X-facing:
+                    // project Z/Y.
+                    renderVertex.uv =
+                        glm::vec2(
+                            p.z + 0.5f,
+                            p.y + 0.5f
+                        );
+                }
+                else
+                {
+                    // Mostly Z-facing:
+                    // project X/Y.
+                    renderVertex.uv =
+                        glm::vec2(
+                            p.x + 0.5f,
+                            p.y + 0.5f
+                        );
+                }
+
+
+
+
+
+
+
+
+            }
+           
             meshData.vertices.push_back(renderVertex);
         }
 
