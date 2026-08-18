@@ -102,7 +102,7 @@ void ObjectExplorerPanel::DrawObjectExplorer(BoxEngine& engine, FaceEditControll
         // ####################################################
         if (ImGui::BeginTabItem("Textures"))
         {
-            DrawTexturesTab(engine,*selected);
+            DrawTexturesTab(engine,*selected, faceEditController);
 
             ImGui::EndTabItem();
         }
@@ -164,7 +164,8 @@ void ObjectExplorerPanel::DrawObjectTab(BoxEngine& engine, Entity& entity)
 
 
 // Textures and Material tab.
-void ObjectExplorerPanel::DrawTexturesTab(BoxEngine& engine,Entity& entity)
+void ObjectExplorerPanel::DrawTexturesTab(BoxEngine& engine, Entity& entity,
+    FaceEditController& faceEditController)
 {
     
 
@@ -179,7 +180,7 @@ void ObjectExplorerPanel::DrawTexturesTab(BoxEngine& engine,Entity& entity)
     // Draw the material editor for the selected entity.
     if (m_materialEditor)
     {
-        m_materialEditor->Draw(engine, entity);
+        m_materialEditor->Draw(engine, entity, faceEditController);
     }
     else
     {

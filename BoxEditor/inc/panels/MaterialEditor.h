@@ -5,6 +5,7 @@ class BoxEngine;
 class Entity;
 class MaterialPreview;
 class Material;
+class FaceEditController;
 
 class MaterialEditor
 {
@@ -16,17 +17,18 @@ public:
 
     void Shutdown();
 
-    void Draw(BoxEngine& engine, Entity& entity);
+    void Draw(BoxEngine& engine, Entity& entity, FaceEditController& faceEditController);
 
 private:
 
+   
     void DrawMaterialProperties(BoxEngine& engine, Entity& entity);
 
     void DrawEmissionControls(class Material& material);
 
     void DrawTextureProperties(Entity& entity);
 
-    void DrawFaceMaterialProperties(BoxEngine& engine, Entity& entity);
+    void DrawFaceMaterialProperties(BoxEngine& engine, Entity& entity, FaceEditController& faceEditController);
 
     std::unique_ptr<MaterialPreview> m_preview;
 };

@@ -6,6 +6,7 @@
 #include <FileDialog.h>
 #include <rendering\Material.h>
 #include <preview/MaterialPreview.h>
+#include <tools/FaceEditController.h>
 #include <miniBoxLog.h>
 
 
@@ -43,7 +44,7 @@ bool MaterialEditor::Initialize()
 	return true;
 }
 
-void MaterialEditor::Draw(BoxEngine& engine, Entity& entity)
+void MaterialEditor::Draw(BoxEngine& engine, Entity& entity, FaceEditController& faceEditController)
 {
 
     if (ImGui::CollapsingHeader(
@@ -68,6 +69,10 @@ void MaterialEditor::Draw(BoxEngine& engine, Entity& entity)
                 "Preview unavailable."
             );
         }
+
+        DrawFaceMaterialProperties(engine, entity, faceEditController);
+
+        ImGui::Spacing();
 
         DrawMaterialProperties(engine, entity);
         DrawEmissionControls(material);
@@ -188,9 +193,156 @@ void MaterialEditor::DrawTextureProperties(Entity& entity)
 	// do this later, for now we will just draw the material properties and emission controls.
 }
 
-void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entity)
+void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entity, FaceEditController& faceEditController)
 {
+    if (!ImGui::CollapsingHeader(
+        "Face Material",
+        ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        return;
+    }
 
+
+    // -------------------------------------------------
+    // No face selected.
+    // -------------------------------------------------
+
+    if (!faceEditController.HasSelectedFace())
+    {
+        ImGui::TextDisabled(
+            "Select a face in Material Mode."
+        );
+
+        return;
+    }
+
+
+    const std::size_t faceIndex =
+        faceEditController.GetSelectedFace();
+
+
+    MeshEditing& mesh =
+        entity.GetEditableMesh();
+
+
+    if (faceIndex >=
+        mesh.GetFaceCount())
+    {
+        ImGui::TextDisabled(
+            "Invalid face selection."
+        );
+
+        return;
+    }
+
+
+    EditFace& face =
+        mesh.GetFace(faceIndex);
+
+
+    ImGui::Text(
+        "Selected Face: %zu",
+        faceIndex
+    );
+
+    ImGui::Text(
+        "Material Slot: %zu",
+        face.materialIndex
+    );
+
+
+    ImGui::Spacing();
+
+
+    // =================================================
+    // NEW MATERIAL SLOT
+    // =================================================
+
+    if (ImGui::Button(
+        "New Material"))
+    {
+        // Shader currently supports 8 slots.
+        if (entity.GetMaterialSlotCount() < 8)
+        {
+            Material newMaterial;
+
+            const std::size_t newSlot =
+                entity.AddMaterialSlot(
+                    newMaterial
+                );
+
+            // Immediately assign the new slot
+            // to the selected face.
+            entity.SetFaceMaterial(
+                faceIndex,
+                newSlot
+            );
+
+
+            // Material index is stored in
+            // MeshVertex, so rebuild render mesh.
+            MeshData renderMesh;
+
+            if (mesh.BuildRenderMesh(
+                renderMesh))
+            {
+                entity.CreateFromMeshData(
+                    renderMesh
+                );
+            }
+
+            BOX_LOG_INFO(
+                "Created material slot "
+                << newSlot
+                << " for face "
+                << faceIndex
+            );
+        }
+        else
+        {
+            BOX_LOG_WARNING(
+                "Maximum material slots reached"
+            );
+        }
+    }
+
+
+    ImGui::Spacing();
+
+
+    // =================================================
+    // CURRENT FACE MATERIAL
+    // =================================================
+
+    if (face.materialIndex >=
+        entity.GetMaterialSlotCount())
+    {
+        ImGui::TextDisabled(
+            "Face has invalid material slot."
+        );
+
+        return;
+    }
+
+
+    Material& material =
+        entity.GetMaterialSlot(
+            face.materialIndex
+        );
+
+
+    glm::vec4 color =
+        material.GetBaseColor();
+
+
+    if (ImGui::ColorEdit4(
+        "Face Color",
+        &color[0]))
+    {
+        material.SetBaseColor(
+            color
+        );
+    }
 
 }
 

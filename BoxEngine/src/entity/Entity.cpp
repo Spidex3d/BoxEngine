@@ -364,22 +364,7 @@ bool Entity::CreateCube()
 
     m_aabbMax = glm::vec3(0.5f);
 
-    // ############################# Material ############################
-    Material redMaterial;
-
-    redMaterial.SetBaseColor(
-        glm::vec4(
-            1.0f,
-            0.0f,
-            0.0f,
-            1.0f
-        )
-    );
-
-    const std::size_t redSlot = AddMaterialSlot(redMaterial);
-
-    SetFaceMaterial(0, redSlot);
-
+    
 
     return true;
 
