@@ -292,6 +292,7 @@ public:
     const glm::vec3& GetAABBMax() const;
 
     // ###################################### Material #####################################
+
     Material& GetMaterial()
     {
         return m_material;
@@ -301,6 +302,44 @@ public:
     {
         return m_material;
     }
+    // ##############
+    bool SetFaceMaterial(std::size_t faceIndex, std::size_t materialIndex);
+
+    std::size_t AddMaterialSlot(const Material& material);
+
+    std::size_t AddMaterialSlot()
+    {
+        m_materialSlots.emplace_back();
+
+        return
+            m_materialSlots.size() - 1;
+    }
+
+    std::size_t GetMaterialSlotCount() const
+    {
+        return m_materialSlots.size();
+    }
+
+    Material& GetMaterialSlot(
+        std::size_t index
+    )
+    {
+        return m_materialSlots.at(index);
+    }
+
+    const Material& GetMaterialSlot(
+        std::size_t index
+    ) const
+    {
+        return m_materialSlots.at(index);
+    }
+private:
+        // ###################################### Material #####################################
+        Material m_material; // Each entity has its own material, which can be modified independently.
+        std::vector<Material> m_materialSlots;
+
+       
+
 private: // modifiers
         // LastExtrude
         bool m_hasLastExtrude = false;
@@ -337,7 +376,7 @@ private:
         const glm::mat4& projection, const glm::vec3& cameraPosition
     );
 private:
-    Material m_material; // Each entity has its own material, which can be modified independently.
+	
 
 	// ###################################### Modifiers #####################################
     std::vector<ModifierData>m_modifiers;

@@ -4,6 +4,21 @@
 #include <memory>
 #include <string>
 
+//The roadmap
+//
+//I would build this in this order:
+//
+//Add materialIndex to EditFace.
+//Let an Entity own multiple Material slots.
+//Add a simple Assign Material to Selected Face function.
+//Get different colours on different faces.
+//Make Extrude / Inset / LoopCut / Bevel preserve face material assignments.
+//Extend rendering to proper per - material draw ranges.
+//Assign different textures to individual materials / faces.
+//Improve UV generation / unwrap.
+//Add texture painting.
+
+
 class Texture;
 
 class Material

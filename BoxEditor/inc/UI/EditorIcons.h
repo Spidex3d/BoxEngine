@@ -16,6 +16,7 @@ public:
     const EditorTexture& GetVertexIcon() const;
     const EditorTexture& GetEdgeIcon() const;
     const EditorTexture& GetFaceIcon() const;
+	const EditorTexture& GetMaterialIcon() const;
     // tools
 	const EditorTexture& GetMoveToolIcon() const;
 	const EditorTexture& GetScaleToolIcon() const;
@@ -28,6 +29,7 @@ private:
     EditorTexture m_vertexIcon;
     EditorTexture m_edgeIcon;
     EditorTexture m_faceIcon;
+	EditorTexture m_materialIcon;
     // tools
 	EditorTexture m_moveToolIcon;
 	EditorTexture m_ScaleToolIcon;

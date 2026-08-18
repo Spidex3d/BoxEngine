@@ -53,7 +53,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     ImGui::GetStyle().FrameBorderSize = 0.3f; // Add a border to the button
     ImGui::GetStyle().FrameRounding = 6.0f; // rounded corners of buttons
 
-    const char* items[] = { "Select Mode", ICON_FA_CUBE " Object Mode", ICON_FA_VECTOR_SQUARE " Edit Mode" };
+    const char* items[] = { "Select Mode", ICON_FA_CUBE " Object Mode", ICON_FA_VECTOR_SQUARE " Edit Mode", ICON_FA_IMAGE " Material Mode"};
     ImGui::SetNextItemWidth(100.0f);
     ImGui::SameLine();
     if (ImGui::Combo("##combo", &m_EditMode, items, IM_ARRAYSIZE(items))) {
@@ -66,6 +66,15 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             action = ViewportAction::SetEditMode;
             BOX_LOG_INFO("Edit mode selected");
         }
+        else if (m_EditMode == 3)
+        {
+            action = ViewportAction::SetMaterialMode;
+
+            // Material mode always works on faces.
+            m_editType = 2;
+
+            BOX_LOG_INFO("Material mode selected");
+        }
         else
         {
             if (m_transformTools.IsTransforming())
@@ -75,9 +84,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 
             action = ViewportAction::SetSelectMode;
 
-            BOX_LOG_INFO(
-                "Select mode selected"
-            );
+            BOX_LOG_INFO("Select mode selected");
         }
 
     }
@@ -88,6 +95,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     const EditorTexture& vertexIcon = icons.GetVertexIcon();
     const EditorTexture& edgeIcon = icons.GetEdgeIcon();
     const EditorTexture& faceIcon = icons.GetFaceIcon();
+	const EditorTexture& materialIcon = icons.GetMaterialIcon();
 
     // keep an int for current edit target: 0 = vertex, 1 = edge, 2 = face
     // If you already have a member, use that one instead.
@@ -104,6 +112,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
         ImGui::BeginDisabled();
     }
 
+    
     ImGui::PushID("editTargetIcons");
     // ########################
     if (ImGui::ImageButton("##VertexTool", reinterpret_cast<ImTextureID>(static_cast<intptr_t>(vertexIcon.id)),iconSize))
@@ -141,6 +150,8 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     }
     
     ImGui::SameLine();
+       
+
     // Face
     if (ImGui::ImageButton("##FaceTool", reinterpret_cast<ImTextureID>(static_cast<intptr_t>(faceIcon.id)), iconSize))
     {
@@ -166,8 +177,49 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     ImGui::PopID();
     ImGui::SameLine();
 
-	// ################################################## End Edit Buttons #########################################
-	
+	// ################################################## Matirial Buttons #########################################
+    // ################################################################
+// MATERIAL MODE - FACE ONLY
+// ################################################################
+
+    const bool materialModeActive = m_EditMode == 3;
+
+    ImGui::SameLine();
+
+    if (!materialModeActive)
+    {
+        ImGui::BeginDisabled();
+    }
+
+    ImGui::PushID("MaterialTargetIcons");
+
+    if (ImGui::ImageButton("##MaterialFaceTool",
+        reinterpret_cast<ImTextureID>(
+            static_cast<intptr_t>(
+                materialIcon.id)), iconSize))
+    {
+        // Material Mode uses normal Face selection.
+        m_editType = 2;
+    }
+
+    if (materialModeActive)
+    {
+        TransformToolBarColors();
+    }
+
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::SetTooltip("Material Face Select");
+    }
+
+    ImGui::PopID();
+
+    if (!materialModeActive)
+    {
+        ImGui::EndDisabled();
+    }
+
+
     // #############################################################################################################
 	// ############################################### Transform Tools buttons #####################################
     // #############################################################################################################
@@ -489,27 +541,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                     BOX_LOG_INFO("Loop Cut started");
                 }
                 
-                /*Entity* selectedEntity = engine.GetSelectedEntity();
-
-                const std::size_t selectedEdge = m_edgeEditController .GetSelectedEdge();
-
-                LoopCut loopCut;
-
-                if (loopCut.Use(selectedEntity->GetEditableMesh(), selectedEdge, 0.5f))
-                {
-                    MeshData renderMesh;
-
-                    if (selectedEntity
-                        ->GetEditableMesh()
-                        .BuildRenderMesh(renderMesh))
-                    {
-                        selectedEntity
-                            ->CreateFromMeshData(
-                                renderMesh
-                            );
-                    }
-                }*/
-
+               
             }
             ImGui::Separator();
             // ############################################ Bevel Modifier ############################################
@@ -637,13 +669,30 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             // ############################################################################################
             // #################################### Editing tools #########################################
             // ############################################################################################
-            const bool editModeActive = m_EditMode == 2;
-			const bool vertexModeActive = editModeActive && m_editType == 0;    // combine edit mode and vertex edit type
+   //         const bool editModeActive = m_EditMode == 2;
+			//const bool vertexModeActive = editModeActive && m_editType == 0;    // combine edit mode and vertex edit type
 
-			const bool edgeModeActive = editModeActive && m_editType == 1;      // combine edit mode and edge edit type
-			
-            const bool faceModeActive = editModeActive && m_editType == 2;      // combine edit mode and face edit type
-                       
+			//const bool edgeModeActive = editModeActive && m_editType == 1;      // combine edit mode and edge edit type
+			//
+   //         const bool faceModeActive = editModeActive && m_editType == 2;      // combine edit mode and face edit type
+   
+            const bool editModeActive = m_EditMode == 2;
+
+            const bool materialModeActive = m_EditMode == 3;
+
+            const bool vertexModeActive = editModeActive && m_editType == 0;
+
+            const bool edgeModeActive = editModeActive && m_editType == 1;
+
+            /*
+             * Face selection is active in:
+             *
+             * Edit Mode     + Face tool
+             * OR
+             * Material Mode
+             */
+            const bool faceModeActive = (editModeActive && m_editType == 2) || materialModeActive;          
+           
 
             // vertex
             m_vertexEditController.HandleInput(engine, viewportHovered, vertexModeActive, m_sceneViewportPos, m_sceneViewportSize);
@@ -655,6 +704,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 			m_faceEditController.HandleInput(engine, viewportHovered, faceModeActive, m_sceneViewportPos, m_sceneViewportSize);
 			m_faceEditController.DrawFace(engine, m_sceneViewportPos, m_sceneViewportSize, faceModeActive);
 
+            
             // ############################################################################################
             // ################################# Modifiers ############################################
             // ############################################################################################

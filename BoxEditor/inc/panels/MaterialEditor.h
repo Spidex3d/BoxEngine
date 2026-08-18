@@ -26,5 +26,7 @@ private:
 
     void DrawTextureProperties(Entity& entity);
 
+    void DrawFaceMaterialProperties(BoxEngine& engine, Entity& entity);
+
     std::unique_ptr<MaterialPreview> m_preview;
 };

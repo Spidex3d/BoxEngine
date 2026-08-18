@@ -7,7 +7,13 @@ in vec3 vWorldPosition;
 
 in vec2 vTexCoord;
 
+// Matirials
+uniform vec4 uMaterialColors[8];
+flat in int vMaterialIndex;
+
+
 out vec4 FragColor;
+
 
 uniform vec4 uBaseColor;
 uniform vec3 uLightDirection;
@@ -28,9 +34,11 @@ void main()
     
     vec3 normal = normalize(vNormal);
 
-    // new
+    // new material
+    vec4 materialColor = uMaterialColors[
+        min(vMaterialIndex, 7u)
+    ];
 
-    vec4 materialColor = uBaseColor;
 
     if (uUseBaseColorTexture)
     {

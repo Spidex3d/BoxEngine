@@ -19,6 +19,8 @@ struct EditEdge
 struct EditFace
 {
     std::vector<std::size_t> vertices;
+
+    std::size_t materialIndex = 0;
 };
 
 class MeshEditing

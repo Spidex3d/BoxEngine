@@ -21,6 +21,8 @@ Entity::Entity(
     : m_id(id),
     m_name(name)
 {
+    // Slot 0 is always the default material.
+    m_materialSlots.emplace_back();
 }
 
 Entity::~Entity()
@@ -109,77 +111,61 @@ bool Entity::CreateFromMeshData(const MeshData& meshData)
 
     if (!meshData.IsValid())
     {
-        BOX_LOG_ERROR("Entity::CreateFromMeshData received invalid mesh data");
+        BOX_LOG_ERROR(
+            "Entity::CreateFromMeshData received invalid mesh data"
+        );
 
         return false;
     }
-	
-    m_meshData = meshData;
 
-    std::vector<float> interleavedVertices;
+    m_meshData =
+        meshData;
 
-    interleavedVertices.reserve(
-        m_meshData.vertices.size() * 8
+    // ------------------------------------------------
+    // Create VAO
+    // ------------------------------------------------
+
+    glGenVertexArrays(
+        1,
+        &m_vao
     );
 
-    for (const MeshVertex& vertex :
-        m_meshData.vertices)
-    {
-        // Position
-        interleavedVertices.push_back(
-            vertex.position.x
-        );
+    glBindVertexArray(
+        m_vao
+    );
 
-        interleavedVertices.push_back(
-            vertex.position.y
-        );
+    // ------------------------------------------------
+    // Create VBO
+    // ------------------------------------------------
 
-        interleavedVertices.push_back(
-            vertex.position.z
-        );
+    glGenBuffers(
+        1,
+        &m_vbo
+    );
 
-        // Normal
-        interleavedVertices.push_back(
-            vertex.normal.x
-        );
-
-        interleavedVertices.push_back(
-            vertex.normal.y
-        );
-
-        interleavedVertices.push_back(
-            vertex.normal.z
-        );
-
-        // UV
-        interleavedVertices.push_back(
-            vertex.uv.x
-        );
-
-        interleavedVertices.push_back(
-            vertex.uv.y
-        );
-    }
-
-    glGenVertexArrays(1, &m_vao);
-
-    glGenBuffers(1, &m_vbo);
-
-    glBindVertexArray(m_vao);
-
-    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+    glBindBuffer(
+        GL_ARRAY_BUFFER,
+        m_vbo
+    );
 
     glBufferData(
         GL_ARRAY_BUFFER,
-        interleavedVertices.size() *
-        sizeof(float),
-        interleavedVertices.data(),
+        m_meshData.vertices.size() *
+        sizeof(MeshVertex),
+        m_meshData.vertices.data(),
         GL_STATIC_DRAW
     );
 
+    // ------------------------------------------------
+    // Create EBO
+    // ------------------------------------------------
+
     if (m_meshData.HasIndices())
     {
-        glGenBuffers(1, &m_ebo);
+        glGenBuffers(
+            1,
+            &m_ebo
+        );
 
         glBindBuffer(
             GL_ELEMENT_ARRAY_BUFFER,
@@ -194,7 +180,8 @@ bool Entity::CreateFromMeshData(const MeshData& meshData)
             GL_STATIC_DRAW
         );
 
-        m_useIndices = true;
+        m_useIndices =
+            true;
 
         m_indexCount =
             static_cast<GLsizei>(
@@ -203,74 +190,142 @@ bool Entity::CreateFromMeshData(const MeshData& meshData)
     }
     else
     {
-        m_useIndices = false;
-        m_indexCount = 0;
+        m_useIndices =
+            false;
+
+        m_indexCount =
+            0;
     }
 
-    constexpr GLsizei stride =
-        8 * sizeof(float);
+
+    // ------------------------------------------------
+    // Vertex layout
+    // ------------------------------------------------
+
 
     // Position
-    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(
+        0
+    );
 
     glVertexAttribPointer(
         0,
         3,
         GL_FLOAT,
         GL_FALSE,
-        stride,
-        reinterpret_cast<void*>(0)
+        sizeof(MeshVertex),
+        reinterpret_cast<void*>(
+            offsetof(
+                MeshVertex,
+                position
+            )
+            )
     );
 
+
     // Normal
-    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(
+        1
+    );
 
     glVertexAttribPointer(
         1,
         3,
         GL_FLOAT,
         GL_FALSE,
-        stride,
+        sizeof(MeshVertex),
         reinterpret_cast<void*>(
-            3 * sizeof(float)
+            offsetof(
+                MeshVertex,
+                normal
+            )
             )
     );
 
+
     // UV
-    glEnableVertexAttribArray(2);
+    glEnableVertexAttribArray(
+        2
+    );
 
     glVertexAttribPointer(
         2,
         2,
         GL_FLOAT,
         GL_FALSE,
-        stride,
+        sizeof(MeshVertex),
         reinterpret_cast<void*>(
-            6 * sizeof(float)
+            offsetof(
+                MeshVertex,
+                uv
+            )
             )
     );
 
-    glBindVertexArray(0);
+
+    // Material index
+    glEnableVertexAttribArray(
+        3
+    );
+
+    glVertexAttribIPointer(
+        3,
+        1,
+        GL_UNSIGNED_INT,
+        sizeof(MeshVertex),
+        reinterpret_cast<void*>(
+            offsetof(
+                MeshVertex,
+                materialIndex
+            )
+            )
+    );
+
+
+    // ------------------------------------------------
+    // Counts
+    // ------------------------------------------------
 
     m_vertexCount =
         static_cast<GLsizei>(
             m_meshData.vertices.size()
             );
 
+
+    glBindVertexArray(
+        0
+    );
+
+    glBindBuffer(
+        GL_ARRAY_BUFFER,
+        0
+    );
+
+
     const bool valid =
         m_vao != 0 &&
         m_vbo != 0 &&
-        m_vertexCount > 0;
+        m_vertexCount > 0 &&
+        (
+            !m_useIndices ||
+            (
+                m_ebo != 0 &&
+                m_indexCount > 0
+                )
+            );
+
 
     if (!valid)
     {
         BOX_LOG_ERROR("Entity::CreateFromMeshData failed");
 
         Destroy();
+
         return false;
     }
 
-    BOX_LOG_INFO("Created entity from imported mesh: "
+    BOX_LOG_INFO(
+        "Created entity from mesh data: "
         << m_name
         << " Vertices="
         << m_vertexCount
@@ -278,7 +333,9 @@ bool Entity::CreateFromMeshData(const MeshData& meshData)
         << m_indexCount
     );
 
+   
     return true;
+
 }
 
 
@@ -306,6 +363,23 @@ bool Entity::CreateCube()
     m_aabbMin = glm::vec3(-0.5f);
 
     m_aabbMax = glm::vec3(0.5f);
+
+    // ############################# Material ############################
+    Material redMaterial;
+
+    redMaterial.SetBaseColor(
+        glm::vec4(
+            1.0f,
+            0.0f,
+            0.0f,
+            1.0f
+        )
+    );
+
+    const std::size_t redSlot = AddMaterialSlot(redMaterial);
+
+    SetFaceMaterial(0, redSlot);
+
 
     return true;
 
@@ -568,63 +642,14 @@ bool Entity::IsFaceSelected(std::size_t index) const
 // ############################################# Mesh Data ##########################################
 bool Entity::CreateBuffersFromMeshData()
 {
+
     if (m_meshData.vertices.empty())
     {
-        BOX_LOG_ERROR("CreateBuffersFromMeshData: No vertices");
+        BOX_LOG_ERROR(
+            "CreateBuffersFromMeshData: No vertices"
+        );
 
         return false;
-    }
-
-    // ------------------------------------------------
-    // Build interleaved GPU vertex data
-    // Position XYZ
-    // Normal   XYZ
-    // UV       XY
-    // ------------------------------------------------
-
-    std::vector<float> interleavedVertices;
-
-    interleavedVertices.reserve(
-        m_meshData.vertices.size() * 8
-    );
-
-    for (const MeshVertex& vertex :
-        m_meshData.vertices)
-    {
-        // Position
-        interleavedVertices.push_back(
-            vertex.position.x
-        );
-
-        interleavedVertices.push_back(
-            vertex.position.y
-        );
-
-        interleavedVertices.push_back(
-            vertex.position.z
-        );
-
-        // Normal
-        interleavedVertices.push_back(
-            vertex.normal.x
-        );
-
-        interleavedVertices.push_back(
-            vertex.normal.y
-        );
-
-        interleavedVertices.push_back(
-            vertex.normal.z
-        );
-
-        // UV
-        interleavedVertices.push_back(
-            vertex.uv.x
-        );
-
-        interleavedVertices.push_back(
-            vertex.uv.y
-        );
     }
 
     // ------------------------------------------------
@@ -642,6 +667,7 @@ bool Entity::CreateBuffersFromMeshData()
 
     // ------------------------------------------------
     // Create VBO
+    // Upload MeshVertex structs directly.
     // ------------------------------------------------
 
     glGenBuffers(
@@ -656,14 +682,15 @@ bool Entity::CreateBuffersFromMeshData()
 
     glBufferData(
         GL_ARRAY_BUFFER,
-        interleavedVertices.size() *
-        sizeof(float),
-        interleavedVertices.data(),
+        m_meshData.vertices.size() *
+        sizeof(MeshVertex),
+        m_meshData.vertices.data(),
         GL_STATIC_DRAW
     );
 
+
     // ------------------------------------------------
-    // Create EBO if mesh is indexed
+    // Create EBO
     // ------------------------------------------------
 
     if (m_meshData.HasIndices())
@@ -686,7 +713,8 @@ bool Entity::CreateBuffersFromMeshData()
             GL_STATIC_DRAW
         );
 
-        m_useIndices = true;
+        m_useIndices =
+            true;
 
         m_indexCount =
             static_cast<GLsizei>(
@@ -695,59 +723,97 @@ bool Entity::CreateBuffersFromMeshData()
     }
     else
     {
-        m_useIndices = false;
-        m_indexCount = 0;
+        m_useIndices =
+            false;
+
+        m_indexCount =
+            0;
     }
+
 
     // ------------------------------------------------
     // Vertex layout
-    //
-    // XYZ XYZ UV
-    // 3 + 3 + 2 = 8 floats
     // ------------------------------------------------
 
-    constexpr GLsizei stride =
-        8 * sizeof(float);
 
     // Position
-    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(
+        0
+    );
 
     glVertexAttribPointer(
         0,
         3,
         GL_FLOAT,
         GL_FALSE,
-        stride,
-        reinterpret_cast<void*>(0)
+        sizeof(MeshVertex),
+        reinterpret_cast<void*>(
+            offsetof(
+                MeshVertex,
+                position
+            )
+            )
     );
 
+
     // Normal
-    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(
+        1
+    );
 
     glVertexAttribPointer(
         1,
         3,
         GL_FLOAT,
         GL_FALSE,
-        stride,
+        sizeof(MeshVertex),
         reinterpret_cast<void*>(
-            3 * sizeof(float)
+            offsetof(
+                MeshVertex,
+                normal
+            )
             )
     );
 
+
     // UV
-    glEnableVertexAttribArray(2);
+    glEnableVertexAttribArray(
+        2
+    );
 
     glVertexAttribPointer(
         2,
         2,
         GL_FLOAT,
         GL_FALSE,
-        stride,
+        sizeof(MeshVertex),
         reinterpret_cast<void*>(
-            6 * sizeof(float)
+            offsetof(
+                MeshVertex,
+                uv
+            )
             )
     );
+
+
+    // Material index
+    glEnableVertexAttribArray(
+        3
+    );
+
+    glVertexAttribIPointer(
+        3,
+        1,
+        GL_UNSIGNED_INT,
+        sizeof(MeshVertex),
+        reinterpret_cast<void*>(
+            offsetof(
+                MeshVertex,
+                materialIndex
+            )
+            )
+    );
+
 
     // ------------------------------------------------
     // Counts
@@ -758,20 +824,16 @@ bool Entity::CreateBuffersFromMeshData()
             m_meshData.vertices.size()
             );
 
-    // IMPORTANT:
-    // Do not unbind the EBO before the VAO.
-    // The EBO binding belongs to the VAO.
 
-    glBindVertexArray(0);
+    glBindVertexArray(
+        0
+    );
 
     glBindBuffer(
         GL_ARRAY_BUFFER,
         0
     );
 
-    // ------------------------------------------------
-    // Validation
-    // ------------------------------------------------
 
     const bool valid =
         m_vao != 0 &&
@@ -785,14 +847,18 @@ bool Entity::CreateBuffersFromMeshData()
                 )
             );
 
+
     if (!valid)
     {
-        BOX_LOG_ERROR("Entity::CreateBuffersFromMeshData failed");
+        BOX_LOG_ERROR(
+            "Entity::CreateBuffersFromMeshData failed"
+        );
 
         Destroy();
 
         return false;
     }
+
 
     BOX_LOG_INFO(
         "GPU mesh created: "
@@ -802,7 +868,9 @@ bool Entity::CreateBuffersFromMeshData()
         << " indices"
     );
 
+
     return true;
+
 }
 
 // #####################################################################################################################
@@ -1366,6 +1434,38 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
     );
 
     // --------------------------------
+    // Material Slot Color
+    // --------------------------------
+    constexpr std::size_t MaxMaterialSlots = 8;
+
+    for (std::size_t index = 0;
+        index < MaxMaterialSlots;
+        ++index)
+    {
+        glm::vec4 color(1.0f);
+
+        if (index <
+            m_materialSlots.size())
+        {
+            color =
+                m_materialSlots[index]
+                .GetBaseColor();
+        }
+
+        const std::string uniformName =
+            "uMaterialColors[" +
+            std::to_string(index) +
+            "]";
+
+        shader.setVec4(
+            uniformName.c_str(),
+            color
+        );
+    }
+
+
+
+    // --------------------------------
     // Base-colour texture
     // --------------------------------
 
@@ -1819,6 +1919,39 @@ glm::mat4 Entity::CalculateModelMatrix() const
 
     return model;
 }
+// ##################################################################################################
+// ########################################### Matirials ############################################
+// ##################################################################################################
+bool Entity::SetFaceMaterial(std::size_t faceIndex, std::size_t materialIndex)
+{
+    if (faceIndex >=
+        m_editableMesh.GetFaceCount())
+    {
+        return false;
+    }
+
+    if (materialIndex >=
+        m_materialSlots.size())
+    {
+        return false;
+    }
+
+    m_editableMesh.GetFace(faceIndex).materialIndex = materialIndex;
+
+    return true;
+}
+
+std::size_t Entity::AddMaterialSlot(const Material& material)
+{
+    m_materialSlots.push_back(material);
+
+    return m_materialSlots.size() - 1;
+}
+
+
+
+
+
 
 void Entity::Destroy()
 {

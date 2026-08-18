@@ -188,6 +188,12 @@ void MaterialEditor::DrawTextureProperties(Entity& entity)
 	// do this later, for now we will just draw the material properties and emission controls.
 }
 
+void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entity)
+{
+
+
+}
+
 void MaterialEditor::Shutdown()
 {
     

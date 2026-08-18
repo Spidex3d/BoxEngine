@@ -3,14 +3,13 @@
 
 bool EditorIcons::Initialize()
 {
-    m_vertexIcon =
-        LoadEditorTexture("assets/textures/icons/vertex.png");
+    m_vertexIcon = LoadEditorTexture("assets/textures/icons/vertex.png");
 
-    m_edgeIcon =
-        LoadEditorTexture("assets/textures/icons/edge.png");
+    m_edgeIcon = LoadEditorTexture("assets/textures/icons/edge.png");
 
-    m_faceIcon =
-        LoadEditorTexture("assets/textures/icons/face.png");
+    m_faceIcon = LoadEditorTexture("assets/textures/icons/face.png");
+
+    m_materialIcon = LoadEditorTexture("assets/textures/icons/material.png");
 
     // tools
 	m_moveToolIcon = LoadEditorTexture("assets/textures/icons/move.png");
@@ -24,6 +23,7 @@ bool EditorIcons::Initialize()
         m_vertexIcon.IsValid() &&
         m_edgeIcon.IsValid() &&
         m_faceIcon.IsValid() &&
+		m_materialIcon.IsValid() &&
 		m_moveToolIcon.IsValid() &&
 		m_ScaleToolIcon.IsValid() &&
 		m_RotateToolIcon.IsValid() &&
@@ -48,6 +48,7 @@ void EditorIcons::Shutdown()
     DestroyEditorTexture(m_vertexIcon);
     DestroyEditorTexture(m_edgeIcon);
     DestroyEditorTexture(m_faceIcon);
+    DestroyEditorTexture(m_materialIcon);
 	DestroyEditorTexture(m_moveToolIcon);
 }
 
@@ -64,6 +65,11 @@ const EditorTexture& EditorIcons::GetEdgeIcon() const
 const EditorTexture& EditorIcons::GetFaceIcon() const
 {
     return m_faceIcon;
+}
+
+const EditorTexture& EditorIcons::GetMaterialIcon() const
+{
+    return m_materialIcon;
 }
 
 const EditorTexture& EditorIcons::GetMoveToolIcon() const

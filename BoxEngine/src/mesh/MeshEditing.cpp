@@ -59,7 +59,10 @@ bool MeshEditing::CreateCube()
 
         {{3, 2, 6, 7}}, // Top
         {{4, 5, 1, 0}}  // Bottom
+
     };
+        m_faces[0].materialIndex = 1;
+       
 
     return
         m_vertices.size() == 8 &&
@@ -416,6 +419,8 @@ bool MeshEditing::BuildRenderMesh(MeshData& meshData) const
 
             renderVertex.normal =
                 faceNormal;
+            // ################### new for matirials ##########################
+            renderVertex.materialIndex = face.materialIndex;
 
             /*
              * Simple quad UV mapping.
@@ -482,9 +487,8 @@ bool MeshEditing::BuildRenderMesh(MeshData& meshData) const
             }
             else
             {
-                //renderVertex.uv = glm::vec2(0.0f);
-                const glm::vec3& p =
-                    renderVertex.position;
+               
+                const glm::vec3& p = renderVertex.position;
 
                 /*
                  * Temporary planar UV projection
