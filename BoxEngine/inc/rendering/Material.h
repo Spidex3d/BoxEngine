@@ -44,7 +44,7 @@ public:
     float GetEmissionStrength() const;
     void SetEmissionStrength(float strength);
 	
-    // Texture management
+    // Texture & Material management
     GLuint GetBaseColorTexture() const;
     
     bool UsesBaseColorTexture() const;
@@ -56,6 +56,20 @@ public:
     void SetBaseColorTexture(GLuint textureID, const std::string& sourcePath);
 
     const std::string& GetBaseColorTexturePath() const;
+
+    const std::string& GetName() const
+    {
+        return m_name;
+    }
+
+    void SetName(const std::string& name)
+    {
+        m_name = name;
+    }
+
+private:
+
+    std::string m_name = "Material";
 
 private:
     glm::vec4 m_baseColor = glm::vec4(1.0f);

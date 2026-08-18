@@ -266,17 +266,30 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
         {
             Material newMaterial;
 
+            const std::size_t nextSlot =
+                entity.GetMaterialSlotCount();
+
+            newMaterial.SetName(
+                "Material " +
+                std::to_string(nextSlot)
+            );
+
             const std::size_t newSlot =
                 entity.AddMaterialSlot(
                     newMaterial
                 );
 
-            // Immediately assign the new slot
-            // to the selected face.
-            entity.SetFaceMaterial(
-                faceIndex,
-                newSlot
-            );
+            //const std::size_t newSlot =
+            //    entity.AddMaterialSlot(
+            //        newMaterial
+            //    );
+
+            //// Immediately assign the new slot
+            //// to the selected face.
+            //entity.SetFaceMaterial(
+            //    faceIndex,
+            //    newSlot
+            //);
 
 
             // Material index is stored in
@@ -323,13 +336,85 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
 
         return;
     }
-
-
-    Material& material =
-        entity.GetMaterialSlot(
+    // #############################################
+    int selectedSlot =
+        static_cast<int>(
             face.materialIndex
+            );
+
+    std::vector<std::string>
+        slotNames;
+
+    for (std::size_t i = 0;
+        i < entity.GetMaterialSlotCount();
+        ++i)
+    {
+        slotNames.push_back(entity.GetMaterialSlot(i).GetName());
+    }
+
+
+    std::vector<const char*>
+        slotItems;
+
+    for (const std::string& name :
+        slotNames)
+    {
+        slotItems.push_back(
+            name.c_str()
+        );
+    }
+
+
+    if (ImGui::Combo(
+        "Material List",
+        &selectedSlot,
+        slotItems.data(),
+        static_cast<int>(
+            slotItems.size()
+            )))
+    {
+        entity.SetFaceMaterial(
+            faceIndex,
+            static_cast<std::size_t>(
+                selectedSlot
+                )
         );
 
+        MeshData renderMesh;
+
+        if (mesh.BuildRenderMesh(
+            renderMesh))
+        {
+            entity.CreateFromMeshData(
+                renderMesh
+            );
+        }
+    }
+
+
+
+    // #############################################
+
+    Material& material = entity.GetMaterialSlot(face.materialIndex);
+
+    char materialNameBuffer[128]{};
+
+    strncpy_s(
+        materialNameBuffer,
+        sizeof(materialNameBuffer),
+        material.GetName().c_str(),
+        _TRUNCATE
+    );
+
+    if (ImGui::InputText(
+        "Material ",
+        materialNameBuffer,
+        sizeof(materialNameBuffer)))
+    {
+        material.SetName(
+            materialNameBuffer
+        );
+    }
 
     glm::vec4 color =
         material.GetBaseColor();

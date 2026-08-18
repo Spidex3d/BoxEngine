@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <string>
 
 class BoxEngine;
 class Entity;
@@ -19,9 +20,9 @@ public:
 
     void Draw(BoxEngine& engine, Entity& entity, FaceEditController& faceEditController);
 
-private:
 
-   
+    
+
     void DrawMaterialProperties(BoxEngine& engine, Entity& entity);
 
     void DrawEmissionControls(class Material& material);

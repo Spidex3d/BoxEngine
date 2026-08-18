@@ -23,6 +23,8 @@ Entity::Entity(
 {
     // Slot 0 is always the default material.
     m_materialSlots.emplace_back();
+
+    m_materialSlots[0].SetName("Default");
 }
 
 Entity::~Entity()
