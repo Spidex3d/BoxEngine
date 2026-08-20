@@ -1,6 +1,7 @@
 #pragma once
 #include <filesystem>
 #include <string>
+#include <vector>
 #include <mesh/MeshData.h>
 
 // Export mbx files to a specified directory
@@ -8,9 +9,35 @@
 // version 0.1
 class Entity;
 
+constexpr int MBX_VERSION_MAJOR = 0;
+constexpr int MBX_VERSION_MINOR = 2;
+
+struct MBXMaterialData
+{
+	std::string name = "Material";
+
+	glm::vec4 baseColor = glm::vec4(1.0f);
+
+	float metallic = 0.0f;
+
+	float roughness = 0.5f;
+
+	float alpha = 1.0f;
+
+	glm::vec3 emissionColor = glm::vec3(0.0f);
+
+	float emissionStrength = 0.0f;
+
+	bool useBaseColorTexture = false;
+
+	std::filesystem::path baseColorTexturePath;
+};
 
 struct MBXImportData
 {
+	int versionMajor = 0;
+	int versionMinor = 0;
+
 	std::string objectName;
 
 	MeshData mesh;
@@ -26,11 +53,9 @@ struct MBXImportData
 	float emissionStrength = 0.0f;
 
 	std::filesystem::path baseColorTexturePath;
+
+	std::vector<MBXMaterialData>materials;
 };
-
-
-
-
 
 class mbxManager
 {
@@ -58,3 +83,4 @@ private:
 	static std::string MakeSafeName(const std::string& name);
 
 };
+

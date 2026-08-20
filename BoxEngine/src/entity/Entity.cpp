@@ -1410,20 +1410,13 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
         renderColor
     );
 
-    shader.SetUniformFloat(
-        "uMetallic",
-        m_material.GetMetallic()
-    );
-
-    shader.SetUniformFloat(
-        "uRoughness",
-        m_material.GetRoughness()
-    );
-
+    
     // --------------------------------
     // Material Slot Color
     // --------------------------------
-    constexpr std::size_t MaxMaterialSlots = 8;
+    constexpr std::size_t
+        MaxMaterialSlots = 8;
+
 
     for (std::size_t index = 0;
         index < MaxMaterialSlots;
@@ -1431,22 +1424,160 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
     {
         glm::vec4 color(1.0f);
 
-        if (index <
-            m_materialSlots.size())
-        {
-            color =
-                m_materialSlots[index]
-                .GetBaseColor();
-        }
+        GLuint textureID = 0;
 
-        const std::string uniformName =
+        float metallic = 0.0f;
+        float roughness = 0.5f;
+        // Emission
+        glm::vec3 emissionColor(0.0f);
+        float emissionStrength = 0.0f;
+
+        bool useTexture = false;
+
+
+        // --------------------------------
+        // Get material slot information.
+        // --------------------------------
+
+        if (index < m_materialSlots.size())
+        {
+            const Material& material =
+                m_materialSlots[index];
+
+            color =
+                material.GetBaseColor();
+
+            textureID =
+                material.GetBaseColorTexture();
+
+            useTexture =
+                material.UsesBaseColorTexture();
+
+            metallic =
+                material.GetMetallic();
+
+            roughness =
+                material.GetRoughness();
+
+            emissionColor =
+                material.GetEmissionColor();
+
+            emissionStrength =
+                material.GetEmissionStrength();
+        }
+		// Metallic
+        const std::string metallicUniform =
+            "uMaterialMetallic[" +
+            std::to_string(index) +
+            "]";
+
+        shader.SetUniformFloat(
+            metallicUniform.c_str(),
+            metallic
+        );
+
+		// Roughness
+        const std::string roughnessUniform =
+            "uMaterialRoughness[" +
+            std::to_string(index) +
+            "]";
+
+        shader.SetUniformFloat(
+            roughnessUniform.c_str(),
+            roughness
+        );
+		// Emission strength
+        const std::string
+            emissionColorUniform =
+            "uMaterialEmissionColor[" +
+            std::to_string(index) +
+            "]";
+
+        shader.setVec3(
+            emissionColorUniform.c_str(),
+            emissionColor
+        );
+
+        const std::string
+            emissionStrengthUniform =
+            "uMaterialEmissionStrength[" +
+            std::to_string(index) +
+            "]";
+
+        shader.SetUniformFloat(
+            emissionStrengthUniform.c_str(),
+            emissionStrength
+        );
+
+
+        // --------------------------------
+        // Material colour
+        // --------------------------------
+
+        const std::string colorUniform =
             "uMaterialColors[" +
             std::to_string(index) +
             "]";
 
+
         shader.setVec4(
-            uniformName.c_str(),
+            colorUniform.c_str(),
             color
+        );
+
+
+        // --------------------------------
+        // Does this slot use a texture?
+        // --------------------------------
+
+        const std::string useTextureUniform =
+            "uMaterialUsesTexture[" +
+            std::to_string(index) +
+            "]";
+
+
+        shader.SetUniformInt(
+            useTextureUniform.c_str(),
+            useTexture ? 1 : 0
+        );
+
+
+        // --------------------------------
+        // Tell sampler which texture unit
+        // belongs to this material.
+        // --------------------------------
+
+        const std::string textureUniform =
+            "uMaterialTextures[" +
+            std::to_string(index) +
+            "]";
+
+
+        shader.SetUniformInt(
+            textureUniform.c_str(),
+            static_cast<int>(index)
+        );
+
+
+        // --------------------------------
+        // Bind texture.
+        //
+        // Slot 0 -> GL_TEXTURE0
+        // Slot 1 -> GL_TEXTURE1
+        // etc.
+        // --------------------------------
+
+        glActiveTexture(
+            GL_TEXTURE0 +
+            static_cast<GLenum>(index)
+        );
+
+
+        glBindTexture(
+            GL_TEXTURE_2D,
+            useTexture
+            ? textureID
+            : 0
         );
     }
 
@@ -1455,34 +1586,7 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
     // --------------------------------
     // Base-colour texture
     // --------------------------------
-
-    const GLuint textureID =
-        m_material.GetBaseColorTexture();
-
-	// Check if the material uses a base color or has a texture
-    const bool useTexture =
-        m_material.UsesBaseColorTexture();
-
-    shader.SetUniformInt(
-        "uUseBaseColorTexture",
-        useTexture ? 1 : 0
-    );
-
-    shader.SetUniformInt(
-        "uBaseColorTexture",
-        0
-    );
-
-    glActiveTexture(
-        GL_TEXTURE0
-    );
-
-    glBindTexture(
-        GL_TEXTURE_2D,
-        useTexture ? textureID : 0
-    );
-
-    
+   
 
     // --------------------------------
     // Lighting
@@ -1505,7 +1609,26 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
     // Cube, sphere, or any other mesh
     DrawMesh();
 
-    glBindTexture(GL_TEXTURE_2D, 0);
+    //glBindTexture(GL_TEXTURE_2D, 0);
+
+    for (std::size_t index = 0;
+        index < MaxMaterialSlots;
+        ++index)
+    {
+        glActiveTexture(
+            GL_TEXTURE0 +
+            static_cast<GLenum>(index)
+        );
+
+        glBindTexture(
+            GL_TEXTURE_2D,
+            0
+        );
+    }
+
+
+    // Restore normal default texture unit.
+    glActiveTexture(GL_TEXTURE0);
 
 }
 

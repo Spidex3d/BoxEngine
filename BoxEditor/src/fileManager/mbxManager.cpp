@@ -11,9 +11,11 @@
 #include <algorithm>
 #include <vector>
 
+namespace fs = std::filesystem;
 // version 0.1
 
-namespace fs = std::filesystem;
+
+
 
 bool mbxManager::ExportMBX(const Entity& entity, const std::filesystem::path& mbxFilePath)
 {
@@ -382,6 +384,7 @@ bool mbxManager::ImportMBX(const std::filesystem::path& mbxFilePath, MBXImportDa
     );
 
     return outData.mesh.IsValid();
+
 }
 
 std::string mbxManager::BuildMBX(const Entity& entity, const std::string& copiedTextureName) const
@@ -395,12 +398,17 @@ std::string mbxManager::BuildMBX(const Entity& entity, const std::string& copied
 
     std::ostringstream output;
 
+    output << "# BoxEditor MBX\n"
+        << "version "
+        << MBX_VERSION_MAJOR
+        << ' '
+        << MBX_VERSION_MINOR
+        << "\n\n";
+
     output << std::fixed
         << std::setprecision(6);
 
-    output
-        << "# BoxEditor MBX 0.1\n"
-        << "# Single-object mesh file\n\n";
+    
 
     output
         << "o "
@@ -465,12 +473,25 @@ std::string mbxManager::BuildMBX(const Entity& entity, const std::string& copied
             const std::uint32_t c =
                 mesh.indices[index + 2] + 1;
 
+            const std::uint32_t materialIndex =
+                mesh.vertices[
+                    mesh.indices[index]
+                ].materialIndex;
+            
+
+            // we need to include the vertex.materialIndex = 2;
+			// f 1/1/1 2/2/2 3/3/3/ m 2 triangle 1
+			// f 1/1/1 3/3/3 4/4/4/ m 2 triangle 2 which makes a face with 4 vertices and 2 triangles
+            
             output
                 << "f "
                 << a << '/' << a << '/' << a << ' '
                 << b << '/' << b << '/' << b << ' '
                 << c << '/' << c << '/' << c
+                << " m "
+                << materialIndex
                 << '\n';
+            
         }
     }
     else
@@ -488,16 +509,104 @@ std::string mbxManager::BuildMBX(const Entity& entity, const std::string& copied
             const std::size_t c =
                 vertex + 3;
 
+            const std::uint32_t materialIndex =
+                mesh.vertices[vertex].materialIndex;
+
             output
                 << "f "
                 << a << '/' << a << '/' << a << ' '
                 << b << '/' << b << '/' << b << ' '
                 << c << '/' << c << '/' << c
+                << " m "
+                << materialIndex
                 << '\n';
         }
     }
 
     output
+        << "\nmaterials "
+        << entity.GetMaterialSlotCount()
+        << '\n';
+
+    for (std::size_t index = 0;
+        index < entity.GetMaterialSlotCount();
+        ++index)
+    {
+        const Material& material =
+            entity.GetMaterialSlot(index);
+
+        output
+            << "\nmaterial "
+            << index
+            << '\n';
+
+        output
+            << "name "
+            << MakeSafeName(
+                material.GetName()
+            )
+            << '\n';
+
+        const glm::vec4 baseColor =
+            material.GetBaseColor();
+
+        output
+            << "base_color "
+            << baseColor.r << ' '
+            << baseColor.g << ' '
+            << baseColor.b << ' '
+            << material.GetAlpha()
+            << '\n';
+
+        output
+            << "metallic "
+            << material.GetMetallic()
+            << '\n';
+
+        output
+            << "roughness "
+            << material.GetRoughness()
+            << '\n';
+
+        output
+            << "alpha "
+            << material.GetAlpha()
+            << '\n';
+
+        const glm::vec3 emissionColor =
+            material.GetEmissionColor();
+
+        output
+            << "emission_color "
+            << emissionColor.r << ' '
+            << emissionColor.g << ' '
+            << emissionColor.b
+            << '\n';
+
+        output
+            << "emission_strength "
+            << material.GetEmissionStrength()
+            << '\n';
+
+        if (material.UsesBaseColorTexture())
+        {
+            const std::filesystem::path texturePath =
+                material.GetBaseColorTexturePath();
+
+            if (!texturePath.empty())
+            {
+                output
+                    << "base_color_map "
+                    << texturePath.filename().string()
+                    << '\n';
+            }
+        }
+
+        output
+            << "endmaterial\n";
+    }
+
+    /*output
         << "\nmaterial\n";
 
     const glm::vec4 baseColor =
@@ -550,7 +659,8 @@ std::string mbxManager::BuildMBX(const Entity& entity, const std::string& copied
     }
 
     output
-        << "endmaterial\n";
+        << "endmaterial\n";*/
+
 
     return output.str();
 }

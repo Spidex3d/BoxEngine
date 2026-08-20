@@ -10,7 +10,15 @@ in vec2 vTexCoord;
 // Matirials
 uniform vec4 uMaterialColors[8];
 flat in int vMaterialIndex;
-
+// Matirials - Textures 
+uniform sampler2D uMaterialTextures[8];
+uniform int uMaterialUsesTexture[8];
+// Metallic & Roughness
+uniform float uMaterialMetallic[8];
+uniform float uMaterialRoughness[8];
+// Emission
+uniform vec3  uMaterialEmissionColor[8];
+uniform float uMaterialEmissionStrength[8];
 
 out vec4 FragColor;
 
@@ -34,16 +42,29 @@ void main()
     
     vec3 normal = normalize(vNormal);
 
-    // new material
-    vec4 materialColor = uMaterialColors[
-        min(vMaterialIndex, 7u)
-    ];
+    int materialIndex = clamp(vMaterialIndex, 0, 7);
 
+    vec4 materialColor = uMaterialColors[materialIndex];
 
-    if (uUseBaseColorTexture)
-    {
-    materialColor *= texture(uBaseColorTexture, vTexCoord);
-    }
+    if (uMaterialUsesTexture[materialIndex] != 0)
+     {
+        materialColor *=
+            texture(
+                uMaterialTextures[
+                    materialIndex
+                ],
+                vTexCoord
+            );
+        }
+        // Metallic & Roughness
+   float metallic = uMaterialMetallic[materialIndex];
+
+   float roughness = uMaterialRoughness[materialIndex];
+
+                // Emission
+    vec3 emissionColor = uMaterialEmissionColor[materialIndex];
+    float emissionStrength = uMaterialEmissionStrength[materialIndex];
+
 
     //vec3 lightDirection = normalize(uLightPosition - vFragPos);
     vec3 lightDirection = normalize(uLightPosition - vWorldPosition);
@@ -53,19 +74,21 @@ void main()
 
     vec3 reflectDirection = reflect(-lightDirection, normal);
 
-    float shininess = mix(128.0, 4.0, uRoughness);
+    //float shininess = mix(128.0, 4.0, uRoughness);
+    float shininess = mix(128.0, 4.0, roughness);
 
     float specularAmount = pow(max(dot(viewDirection, reflectDirection), 0.0), shininess);
 
     vec3 dielectricSpecular = vec3(0.04);
 
-   // vec3 specularColor = mix(dielectricSpecular, uBaseColor.rgb, uMetallic);
-    vec3 specularColor = mix(dielectricSpecular, materialColor.rgb, uMetallic);
+    //vec3 specularColor = mix(dielectricSpecular, materialColor.rgb, uMetallic);
+    vec3 specularColor = mix(dielectricSpecular, materialColor.rgb, metallic);
 
     //vec3 diffuse = uBaseColor.rgb * max(dot(normal, lightDirection), 0.0);
     vec3 diffuse = materialColor.rgb * max(dot(normal, lightDirection), 0.0);
 
-    diffuse *= 1.0 - uMetallic;
+   // diffuse *= 1.0 - uMetallic;
+    diffuse *= 1.0 - metallic;
 
     vec3 specular = specularColor * specularAmount;
     
@@ -74,14 +97,34 @@ void main()
     //vec3 ambient = uBaseColor.rgb * ambientStrength;
     vec3 ambient = materialColor.rgb * ambientStrength;
 
+    vec3 finalColor =
+    ambient +
+    diffuse +
+    specular;
 
-    vec3 finalColor = ambient + diffuse + specular;
+finalColor *=
+    uLightColor;
 
-    
 
-    finalColor *= uLightColor;
+// --------------------------------
+// Emission
+// --------------------------------
 
-    FragColor = vec4(finalColor, materialColor.a);
+vec3 emission =  emissionColor * emissionStrength;
+
+finalColor += emission;
+
+
+FragColor = vec4(finalColor, materialColor.a);
+
+
+
+//    vec3 finalColor = ambient + diffuse + specular;
+//        
+//
+//    finalColor *= uLightColor;
+//
+//    FragColor = vec4(finalColor, materialColor.a);
    
  
 }
