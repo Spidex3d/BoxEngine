@@ -118,12 +118,25 @@ void MaterialPreview::RenderPreview(
         return;
     }
 
-    /*
-     * Copy the currently edited material onto
-     * the private preview sphere.
-     */
+     // Old material path.
+ // Still needed for textures, metallic,
+ // roughness, etc.
     m_previewSphere->GetMaterial() =
         material;
+
+
+    // New material-slot colour path.
+    //
+    // Preview sphere vertices use materialIndex 0,
+    // so slot 0 must contain the material currently
+    // being previewed.
+    if (m_previewSphere
+        ->GetMaterialSlotCount() > 0)
+    {
+        m_previewSphere
+            ->GetMaterialSlot(0) =
+            material;
+    }
 
     m_framebuffer.Bind();
 

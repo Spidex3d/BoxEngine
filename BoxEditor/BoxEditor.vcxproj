@@ -142,7 +142,6 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\panels\HelpPanel.cpp" />
     <ClCompile Include="src\panels\MainMenuBar.cpp" />
-    <ClCompile Include="src\panels\MaterialBrowser.cpp" />
     <ClCompile Include="src\panels\MaterialEditor.cpp" />
     <ClCompile Include="src\panels\ObjectExplorerPanel.cpp" />
     <ClCompile Include="src\panels\SceneCollectionPanel.cpp" />
@@ -190,7 +189,6 @@
     <ClInclude Include="inc\tools\VertexEditController.h" />
     <ClInclude Include="inc\UI\EditorIcons.h" />
     <ClInclude Include="inc\UI\EditorTexture.h" />
-    <ClInclude Include="inc\panels\MaterialBrowser.h" />
     <ClInclude Include="vendor\imgui\imconfig.h" />
     <ClInclude Include="vendor\imgui\imgui.h" />
     <ClInclude Include="vendor\imgui\ImGuiAF.h" />

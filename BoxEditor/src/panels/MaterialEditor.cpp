@@ -7,12 +7,10 @@
 #include <rendering\Material.h>
 #include <preview/MaterialPreview.h>
 #include <tools/FaceEditController.h>
+
 #include <miniBoxLog.h>
 
-
-
 MaterialEditor::MaterialEditor() = default;
-
 
 MaterialEditor::~MaterialEditor()
 {
@@ -44,45 +42,106 @@ bool MaterialEditor::Initialize()
 	return true;
 }
 
-void MaterialEditor::Draw(BoxEngine& engine, Entity& entity, FaceEditController& faceEditController)
+void MaterialEditor::Draw(
+    BoxEngine& engine,
+    Entity& entity,
+    FaceEditController& faceEditController)
 {
-
-    if (ImGui::CollapsingHeader(
+    if (!ImGui::CollapsingHeader(
         "Material Editor"))
     {
-      
-        Material& material = entity.GetMaterial();
-
-        ImGui::Spacing();
-              
-
-        if (m_preview)
-        {
-            ImGui::TextUnformatted(
-                "Material Preview"
-            );
-            m_preview->Draw(material);
-        }
-        else
-        {
-            ImGui::TextDisabled(
-                "Preview unavailable."
-            );
-        }
-
-        DrawFaceMaterialProperties(engine, entity, faceEditController);
-
-        ImGui::Spacing();
-
-        DrawMaterialProperties(engine, entity);
-        DrawEmissionControls(material);
-        DrawTextureProperties(entity);
+        return;
     }
 
+
+    // -------------------------------------------------
+    // Choose which material the preview should show.
+    //
+    // Default to the old entity material if there
+    // isn't a valid selected face.
+    // -------------------------------------------------
+
+    Material* previewMaterial = &entity.GetMaterial();
+
+
+    if (faceEditController.HasSelectedFace())
+    {
+        const std::size_t faceIndex =
+            faceEditController.GetSelectedFace();
+
+        MeshEditing& mesh =
+            entity.GetEditableMesh();
+
+        if (faceIndex <
+            mesh.GetFaceCount())
+        {
+            const EditFace& face =
+                mesh.GetFace(faceIndex);
+
+            if (face.materialIndex <
+                entity.GetMaterialSlotCount())
+            {
+                previewMaterial =
+                    &entity.GetMaterialSlot(
+                        face.materialIndex
+                    );
+            }
+        }
+    }
+
+
+    ImGui::Spacing();
+
+
+    // -------------------------------------------------
+    // Material Preview
+    // -------------------------------------------------
+
+    if (m_preview)
+    {
+        ImGui::TextUnformatted(
+            "Material Preview"
+        );
+
+        m_preview->Draw(
+            *previewMaterial
+        );
+    }
+    else
+    {
+        ImGui::TextDisabled(
+            "Preview unavailable."
+        );
+    }
+
+
+    // -------------------------------------------------
+    // Face Material controls
+    // -------------------------------------------------
+
+    DrawFaceMaterialProperties(
+        engine,
+        entity,
+        faceEditController
+    );
+
+
+    ImGui::Spacing();
+
+
+    // Keep these old controls for now.
+    DrawMaterialProperties(
+        engine,
+        entity,
+        *previewMaterial
+    );
+
+    DrawEmissionControls(*previewMaterial);
+
+    DrawTextureProperties(engine, entity, *previewMaterial);
 }
 
-
-void MaterialEditor::DrawMaterialProperties(BoxEngine& engine, Entity& entity)
+void MaterialEditor::DrawMaterialProperties(BoxEngine& engine, Entity& entity, Material& material)
 {
 
     if (ImGui::CollapsingHeader("Material Properties")) // ImGuiTreeNodeFlags_DefaultOpen
@@ -94,9 +153,6 @@ void MaterialEditor::DrawMaterialProperties(BoxEngine& engine, Entity& entity)
         ImGui::Text("Textures for: %s", entity.GetName().c_str());
         ImGui::Spacing();
 
-        Material& material = entity.GetMaterial();
-
-      
         glm::vec4 baseColor = material.GetBaseColor();
         if (ImGui::ColorEdit4("Base Color", &baseColor[0]))
         {
@@ -137,9 +193,7 @@ void MaterialEditor::DrawMaterialProperties(BoxEngine& engine, Entity& entity)
 
                 if (textureID != 0)
                 {
-                    /*material.SetBaseColorTexture(
-                        textureID
-                    );*/ 
+                    
                     material.SetBaseColorTexture(
                         textureID,
                         path
@@ -188,7 +242,7 @@ void MaterialEditor::DrawEmissionControls(Material& material)
    
 }
 
-void MaterialEditor::DrawTextureProperties(Entity& entity)
+void MaterialEditor::DrawTextureProperties(BoxEngine& engine, Entity& entity, Material& material)
 {
 	// do this later, for now we will just draw the material properties and emission controls.
 }
@@ -202,7 +256,7 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
         return;
     }
 
-
+    
     // -------------------------------------------------
     // No face selected.
     // -------------------------------------------------
@@ -221,8 +275,7 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
         faceEditController.GetSelectedFace();
 
 
-    MeshEditing& mesh =
-        entity.GetEditableMesh();
+    MeshEditing& mesh = entity.GetEditableMesh();
 
 
     if (faceIndex >=
@@ -234,10 +287,19 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
 
         return;
     }
+    // push
+    //ImGui::PushID("MaterialButtons");
+
+    //ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // normal
+    //ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.16f, 0.70f, 0.16f, 1.0f)); // hover
+    //ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.10f, 0.50f, 0.10f, 1.0f)); // active/click
+    //ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.8f, 1.0f)); // active/click
+
+    //ImGui::GetStyle().FrameBorderSize = 0.3f; // Add a border to the button
+    //ImGui::GetStyle().FrameRounding = 6.0f; // rounded corners of buttons
 
 
-    EditFace& face =
-        mesh.GetFace(faceIndex);
+    EditFace& face = mesh.GetFace(faceIndex);
 
 
     ImGui::Text(
@@ -258,8 +320,7 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
     // NEW MATERIAL SLOT
     // =================================================
 
-    if (ImGui::Button(
-        "New Material"))
+    if (ImGui::Button("Add New Material"))
     {
         // Shader currently supports 8 slots.
         if (entity.GetMaterialSlotCount() < 8)
@@ -279,21 +340,23 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
                     newMaterial
                 );
 
-            //const std::size_t newSlot =
-            //    entity.AddMaterialSlot(
-            //        newMaterial
-            //    );
 
-            //// Immediately assign the new slot
-            //// to the selected face.
-            //entity.SetFaceMaterial(
-            //    faceIndex,
-            //    newSlot
-            //);
+            // -----------------------------------------
+            // Make the newly-created material
+            // the material for the selected face.
+            // -----------------------------------------
+
+            entity.SetFaceMaterial(
+                faceIndex,
+                newSlot
+            );
 
 
-            // Material index is stored in
-            // MeshVertex, so rebuild render mesh.
+            // -----------------------------------------
+            // Rebuild so the face gets its new
+            // materialIndex on the GPU.
+            // -----------------------------------------
+
             MeshData renderMesh;
 
             if (mesh.BuildRenderMesh(
@@ -303,6 +366,7 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
                     renderMesh
                 );
             }
+
 
             BOX_LOG_INFO(
                 "Created material slot "
@@ -318,7 +382,6 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
             );
         }
     }
-
 
     ImGui::Spacing();
 
@@ -337,13 +400,9 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
         return;
     }
     // #############################################
-    int selectedSlot =
-        static_cast<int>(
-            face.materialIndex
-            );
+    int selectedSlot = static_cast<int>(face.materialIndex);
 
-    std::vector<std::string>
-        slotNames;
+    std::vector<std::string>slotNames;
 
     for (std::size_t i = 0;
         i < entity.GetMaterialSlotCount();
@@ -353,48 +412,14 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
     }
 
 
-    std::vector<const char*>
-        slotItems;
+    std::vector<const char*>slotItems;
 
-    for (const std::string& name :
-        slotNames)
+    for (const std::string& name : slotNames)
     {
-        slotItems.push_back(
-            name.c_str()
-        );
+        slotItems.push_back(name.c_str());
     }
 
-
-    if (ImGui::Combo(
-        "Material List",
-        &selectedSlot,
-        slotItems.data(),
-        static_cast<int>(
-            slotItems.size()
-            )))
-    {
-        entity.SetFaceMaterial(
-            faceIndex,
-            static_cast<std::size_t>(
-                selectedSlot
-                )
-        );
-
-        MeshData renderMesh;
-
-        if (mesh.BuildRenderMesh(
-            renderMesh))
-        {
-            entity.CreateFromMeshData(
-                renderMesh
-            );
-        }
-    }
-
-
-
-    // #############################################
-
+	// ############################################ New Material Name Selection #######################
     Material& material = entity.GetMaterialSlot(face.materialIndex);
 
     char materialNameBuffer[128]{};
@@ -415,20 +440,45 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
             materialNameBuffer
         );
     }
+	// ############################################# New Material List Selection #######################
 
-    glm::vec4 color =
-        material.GetBaseColor();
-
-
-    if (ImGui::ColorEdit4(
-        "Face Color",
-        &color[0]))
+    if (ImGui::ListBox(
+        "Material List",
+        &selectedSlot,
+        slotItems.data(),
+        static_cast<int>(
+            slotItems.size()
+            ),
+        4))
     {
-        material.SetBaseColor(
-            color
+        entity.SetFaceMaterial(
+            faceIndex,
+            static_cast<std::size_t>(
+                selectedSlot
+                )
         );
+        MeshData renderMesh;
+        if (mesh.BuildRenderMesh(
+            renderMesh))
+        {
+            entity.CreateFromMeshData(
+                renderMesh
+            );
+        }
+	}
+
+	// ############################################# New Material Color Selection #######################
+    glm::vec4 color = material.GetBaseColor();
+
+
+    if (ImGui::ColorEdit4("Face Color", &color[0]))
+    {
+        material.SetBaseColor(color);
     }
 
+	
+   // ImGui::PopStyleColor(4); // pop all 4 pushed colors has to match top
+   
 }
 
 void MaterialEditor::Shutdown()

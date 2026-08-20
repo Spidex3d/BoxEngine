@@ -97,11 +97,11 @@ bool App::Init()
         return false;
     }
 
-    if (!m_materialBrowser.Initialize())
+    /*if (!m_materialBrowser.Initialize())
     {
         BOX_LOG_ERROR("Failed to initialize Material Browser");
         return false;
-    }
+    }*/
     
     m_helpPanel = std::make_unique<HelpPanel>();
    
@@ -172,9 +172,7 @@ int App::Run()
             m_helpPanel->Draw();
         }
 
-        // In your Draw() or Update() method
-        m_materialBrowser.Draw(*m_engine); // Pass your BoxEngine instance
-
+        
 		m_imgui->RenderImGui();
 
         // Engine update/render and ImGui will go here later.

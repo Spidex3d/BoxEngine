@@ -23,13 +23,18 @@ public:
 
     
 
-    void DrawMaterialProperties(BoxEngine& engine, Entity& entity);
+    void DrawMaterialProperties(BoxEngine& engine, Entity& entity, Material& material);
 
     void DrawEmissionControls(class Material& material);
 
-    void DrawTextureProperties(Entity& entity);
+    void DrawTextureProperties(BoxEngine& engine, Entity& entity, Material& material);
 
     void DrawFaceMaterialProperties(BoxEngine& engine, Entity& entity, FaceEditController& faceEditController);
 
+private:
+
     std::unique_ptr<MaterialPreview> m_preview;
+
+    
+
 };

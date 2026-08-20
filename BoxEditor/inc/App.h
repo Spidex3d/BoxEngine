@@ -5,7 +5,6 @@
 #include "panels\SceneViewportPanel.h"
 #include "panels\SceneCollectionPanel.h"
 #include "panels\ObjectExplorerPanel.h"
-#include "panels\MaterialBrowser.h"
 #include <UI/EditorIcons.h>
 #include <fileManager\mbxManager.h> 
 
@@ -50,7 +49,7 @@ private:
 
 	std::unique_ptr<mbxManager>m_mbxManager;
 
-	MaterialBrowser m_materialBrowser;
+	
 
 	std::unique_ptr<HelpPanel> m_helpPanel; // Help panel for ImGui
 
