@@ -7,6 +7,7 @@
 // Export mbx files to a specified directory
 // Import mbx files from a specified directory
 // version 0.1
+// version 0.2 21/08/2026
 class Entity;
 
 constexpr int MBX_VERSION_MAJOR = 0;
@@ -76,9 +77,11 @@ private:
 	// Build the mbx file then call ExportMBX to export it to a specified directory
 	std::string BuildMBX(const Entity& entity, const std::string& copiedTextureName) const;
 
-	bool CopyMaterialTextures(const Entity& entity, const std::filesystem::path& outputDirectory,
+	/*bool CopyMaterialTextures(const Entity& entity, const std::filesystem::path& outputDirectory,
 		std::string& outBaseColorTextureName
-	) const;
+	) const;*/
+
+	bool CopyMaterialTextures(const Entity& entity, const std::filesystem::path& outputDirectory) const;
 
 	static std::string MakeSafeName(const std::string& name);
 

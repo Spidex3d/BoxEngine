@@ -333,6 +333,11 @@ public:
     {
         return m_materialSlots.at(index);
     }
+
+    void ClearMaterialSlots()
+    {
+        m_materialSlots.clear();
+    }
 private:
         // ###################################### Material #####################################
         Material m_material; // Each entity has its own material, which can be modified independently.

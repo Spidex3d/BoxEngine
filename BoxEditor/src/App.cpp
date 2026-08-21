@@ -1,13 +1,12 @@
 #include "App.h"
 #include "BoxWindow.h"
-#include <miniBoxLog.h>
+
 #include <BoxEngine.h>
 #include <UI/EditorIcons.h>
 #include "camera/Camera.h"
 #include <EditorInput.h>
 #include <imgui/imgui.h>
 #include "panels/HelpPanel.h"
-
 
 #include <FileDialog.h>
 
@@ -96,12 +95,6 @@ bool App::Init()
         m_imgObjectExplorer.reset();
         return false;
     }
-
-    /*if (!m_materialBrowser.Initialize())
-    {
-        BOX_LOG_ERROR("Failed to initialize Material Browser");
-        return false;
-    }*/
     
     m_helpPanel = std::make_unique<HelpPanel>();
    
@@ -175,7 +168,7 @@ int App::Run()
         
 		m_imgui->RenderImGui();
 
-        // Engine update/render and ImGui will go here later.
+        
 
         glfwSwapBuffers(nativeWindow);
     }
@@ -183,7 +176,7 @@ int App::Run()
     Shutdown();
     return 0;
 }
-// handle the menu actions from the MainMenuBar
+// handle the top menu actions from the MainMenuBar
 void App::HandleMenuAction(
     MenuAction action,
     BoxEngine& engine)
@@ -219,78 +212,39 @@ void App::HandleMenuAction(
     {
         const std::string path = FileDialog::OpenMBX("mbx", "MBX Files\0*.mbx\0All Files\0*.*\0\0");
 
-        if (path.empty())
-        {
-            break;
-        }
-
         MBXImportData importedData;
 
-        if (!m_mbxManager->ImportMBX(
-            path,
-            importedData))
+        if (!m_mbxManager->ImportMBX(path, importedData))
         {
-            BOX_LOG_ERROR("Failed to import MBX: " << path);
+            BOX_LOG_ERROR(
+                "Failed to import MBX: "
+                << path
+            );
 
             break;
         }
 
-        Entity* importedEntity = engine.AddImportedMesh(
-                importedData.objectName, importedData.mesh );
+
+        Entity* importedEntity = engine.AddImportedMesh(importedData.objectName,
+                importedData.mesh);
 
         if (!importedEntity)
         {
             break;
         }
 
-        Material& material = importedEntity->GetMaterial();
 
-        material.SetBaseColor(importedData.baseColor);
+        RebuildImportedMaterialSlots(
+            engine,
+            *importedEntity,
+            importedData
+        );
 
-        material.SetMetallic(importedData.metallic);
-
-        material.SetRoughness(importedData.roughness);
-
-        material.SetAlpha(importedData.alpha);
-
-        material.SetEmissionColor(importedData.emissionColor);
-
-        material.SetEmissionStrength(importedData.emissionStrength);
-
-        if (!importedData
-            .baseColorTexturePath
-            .empty())
-        {
-            const std::string texturePath =
-                importedData
-                .baseColorTexturePath
-                .string();
-
-            const GLuint textureID =
-                engine.LoadTexture(
-                    texturePath
-                );
-
-            if (textureID != 0)
-            {
-                material.SetBaseColorTexture(
-                    textureID,
-                    texturePath
-                );
-
-                material.SetUseBaseColorTexture(
-                    true
-                );
-            }
-            else
-            {
-                BOX_LOG_WARNING("MBX loaded, but texture failed: " << texturePath);
-            }
-        }
 
         BOX_LOG_INFO("Imported MBX successfully: " << path);
 
         break;
+        
     }
 
 	// ############################################ Handle other menu actions #####################################################
@@ -350,80 +304,42 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
     {
     case ViewportAction::AddMbxModel:
     {
-        const std::string path = FileDialog::OpenMBX("mbx", "MBX Files\0*.mbx\0All Files\0*.*\0\0");
 
-        if (path.empty())
-        {
-            break;
-        }
+        const std::string path = FileDialog::OpenMBX("mbx", "MBX Files\0*.mbx\0All Files\0*.*\0\0");
 
         MBXImportData importedData;
 
-        if (!m_mbxManager->ImportMBX(
-            path,
-            importedData))
+        if (!m_mbxManager->ImportMBX(path, importedData))
         {
-            BOX_LOG_ERROR("Failed to import MBX: " << path);
+            BOX_LOG_ERROR(
+                "Failed to import MBX: "
+                << path
+            );
 
             break;
         }
 
-        Entity* importedEntity = engine.AddImportedMesh(
-            importedData.objectName, importedData.mesh);
+
+        Entity* importedEntity = engine.AddImportedMesh(importedData.objectName,
+            importedData.mesh);
 
         if (!importedEntity)
         {
             break;
         }
 
-        Material& material = importedEntity->GetMaterial();
 
-        material.SetBaseColor(importedData.baseColor);
+        RebuildImportedMaterialSlots(
+            engine,
+            *importedEntity,
+            importedData
+        );
 
-        material.SetMetallic(importedData.metallic);
-
-        material.SetRoughness(importedData.roughness);
-
-        material.SetAlpha(importedData.alpha);
-
-        material.SetEmissionColor(importedData.emissionColor);
-
-        material.SetEmissionStrength(importedData.emissionStrength);
-
-        if (!importedData
-            .baseColorTexturePath
-            .empty())
-        {
-            const std::string texturePath =
-                importedData
-                .baseColorTexturePath
-                .string();
-
-            const GLuint textureID =
-                engine.LoadTexture(
-                    texturePath
-                );
-
-            if (textureID != 0)
-            {
-                material.SetBaseColorTexture(
-                    textureID,
-                    texturePath
-                );
-
-                material.SetUseBaseColorTexture(
-                    true
-                );
-            }
-            else
-            {
-                BOX_LOG_WARNING("MBX loaded, but texture failed: " << texturePath);
-            }
-        }
 
         BOX_LOG_INFO("Imported MBX successfully: " << path);
 
         break;
+       
     }
 
 
@@ -533,8 +449,91 @@ void App::HandleInput()
             10.0f
         );
     }
-
    
+}
+// rebuild the material slots for the imported entity from the imported data
+void App::RebuildImportedMaterialSlots(BoxEngine& engine, Entity& entity, const MBXImportData& importedData)
+{
+    entity.ClearMaterialSlots();
+
+    for (const MBXMaterialData& importedMaterial :
+        importedData.materials)
+    {
+        Material material;
+
+        material.SetName(
+            importedMaterial.name
+        );
+
+        material.SetBaseColor(
+            importedMaterial.baseColor
+        );
+
+        material.SetMetallic(
+            importedMaterial.metallic
+        );
+
+        material.SetRoughness(
+            importedMaterial.roughness
+        );
+
+        material.SetAlpha(
+            importedMaterial.alpha
+        );
+
+        material.SetEmissionColor(
+            importedMaterial.emissionColor
+        );
+
+        material.SetEmissionStrength(
+            importedMaterial.emissionStrength
+        );
+
+
+        // -----------------------------------------
+        // Load optional base-colour texture.
+        // -----------------------------------------
+
+        if (importedMaterial.useBaseColorTexture &&
+            !importedMaterial
+            .baseColorTexturePath
+            .empty())
+        {
+            const std::string texturePath =
+                importedMaterial
+                .baseColorTexturePath
+                .string();
+
+            const GLuint textureID =
+                engine.LoadTexture(
+                    texturePath
+                );
+
+            if (textureID != 0)
+            {
+                material.SetBaseColorTexture(
+                    textureID,
+                    texturePath
+                );
+
+                material.SetUseBaseColorTexture(
+                    true
+                );
+            }
+            else
+            {
+                BOX_LOG_WARNING(
+                    "MBX material texture failed: "
+                    << texturePath
+                );
+            }
+        }
+
+
+        entity.AddMaterialSlot(
+            material
+        );
+    }
 }
 
 // shutdown the window and ImGui context and go to bed.

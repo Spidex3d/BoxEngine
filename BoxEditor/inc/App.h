@@ -7,6 +7,8 @@
 #include "panels\ObjectExplorerPanel.h"
 #include <UI/EditorIcons.h>
 #include <fileManager\mbxManager.h> 
+#include <miniBoxLog.h>
+
 
 class BoxWindow;
 class EditorIcons;
@@ -52,5 +54,11 @@ private:
 	
 
 	std::unique_ptr<HelpPanel> m_helpPanel; // Help panel for ImGui
+
+private:
+
+	void RebuildImportedMaterialSlots(BoxEngine& engine, Entity& entity,
+		const MBXImportData& importedData
+	);
 
 };

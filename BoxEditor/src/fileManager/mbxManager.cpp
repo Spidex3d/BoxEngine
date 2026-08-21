@@ -12,7 +12,8 @@
 #include <vector>
 
 namespace fs = std::filesystem;
-// version 0.1
+// version 0.1 07/07/2026
+// version 0.2 21/08/2026
 
 
 
@@ -56,12 +57,9 @@ bool mbxManager::ExportMBX(const Entity& entity, const std::filesystem::path& mb
         return false;
     }
 
-    std::string copiedTextureName;
-
     if (!CopyMaterialTextures(
         entity,
-        outputDirectory,
-        copiedTextureName))
+        outputDirectory))
     {
         return false;
     }
@@ -69,8 +67,9 @@ bool mbxManager::ExportMBX(const Entity& entity, const std::filesystem::path& mb
     const std::string mbxText =
         BuildMBX(
             entity,
-            copiedTextureName
+            ""
         );
+
 
     std::ofstream file(
         finalPath,
@@ -131,7 +130,11 @@ bool mbxManager::ImportMBX(const std::filesystem::path& mbxFilePath, MBXImportDa
 
     std::vector<std::uint32_t> normalIndices;
 
+    std::vector<std::uint32_t>materialIndices;
+
     bool readingMaterial = false;
+
+    std::size_t currentMaterialIndex = static_cast<std::size_t>(-1);
 
     std::string line;
 
@@ -147,6 +150,15 @@ bool mbxManager::ImportMBX(const std::filesystem::path& mbxFilePath, MBXImportDa
 
         std::string command;
         stream >> command;
+
+        if (command == "version")
+        {
+            stream
+                >> outData.versionMajor
+                >> outData.versionMinor;
+        }
+        
+
 
         if (command == "o")
         {
@@ -240,62 +252,149 @@ bool mbxManager::ImportMBX(const std::filesystem::path& mbxFilePath, MBXImportDa
 
                 normalIndices.push_back(normalIndex - 1);
             }
+			// Read optional material index for this face.
+            std::uint32_t materialIndex = 0;
+
+            std::string materialCommand;
+
+            if (stream >> materialCommand)
+            {
+                if (materialCommand == "m")
+                {
+                    stream >> materialIndex;
+                }
+            }
+
+
+            // One material index for each of
+            // the three triangle vertices.
+            materialIndices.push_back(
+                materialIndex
+            );
+
+            materialIndices.push_back(
+                materialIndex
+            );
+
+            materialIndices.push_back(
+                materialIndex
+            );
+
+
+
         }
+
+        else if (command == "materials")
+        {
+            std::size_t materialCount = 0;
+
+            stream >> materialCount;
+
+            outData.materials.reserve(
+                materialCount
+            );
+        }
+
         else if (command == "material")
         {
+            std::size_t materialIndex = 0;
+
+            // MBX 0.2:
+            //
+            // material 0
+            // material 1
+            // etc.
+            //
+            // If no index exists, materialIndex
+            // simply remains 0 for old files.
+
+            stream >> materialIndex;
+
+
+            if (outData.materials.size() <=
+                materialIndex)
+            {
+                outData.materials.resize(
+                    materialIndex + 1
+                );
+            }
+
+
+            currentMaterialIndex =
+                materialIndex;
+
             readingMaterial = true;
         }
         else if (command == "endmaterial")
         {
             readingMaterial = false;
+
+            currentMaterialIndex = static_cast<std::size_t>(-1);
         }
-        else if (readingMaterial)
-        {
-            if (command == "base_color")
+        else if (
+            readingMaterial &&
+            currentMaterialIndex <
+            outData.materials.size())
             {
-                stream
-                    >> outData.baseColor.r
-                    >> outData.baseColor.g
-                    >> outData.baseColor.b
-                    >> outData.baseColor.a;
-            }
-            else if (command == "metallic")
-            {
-                stream >> outData.metallic;
-            }
-            else if (command == "roughness")
-            {
-                stream >> outData.roughness;
-            }
-            else if (command == "alpha")
-            {
-                stream >> outData.alpha;
-            }
-            else if (
-                command == "emission_color")
-            {
-                stream
-                    >> outData.emissionColor.r
-                    >> outData.emissionColor.g
-                    >> outData.emissionColor.b;
-            }
-            else if (
-                command == "emission_strength")
-            {
-                stream
-                    >> outData.emissionStrength;
-            }
-            else if (
-                command == "base_color_map")
-            {
-                std::string textureFilename;
+                MBXMaterialData& material =
+                    outData.materials[
+                        currentMaterialIndex
+                    ];
 
-                stream >> textureFilename;
 
-                outData.baseColorTexturePath =
-                    mbxFilePath.parent_path() /
-                    textureFilename;
-            }
+                if (command == "name")
+                {
+                    stream >> material.name;
+                }
+                else if (command == "base_color")
+                {
+                    stream
+                        >> material.baseColor.r
+                        >> material.baseColor.g
+                        >> material.baseColor.b
+                        >> material.baseColor.a;
+                }
+                else if (command == "metallic")
+                {
+                    stream >>
+                        material.metallic;
+                }
+                else if (command == "roughness")
+                {
+                    stream >>
+                        material.roughness;
+                }
+                else if (command == "alpha")
+                {
+                    stream >>
+                        material.alpha;
+                }
+                else if (command == "emission_color")
+                {
+                    stream
+                        >> material.emissionColor.r
+                        >> material.emissionColor.g
+                        >> material.emissionColor.b;
+                }
+                else if (command == "emission_strength")
+                {
+                    stream >>
+                        material.emissionStrength;
+                }
+                else if (command == "base_color_map")
+                {
+                    std::string textureFilename;
+
+                    stream >>
+                        textureFilename;
+
+                    material.baseColorTexturePath =
+                        mbxFilePath.parent_path() /
+                        textureFilename;
+
+                    material.useBaseColorTexture =
+                        true;
+                }
         }
     }
 
@@ -309,9 +408,13 @@ bool mbxManager::ImportMBX(const std::filesystem::path& mbxFilePath, MBXImportDa
     if (positionIndices.size() !=
         textureIndices.size() ||
         positionIndices.size() !=
-        normalIndices.size())
+        normalIndices.size() ||
+        positionIndices.size() !=
+        materialIndices.size())
     {
-        BOX_LOG_ERROR("MBX face index arrays do not match");
+        BOX_LOG_ERROR(
+            "MBX face index arrays do not match"
+        );
 
         return false;
     }
@@ -331,6 +434,9 @@ bool mbxManager::ImportMBX(const std::filesystem::path& mbxFilePath, MBXImportDa
         index < positionIndices.size();
         ++index)
     {
+        
+
+
         const std::uint32_t positionIndex =
             positionIndices[index];
 
@@ -359,9 +465,9 @@ bool mbxManager::ImportMBX(const std::filesystem::path& mbxFilePath, MBXImportDa
 
         vertex.uv = textureCoordinates[uvIndex];
 
-        outData.mesh.vertices.push_back(
-            vertex
-        );
+        vertex.materialIndex = materialIndices[index];
+
+        outData.mesh.vertices.push_back(vertex);
     }
 
     /*
@@ -381,7 +487,34 @@ bool mbxManager::ImportMBX(const std::filesystem::path& mbxFilePath, MBXImportDa
         << outData.objectName
         << " Vertices="
         << outData.mesh.vertices.size()
+        << " Materials="
+        << outData.materials.size()
+        << " Version="
+        << outData.versionMajor
+        << "."
+        << outData.versionMinor
     );
+
+    for (std::size_t index = 0;
+        index < outData.materials.size();
+        ++index)
+    {
+        const MBXMaterialData& material =
+            outData.materials[index];
+
+        BOX_LOG_INFO(
+            "Imported Material "
+            << index
+            << ": "
+            << material.name
+            << " Metallic="
+            << material.metallic
+            << " Roughness="
+            << material.roughness
+            << " Texture="
+            << material.baseColorTexturePath.string()
+        );
+    }
 
     return outData.mesh.IsValid();
 
@@ -602,114 +735,121 @@ std::string mbxManager::BuildMBX(const Entity& entity, const std::string& copied
             }
         }
 
-        output
-            << "endmaterial\n";
+        output << "endmaterial\n";
     }
 
-    /*output
-        << "\nmaterial\n";
-
-    const glm::vec4 baseColor =
-        material.GetBaseColor();
-
-    output
-        << "base_color "
-        << baseColor.r << ' '
-        << baseColor.g << ' '
-        << baseColor.b << ' '
-        << material.GetAlpha()
-        << '\n';
-
-    output
-        << "metallic "
-        << material.GetMetallic()
-        << '\n';
-
-    output
-        << "roughness "
-        << material.GetRoughness()
-        << '\n';
-
-    output
-        << "alpha "
-        << material.GetAlpha()
-        << '\n';
-
-    const glm::vec3 emissionColor =
-        material.GetEmissionColor();
-
-    output
-        << "emission_color "
-        << emissionColor.r << ' '
-        << emissionColor.g << ' '
-        << emissionColor.b
-        << '\n';
-
-    output
-        << "emission_strength "
-        << material.GetEmissionStrength()
-        << '\n';
-
-    if (!copiedTextureName.empty())
-    {
-        output
-            << "base_color_map "
-            << copiedTextureName
-            << '\n';
-    }
-
-    output
-        << "endmaterial\n";*/
-
-
+    
     return output.str();
 }
 
-bool mbxManager::CopyMaterialTextures(const Entity& entity, const std::filesystem::path& outputDirectory, std::string& outBaseColorTextureName) const
+bool mbxManager::CopyMaterialTextures(const Entity& entity, const std::filesystem::path& outputDirectory) const
 {
-    outBaseColorTextureName.clear();
 
-    const Material& material = entity.GetMaterial();
-
-    if (!material.UsesBaseColorTexture())
+    for (std::size_t index = 0;
+        index < entity.GetMaterialSlotCount();
+        ++index)
     {
-        return true;
-    }
+        const Material& material =
+            entity.GetMaterialSlot(index);
 
-    const std::string& sourcePathString = material.GetBaseColorTexturePath();
 
-    if (sourcePathString.empty())
-    {
-        BOX_LOG_ERROR("Entity '" << entity.GetName() << "' has texture ID "
-            << material.GetBaseColorTexture() << " but no texture source path");
+        // -----------------------------------------
+        // This material does not use a texture.
+        // -----------------------------------------
 
-        return false;
-    }
-
-    const fs::path sourcePath = sourcePathString;
-
-    if (!fs::exists(sourcePath))
-    {
-        BOX_LOG_ERROR("Texture source does not exist: " << sourcePath.string());
-
-        return false;
-    }
-
-    const fs::path destinationPath = outputDirectory / sourcePath.filename();
-
-    std::error_code error;
-
-    /*
-     * Do not copy a file onto itself.
-     */
-    if (fs::weakly_canonical(sourcePath, error) != fs::weakly_canonical(destinationPath, error))
-    {
-        const fs::path absoluteSource = fs::absolute(sourcePath);
-
-        const fs::path absoluteDestination = fs::absolute(destinationPath);
-
-        if (absoluteSource != absoluteDestination)
+        if (!material.UsesBaseColorTexture())
         {
+            continue;
+        }
+
+
+        const std::string& sourcePathString =
+            material.GetBaseColorTexturePath();
+
+
+        if (sourcePathString.empty())
+        {
+            BOX_LOG_ERROR(
+                "Material '"
+                << material.GetName()
+                << "' on entity '"
+                << entity.GetName()
+                << "' has a texture ID but no source path"
+            );
+
+            return false;
+        }
+
+
+        const fs::path sourcePath =
+            sourcePathString;
+
+
+        if (!fs::exists(sourcePath))
+        {
+            BOX_LOG_ERROR(
+                "Texture source does not exist: "
+                << sourcePath.string()
+            );
+
+            return false;
+        }
+
+
+        const fs::path destinationPath =
+            outputDirectory /
+            sourcePath.filename();
+
+
+        std::error_code error;
+
+
+        // -----------------------------------------
+        // Avoid copying a file onto itself.
+        // -----------------------------------------
+
+        const fs::path absoluteSource =
+            fs::absolute(
+                sourcePath,
+                error
+            );
+
+        if (error)
+        {
+            BOX_LOG_ERROR(
+                "Failed to resolve texture source path: "
+                << error.message()
+            );
+
+            return false;
+        }
+
+
+        error.clear();
+
+
+        const fs::path absoluteDestination =
+            fs::absolute(
+                destinationPath,
+                error
+            );
+
+        if (error)
+        {
+            BOX_LOG_ERROR(
+                "Failed to resolve texture destination path: "
+                << error.message()
+            );
+
+            return false;
+        }
+
+
+        if (absoluteSource !=
+            absoluteDestination)
+        {
+            error.clear();
+
             fs::copy_file(
                 sourcePath,
                 destinationPath,
@@ -717,19 +857,33 @@ bool mbxManager::CopyMaterialTextures(const Entity& entity, const std::filesyste
                 error
             );
 
+
             if (error)
             {
-                BOX_LOG_ERROR("Failed to copy texture: " << error.message());
+                BOX_LOG_ERROR(
+                    "Failed to copy texture '"
+                    << material.GetName()
+                    << "': "
+                    << error.message()
+                );
 
                 return false;
             }
-        }
 
+
+            BOX_LOG_INFO(
+                "Copied material texture: "
+                << sourcePath.string()
+                << " -> "
+                << destinationPath.string()
+            );
+        }
     }
 
-    outBaseColorTextureName = destinationPath.filename().string();
 
     return true;
+
+    
 }
 
 std::string mbxManager::MakeSafeName(const std::string& name)
