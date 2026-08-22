@@ -138,7 +138,47 @@ bool MeshEditing::CreatePyramid()
 		m_faces.size() == 5;
 }
 
-
+bool MeshEditing::CreateSphere(int sectors, int stacks)
+{
+    Clear();
+    if (sectors < 3 || stacks < 2)
+    {
+        BOX_LOG_ERROR("MeshEditing::CreateSphere: Invalid sector or stack count");
+        return false;
+    }
+    const float radius = 0.5f;
+    for (int stack = 0; stack <= stacks; ++stack)
+    {
+        const float stackAngle = pi / 2.0f - stack * pi / stacks;
+        const float xy = radius * cos(stackAngle);
+        const float z = radius * sin(stackAngle);
+        for (int sector = 0; sector <= sectors; ++sector)
+        {
+            const float sectorAngle = sector * 2.0f * pi / sectors;
+            const float x = xy * cos(sectorAngle);
+            const float y = xy * sin(sectorAngle);
+            m_vertices.push_back({ {x, y, z} });
+        }
+    }
+    for (int stack = 0; stack < stacks; ++stack)
+    {
+        for (int sector = 0; sector < sectors; ++sector)
+        {
+            const std::size_t first = stack * (sectors + 1) + sector;
+            const std::size_t second = first + sectors + 1;
+            if (stack != 0)
+            {
+                m_faces.push_back({ {first, second, first + 1} });
+            }
+            if (stack != stacks - 1)
+            {
+                m_faces.push_back({ {first + 1, second, second + 1} });
+            }
+        }
+    }
+    RebuildEdges();
+    return true;
+}
 
 
 std::size_t MeshEditing::GetVertexCount() const

@@ -9,6 +9,7 @@
 #include <cmath>
 #include <glm/gtc/matrix_transform.hpp>
 #include <mesh/modifiers/LoopCut.h>
+#include <mesh/modifiers/Bevel.h>
 
 void EdgeEditController::HandleInput(
     BoxEngine& engine,
@@ -659,17 +660,206 @@ void EdgeEditController::ConfirmLoopCut(Entity& entity)
     BOX_LOG_INFO(
         "LoopCut confirmed. Amount="
         << m_loopCutAmount
-	);
+    );
 }
-
-   // ###################################################################################################
+    // ###################################################################################################
    // ########################################### Bevel #################################################
    // ###################################################################################################
 
 
+void EdgeEditController::EdgeBevelMove(Entity& entity)
+{
+}
+
+void EdgeEditController::CancelBevel(Entity& entity)
+{
+}
+
+void EdgeEditController::BeginBevel(Entity& entity)
+{
+    if (m_selectedEdge == InvalidEdge)
+    {
+        return;
+    }
+
+    MeshEditing& mesh =
+        entity.GetEditableMesh();
+
+    if (m_selectedEdge >=
+        mesh.GetEdgeCount())
+    {
+        return;
+    }
+
+
+    // Save topology before bevel.
+    m_meshBeforeBevel =
+        mesh;
+
+
+    // Remember selected edge.
+    m_bevelEdge =
+        m_selectedEdge;
+
+
+    // Default Bevel values.
+    m_bevelWidth =
+        0.10f;
+
+    m_bevelSegments =
+        5;
+
+    m_bevelProfile =
+        0.5f;
+
+
+    // Mouse starting position.
+    m_bevelStartMouse =
+        ImGui::GetMousePos();
+
+
+    m_isBeveling =
+        true;
+
+
+    BOX_LOG_INFO(
+        "Bevel started on edge "
+        << m_bevelEdge
+    );
+}
+
+void EdgeEditController::SetBevelValues(
+    Entity& entity,
+    float width,
+    int segments,
+    float profile)
+{
+    if (!m_isBeveling)
+    {
+        return;
+    }
+
+
+    // -----------------------------------------
+    // Clamp incoming values.
+    // -----------------------------------------
+
+    m_bevelWidth =
+        glm::clamp(
+            width,
+            0.001f,
+            1.0f
+        );
+
+    m_bevelSegments =
+        std::clamp(
+            segments,
+            1,
+            10
+        );
+
+    m_bevelProfile =
+        glm::clamp(
+            profile,
+            0.0f,
+            1.0f
+        );
+
+
+    // -----------------------------------------
+    // Restore mesh from BEFORE the bevel.
+    //
+    // This is critical. Otherwise every UI
+    // change would bevel an already-bevelled
+    // mesh.
+    // -----------------------------------------
+
+    MeshEditing& editableMesh =
+        entity.GetEditableMesh();
+
+    editableMesh =
+        m_meshBeforeBevel;
+
+
+    // -----------------------------------------
+    // Reapply bevel with new values.
+    // -----------------------------------------
+
+    Bevel bevel;
+
+    if (!bevel.Use(
+        editableMesh,
+        m_bevelEdge,
+        m_bevelWidth,
+        m_bevelSegments,
+        m_bevelProfile))
+    {
+        BOX_LOG_ERROR(
+            "Bevel: live update failed"
+        );
+
+        return;
+    }
+
+
+    // -----------------------------------------
+    // Rebuild render mesh.
+    // -----------------------------------------
+
+    MeshData renderMesh;
+
+    if (!editableMesh.BuildRenderMesh(
+        renderMesh))
+    {
+        BOX_LOG_ERROR(
+            "Bevel: failed to rebuild render mesh"
+        );
+
+        return;
+    }
+
+
+    if (!entity.CreateFromMeshData(
+        renderMesh))
+    {
+        BOX_LOG_ERROR(
+            "Bevel: failed to update GPU mesh"
+        );
+
+        return;
+    }
+}
 
 void EdgeEditController::ConfirmBevel(Entity& entity)
 {
+    if (!m_isBeveling)
+    {
+        return;
+    }
+
+
+    m_isBeveling =
+        false;
+
+
+    entity.SetLastBevel(
+        m_bevelEdge,
+        m_bevelWidth,
+        m_bevelSegments,
+        m_bevelProfile,
+        m_meshBeforeBevel
+    );
+
+
+    BOX_LOG_INFO(
+        "Bevel confirmed. "
+        << "Width="
+        << m_bevelWidth
+        << " Segments="
+        << m_bevelSegments
+        << " Profile="
+        << m_bevelProfile
+    );
 }
 
    // ###################################################################################################

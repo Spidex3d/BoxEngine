@@ -33,6 +33,12 @@ public:
     bool CreateCube();
     bool CreatePlane();
 	bool CreatePyramid();
+	bool CreateSphere(int sectors = 32, int stacks = 16);
+	bool CreateIcoSphere(int recursionLevel = 2);
+    bool CreateCylinder(int sectors = 32, int stacks = 16, float radius = 0.5f, float height = 1.0f);
+	bool CreateCone(int sectors = 32, float radius = 0.5f, float height = 1.0f);
+	bool CreateTorus(int sides = 16, int rings = 32, float innerRadius = 0.2f, float outerRadius = 0.5f);
+
 
     std::size_t GetVertexCount() const;
     std::size_t GetEdgeCount() const;
@@ -63,6 +69,8 @@ public:
     const std::vector<EditFace>& GetFaces() const;
 
 private:
+    float pi = 3.14159265358979323846f;
+
     std::vector<EditVertex> m_vertices;
     std::vector<EditEdge> m_edges;
     std::vector<EditFace> m_faces;

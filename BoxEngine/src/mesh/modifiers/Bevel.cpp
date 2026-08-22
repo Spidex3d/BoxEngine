@@ -253,7 +253,7 @@ bool Bevel::Use(
 
 
     width = glm::clamp(width, 0.001f, 0.49f);
-	segments = glm::clamp(segments, 1, 6);
+	segments = glm::clamp(segments, 1, 10);
     profile = glm::clamp(profile, 0.01f, 0.99f);
 
     const EditEdge selectedEdge =

@@ -429,6 +429,9 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             if (ImGui::MenuItem("Area")) {
                 //  if (m_actionCallback) m_actionCallback("AddLight:Area");
             }
+
+            // Environmental Atmosphere
+
             ImGui::EndMenu();
         }
 
@@ -557,6 +560,32 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                     );
                 }
                 else if (
+                    !m_edgeEditController
+                    .HasSelectedEdge())
+                {
+                    BOX_LOG_WARNING(
+                        "Bevel: no edge selected"
+                    );
+                }
+                else
+                {
+                    m_edgeEditController
+                        .BeginBevel(
+                            *selectedEntity
+                        );
+
+                    BOX_LOG_INFO(
+                        "Bevel started"
+                    );
+                }
+
+                /*Entity* selectedEntity = engine.GetSelectedEntity();
+
+                if (!selectedEntity)
+                {
+                    BOX_LOG_WARNING("Bevel: no edge selected");
+                }
+                else if (
                     !m_edgeEditController.HasSelectedEdge())
                 {
                     BOX_LOG_WARNING(
@@ -565,6 +594,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                 }
                 else
                 {
+
                     const std::size_t selectedEdge =
                         m_edgeEditController
                         .GetSelectedEdge();
@@ -589,13 +619,29 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                                 );
                         }
                     }
-                }
+                }*/
             }
             if (ImGui::MenuItem("Solidify"))
             {
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Scatter"))
+            {
+            }
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Terrain")) {
+
+            if (ImGui::MenuItem("Add Terrain"))
+            {
+
+            }
+            if (ImGui::MenuItem("Add Rock"))
+            {
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Add Rock Scatter"))
             {
             }
             ImGui::EndMenu();
@@ -611,6 +657,25 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             if (ImGui::MenuItem("Add Sky Sphere "))
             {
             }
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Environment Atmosphere")) {
+
+            if (ImGui::MenuItem("Fog")) {
+                //if (m_actionCallback) m_actionCallback("AddLight:Ambient");
+
+            }
+
+            if (ImGui::MenuItem("Mist")) {
+            }
+
+            if (ImGui::MenuItem("Other")) {
+                //  if (m_actionCallback) m_actionCallback("AddLight:Area");
+            }
+
+            // Environmental Atmosphere
+
             ImGui::EndMenu();
         }
 

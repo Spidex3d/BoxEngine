@@ -11,7 +11,7 @@
 #include <miniBoxLog.h>
 #include <tools/FaceEditController.h>
 #include <tools/EdgeEditController.h>
-
+#include <algorithm>
 
 ObjectExplorerPanel::ObjectExplorerPanel() = default;
 
@@ -222,6 +222,12 @@ void ObjectExplorerPanel::DrawModifiersTab(BoxEngine& engine, Entity& entity, Fa
     {
         LoopCutControls(entity, edgeEditController);
         return;
+	}
+	// Bevel
+    if (edgeEditController.IsBeveling())
+    {
+        BevelControls(entity, edgeEditController);
+		return;
 	}
 
 
@@ -723,18 +729,220 @@ void ObjectExplorerPanel::LoopCutControls(Entity& entity, EdgeEditController& ed
 // =================================================
 void ObjectExplorerPanel::BevelControls(Entity& entity, EdgeEditController& edgeEditController)
 {
-    if (entity.HasLastBevel())
-    {
-        ImGui::SeparatorText("Last Operation");
+    // =================================================
+   // ACTIVE BEVEL
+   // =================================================
 
-        ImGui::Text("Face Bevel");
+    if (edgeEditController.IsBeveling())
+    {
+        ImGui::SeparatorText(
+            "Active Operation"
+        );
+
+        ImGui::Text(
+            "Edge Bevel"
+        );
 
         ImGui::Spacing();
 
-       // float amount = edgeEditController.GetLoopBevel();
+
+        float width =
+            edgeEditController.GetBevelWidth();
+
+        int segments =
+            edgeEditController.GetBevelSegments();
+
+        float profile =
+            edgeEditController.GetBevelProfile();
+
+        bool changed = false;
+
+        // ---------------------------------------------
+        // Width
+        // ---------------------------------------------
+
+        if (ImGui::InputFloat(
+            "Bevel Width",
+            &width,
+            0.01f,
+            0.1f))
+        {
+            width =
+                std::clamp(
+                    width,
+                    0.035f,
+                    0.400f
+                );
+
+            changed = true;
+        }
+
+
+        // ---------------------------------------------
+        // Segments
+        // ---------------------------------------------
+
+        if (ImGui::InputInt(
+            "Bevel Segments",
+            &segments,
+            1,
+            1))
+        {
+            segments =
+                std::clamp(
+                    segments,
+                    1,
+                    10
+                );
+
+            changed = true;
+        }
+
+
+        // ---------------------------------------------
+        // Profile
+        // ---------------------------------------------
+
+        if (ImGui::InputFloat(
+            "Bevel Profile",
+            &profile,
+            0.01f,
+            0.1f))
+        {
+            profile =
+                std::clamp(
+                    profile,
+                    0.0f,
+                    1.0f
+                );
+
+            changed = true;
+        }
+
+
+        if (changed)
+        {
+            edgeEditController.SetBevelValues(
+                entity,
+                width,
+                segments,
+                profile
+            );
+        }
+
+        ImGui::Spacing();
+        // ---------------------------------------------
+        // Confirm / Cancel
+        // ---------------------------------------------
+
+        if (ImGui::Button(
+            "Confirm",
+            ImVec2(90.0f, 0.0f)))
+        {
+            edgeEditController
+                .ConfirmBevel(entity);
+        }
+
+
+        ImGui::SameLine();
+
+
+        if (ImGui::Button(
+            "Cancel",
+            ImVec2(90.0f, 0.0f)))
+        {
+            edgeEditController
+                .CancelBevel(entity);
+        }
+
+
+        return;
     }
 
 
-    return;
+    // =================================================
+    // LAST CONFIRMED BEVEL
+    // =================================================
+
+    if (entity.HasLastBevel())
+    {
+        ImGui::SeparatorText(
+            "Last Operation"
+        );
+
+        ImGui::Text(
+            "Edge Bevel"
+        );
+
+
+        BevelModifierData lastBevel =
+            entity.GetLastBevel();
+
+
+        bool changed = false;
+
+        if (ImGui::InputFloat(
+            "Bevel Width",
+            &lastBevel.width,
+            0.01f,
+            0.1f))
+        {
+            lastBevel.width =
+                std::clamp(
+                    lastBevel.width,
+                    0.035f,
+                    0.400f
+                );
+
+            changed = true;
+        }
+         
+
+        if (ImGui::InputInt(
+            "Bevel Segments",
+            &lastBevel.segments,
+            1,      // +/- changes by 1
+            1       // Ctrl +/- also changes by 1
+        ))
+        {
+            // Keep it within our allowed range.
+            lastBevel.segments =
+                std::clamp(
+                    lastBevel.segments,
+                    1,
+                    10
+                );
+
+            changed = true;
+        }
+
+        if (ImGui::InputFloat("Bevel Profile", &lastBevel.profile, 0.01f, 0.1f))
+        {
+            // Keep it within our allowed range.
+            lastBevel.profile =
+                std::clamp(
+                    lastBevel.profile,
+                    0.0f,
+                    1.0f);
+            changed = true;
+		}
+
+        if (changed)
+        {
+            entity.UpdateLastBevel(
+                lastBevel.width,
+                lastBevel.segments,
+                lastBevel.profile
+            );
+        }
+
+
+        return;
+    }
+
+
+    ImGui::TextDisabled(
+        "No bevel operation."
+    );
 
 }

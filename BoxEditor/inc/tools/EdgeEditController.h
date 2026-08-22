@@ -93,6 +93,8 @@ public:
 
     void BeginBevel(Entity& entity);
 
+    void SetBevelValues(Entity& entity, float width, int segments, float profile);
+
     MeshEditing m_meshBeforeBevel;
 
     bool IsBeveling() const

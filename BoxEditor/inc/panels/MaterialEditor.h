@@ -32,6 +32,7 @@ public:
     void DrawFaceMaterialProperties(BoxEngine& engine, Entity& entity, FaceEditController& faceEditController);
 
 private:
+    
 
     std::unique_ptr<MaterialPreview> m_preview;
 

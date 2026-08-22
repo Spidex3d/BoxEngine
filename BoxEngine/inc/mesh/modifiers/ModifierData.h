@@ -97,7 +97,8 @@ struct BevelModifierData
 {
     std::size_t edgeIndex = 0;
     float width = 0.1f;
-    std::size_t segments = 1;
+    //std::size_t segments = 1;
+    int segments = 1;
     float profile = 0.5f;
 };
 
