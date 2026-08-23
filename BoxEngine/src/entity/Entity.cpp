@@ -403,6 +403,33 @@ bool Entity::CreatePlane()
     return true;
 
 }
+
+bool Entity::CreateCylinder(int sectors, int stacks, float radius, float height)
+{
+    Destroy();
+    if (!m_editableMesh.CreateCylinder(sectors, stacks, radius, height))
+    {
+        return false;
+    }
+    m_baseEditableMesh = m_editableMesh;
+    if (!m_editableMesh.BuildRenderMesh(
+        m_meshData))
+    {
+        return false;
+    }
+    if (!CreateBuffersFromMeshData())
+    {
+        return false;
+    }
+    m_aabbMin = glm::vec3(-radius, -height * 0.5f, -radius);
+    m_aabbMax = glm::vec3(radius, height * 0.5f, radius);
+	return true;
+}
+
+
+
+
+
 bool Entity::CreatePyramid()
 {
     Destroy();

@@ -148,6 +148,79 @@ bool Grid::Create(
         3 * sizeof(float),
         reinterpret_cast<void*>(0)
     );
+    // Axis rendering color lines for X, Y, Z axes
+    // =====================================================
+    // Create X and Z axis lines
+    // =====================================================
+
+    std::vector<float> axisVertices =
+    {
+        // X axis
+        -extent, 0.002f, 0.0f,
+         extent, 0.002f, 0.0f,
+
+         // Z axis
+          0.0f, 0.002f, -extent,
+          0.0f, 0.002f,  extent
+    };
+
+    m_axisVertexCount =
+        static_cast<GLsizei>(
+            axisVertices.size() / 3
+            );
+
+
+    glGenVertexArrays(
+        1,
+        &m_axisVao
+    );
+
+    glGenBuffers(
+        1,
+        &m_axisVbo
+    );
+
+
+    glBindVertexArray(
+        m_axisVao
+    );
+
+    glBindBuffer(
+        GL_ARRAY_BUFFER,
+        m_axisVbo
+    );
+
+    glBufferData(
+        GL_ARRAY_BUFFER,
+        axisVertices.size() *
+        sizeof(float),
+        axisVertices.data(),
+        GL_STATIC_DRAW
+    );
+
+    glEnableVertexAttribArray(
+        0
+    );
+
+    glVertexAttribPointer(
+        0,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        3 * sizeof(float),
+        reinterpret_cast<void*>(0)
+    );
+
+    glBindBuffer(
+        GL_ARRAY_BUFFER,
+        0
+    );
+
+    glBindVertexArray(
+        0
+    );
+
+
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -217,6 +290,64 @@ void Grid::RenderPreview(
     );
 
     glBindVertexArray(0);
+
+    // =====================================================
+    // Draw coloured world axes
+    // =====================================================
+
+    glBindVertexArray(
+        m_axisVao
+    );
+
+
+    // -----------------------------------------------------
+    // X axis - Green
+    // -----------------------------------------------------
+
+    shader.setVec3(
+        "uGridColor",
+        glm::vec3(
+            0.0f,
+            1.0f,
+            0.0f
+        )
+    );
+
+    glDrawArrays(
+        GL_LINES,
+        0,
+        2
+    );
+
+
+    // -----------------------------------------------------
+    // Z axis - Blue
+    // -----------------------------------------------------
+
+    shader.setVec3(
+        "uGridColor",
+        glm::vec3(
+            0.0f,
+            0.3f,
+            1.0f
+        )
+    );
+
+    glDrawArrays(
+        GL_LINES,
+        2,
+        2
+    );
+
+
+    glBindVertexArray(
+        0
+    );
+
+
+
+
+
 }
 
 void Grid::Destroy()
@@ -242,4 +373,26 @@ void Grid::Destroy()
     }
 
     m_vertexCount = 0;
+
+    if (m_axisVbo != 0)
+    {
+        glDeleteBuffers(
+            1,
+            &m_axisVbo
+        );
+
+        m_axisVbo = 0;
+    }
+
+    if (m_axisVao != 0)
+    {
+        glDeleteVertexArrays(
+            1,
+            &m_axisVao
+        );
+
+        m_axisVao = 0;
+    }
+
+    m_axisVertexCount = 0;
 }

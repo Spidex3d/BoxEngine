@@ -703,14 +703,11 @@ void EdgeEditController::BeginBevel(Entity& entity)
 
 
     // Default Bevel values.
-    m_bevelWidth =
-        0.10f;
+    m_bevelWidth = 0.10f;
 
-    m_bevelSegments =
-        5;
+    m_bevelSegments = 1;
 
-    m_bevelProfile =
-        0.5f;
+    m_bevelProfile = 0.5f;
 
 
     // Mouse starting position.
@@ -718,14 +715,9 @@ void EdgeEditController::BeginBevel(Entity& entity)
         ImGui::GetMousePos();
 
 
-    m_isBeveling =
-        true;
+    m_isBeveling = true;
 
-
-    BOX_LOG_INFO(
-        "Bevel started on edge "
-        << m_bevelEdge
-    );
+    BOX_LOG_INFO("Bevel started on edge " << m_bevelEdge);
 }
 
 void EdgeEditController::SetBevelValues(

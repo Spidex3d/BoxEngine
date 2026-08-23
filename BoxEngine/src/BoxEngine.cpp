@@ -319,6 +319,38 @@ bool BoxEngine::AddEditableSphere(const glm::vec3& position)
     return true;
 }
 
+bool BoxEngine::AddEditableCylinder(const glm::vec3& position, int sectors, int stacks, float radius, float height)
+{
+    const int entityID = m_nextEntityID++;
+
+    const std::string entityName = "Cylinder " + std::to_string(entityID);
+
+    auto cylinder = std::make_unique<Entity>(entityID, entityName);
+
+    cylinder->GetMaterial().SetBaseColorTexture(m_defaultTexture.GetID(), m_defaultTexturePath);
+
+    Material& material = cylinder->GetMaterial();
+
+    material.SetUseBaseColorTexture(true);
+
+    cylinder->SetPosition(position);
+
+    if (!cylinder->CreateCylinder(sectors, stacks, radius, height))
+    {
+        BOX_LOG_ERROR("Failed to add editable cylinder");
+        return false;
+    }
+
+    m_entities.push_back(std::move(cylinder));
+
+    m_selectedEntityID = entityID; // set the newly added cylinder as the selected entity
+
+    BOX_LOG_INFO(
+        "Added editable cylinder. Entity count: " << m_entities.size());
+
+    return true;
+}
+
 bool BoxEngine::AddEditablePyramid(const glm::vec3& position)
 {
     const int entityID = m_nextEntityID++;

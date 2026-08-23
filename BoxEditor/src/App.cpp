@@ -361,6 +361,10 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
 	case ViewportAction::AddEditableSphere:
 		engine.AddEditableSphere(glm::vec3(0.0f));
 		break;
+    case ViewportAction::AddEditableCylinder:
+        engine.AddEditableCylinder(glm::vec3(0.0f, 0.0f, 0.0f)); 
+		break;
+
     case ViewportAction::AddEditablePyramid:
 
 		engine.AddEditablePyramid(glm::vec3(0.0f, -0.5f, 0.0f)); // -0.5f on y to sit it on the ground plane

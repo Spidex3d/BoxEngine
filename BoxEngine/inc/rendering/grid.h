@@ -48,6 +48,11 @@ class Grid
 
 
 private:
+    // Axis rendering color lines for X, Y, Z axes
+    GLuint m_axisVao = 0;
+    GLuint m_axisVbo = 0;
+
+    GLsizei m_axisVertexCount = 0;
 
 	GLuint m_vao = 0;
 	GLuint m_vbo = 0;
@@ -60,5 +65,6 @@ private:
 	glm::vec3 m_position{ 0.0f };
 
 	bool m_visible = true;
+	
 
 };

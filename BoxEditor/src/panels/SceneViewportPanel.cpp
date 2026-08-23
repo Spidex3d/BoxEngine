@@ -393,8 +393,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             }
 
             if (ImGui::MenuItem("Editable Cylinder")) {
-                // Request engine to add a plane via action callback
-                //if (m_actionCallback) m_actionCallback("AddEditableCylinder");
+				action = ViewportAction::AddEditableCylinder;
             }
 
             if (ImGui::MenuItem("Editable Cone")) {
@@ -579,47 +578,6 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                     );
                 }
 
-                /*Entity* selectedEntity = engine.GetSelectedEntity();
-
-                if (!selectedEntity)
-                {
-                    BOX_LOG_WARNING("Bevel: no edge selected");
-                }
-                else if (
-                    !m_edgeEditController.HasSelectedEdge())
-                {
-                    BOX_LOG_WARNING(
-                        "Bevel: no edge selected"
-                    );
-                }
-                else
-                {
-
-                    const std::size_t selectedEdge =
-                        m_edgeEditController
-                        .GetSelectedEdge();
-
-                    Bevel bevel;
-
-                    if (bevel.Use(
-                        selectedEntity
-                        ->GetEditableMesh(),
-                        selectedEdge, 0.10f, 5, 0.5f))
-                    {
-                        MeshData renderMesh;
-
-                        if (selectedEntity
-                            ->GetEditableMesh()
-                            .BuildRenderMesh(
-                                renderMesh))
-                        {
-                            selectedEntity
-                                ->CreateFromMeshData(
-                                    renderMesh
-                                );
-                        }
-                    }
-                }*/
             }
             if (ImGui::MenuItem("Solidify"))
             {
