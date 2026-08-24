@@ -16,6 +16,18 @@ class Shader;
 class Camera;
 class FaceExtrude;
 
+enum class EntityPrimitiveType
+{
+    None,
+
+    Cube,
+    Plane,
+    Sphere,
+    Cylinder,
+    Pyramid
+};
+
+
 class Entity
 {
 public:
@@ -35,10 +47,23 @@ public:
 	bool CreatePlane(); // Create a Plane from the new editable mesh data, buffers for rendering.
     bool CreateSphere(int sectors = 32, int stacks = 16);
 	// bool CreateIcoSphere(int recursionLevel = 2);
-	bool CreateCylinder(int sectors = 32, int stacks = 1, float radius = 0.5f, float height = 1.0f);
+	bool CreateCylinder(int sectors = 32, int stacks = 1, float radius = 0.5f, float height = 1.0f); // follow to boxengine.h line 65
 	// bool CreateCone(int sectors = 32, float radius = 0.5f, float height = 1.0f);
 	// bool CreateTorus(int sides = 16, int rings = 32, float innerRadius = 0.2f, float outerRadius = 0.5f);
      bool CreatePyramid();
+
+     // this just gives us a primitive type
+     EntityPrimitiveType GetPrimitiveType() const
+     {
+         return m_primitiveType;
+     }
+
+     void SetPrimitiveType(EntityPrimitiveType type)
+     {
+         m_primitiveType = type;
+     }
+
+
 
     void DrawMesh() const;
     // ##################################################################################
@@ -242,43 +267,67 @@ public:
         m_name = name;
     }
 
-    void SetPosition(const glm::vec3& position)
-    {
+    void SetPosition(const glm::vec3& position){
         m_position = position;
     }
 
-    void SetRotation(const glm::vec3& rotation)
-    {
+    void SetRotation(const glm::vec3& rotation) {
         m_rotation = rotation;
     }
 
-    void SetScale(const glm::vec3& scale)
-    {
+    void SetScale(const glm::vec3& scale) {
         m_scale = scale;
     }
 
-    const glm::vec3& GetPosition() const
-    {
+    const glm::vec3& GetPosition() const  {
         return m_position;
     }
 
-    const glm::vec3& GetRotation() const
-    {
+    const glm::vec3& GetRotation() const  {
         return m_rotation;
     }
 
-    const glm::vec3& GetScale() const
-    {
+    const glm::vec3& GetScale() const  {
         return m_scale;
     }
+	// #####################################################################################
+	// ###################################### Cylinder #####################################
+	// #####################################################################################
+    void SetCylinderSectors(int sectors) {
+        m_cylinderSectors = sectors;   
+	}
+    void SetCylinderStacks(int stacks) {
+        m_cylinderStacks = stacks;
+    }
+    void SetCylinderRadius(float radius) {
+        m_cylinderRadius = radius;
+    }
+    void SetCylinderHeight(float height) {
+        m_cylinderHeight = height;
+	}
+    //#####################################
+    int GetCylinderSectors() const {
+        return m_cylinderSectors;
+    }
+    int GetCylinderStacks() const {
+        return m_cylinderStacks;
+    }
+    float GetCylinderRadius() const {
+        return m_cylinderRadius;
+	}
+    float GetCylinderHeight() const {   
+		return m_cylinderHeight;
+    }
 
-    void SetVisible(bool visible)
-    {
+
+    bool UpdateCylinder();
+
+	// ###################################### Visibility #####################################
+    void SetVisible(bool visible)  {
         m_visible = visible;
     }
 
-    bool IsVisible() const
-    {
+    bool IsVisible() const  {
         return m_visible;
     }
 	// ###################################### Mesh Data ###################################
@@ -368,6 +417,9 @@ private: // modifiers
         LastOperationType m_lastOperationType = LastOperationType::None;
 
 private:
+
+    EntityPrimitiveType m_primitiveType = EntityPrimitiveType::None;
+
 	// ############################# Mesh editing data for the entity #############################
 	std::vector<std::size_t>m_selectedVertices; // Store the indices of selected vertices for editing
 	std::vector<std::size_t>m_selectedEdges;    // Store the indices of selected edges for editing
@@ -398,10 +450,16 @@ private:
 private:
     int m_id = -1;
     std::string m_name;
-
+	// all entities have a position, rotation, and scale, which is used to calculate the model matrix for rendering.
     glm::vec3 m_position{ 0.0f };
     glm::vec3 m_rotation{ 0.0f };
     glm::vec3 m_scale{ 1.0f };
+	//  Cylinder specific parameters
+	int m_cylinderSectors = 32;
+	int m_cylinderStacks = 1;
+	float m_cylinderRadius = 0.5f;
+	float m_cylinderHeight = 1.0f;
+
 
     bool m_visible = true;
 

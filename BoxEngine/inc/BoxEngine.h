@@ -53,7 +53,7 @@ public:
 
     bool AddEditableSphere(const glm::vec3& position);
 
-	bool AddEditableCylinder(const glm::vec3& position = glm::vec3(0.0f), int sectors = 8, int stacks = 1, float radius = 0.5f, float height = 1.0f);
+	bool AddEditableCylinder(const glm::vec3& position = glm::vec3(0.0f), int sectors = 32, int stacks = 1, float radius = 0.5f, float height = 1.0f);
 
 	bool AddEditablePyramid(const glm::vec3& position = glm::vec3(0.0f));
 

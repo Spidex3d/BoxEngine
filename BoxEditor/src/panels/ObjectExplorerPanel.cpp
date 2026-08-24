@@ -126,7 +126,7 @@ void ObjectExplorerPanel::DrawObjectExplorer(BoxEngine& engine, FaceEditControll
 
 void ObjectExplorerPanel::DrawObjectTab(BoxEngine& engine, Entity& entity)
 {
-   // char nameBuffer[128]{};
+   
 
     strncpy_s(nameBuffer, sizeof(nameBuffer), entity.GetName().c_str(), _TRUNCATE);
 
@@ -154,7 +154,143 @@ void ObjectExplorerPanel::DrawObjectTab(BoxEngine& engine, Entity& entity)
     if (ImGui::InputFloat3("Scale", sc)) {
         entity.SetScale(glm::vec3(sc[0], sc[1], sc[2]));
     }
+	ImGui::Spacing();
+    ImGui::Separator();
+   
 
+	// #####################################################################################################
+	// ########################################### cyilender properties ####################################
+	// #####################################################################################################
+
+    switch (entity.GetPrimitiveType())
+    {
+    case EntityPrimitiveType::Cube:
+    {
+        // Cube properties later.
+
+        break;
+    }
+    case EntityPrimitiveType::Plane:
+    {
+        // Plane properties later.
+
+        break;
+    }
+
+    case EntityPrimitiveType::Cylinder:
+    {
+        ImGui::SeparatorText("Cylinder Properties");
+
+        bool cylinderChanged = false;
+
+        float radius = entity.GetCylinderRadius();
+
+        int sectors = entity.GetCylinderSectors();
+
+        int stacks = entity.GetCylinderStacks();
+
+        float height = entity.GetCylinderHeight();
+
+
+        // -----------------------------------------
+        // Radius
+        // -----------------------------------------
+
+        if (ImGui::InputFloat("Radius", &radius, 0.05f, 0.25f))
+        {
+            radius = std::clamp(radius, 0.05f, 6.0f);
+
+            entity.SetCylinderRadius(radius);
+
+            cylinderChanged = true;
+        }
+
+        // -----------------------------------------
+        // Sectors
+        // -----------------------------------------
+
+        if (ImGui::InputInt("Sectors", &sectors, 1, 4))
+        {
+            sectors = std::clamp(sectors, 3, 64);
+
+            entity.SetCylinderSectors(sectors);
+
+            cylinderChanged = true;
+        }
+
+
+        // -----------------------------------------
+        // Stacks
+        // -----------------------------------------
+
+        if (ImGui::InputInt("Stacks", &stacks, 1, 1))
+        {
+            stacks = std::clamp(stacks, 1, 8);
+
+            entity.SetCylinderStacks(stacks);
+
+            cylinderChanged = true;
+        }
+        // -----------------------------------------
+		// Height
+        // -----------------------------------------
+        
+        if (ImGui::InputFloat("Height", &height, 0.05f, 0.25f))
+        {
+            height = std::clamp(height, 0.05f, 6.0f);
+
+            entity.SetCylinderHeight(height);
+
+            cylinderChanged = true;
+        }
+
+        // -----------------------------------------
+        // Rebuild once if anything changed.
+        // -----------------------------------------
+
+        if (cylinderChanged)
+        {
+            entity.UpdateCylinder();
+        }
+
+        break;
+    }
+
+
+    case EntityPrimitiveType::Sphere:
+    {
+        // Sphere properties later.
+
+        break;
+    }
+
+
+    
+
+
+    case EntityPrimitiveType::Pyramid:
+    {
+        // Pyramid properties later.
+
+        break;
+    }
+
+
+    case EntityPrimitiveType::None:
+    default:
+    {
+        break;
+    }
+    }
+
+
+
+
+
+
+
+
+ 
     bool visible = entity.IsVisible();
     if (ImGui::Checkbox("Visible", &visible)) {
         entity.SetVisible(visible);

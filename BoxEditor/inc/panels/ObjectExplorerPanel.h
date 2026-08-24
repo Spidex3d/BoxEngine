@@ -33,9 +33,6 @@ private:
         FaceEditController& faceEditController
     );
 
-    /*void DrawTexturesTab(BoxEngine& engine,
-        Entity& entity
-    );*/
     
 	// modifiers tab for extrude and inset ect. controls, with the ability to confirm or cancel the operation.
     void DrawModifiersTab(BoxEngine& engine, Entity& entity, FaceEditController& faceEditController, EdgeEditController& edgeEditController);

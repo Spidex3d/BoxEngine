@@ -193,7 +193,7 @@ void TransformTools::UpdateMoveTransform(BoxEngine& engine)
         break;
 
     case TransformAxis::Z:
-        position.z += deltaX *
+        position.z -= deltaX *
             m_moveSensitivity;
         break;
 

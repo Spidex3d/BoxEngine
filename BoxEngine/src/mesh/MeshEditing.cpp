@@ -183,12 +183,13 @@ bool MeshEditing::CreateSphere(int sectors, int stacks)
     return true;
 }
 
-bool MeshEditing::CreateCylinder(int sectors, int stacks, float radius, float height)
+bool MeshEditing::CreateCylinder(
+    int sectors,
+    int stacks,
+    float radius,
+    float height)
 {
     Clear();
-    // -------------------------------------------------
-    // Validate input.
-    // -------------------------------------------------
 
     if (sectors < 3)
     {
@@ -211,143 +212,129 @@ bool MeshEditing::CreateCylinder(int sectors, int stacks, float radius, float he
         return false;
     }
 
-
-    // -------------------------------------------------
-    // First version:
-    // ignore stacks > 1 for now.
-    // We will add them after this works.
-    // -------------------------------------------------
-
     const float halfHeight =
         height * 0.5f;
 
 
-    // -------------------------------------------------
-    // Bottom ring.
+    // =================================================
+    // CREATE HORIZONTAL RINGS
     //
-    // Vertex indices:
-    // 0 ... sectors - 1
-    // -------------------------------------------------
+    // stacks = 1  -> 2 rings
+    // stacks = 2  -> 3 rings
+    // stacks = 4  -> 5 rings
+    // =================================================
 
-    for (int sector = 0;
-        sector < sectors;
-        ++sector)
+    for (int stack = 0;
+        stack <= stacks;
+        ++stack)
     {
-        const float angle =
-            static_cast<float>(sector) *
-            2.0f *
-            pi /
-            static_cast<float>(sectors);
+        const float t =
+            static_cast<float>(stack) /
+            static_cast<float>(stacks);
+
+        const float y =
+            -halfHeight +
+            t * height;
 
 
-        const float x =
-            std::cos(angle) *
-            radius;
+        for (int sector = 0;
+            sector < sectors;
+            ++sector)
+        {
+            const float angle =
+                static_cast<float>(sector) *
+                2.0f *
+                pi /
+                static_cast<float>(sectors);
 
-        const float z =
-            std::sin(angle) *
-            radius;
+            const float x =
+                std::cos(angle) *
+                radius;
 
+            const float z =
+                std::sin(angle) *
+                radius;
 
-        AddVertex(
-            glm::vec3(
-                x,
-                -halfHeight,
-                z
-            )
-        );
+            AddVertex(
+                glm::vec3(
+                    x,
+                    y,
+                    z
+                )
+            );
+        }
     }
 
 
-    // -------------------------------------------------
-    // Top ring.
-    //
-    // Vertex indices:
-    // sectors ... sectors * 2 - 1
-    // -------------------------------------------------
+    // =================================================
+    // CREATE SIDE QUADS
+    // =================================================
 
-    for (int sector = 0;
-        sector < sectors;
-        ++sector)
+    for (int stack = 0;
+        stack < stacks;
+        ++stack)
     {
-        const float angle =
-            static_cast<float>(sector) *
-            2.0f *
-            pi /
-            static_cast<float>(sectors);
+        const std::size_t lowerRing =
+            static_cast<std::size_t>(
+                stack * sectors
+                );
+
+        const std::size_t upperRing =
+            static_cast<std::size_t>(
+                (stack + 1) * sectors
+                );
 
 
-        const float x =
-            std::cos(angle) *
-            radius;
+        for (int sector = 0;
+            sector < sectors;
+            ++sector)
+        {
+            const int next =
+                (sector + 1) %
+                sectors;
 
-        const float z =
-            std::sin(angle) *
-            radius;
+
+            const std::size_t bottomA =
+                lowerRing +
+                static_cast<std::size_t>(
+                    sector
+                    );
+
+            const std::size_t bottomB =
+                lowerRing +
+                static_cast<std::size_t>(
+                    next
+                    );
+
+            const std::size_t topA =
+                upperRing +
+                static_cast<std::size_t>(
+                    sector
+                    );
+
+            const std::size_t topB =
+                upperRing +
+                static_cast<std::size_t>(
+                    next
+                    );
 
 
-        AddVertex(
-            glm::vec3(
-                x,
-                halfHeight,
-                z
-            )
-        );
+            // Outward winding.
+            AddFace(
+                {
+                    bottomA,
+                    topA,
+                    topB,
+                    bottomB
+                }
+            );
+        }
     }
 
 
-    // -------------------------------------------------
-    // Side faces.
-    // One quad per sector.
-    // -------------------------------------------------
-
-    for (int sector = 0;
-        sector < sectors;
-        ++sector)
-    {
-        const int next =
-            (sector + 1) %
-            sectors;
-
-
-        const std::size_t bottomA =
-            static_cast<std::size_t>(
-                sector
-                );
-
-        const std::size_t bottomB =
-            static_cast<std::size_t>(
-                next
-                );
-
-        const std::size_t topA =
-            static_cast<std::size_t>(
-                sectors + sector
-                );
-
-        const std::size_t topB =
-            static_cast<std::size_t>(
-                sectors + next
-                );
-
-
-        AddFace(
-            {
-                bottomA,
-                topA,
-                topB,
-                bottomB
-            }
-        );
-    }
-
-
-    // -------------------------------------------------
-    // Top face.
-    //
-    // Use one n-gon instead of triangle fan faces.
-    // BuildRenderMesh() can triangulate n-gons already.
-    // -------------------------------------------------
+    // =================================================
+    // TOP CAP
+    // =================================================
 
     std::vector<std::size_t>
         topFace;
@@ -356,39 +343,33 @@ bool MeshEditing::CreateCylinder(int sectors, int stacks, float radius, float he
         sectors
     );
 
+    const std::size_t topRing =
+        static_cast<std::size_t>(
+            stacks * sectors
+            );
+
+
+    // Reverse order so normal points +Y.
     for (int sector = sectors - 1;
         sector >= 0;
         --sector)
     {
         topFace.push_back(
+            topRing +
             static_cast<std::size_t>(
-                sectors + sector
+                sector
                 )
         );
     }
-
-    /*for (int sector = 0;
-        sector < sectors;
-        ++sector)
-    {
-        topFace.push_back(
-            static_cast<std::size_t>(
-                sectors + sector
-                )
-        );
-    }*/
-
 
     AddFace(
         topFace
     );
 
 
-    // -------------------------------------------------
-    // Bottom face.
-    //
-    // Reverse winding so its normal points downward.
-    // -------------------------------------------------
+    // =================================================
+    // BOTTOM CAP
+    // =================================================
 
     std::vector<std::size_t>
         bottomFace;
@@ -397,6 +378,8 @@ bool MeshEditing::CreateCylinder(int sectors, int stacks, float radius, float he
         sectors
     );
 
+
+    // Forward order so normal points -Y.
     for (int sector = 0;
         sector < sectors;
         ++sector)
@@ -408,19 +391,25 @@ bool MeshEditing::CreateCylinder(int sectors, int stacks, float radius, float he
         );
     }
 
-    AddFace(bottomFace);
+    AddFace(
+        bottomFace
+    );
 
 
-    // -------------------------------------------------
-    // Generate modelling edges.
-    // -------------------------------------------------
+    // =================================================
+    // EDGES
+    // =================================================
 
     RebuildEdges();
 
 
     BOX_LOG_INFO(
         "Created editable cylinder. "
-        << "Vertices="
+        << "Sectors="
+        << sectors
+        << " Stacks="
+        << stacks
+        << " Vertices="
         << GetVertexCount()
         << " Edges="
         << GetEdgeCount()
@@ -433,6 +422,7 @@ bool MeshEditing::CreateCylinder(int sectors, int stacks, float radius, float he
         !m_vertices.empty() &&
         !m_faces.empty();
 }
+
 
 
 std::size_t MeshEditing::GetVertexCount() const

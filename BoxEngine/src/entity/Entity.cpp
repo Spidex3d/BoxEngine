@@ -350,6 +350,8 @@ bool Entity::CreateCube()
         return false;
     }
 
+	m_primitiveType = EntityPrimitiveType::Cube;
+
     m_baseEditableMesh = m_editableMesh;
 
     if (!m_editableMesh.BuildRenderMesh(m_meshData))
@@ -381,10 +383,11 @@ bool Entity::CreatePlane()
         return false;
     }
 
+    m_primitiveType = EntityPrimitiveType::Plane;
+
     m_baseEditableMesh = m_editableMesh;
 
-    if (!m_editableMesh.BuildRenderMesh(
-        m_meshData))
+    if (!m_editableMesh.BuildRenderMesh(m_meshData))
     {
         return false;
     }
@@ -394,11 +397,9 @@ bool Entity::CreatePlane()
         return false;
     }
 
-    m_aabbMin =
-        glm::vec3(-0.5f);
+    m_aabbMin = glm::vec3(-0.5f);
 
-    m_aabbMax =
-        glm::vec3(0.5f);
+    m_aabbMax = glm::vec3(0.5f);
 
     return true;
 
@@ -411,9 +412,16 @@ bool Entity::CreateCylinder(int sectors, int stacks, float radius, float height)
     {
         return false;
     }
+
+    m_cylinderSectors = sectors;
+    m_cylinderStacks = stacks;
+    m_cylinderRadius = radius;
+    m_cylinderHeight = height;
+
+    m_primitiveType = EntityPrimitiveType::Cylinder;
+
     m_baseEditableMesh = m_editableMesh;
-    if (!m_editableMesh.BuildRenderMesh(
-        m_meshData))
+    if (!m_editableMesh.BuildRenderMesh(m_meshData))
     {
         return false;
     }
@@ -426,7 +434,79 @@ bool Entity::CreateCylinder(int sectors, int stacks, float radius, float height)
 	return true;
 }
 
+bool Entity::UpdateCylinder()
+{
+    // -----------------------------------------
+    // Recreate editable cylinder using the
+    // currently stored primitive properties.
+    // -----------------------------------------
 
+    if (!m_editableMesh.CreateCylinder(
+        m_cylinderSectors,
+        m_cylinderStacks,
+        m_cylinderRadius,
+        m_cylinderHeight))
+    {
+        return false;
+    }
+
+
+    // This is now the new base primitive.
+    m_baseEditableMesh =
+        m_editableMesh;
+
+
+    if (!m_editableMesh.BuildRenderMesh(
+        m_meshData))
+    {
+        return false;
+    }
+
+
+    // Destroy only existing GPU buffers before
+    // recreating them.
+    if (m_ebo != 0)
+    {
+        glDeleteBuffers(1, &m_ebo);
+        m_ebo = 0;
+    }
+
+    if (m_vbo != 0)
+    {
+        glDeleteBuffers(1, &m_vbo);
+        m_vbo = 0;
+    }
+
+    if (m_vao != 0)
+    {
+        glDeleteVertexArrays(1, &m_vao);
+        m_vao = 0;
+    }
+
+
+    if (!CreateBuffersFromMeshData())
+    {
+        return false;
+    }
+
+
+    m_aabbMin =
+        glm::vec3(
+            -m_cylinderRadius,
+            -m_cylinderHeight * 0.5f,
+            -m_cylinderRadius
+        );
+
+    m_aabbMax =
+        glm::vec3(
+            m_cylinderRadius,
+            m_cylinderHeight * 0.5f,
+            m_cylinderRadius
+        );
+
+
+    return true;
+}
 
 
 
@@ -439,10 +519,11 @@ bool Entity::CreatePyramid()
         return false;
     }
 
+    m_primitiveType = EntityPrimitiveType::Pyramid;
+
     m_baseEditableMesh = m_editableMesh;
 
-    if (!m_editableMesh.BuildRenderMesh(
-        m_meshData))
+    if (!m_editableMesh.BuildRenderMesh(m_meshData))
     {
         return false;
     }
@@ -1688,6 +1769,8 @@ bool Entity::CreateSphere(int sectors, int stacks)
     {
         stacks = 2;
     }
+
+	m_primitiveType = EntityPrimitiveType::Sphere;
 
     constexpr float radius = 0.5f;
 
