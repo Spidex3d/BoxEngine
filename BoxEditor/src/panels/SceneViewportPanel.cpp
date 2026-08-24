@@ -53,7 +53,29 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     ImGui::GetStyle().FrameBorderSize = 0.3f; // Add a border to the button
     ImGui::GetStyle().FrameRounding = 6.0f; // rounded corners of buttons
 
-    const char* items[] = { "Select Mode", ICON_FA_CUBE " Object Mode", ICON_FA_VECTOR_SQUARE " Edit Mode", ICON_FA_IMAGE " Material Mode"};
+
+    if (!ImGui::GetIO().WantTextInput &&
+        ImGui::IsKeyPressed(
+            ImGuiKey_Tab,
+            false))
+    {
+        if (m_EditMode == 2)
+        {
+            m_EditMode = 1;
+
+            action =
+                ViewportAction::SetObjectMode;
+        }
+        else
+        {
+            m_EditMode = 2;
+
+            action =
+                ViewportAction::SetEditMode;
+        }
+    }
+
+    const char* items[] = { "Select Mode", ICON_FA_CUBE " Object Mode", ICON_FA_VECTOR_SQUARE " Edit Mode"};
     ImGui::SetNextItemWidth(100.0f);
     ImGui::SameLine();
     if (ImGui::Combo("##combo", &m_EditMode, items, IM_ARRAYSIZE(items))) {
@@ -65,15 +87,6 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
         else if (m_EditMode == 2) {
             action = ViewportAction::SetEditMode;
             BOX_LOG_INFO("Edit mode selected");
-        }
-        else if (m_EditMode == 3)
-        {
-            action = ViewportAction::SetMaterialMode;
-
-            // Material mode always works on faces.
-            m_editType = 2;
-
-            BOX_LOG_INFO("Material mode selected");
         }
         else
         {
@@ -114,11 +127,11 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 
     
     ImGui::PushID("editTargetIcons");
-    // ########################
+    // ########### Vertex #############
     if (ImGui::ImageButton("##VertexTool", reinterpret_cast<ImTextureID>(static_cast<intptr_t>(vertexIcon.id)),iconSize))
     {
         m_editType = 0;
-        // action = ViewportAction::VertexEditMode;
+        
     }
 
     if (m_editType == 0)
@@ -136,7 +149,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     if (ImGui::ImageButton("##EdgeTool", reinterpret_cast<ImTextureID>(static_cast<intptr_t>(edgeIcon.id)), iconSize))
     {
         m_editType = 1;
-        // action = ViewportAction::EdgeEditMode;
+        
     }
 
     if (m_editType == 1)
@@ -156,7 +169,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     if (ImGui::ImageButton("##FaceTool", reinterpret_cast<ImTextureID>(static_cast<intptr_t>(faceIcon.id)), iconSize))
     {
         m_editType = 2;
-        // action = ViewportAction::FaceEditMode;
+        
     }
 
     if (m_editType == 2)
@@ -177,49 +190,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     ImGui::PopID();
     ImGui::SameLine();
 
-	// ################################################## Matirial Buttons #########################################
-    // ################################################################
-// MATERIAL MODE - FACE ONLY
-// ################################################################
-
-    const bool materialModeActive = m_EditMode == 3;
-
-    ImGui::SameLine();
-
-    if (!materialModeActive)
-    {
-        ImGui::BeginDisabled();
-    }
-
-    ImGui::PushID("MaterialTargetIcons");
-
-    if (ImGui::ImageButton("##MaterialFaceTool",
-        reinterpret_cast<ImTextureID>(
-            static_cast<intptr_t>(
-                materialIcon.id)), iconSize))
-    {
-        // Material Mode uses normal Face selection.
-        m_editType = 2;
-    }
-
-    if (materialModeActive)
-    {
-        TransformToolBarColors();
-    }
-
-    if (ImGui::IsItemHovered())
-    {
-        ImGui::SetTooltip("Material Face Select");
-    }
-
-    ImGui::PopID();
-
-    if (!materialModeActive)
-    {
-        ImGui::EndDisabled();
-    }
-
-
+	
     // #############################################################################################################
 	// ############################################### Transform Tools buttons #####################################
     // #############################################################################################################

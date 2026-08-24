@@ -68,6 +68,8 @@ void HelpPanel::Draw()
 
             ImGui::BulletText("Add objects right click in the viewport.");
 
+            ImGui::BulletText("Select Edit Mode - Object Mode use Tab Key.");
+
             ImGui::BulletText("Select objects by clicking them in the viewport.");
 
             ImGui::BulletText("Use the Object Explorer for precise transforms.");
@@ -81,7 +83,7 @@ void HelpPanel::Draw()
             ImGui::BulletText("To Rotate the object use object mode press rotate x,y,z to rotate.");
 
             ImGui::TextWrapped(
-                "To edit an object use edit mode select the vertex button "
+                "To edit an object use tab key to enter edit mode, select the vertex button "
                 "select a vertex press x to move on x, press y to move on y, press z to move on z. "
                 " Or use the edge button then select an edge to manipulate it."
                 " Press x to move on x, press y to move on y, press z to move on z."
@@ -139,7 +141,7 @@ void HelpPanel::Draw()
 
             ImGui::EndTabItem();
         }
-
+		// Modes tab
         if (ImGui::BeginTabItem(
             "Modes"))
         {
@@ -170,26 +172,19 @@ void HelpPanel::Draw()
 
             ImGui::EndTabItem();
         }
-
-        if (ImGui::BeginTabItem(ICON_FA_TOOLS" Tools"))
+		// Modifiers tab
+        if (ImGui::BeginTabItem(ICON_FA_TOOLS" Modifiers"))
         {
-            ImGui::TextWrapped(
-                "Select an object and enter Object Mode."
-            );
+            ImGui::TextWrapped("To Select a Modifiers right click in the main screen.");
 
             ImGui::Spacing();
 
-            ImGui::BulletText(
-                "Click the Move tool."
-            );
+            ImGui::BulletText("To use Extrude select a face ");
+            ImGui::TextWrapped("select a face to extrude then select X,Y or Z and move the mouse");
 
-            ImGui::BulletText(
-                "Press X to move along the X axis."
-            );
+            ImGui::BulletText("To use Inset select a face");
 
-            ImGui::BulletText(
-                "Press Y to move along the Y axis."
-            );
+            ImGui::BulletText("Press Y to move along the Y axis.");
 
             ImGui::BulletText(
                 "Press Z to move along the Z axis."
@@ -210,6 +205,7 @@ void HelpPanel::Draw()
             ImGui::EndTabItem();
         }
 
+		// Materials tab
         if (ImGui::BeginTabItem(
             "Materials"))
         {
@@ -243,6 +239,7 @@ void HelpPanel::Draw()
 
             ImGui::EndTabItem();
         }
+		// Shortcuts tab
         if (ImGui::BeginTabItem("Shortcuts"))
         {
             ImGui::SeparatorText(ICON_FA_CAMERA" Camera Controls");
@@ -414,7 +411,7 @@ void HelpPanel::Draw()
             {
                 ImGui::TableSetupColumn(ICON_FA_KEYBOARD" Key");
 
-                ImGui::TableSetupColumn("Scale Action");
+                ImGui::TableSetupColumn("Rotate Action");
                 ImGui::TableHeadersRow();
 
                 const auto AddShortcut =
@@ -454,6 +451,46 @@ void HelpPanel::Draw()
                     "Right Mouse",
                     "Cancel transform"
                 );
+
+                ImGui::EndTable();
+            }
+
+			// Edit Mode Shortcuts
+            ImGui::SeparatorText(ICON_FA_COG" Edit Mode Controls");
+
+            if (ImGui::BeginTable(
+                "##ShortcutTableEditMode",
+                2,
+                ImGuiTableFlags_Borders |
+                ImGuiTableFlags_RowBg))
+            {
+                ImGui::TableSetupColumn(ICON_FA_KEYBOARD" Key");
+
+                ImGui::TableSetupColumn("Edit Action");
+                ImGui::TableHeadersRow();
+
+                const auto AddShortcut =
+                    [](const char* key,
+                        const char* action)
+                {
+                    ImGui::TableNextRow();
+
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::TextUnformatted(key);
+
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::TextUnformatted(action);
+                };
+                AddShortcut(
+                    "Use Tab Key",
+                    "Switch Edit Mode"
+                );
+
+                AddShortcut(
+                    "Use Tab Key",
+                    "Switch Object Mode"
+                );
+                
 
                 ImGui::EndTable();
             }

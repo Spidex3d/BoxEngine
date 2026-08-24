@@ -21,7 +21,7 @@ enum class ViewportAction
 
     SetObjectMode,
     SetEditMode,
-    SetMaterialMode,
+    //SetMaterialMode,
 	SetSelectMode,
 
 	vertexEditMode,
