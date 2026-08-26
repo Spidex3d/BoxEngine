@@ -91,15 +91,25 @@ public:
 
 	bool SetEdgePosition(std::size_t index, const glm::vec3& positionA, const glm::vec3& positionB);
 	void ClearSelectedEdges();
+
+    void AddSelectedEdge(std::size_t index); // for multi edge selection
+
     void SelectEdge(std::size_t index);
 
    // void SelectEdges(std::size_t index);
     bool IsEdgeSelected(std::size_t index) const;
 
+    const std::vector<std::size_t>&GetSelectedEdges() const
+    {
+        return m_selectedEdges;
+    }
+
     // ##################################### Face ##########################################
 
     bool SetFacePosition(std::size_t index, const glm::vec3& positionA, const glm::vec3& positionB);
     void ClearSelectedFace();
+
+
     void SelectFace(std::size_t index);
 
     bool IsFaceSelected(std::size_t index) const;

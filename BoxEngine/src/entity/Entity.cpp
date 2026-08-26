@@ -699,13 +699,36 @@ void Entity::ClearSelectedEdges()
 {
     m_selectedEdges.clear();
 }
-
+// single edge selection
 void Entity::SelectEdge(std::size_t index)
 {
     
     m_selectedEdges.clear();
 
     m_selectedEdges.push_back(index);
+}
+// multi edge selection
+void Entity::AddSelectedEdge(
+    std::size_t index)
+{
+    if (index >=
+        m_editableMesh.GetEdgeCount())
+    {
+        return;
+    }
+
+
+    // Don't add the same edge twice.
+    if (std::find(
+        m_selectedEdges.begin(),
+        m_selectedEdges.end(),
+        index) ==
+        m_selectedEdges.end())
+    {
+        m_selectedEdges.push_back(
+            index
+        );
+    }
 }
 
 bool Entity::IsEdgeSelected(std::size_t index) const

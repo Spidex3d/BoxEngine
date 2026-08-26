@@ -54,24 +54,19 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     ImGui::GetStyle().FrameRounding = 6.0f; // rounded corners of buttons
 
 
-    if (!ImGui::GetIO().WantTextInput &&
-        ImGui::IsKeyPressed(
-            ImGuiKey_Tab,
-            false))
+    if (!ImGui::GetIO().WantTextInput && ImGui::IsKeyPressed(ImGuiKey_Tab, false))
     {
         if (m_EditMode == 2)
         {
             m_EditMode = 1;
 
-            action =
-                ViewportAction::SetObjectMode;
+            action = ViewportAction::SetObjectMode;
         }
         else
         {
             m_EditMode = 2;
 
-            action =
-                ViewportAction::SetEditMode;
+            action = ViewportAction::SetEditMode;
         }
     }
 
@@ -112,9 +107,30 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 
     // keep an int for current edit target: 0 = vertex, 1 = edge, 2 = face
     // If you already have a member, use that one instead.
-    
     const ImVec2 editTypeSize(18, 18);
     const ImVec2 iconSize(18, 18);
+	// need add keyboard shortcuts for switching between edit targets, for example: 1 = vertex, 2 = edge, 3 = face
+	/*if (!ImGui::GetIO().WantTextInput && ImGui::IsKeyPressed(ImGuiKey_1, false))
+    {
+        if (m_editType == 0)
+        {
+            m_editType = 1;
+			action = ViewportAction::vertexEditMode;
+        }
+        else if (m_editType == 1)
+        {
+            m_editType = 2;
+			action = ViewportAction::edgeEditMode;
+        }
+        else
+        {
+            m_editType = 0;
+			action = ViewportAction::faceEditMode;
+        }
+	}*/
+
+
+
     // AddVertexMode AddEdgeMode AddFaceMode
     ImGui::SameLine();
 

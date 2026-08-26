@@ -390,10 +390,10 @@ void App::HandleInput()
 	// keyboard input handling for camera movement and application exit
     if (m_input->IsKeyPressed(GLFW_KEY_ESCAPE))
     {
-        glfwSetWindowShouldClose(
+        /*glfwSetWindowShouldClose(
             m_window->GetWindow(),
             GLFW_TRUE
-        );
+        );*/
     }
 
     Camera& camera =

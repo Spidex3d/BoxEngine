@@ -236,9 +236,7 @@ void FaceEditController::HandleInput(
         
         if (ImGui::IsKeyPressed(
             ImGuiKey_Escape,
-            false) ||
-            ImGui::IsMouseClicked(
-                ImGuiMouseButton_Right))
+            false))
         {
             CancelExtrude(
                 *entity
@@ -295,9 +293,7 @@ void FaceEditController::HandleInput(
         // Cancel
         if (ImGui::IsKeyPressed(
             ImGuiKey_Escape,
-            false) ||
-            ImGui::IsMouseClicked(
-                ImGuiMouseButton_Right))
+            false))
         {
             CancelInset(
                 *entity
@@ -365,9 +361,7 @@ void FaceEditController::HandleInput(
         else if (
             ImGui::IsKeyPressed(
                 ImGuiKey_Escape,
-                false) ||
-            ImGui::IsMouseClicked(
-                ImGuiMouseButton_Right))
+                false))
         {
             EditCancelMove(
                 *entity

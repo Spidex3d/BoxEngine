@@ -80,9 +80,7 @@ void EdgeEditController::HandleInput(
         // Cancel Loop Cut.
         if (ImGui::IsKeyPressed(
             ImGuiKey_Escape,
-            false) ||
-            ImGui::IsMouseClicked(
-                ImGuiMouseButton_Right))
+            false))
         {
             CancelLoopCut(
                 *entity
@@ -97,6 +95,43 @@ void EdgeEditController::HandleInput(
         // while Loop Cut is active.
         return;
     }
+
+	// =================================================
+	// =================== Scale Edge ==================
+	// =================================================
+
+    if (!m_isScaling && !m_isMoving)
+    {
+        if (ImGui::IsKeyPressed(ImGuiKey_S, false))
+        {
+            EditBeginScale(*entity);
+
+            return;
+        }
+    }
+
+    if (m_isScaling)
+    {
+        EditUpdateScale(*entity);
+
+        if (ImGui::IsMouseClicked(
+            ImGuiMouseButton_Left))
+        {
+            EditConfirmScale();
+
+            return;
+        }
+
+        if (ImGui::IsKeyPressed(ImGuiKey_Escape, false))
+        {
+            EditCancelScale(*entity);
+
+            return;
+        }
+
+        return;
+    }
+
 
 
     // =================================================
@@ -155,9 +190,7 @@ void EdgeEditController::HandleInput(
         else if (
             ImGui::IsKeyPressed(
                 ImGuiKey_Escape,
-                false) ||
-            ImGui::IsMouseClicked(
-                ImGuiMouseButton_Right))
+                false))
         {
             EditCancelMove(
                 *entity
@@ -185,152 +218,6 @@ void EdgeEditController::HandleInput(
         );
     }
 }
-
-//void EdgeEditController::HandleInput(BoxEngine& engine, bool viewportHovered, bool edgeModeActive, const ImVec2& viewportPosition,
-//	const ImVec2& viewportSize)
-//{
-//    if (!edgeModeActive)
-//    {
-//        if (m_isMoving)
-//        {
-//            Entity* entity = engine.GetSelectedEntity();
-//
-//            if (entity)
-//            {
-//                EditCancelMove(*entity);
-//            }
-//        }
-//
-//        return;
-//    }
-//
-//    if (!viewportHovered)
-//    {
-//        return;
-//    }
-//
-//    Entity* entity = engine.GetSelectedEntity();
-//
-//    if (!entity)
-//    {
-//        return;
-//    }
-//
-//    if (!m_isLoopCutting)
-//    {
-//        return;
-//    }
-//
-//    // =================================================
-//    // ACTIVE LOOP CUT
-//    // =================================================
-//
-//    if (m_isLoopCutting)
-//    {
-//        EdgeLoopCutMove(
-//            *entity
-//        );
-//
-//        // Confirm
-//        if (ImGui::IsMouseClicked(
-//            ImGuiMouseButton_Left))
-//        {
-//            ConfirmLoopCut();
-//
-//            return;
-//        }
-//
-//        // Cancel
-//        if (ImGui::IsKeyPressed(
-//            ImGuiKey_Escape,
-//            false) ||
-//            ImGui::IsMouseClicked(
-//                ImGuiMouseButton_Right))
-//        {
-//            CancelLoopCut(
-//                *entity
-//            );
-//
-//            return;
-//        }
-//
-//        return;
-//    }
-//
-//	// ####################################################################################################
-//
-//    // Start moving the selected edge.
-//    if (!m_isMoving &&
-//        m_selectedEdge != InvalidEdge)
-//    {
-//        if (ImGui::IsKeyPressed(
-//            ImGuiKey_X,
-//            false))
-//        {
-//            EditBeginMove(
-//                *entity,
-//                EdgeMoveAxis::X
-//            );
-//        }
-//        else if (ImGui::IsKeyPressed(
-//            ImGuiKey_Y,
-//            false))
-//        {
-//            EditBeginMove(
-//                *entity,
-//                EdgeMoveAxis::Y
-//            );
-//        }
-//        else if (ImGui::IsKeyPressed(
-//            ImGuiKey_Z,
-//            false))
-//        {
-//            EditBeginMove(
-//                *entity,
-//                EdgeMoveAxis::Z
-//            );
-//        }
-//    }
-//
-//    // Update active edge movement.
-//    if (m_isMoving)
-//    {
-//        EditUpdateMove(*entity);
-//
-//        if (ImGui::IsMouseClicked(
-//            ImGuiMouseButton_Left))
-//        {
-//            EditConfirmMove();
-//        }
-//        else if (
-//            ImGui::IsKeyPressed(
-//                ImGuiKey_Escape,
-//                false) ||
-//            ImGui::IsMouseClicked(
-//                ImGuiMouseButton_Right))
-//        {
-//            EditCancelMove(*entity);
-//        }
-//
-//        /*
-//         * Do not let the confirmation click
-//         * select another edge.
-//         */
-//        return;
-//    }
-//
-//    // Normal edge selection.
-//    if (ImGui::IsMouseClicked(
-//        ImGuiMouseButton_Left))
-//    {
-//        PickEdge(
-//            engine,
-//            viewportPosition,
-//            viewportSize
-//        );
-//    }
-//
-//}
 
 void EdgeEditController::DrawEdge(BoxEngine& engine, const ImVec2& viewportPosition, const ImVec2& viewportSize, bool edgeModeActive)
 {
@@ -397,7 +284,8 @@ void EdgeEditController::DrawEdge(BoxEngine& engine, const ImVec2& viewportPosit
         }
 
        // const bool selected = index == m_selectedEdge;
-        const bool selected = edges[index].editableEdgeIndex == m_selectedEdge;
+        //const bool selected = edges[index].editableEdgeIndex == m_selectedEdge;
+        const bool selected = entity->IsEdgeSelected(edges[index].editableEdgeIndex);
 
         const ImU32 color =
             selected
@@ -1026,8 +914,9 @@ float EdgeEditController::DistanceToLineSegment(const ImVec2& point, const ImVec
 
 bool EdgeEditController::PickEdge(BoxEngine& engine, const ImVec2& viewportPosition, const ImVec2& viewportSize)
 {
-    Entity* entity =
-        engine.GetSelectedEntity();
+    Entity* entity = engine.GetSelectedEntity();
+
+	const bool ctrlHeld = ImGui::GetIO().KeyCtrl; // Check if the Ctrl key is held down for multi-selection
 
     if (!entity)
     {
@@ -1071,8 +960,7 @@ bool EdgeEditController::PickEdge(BoxEngine& engine, const ImVec2& viewportPosit
     float closestDistance =
         std::numeric_limits<float>::max();
 
-    std::size_t closestEdge =
-        InvalidEdge;
+    std::size_t closestEdge = InvalidEdge;
 
     for (std::size_t index = 0;
         index < edges.size();
@@ -1117,20 +1005,81 @@ bool EdgeEditController::PickEdge(BoxEngine& engine, const ImVec2& viewportPosit
 
     if (closestEdge == InvalidEdge)
     {
-        ClearSelection(engine);
+    // Normal click on empty space clears
+    // the selection.
+    //
+    // Ctrl-click on empty space leaves the
+    // existing multi-selection alone.
+        if (!ctrlHeld)
+        {
+            ClearSelection(
+                engine
+            );
+        }
+
         return false;
+
+        /*ClearSelection(engine);
+        return false;*/
     }
+
+    const std::size_t pickedEdge =
+        edges[closestEdge]
+        .editableEdgeIndex;
+
+
+    // -------------------------------------------------
+    // Keep this as the ACTIVE edge.
+    //
+    // Bevel / LoopCut can continue using
+    // GetSelectedEdge() exactly as before.
+    // -------------------------------------------------
+
+    m_selectedEdge =
+        pickedEdge;
+
+
+    // -------------------------------------------------
+    // Selection behaviour.
+    // -------------------------------------------------
+
+    if (ctrlHeld)
+    {
+        entity->AddSelectedEdge(
+            pickedEdge
+        );
+    }
+    else
+    {
+        entity->SelectEdge(
+            pickedEdge
+        );
+    }
+
+
+    BOX_LOG_INFO(
+        "Selected edge index: "
+        << pickedEdge
+        << " Total selected="
+        << entity
+        ->GetSelectedEdges()
+        .size()
+    );
+
+
+    return true;
+
 
     // m_selectedEdge = closestEdge;
 
-    m_selectedEdge = edges[closestEdge].editableEdgeIndex;
+    /*m_selectedEdge = edges[closestEdge].editableEdgeIndex;
 
     BOX_LOG_INFO(
         "Selected edge index: "
         << m_selectedEdge
     );
 
-    return true;
+    return true;*/
 }
 
 void EdgeEditController::EditBeginMove(Entity& entity, EdgeMoveAxis axis)
@@ -1282,6 +1231,7 @@ void EdgeEditController::EditUpdateMove(Entity& entity)
     }
 }
 
+
 void EdgeEditController::EditConfirmMove()
 {
 
@@ -1328,3 +1278,329 @@ void EdgeEditController::EditCancelMove(Entity& entity)
     m_moveAxis = EdgeMoveAxis::None;
 
  }
+
+// ###################################################################################################
+// ####################################### Multi Selct Edges #########################################
+// ###################################################################################################
+
+void EdgeEditController::EditBeginScale(Entity& entity)
+{
+    const std::vector<std::size_t>& selectedEdges =
+        entity.GetSelectedEdges();
+
+    if (selectedEdges.empty())
+    {
+        return;
+    }
+
+
+    MeshEditing& editableMesh =
+        entity.GetEditableMesh();
+
+
+    // -----------------------------------------
+    // Clear previous scale state.
+    // -----------------------------------------
+
+    m_scaleVertices.clear();
+
+    m_scaleStartPositions.clear();
+
+    m_scaleCenter =
+        glm::vec3(0.0f);
+
+
+    // -----------------------------------------
+    // Collect unique vertices from every
+    // selected edge.
+    // -----------------------------------------
+
+    for (const std::size_t edgeIndex :
+    selectedEdges)
+    {
+        if (edgeIndex >=
+            editableMesh.GetEdgeCount())
+        {
+            continue;
+        }
+
+
+        const EditEdge& edge =
+            editableMesh.GetEdge(
+                edgeIndex
+            );
+
+
+        // Vertex A
+        if (std::find(
+            m_scaleVertices.begin(),
+            m_scaleVertices.end(),
+            edge.vertexA) ==
+            m_scaleVertices.end())
+        {
+            m_scaleVertices.push_back(
+                edge.vertexA
+            );
+        }
+
+
+        // Vertex B
+        if (std::find(
+            m_scaleVertices.begin(),
+            m_scaleVertices.end(),
+            edge.vertexB) ==
+            m_scaleVertices.end())
+        {
+            m_scaleVertices.push_back(
+                edge.vertexB
+            );
+        }
+    }
+
+
+    if (m_scaleVertices.empty())
+    {
+        return;
+    }
+
+
+    // -----------------------------------------
+    // Store original vertex positions and
+    // calculate selection centre.
+    // -----------------------------------------
+
+    for (const std::size_t vertexIndex :
+    m_scaleVertices)
+    {
+        if (vertexIndex >=
+            editableMesh.GetVertexCount())
+        {
+            continue;
+        }
+
+
+        const glm::vec3 position =
+            editableMesh
+            .GetVertex(vertexIndex)
+            .position;
+
+
+        m_scaleStartPositions.push_back(
+            position
+        );
+
+
+        m_scaleCenter +=
+            position;
+    }
+
+
+    if (m_scaleStartPositions.empty())
+    {
+        m_scaleVertices.clear();
+
+        return;
+    }
+
+
+    m_scaleCenter /=
+        static_cast<float>(
+            m_scaleStartPositions.size()
+            );
+
+
+    // -----------------------------------------
+    // Remember mouse origin.
+    // -----------------------------------------
+
+    m_scaleStartMouse =
+        ImGui::GetMousePos();
+
+
+    m_isScaling =
+        true;
+
+
+    BOX_LOG_INFO(
+        "Edge scale started. "
+        << "Edges="
+        << selectedEdges.size()
+        << " Vertices="
+        << m_scaleVertices.size()
+    );
+}
+
+void EdgeEditController::EditUpdateScale(Entity& entity)
+{
+    if (!m_isScaling)
+    {
+        return;
+    }
+
+
+    if (m_scaleVertices.empty() ||
+        m_scaleStartPositions.empty())
+    {
+        return;
+    }
+
+
+    // -----------------------------------------
+    // Mouse movement.
+    // -----------------------------------------
+
+    const ImVec2 currentMouse =
+        ImGui::GetMousePos();
+
+    const float deltaX =
+        currentMouse.x -
+        m_scaleStartMouse.x;
+
+
+    // -----------------------------------------
+    // Convert mouse movement into scale.
+    //
+    // Start at 1.0:
+    //
+    // mouse right -> larger
+    // mouse left  -> smaller
+    // -----------------------------------------
+
+    float scaleFactor =
+        1.0f +
+        deltaX *
+        m_scaleSensitivity;
+
+
+    // Prevent the selection from collapsing
+    // through zero or flipping inside-out.
+    scaleFactor =
+        glm::max(
+            scaleFactor,
+            0.01f
+        );
+
+
+    MeshEditing& editableMesh =
+        entity.GetEditableMesh();
+
+
+    // -----------------------------------------
+    // Scale every stored vertex around the
+    // selection centre.
+    // -----------------------------------------
+
+    const std::size_t count =
+        std::min(
+            m_scaleVertices.size(),
+            m_scaleStartPositions.size()
+        );
+
+
+    for (std::size_t index = 0;
+        index < count;
+        ++index)
+    {
+        const std::size_t vertexIndex =
+            m_scaleVertices[index];
+
+        if (vertexIndex >=
+            editableMesh.GetVertexCount())
+        {
+            continue;
+        }
+
+
+        const glm::vec3 offset =
+            m_scaleStartPositions[index] -
+            m_scaleCenter;
+
+
+        const glm::vec3 scaledPosition =
+            m_scaleCenter +
+            offset *
+            scaleFactor;
+
+
+        editableMesh
+            .GetVertex(vertexIndex)
+            .position =
+            scaledPosition;
+    }
+
+
+    // -----------------------------------------
+    // Rebuild render mesh.
+    // -----------------------------------------
+
+    MeshData renderMesh;
+
+    if (!editableMesh.BuildRenderMesh(
+        renderMesh))
+    {
+        BOX_LOG_ERROR(
+            "Edge scale: failed to rebuild render mesh"
+        );
+
+        return;
+    }
+
+
+    if (!entity.CreateFromMeshData(
+        renderMesh))
+    {
+        BOX_LOG_ERROR(
+            "Edge scale: failed to update GPU mesh"
+        );
+
+        return;
+    }
+}
+void EdgeEditController::EditConfirmScale()
+{
+    if (!m_isScaling)
+    {
+        return;
+    }
+
+    m_isScaling = false;
+
+    m_scaleVertices.clear();
+    m_scaleStartPositions.clear();
+
+    BOX_LOG_INFO(
+        "Edge scale confirmed."
+    );
+}
+
+void EdgeEditController::EditCancelScale(Entity& entity)
+{
+    if (!m_isScaling)
+    {
+        return;
+	}
+    MeshEditing& editableMesh = entity.GetEditableMesh();
+	const std::size_t count = std::min(m_scaleVertices.size(), m_scaleStartPositions.size());
+    for (std::size_t index = 0; index < count; ++index)
+    {
+        const std::size_t vertexIndex = m_scaleVertices[index];
+        if (vertexIndex >= editableMesh.GetVertexCount())
+        {
+            continue;
+        }
+        editableMesh.GetVertex(vertexIndex).position = m_scaleStartPositions[index];
+    }
+    MeshData renderMesh;
+    if (editableMesh.BuildRenderMesh(renderMesh))
+    {
+        entity.CreateFromMeshData(renderMesh);
+    }
+    m_isScaling = false;
+
+    m_scaleVertices.clear();
+    m_scaleStartPositions.clear();
+
+    BOX_LOG_INFO(
+        "Edge scale cancelled."
+    );
+}

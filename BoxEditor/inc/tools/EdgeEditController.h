@@ -117,7 +117,7 @@ public:
 
     void ConfirmBevel(Entity& entity);
 
-
+	
 private: // loopcuts - facecut
     // face cut variables
     std::size_t m_faceCutEdge = InvalidEdge;
@@ -186,22 +186,30 @@ private:
 
     void EditConfirmMove();
 
-    void EditCancelMove(
-        Entity& entity
-    );
+    void EditCancelMove(Entity& entity);
+
+    // ###################################################################################################
+    // ####################################### Multi Selct Edges #########################################
+    // ###################################################################################################
+
+    // Multi-edge scale
+    void EditBeginScale(Entity& entity);
+
+    void EditUpdateScale(Entity& entity);
+
+    void EditConfirmScale();
+
+    void EditCancelScale(Entity& entity);
 
 private:
-    // Edge Start Position
+    // -------------------------------------------------
+    // Edge move
+    // -------------------------------------------------
     std::size_t m_moveVertexA = 0;
     std::size_t m_moveVertexB = 0;
 
     glm::vec3 m_startPositionA{ 0.0f };
     glm::vec3 m_startPositionB{ 0.0f };
-
-    static constexpr std::size_t InvalidEdge = static_cast<std::size_t>(-1);
-	// ##################################################################################################
-
-    std::size_t m_selectedEdge = InvalidEdge;
 
     bool m_isMoving = false;
 
@@ -210,5 +218,33 @@ private:
     ImVec2 m_startMouse = ImVec2(0.0f, 0.0f);
 
 	float m_moveSensitivity = 0.01f; // Sensitivity for moving, adjust as needed
+
+    // -------------------------------------------------
+    // Multi-edge scale
+    // -------------------------------------------------
+
+    bool m_isScaling = false;
+
+    glm::vec3 m_scaleCenter{ 0.0f };
+
+    std::vector<std::size_t>m_scaleVertices;
+
+    std::vector<glm::vec3>m_scaleStartPositions;
+
+    ImVec2 m_scaleStartMouse = ImVec2(0.0f, 0.0f);
+
+	float m_scaleSensitivity = 0.01f; // Sensitivity for scaling, adjust as needed
+
+
+    // -------------------------------------------------
+    // Selection
+    // -------------------------------------------------
+
+    static constexpr std::size_t
+        InvalidEdge =
+        static_cast<std::size_t>(-1);
+
+    std::size_t m_selectedEdge =
+        InvalidEdge;
 
 };
