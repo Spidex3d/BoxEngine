@@ -92,7 +92,17 @@ public:
 	bool SetEdgePosition(std::size_t index, const glm::vec3& positionA, const glm::vec3& positionB);
 	void ClearSelectedEdges();
 
-    void AddSelectedEdge(std::size_t index); // for multi edge selection
+    // ================================================================
+	// ================== Single multi edge selection =================
+    // ================================================================
+
+	void AddSelectedEdge(std::size_t index); // for multi edge selection Ctrl + click
+
+    // ================================================================
+    // ==================== Loop edge selection =======================
+    // ================================================================
+
+	void AddLoopSelectedEdges(std::size_t loopEdgeIndex); // for selecting a loop of edges Alt + click
 
     void SelectEdge(std::size_t index);
 

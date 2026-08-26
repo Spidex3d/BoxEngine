@@ -132,6 +132,227 @@ void EdgeEditController::HandleInput(
         return;
     }
 
+    // =================================================
+    // ================= Multi Edge Move ===============
+    // =================================================
+
+    // =================================================
+    // START MULTI EDGE MOVE
+    // =================================================
+
+    if (!m_isMoving &&
+        !m_isMultiMoving &&
+        !m_isScaling)
+    {
+        if (ImGui::IsKeyPressed(
+            ImGuiKey_G,
+            false))
+        {
+            EditBeginMultiMove(
+                *entity,
+                EdgeMoveAxis::None
+            );
+
+            return;
+        }
+    }
+
+
+    // =================================================
+    // ACTIVE MULTI EDGE MOVE
+    // =================================================
+
+    if (m_isMultiMoving)
+    {
+        // ---------------------------------------------
+        // Choose / change axis
+        // ---------------------------------------------
+
+        if (ImGui::IsKeyPressed(
+            ImGuiKey_X,
+            false))
+        {
+            SetMultiMoveAxis(
+                *entity,
+                EdgeMoveAxis::X
+            );
+        }
+        else if (ImGui::IsKeyPressed(
+            ImGuiKey_Y,
+            false))
+        {
+            SetMultiMoveAxis(
+                *entity,
+                EdgeMoveAxis::Y
+            );
+        }
+        else if (ImGui::IsKeyPressed(
+            ImGuiKey_Z,
+            false))
+        {
+            SetMultiMoveAxis(
+                *entity,
+                EdgeMoveAxis::Z
+            );
+        }
+
+        // ---------------------------------------------
+        // Update only after an axis is selected.
+        // ---------------------------------------------
+
+        if (m_multiMoveAxis !=
+            EdgeMoveAxis::None)
+        {
+            EditUpdateMultiMove(
+                *entity
+            );
+        }
+
+        // ---------------------------------------------
+        // Confirm
+        // ---------------------------------------------
+
+        if (ImGui::IsMouseClicked(
+            ImGuiMouseButton_Left))
+        {
+            if (m_multiMoveAxis !=
+                EdgeMoveAxis::None)
+            {
+                EditConfirmMultiMove();
+            }
+
+            return;
+        }
+
+        // ---------------------------------------------
+        // Cancel
+        // ---------------------------------------------
+
+        if (ImGui::IsKeyPressed(
+            ImGuiKey_Escape,
+            false))
+        {
+            EditCancelMultiMove(
+                *entity
+            );
+
+            return;
+        }
+
+        // VERY IMPORTANT:
+        // Don't fall through into normal edge movement
+        // or edge selection while G-move is active.
+        return;
+    }
+
+    // =================================================
+    // START MULTI EDGE ROTATE
+    // =================================================
+
+    if (!m_isMoving &&
+        !m_isMultiMoving &&
+        !m_isScaling &&
+        !m_isMultiRotating)
+    {
+        if (ImGui::IsKeyPressed(
+            ImGuiKey_R,
+            false))
+        {
+            EditBeginMultiRotate(
+                *entity,
+                EdgeMoveAxis::None
+            );
+
+            return;
+        }
+    }
+
+
+    // =================================================
+    // ACTIVE MULTI EDGE ROTATE
+    // =================================================
+
+    if (m_isMultiRotating)
+    {
+        // ---------------------------------------------
+        // Choose rotation axis.
+        // ---------------------------------------------
+
+        if (ImGui::IsKeyPressed(
+            ImGuiKey_X,
+            false))
+        {
+            SetMultiRotateAxis(
+                *entity,
+                EdgeMoveAxis::X
+            );
+        }
+        else if (ImGui::IsKeyPressed(
+            ImGuiKey_Y,
+            false))
+        {
+            SetMultiRotateAxis(
+                *entity,
+                EdgeMoveAxis::Y
+            );
+        }
+        else if (ImGui::IsKeyPressed(
+            ImGuiKey_Z,
+            false))
+        {
+            SetMultiRotateAxis(
+                *entity,
+                EdgeMoveAxis::Z
+            );
+        }
+
+        // ---------------------------------------------
+        // Rotate only after choosing axis.
+        // ---------------------------------------------
+
+        if (m_multiRotateAxis !=
+            EdgeMoveAxis::None)
+        {
+            EditUpdateMultiRotate(
+                *entity
+            );
+        }
+
+        // ---------------------------------------------
+        // Confirm
+        // ---------------------------------------------
+
+        if (ImGui::IsMouseClicked(
+            ImGuiMouseButton_Left))
+        {
+            if (m_multiRotateAxis !=
+                EdgeMoveAxis::None)
+            {
+                EditConfirmMultiRotate();
+            }
+
+            return;
+        }
+
+        // ---------------------------------------------
+        // Cancel
+        // ---------------------------------------------
+
+        if (ImGui::IsKeyPressed(
+            ImGuiKey_Escape,
+            false))
+        {
+            EditCancelMultiRotate(
+                *entity
+            );
+
+            return;
+        }
+
+        // Don't fall through into Move,
+        // selection, etc.
+        return;
+    }
 
 
     // =================================================
@@ -196,7 +417,6 @@ void EdgeEditController::HandleInput(
                 *entity
             );
         }
-
 
         // Do not allow the confirmation click
         // to select another edge.
@@ -1069,17 +1289,6 @@ bool EdgeEditController::PickEdge(BoxEngine& engine, const ImVec2& viewportPosit
 
     return true;
 
-
-    // m_selectedEdge = closestEdge;
-
-    /*m_selectedEdge = edges[closestEdge].editableEdgeIndex;
-
-    BOX_LOG_INFO(
-        "Selected edge index: "
-        << m_selectedEdge
-    );
-
-    return true;*/
 }
 
 void EdgeEditController::EditBeginMove(Entity& entity, EdgeMoveAxis axis)
@@ -1603,4 +1812,802 @@ void EdgeEditController::EditCancelScale(Entity& entity)
     BOX_LOG_INFO(
         "Edge scale cancelled."
     );
+}
+
+void EdgeEditController::EditBeginMultiMove(Entity& entity, EdgeMoveAxis axis)
+{
+    const std::vector<std::size_t>& selectedEdges =
+        entity.GetSelectedEdges();
+
+    if (selectedEdges.empty())
+    {
+        return;
+    }
+
+
+    MeshEditing& editableMesh =
+        entity.GetEditableMesh();
+
+
+    // -----------------------------------------
+    // Clear previous move state.
+    // -----------------------------------------
+
+    m_multiMoveVertices.clear();
+
+    m_multiMoveStartPositions.clear();
+
+
+    // -----------------------------------------
+    // Collect unique vertices from all
+    // selected edges.
+    // -----------------------------------------
+
+    for (const std::size_t edgeIndex :
+    selectedEdges)
+    {
+        if (edgeIndex >=
+            editableMesh.GetEdgeCount())
+        {
+            continue;
+        }
+
+
+        const EditEdge& edge =
+            editableMesh.GetEdge(
+                edgeIndex
+            );
+
+
+        // Vertex A
+        if (std::find(
+            m_multiMoveVertices.begin(),
+            m_multiMoveVertices.end(),
+            edge.vertexA) ==
+            m_multiMoveVertices.end())
+        {
+            m_multiMoveVertices.push_back(
+                edge.vertexA
+            );
+        }
+
+
+        // Vertex B
+        if (std::find(
+            m_multiMoveVertices.begin(),
+            m_multiMoveVertices.end(),
+            edge.vertexB) ==
+            m_multiMoveVertices.end())
+        {
+            m_multiMoveVertices.push_back(
+                edge.vertexB
+            );
+        }
+    }
+
+
+    if (m_multiMoveVertices.empty())
+    {
+        return;
+    }
+
+
+    // -----------------------------------------
+    // Store original positions.
+    // -----------------------------------------
+
+    for (const std::size_t vertexIndex :
+    m_multiMoveVertices)
+    {
+        if (vertexIndex >=
+            editableMesh.GetVertexCount())
+        {
+            continue;
+        }
+
+
+        m_multiMoveStartPositions.push_back(
+            editableMesh
+            .GetVertex(vertexIndex)
+            .position
+        );
+    }
+
+
+    if (m_multiMoveStartPositions.empty())
+    {
+        m_multiMoveVertices.clear();
+
+        return;
+    }
+
+
+    // -----------------------------------------
+    // Store active axis.
+    // -----------------------------------------
+
+    m_multiMoveAxis =
+        axis;
+
+
+    // -----------------------------------------
+    // Store mouse starting point.
+    // -----------------------------------------
+
+    m_multiMoveStartMouse =
+        ImGui::GetMousePos();
+
+
+    m_isMultiMoving =
+        true;
+
+
+    BOX_LOG_INFO(
+        "Multi-edge move started. "
+        << "Edges="
+        << selectedEdges.size()
+        << " Vertices="
+        << m_multiMoveVertices.size()
+    );
+
+}
+
+void EdgeEditController::EditUpdateMultiMove(Entity& entity)
+{
+    if (!m_isMultiMoving)
+    {
+        return;
+    }
+
+
+    if (m_multiMoveVertices.empty() ||
+        m_multiMoveStartPositions.empty())
+    {
+        return;
+    }
+
+
+    const ImVec2 currentMouse =
+        ImGui::GetMousePos();
+
+    const float deltaX =
+        currentMouse.x -
+        m_multiMoveStartMouse.x;
+
+    const float deltaY =
+        currentMouse.y -
+        m_multiMoveStartMouse.y;
+
+
+    glm::vec3 movement(0.0f);
+
+
+    // -----------------------------------------
+    // Build movement from the selected axis.
+    // -----------------------------------------
+
+    switch (m_multiMoveAxis)
+    {
+    case EdgeMoveAxis::X:
+
+        movement.x =
+            deltaX *
+            m_multiMoveSensitivity;
+
+        break;
+
+
+    case EdgeMoveAxis::Y:
+
+        movement.y =
+            -deltaY *
+            m_multiMoveSensitivity;
+
+        break;
+
+
+    case EdgeMoveAxis::Z:
+
+        // Same screen-direction fix we used
+        // for object movement.
+        movement.z =
+            -deltaX *
+            m_multiMoveSensitivity;
+
+        break;
+
+
+    case EdgeMoveAxis::None:
+    default:
+
+        return;
+    }
+
+
+    MeshEditing& editableMesh =
+        entity.GetEditableMesh();
+
+
+    const std::size_t count =
+        std::min(
+            m_multiMoveVertices.size(),
+            m_multiMoveStartPositions.size()
+        );
+
+
+    // -----------------------------------------
+    // Move every unique selected vertex.
+    // -----------------------------------------
+
+    for (std::size_t index = 0;
+        index < count;
+        ++index)
+    {
+        const std::size_t vertexIndex =
+            m_multiMoveVertices[index];
+
+        if (vertexIndex >=
+            editableMesh.GetVertexCount())
+        {
+            continue;
+        }
+
+
+        editableMesh
+            .GetVertex(vertexIndex)
+            .position =
+            m_multiMoveStartPositions[index] +
+            movement;
+    }
+
+
+    // -----------------------------------------
+    // Rebuild render mesh.
+    // -----------------------------------------
+
+    MeshData renderMesh;
+
+    if (!editableMesh.BuildRenderMesh(
+        renderMesh))
+    {
+        BOX_LOG_ERROR(
+            "Multi-edge move: "
+            "failed to rebuild render mesh"
+        );
+
+        return;
+    }
+
+
+    if (!entity.CreateFromMeshData(
+        renderMesh))
+    {
+        BOX_LOG_ERROR(
+            "Multi-edge move: "
+            "failed to update GPU mesh"
+        );
+
+        return;
+    }
+}
+
+void EdgeEditController::EditConfirmMultiMove()
+{
+    if (!m_isMultiMoving)
+    {
+        return;
+	}
+    m_isMultiMoving = false;
+
+    m_multiMoveAxis = EdgeMoveAxis::None;
+
+    m_multiMoveVertices.clear();
+    m_multiMoveStartPositions.clear();
+    BOX_LOG_INFO(
+        "Multi-edge move confirmed."
+	);
+}
+
+void EdgeEditController::EditCancelMultiMove(Entity& entity)
+{
+    if (!m_isMultiMoving)
+    {
+        return;
+    }
+    MeshEditing& editableMesh = entity.GetEditableMesh();
+    const std::size_t count = std::min(m_multiMoveVertices.size(), m_multiMoveStartPositions.size());
+    for (std::size_t index = 0; index < count; ++index)
+    {
+        const std::size_t vertexIndex = m_multiMoveVertices[index];
+        if (vertexIndex >= editableMesh.GetVertexCount())
+        {
+            continue;
+        }
+        editableMesh.GetVertex(vertexIndex).position = m_multiMoveStartPositions[index];
+    }
+    MeshData renderMesh;
+    if (editableMesh.BuildRenderMesh(renderMesh))
+    {
+        entity.CreateFromMeshData(renderMesh);
+    }
+    m_isMultiMoving = false;
+
+    m_multiMoveAxis = EdgeMoveAxis::None;
+
+    m_multiMoveVertices.clear();
+    m_multiMoveStartPositions.clear();
+    BOX_LOG_INFO(
+        "Multi-edge move cancelled."
+	);
+}
+
+// Rotate selected edges around their center point. This is a placeholder for future implementation.
+void EdgeEditController::EditBeginMultiRotate(Entity& entity, EdgeMoveAxis axis)
+{
+    const std::vector<std::size_t>& selectedEdges = entity.GetSelectedEdges();
+
+    if (selectedEdges.empty())
+    {
+        return;
+    }
+
+
+    MeshEditing& editableMesh = entity.GetEditableMesh();
+
+
+    // -----------------------------------------
+    // Clear previous scale state.
+    // -----------------------------------------
+
+    m_multiRotateVertices.clear();
+
+    m_multiRotateStartPositions.clear();
+
+    m_multiRotateCenter = glm::vec3(0.0f);
+
+    for (const std::size_t edgeIndex :
+    selectedEdges)
+    {
+        if (edgeIndex >=
+            editableMesh.GetEdgeCount())
+        {
+            continue;
+        }
+
+
+        const EditEdge& edge =
+            editableMesh.GetEdge(
+                edgeIndex
+            );
+
+
+        // Vertex A
+        if (std::find(
+            m_multiRotateVertices.begin(),
+            m_multiRotateVertices.end(),
+            edge.vertexA) ==
+            m_multiRotateVertices.end())
+        {
+            m_multiRotateVertices.push_back(
+                edge.vertexA
+            );
+        }
+
+
+        // Vertex B
+        if (std::find(
+            m_multiRotateVertices.begin(),
+            m_multiRotateVertices.end(),
+            edge.vertexB) ==
+            m_multiRotateVertices.end())
+        {
+            m_multiRotateVertices.push_back(
+                edge.vertexB
+            );
+        }
+    }
+
+
+    if (m_multiRotateVertices.empty())
+    {
+        return;
+    }
+
+    // -----------------------------------------
+    // Store original vertex positions and
+    // calculate selection centre.
+    // -----------------------------------------
+
+    for (const std::size_t vertexIndex :
+    m_multiRotateVertices)
+    {
+        if (vertexIndex >=
+            editableMesh.GetVertexCount())
+        {
+            continue;
+        }
+
+
+        const glm::vec3 position =
+            editableMesh
+            .GetVertex(vertexIndex)
+            .position;
+
+
+        m_multiRotateStartPositions.push_back(
+            position
+        );
+
+
+        m_multiRotateCenter +=
+            position;
+    }
+
+
+    if (m_multiRotateStartPositions.empty())
+    {
+        m_multiRotateVertices.clear();
+
+        return;
+    }
+
+
+    m_multiRotateCenter /= static_cast<float>(m_multiRotateStartPositions.size());
+
+    // -----------------------------------------
+    // Remember mouse origin.
+    // -----------------------------------------
+
+    m_multiRotateAxis = axis;
+
+    m_multiRotateStartMouse = ImGui::GetMousePos();
+
+    m_isMultiRotating = true;
+
+    BOX_LOG_INFO(
+        "Edge rotation started. "
+        << "Edges="
+        << selectedEdges.size()
+        << " Vertices="
+        << m_multiRotateVertices.size()
+    );
+
+
+}
+
+void EdgeEditController::EditUpdateMultiRotate(Entity& entity)
+{
+
+    if (!m_isMultiRotating)
+    {
+        return;
+    }
+
+    if (m_multiRotateVertices.empty() ||
+        m_multiRotateStartPositions.empty())
+    {
+        return;
+    }
+
+
+    const ImVec2 currentMouse =
+        ImGui::GetMousePos();
+
+    const float deltaX =
+        currentMouse.x -
+        m_multiRotateStartMouse.x;
+
+
+    // Mouse movement becomes degrees.
+    const float rotationAngle =
+        deltaX *
+        m_multiRotateSensitivity;
+
+
+    glm::vec3 rotationAxis(0.0f);
+
+    switch (m_multiRotateAxis)
+    {
+    case EdgeMoveAxis::X:
+
+        rotationAxis =
+            glm::vec3(
+                1.0f,
+                0.0f,
+                0.0f
+            );
+
+        break;
+
+
+    case EdgeMoveAxis::Y:
+
+        rotationAxis =
+            glm::vec3(
+                0.0f,
+                1.0f,
+                0.0f
+            );
+
+        break;
+
+
+    case EdgeMoveAxis::Z:
+
+        rotationAxis =
+            glm::vec3(
+                0.0f,
+                0.0f,
+                1.0f
+            );
+
+        break;
+
+
+    case EdgeMoveAxis::None:
+    default:
+
+        return;
+    }
+
+
+    const glm::mat4 rotationMatrix =
+        glm::rotate(
+            glm::mat4(1.0f),
+            glm::radians(
+                rotationAngle
+            ),
+            rotationAxis
+        );
+
+
+    MeshEditing& editableMesh =
+        entity.GetEditableMesh();
+
+
+    const std::size_t count =
+        std::min(
+            m_multiRotateVertices.size(),
+            m_multiRotateStartPositions.size()
+        );
+
+
+    for (std::size_t index = 0;
+        index < count;
+        ++index)
+    {
+        const std::size_t vertexIndex =
+            m_multiRotateVertices[index];
+
+        if (vertexIndex >=
+            editableMesh.GetVertexCount())
+        {
+            continue;
+        }
+
+
+        // Position relative to selection centre.
+        const glm::vec3 offset =
+            m_multiRotateStartPositions[index] -
+            m_multiRotateCenter;
+
+
+        // Rotate that offset.
+        const glm::vec3 rotatedOffset =
+            glm::vec3(
+                rotationMatrix *
+                glm::vec4(
+                    offset,
+                    0.0f
+                )
+            );
+
+
+        // Put it back around the centre.
+        editableMesh
+            .GetVertex(vertexIndex)
+            .position =
+            m_multiRotateCenter +
+            rotatedOffset;
+    }
+
+
+    MeshData renderMesh;
+
+    if (!editableMesh.BuildRenderMesh(
+        renderMesh))
+    {
+        BOX_LOG_ERROR(
+            "Multi-edge rotate: "
+            "failed to rebuild render mesh"
+        );
+
+        return;
+    }
+
+
+    if (!entity.CreateFromMeshData(
+        renderMesh))
+    {
+        BOX_LOG_ERROR(
+            "Multi-edge rotate: "
+            "failed to update GPU mesh"
+        );
+
+        return;
+    }
+}
+
+void EdgeEditController::EditConfirmMultiRotate()
+{
+    if (!m_isMultiRotating)
+    {
+        return;
+	}
+    m_isMultiRotating = false;
+
+    m_multiRotateAxis = EdgeMoveAxis::None;
+
+    m_multiRotateVertices.clear();
+    m_multiRotateStartPositions.clear();
+    BOX_LOG_INFO(
+        "Edge rotation confirmed."
+	);
+}
+
+void EdgeEditController::EditCancelMultiRotate(Entity& entity)
+{
+    if (!m_isMultiRotating)
+    {
+        return;
+    }
+    MeshEditing& editableMesh = entity.GetEditableMesh();
+    const std::size_t count = std::min(m_multiRotateVertices.size(), m_multiRotateStartPositions.size());
+    for (std::size_t index = 0; index < count; ++index)
+    {
+        const std::size_t vertexIndex = m_multiRotateVertices[index];
+        if (vertexIndex >= editableMesh.GetVertexCount())
+        {
+            continue;
+        }
+        editableMesh.GetVertex(vertexIndex).position = m_multiRotateStartPositions[index];
+    }
+    MeshData renderMesh;
+    if (editableMesh.BuildRenderMesh(renderMesh))
+    {
+        entity.CreateFromMeshData(renderMesh);
+    }
+    m_isMultiRotating = false;
+
+    m_multiRotateAxis = EdgeMoveAxis::None;
+
+    m_multiRotateVertices.clear();
+    m_multiRotateStartPositions.clear();
+    BOX_LOG_INFO("Edge rotation cancelled.");
+}
+
+void EdgeEditController::SetMultiRotateAxis(Entity& entity, EdgeMoveAxis axis)
+{
+    if (!m_isMultiRotating)
+    {
+        return;
+    }
+
+
+    m_multiRotateAxis = axis;
+
+
+    // Reset mouse origin when changing axis.
+    m_multiRotateStartMouse = ImGui::GetMousePos();
+
+
+    MeshEditing& mesh = entity.GetEditableMesh();
+
+
+    const std::size_t count = std::min(
+            m_multiRotateVertices.size(),
+            m_multiRotateStartPositions.size()
+        );
+
+
+    // Current positions become the new
+    // rotation starting positions.
+    m_multiRotateCenter = glm::vec3(0.0f);
+
+
+    for (std::size_t index = 0;
+        index < count;
+        ++index)
+    {
+        const std::size_t vertexIndex =
+            m_multiRotateVertices[index];
+
+        if (vertexIndex >= mesh.GetVertexCount())
+        {
+            continue;
+        }
+
+
+        m_multiRotateStartPositions[index] = mesh.GetVertex(vertexIndex).position;
+
+        m_multiRotateCenter += m_multiRotateStartPositions[index];
+    }
+
+
+    if (count > 0)
+    {
+        m_multiRotateCenter /=
+            static_cast<float>(
+                count
+                );
+    }
+}
+
+
+
+
+// Helpers for multi-move axis switching while moving.
+void EdgeEditController::SetMultiMoveAxis(Entity& entity, EdgeMoveAxis axis)
+{
+    if (!m_isMultiMoving)
+    {
+        return;
+    }
+
+
+    // -----------------------------------------
+    // Set the requested axis.
+    // -----------------------------------------
+
+    m_multiMoveAxis =
+        axis;
+
+
+    // -----------------------------------------
+    // Reset mouse origin so changing axis
+    // doesn't make the mesh jump.
+    // -----------------------------------------
+
+    m_multiMoveStartMouse =
+        ImGui::GetMousePos();
+
+
+    // -----------------------------------------
+    // Refresh current vertex positions.
+    //
+    // These become the new starting positions
+    // for movement along the new axis.
+    // -----------------------------------------
+
+    MeshEditing& mesh =
+        entity.GetEditableMesh();
+
+
+    const std::size_t count =
+        std::min(
+            m_multiMoveVertices.size(),
+            m_multiMoveStartPositions.size()
+        );
+
+
+    for (std::size_t index = 0;
+        index < count;
+        ++index)
+    {
+        const std::size_t vertexIndex =
+            m_multiMoveVertices[index];
+
+
+        if (vertexIndex >=
+            mesh.GetVertexCount())
+        {
+            continue;
+        }
+
+
+        m_multiMoveStartPositions[index] =
+            mesh
+            .GetVertex(vertexIndex)
+            .position;
+    }
 }

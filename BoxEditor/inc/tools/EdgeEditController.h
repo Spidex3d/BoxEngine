@@ -189,17 +189,28 @@ private:
     void EditCancelMove(Entity& entity);
 
     // ###################################################################################################
-    // ####################################### Multi Selct Edges #########################################
+    // ####################################### Multi Select Edges #########################################
     // ###################################################################################################
 
-    // Multi-edge scale
+    // Multi-edge scale "S"
     void EditBeginScale(Entity& entity);
-
     void EditUpdateScale(Entity& entity);
-
     void EditConfirmScale();
-
     void EditCancelScale(Entity& entity);
+
+    // Multi-edge Move "G"
+	void EditBeginMultiMove(Entity& entity, EdgeMoveAxis axis);
+    void EditUpdateMultiMove(Entity& entity);
+    void EditConfirmMultiMove();
+	void EditCancelMultiMove(Entity& entity);
+    void SetMultiMoveAxis(Entity& entity, EdgeMoveAxis axis);
+
+	// Multi-edge Rotate "R"
+    void EditBeginMultiRotate(Entity& entity, EdgeMoveAxis axis);
+    void EditUpdateMultiRotate(Entity& entity);
+    void EditConfirmMultiRotate();
+    void EditCancelMultiRotate(Entity& entity);
+    void SetMultiRotateAxis(Entity& entity, EdgeMoveAxis axis);
 
 private:
     // -------------------------------------------------
@@ -224,16 +235,31 @@ private:
     // -------------------------------------------------
 
     bool m_isScaling = false;
-
     glm::vec3 m_scaleCenter{ 0.0f };
-
     std::vector<std::size_t>m_scaleVertices;
-
     std::vector<glm::vec3>m_scaleStartPositions;
-
     ImVec2 m_scaleStartMouse = ImVec2(0.0f, 0.0f);
-
 	float m_scaleSensitivity = 0.01f; // Sensitivity for scaling, adjust as needed
+
+    // -------------------------------------------------
+    // Multi-edge move
+    // -------------------------------------------------
+	bool m_isMultiMoving = false;
+    EdgeMoveAxis m_multiMoveAxis = EdgeMoveAxis::None;
+	std::vector<std::size_t> m_multiMoveVertices;
+	std::vector<glm::vec3> m_multiMoveStartPositions;
+	ImVec2 m_multiMoveStartMouse = ImVec2(0.0f, 0.0f);
+	float m_multiMoveSensitivity = 0.01f; // Sensitivity for multi-edge moving, adjust as needed
+    // -------------------------------------------------
+    // Multi-edge rotate
+    // -------------------------------------------------
+    bool m_isMultiRotating = false;
+    EdgeMoveAxis m_multiRotateAxis = EdgeMoveAxis::None;
+    glm::vec3 m_multiRotateCenter{ 0.0f };
+    std::vector<std::size_t>m_multiRotateVertices;
+    std::vector<glm::vec3>m_multiRotateStartPositions;
+    ImVec2 m_multiRotateStartMouse = ImVec2(0.0f, 0.0f);
+    float m_multiRotateSensitivity = 0.2f;
 
 
     // -------------------------------------------------
