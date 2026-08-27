@@ -237,7 +237,7 @@ void MaterialPreview::Draw(const Material& material)
     const ImVec2 previewSize(static_cast<float>(m_width - 100), static_cast<float>(m_height - 100));
     // Flip framebuffer texture vertically.
 	// draw the sphere preview texture in the ImGui window
-    ImGui::Image(reinterpret_cast<ImTextureID>(static_cast<intptr_t>(previewTexture)), previewSize, ImVec2(0.0f, 1.0f),ImVec2(1.0f, 0.0f));
+    ImGui::Image((ImTextureID)(static_cast<intptr_t>(previewTexture)), previewSize, ImVec2(0.0f, 1.0f),ImVec2(1.0f, 0.0f));
 
 }
 

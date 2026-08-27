@@ -144,7 +144,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     
     ImGui::PushID("editTargetIcons");
     // ########### Vertex #############
-    if (ImGui::ImageButton("##VertexTool", reinterpret_cast<ImTextureID>(static_cast<intptr_t>(vertexIcon.id)),iconSize))
+    if (ImGui::ImageButton("##VertexTool", (ImTextureID)(intptr_t)vertexIcon.id,iconSize))
     {
         m_editType = 0;
         
@@ -162,7 +162,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     
     ImGui::SameLine();
     // Edge
-    if (ImGui::ImageButton("##EdgeTool", reinterpret_cast<ImTextureID>(static_cast<intptr_t>(edgeIcon.id)), iconSize))
+    if (ImGui::ImageButton("##EdgeTool", (ImTextureID)(intptr_t)edgeIcon.id, iconSize))
     {
         m_editType = 1;
         
@@ -182,7 +182,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
        
 
     // Face
-    if (ImGui::ImageButton("##FaceTool", reinterpret_cast<ImTextureID>(static_cast<intptr_t>(faceIcon.id)), iconSize))
+    if (ImGui::ImageButton("##FaceTool", (ImTextureID)(intptr_t)faceIcon.id, iconSize))
     {
         m_editType = 2;
         
@@ -227,7 +227,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 
     // Move
     ImGui::SameLine();
-    if (ImGui::ImageButton("##MoveTool", reinterpret_cast<ImTextureID>(static_cast<intptr_t>(moveIcon.id)), iconSize))
+    if (ImGui::ImageButton("##MoveTool", (ImTextureID)(intptr_t)moveIcon.id, iconSize))
     {
         m_transformTools.SetActiveTool(TransformToolType::Move);
         
@@ -242,7 +242,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     }
 	// Scale
 	ImGui::SameLine();
-    if (ImGui::ImageButton("##ScaleTool", reinterpret_cast<ImTextureID>(static_cast<intptr_t>(scaleIcon.id)), iconSize))
+    if (ImGui::ImageButton("##ScaleTool", (ImTextureID)(intptr_t)scaleIcon.id, iconSize))
     {
         m_transformTools.SetActiveTool(TransformToolType::Scale);
     }
@@ -257,7 +257,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     }
 	// Rotate
     ImGui::SameLine();
-    if (ImGui::ImageButton("##RotateTool", reinterpret_cast<ImTextureID>(static_cast<intptr_t>(rotateIcon.id)), iconSize))
+    if (ImGui::ImageButton("##RotateTool", (ImTextureID)(intptr_t)rotateIcon.id, iconSize))
     {
 		m_transformTools.SetActiveTool(TransformToolType::Rotate);
     }
@@ -272,7 +272,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     }
 	// Local
     ImGui::SameLine();
-    if (ImGui::ImageButton("##LocalTool", reinterpret_cast<ImTextureID>(static_cast<intptr_t>(localIcon.id)), iconSize))
+    if (ImGui::ImageButton("##LocalTool", (ImTextureID)(intptr_t)localIcon.id, iconSize))
     {
 		m_transformTools.SetActiveTool(TransformToolType::Local);
     }
@@ -287,7 +287,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     }
 	// Snap
     ImGui::SameLine();
-    if (ImGui::ImageButton("##SnapTool", reinterpret_cast<ImTextureID>(static_cast<intptr_t>(snapIcon.id)), iconSize))
+    if (ImGui::ImageButton("##SnapTool", (ImTextureID)(intptr_t)snapIcon.id, iconSize))
     {
 		m_transformTools.SetActiveTool(TransformToolType::Snap);
     }
@@ -302,7 +302,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     }
 	// Drop the object to the ground plane / grid
     ImGui::SameLine();
-    if (ImGui::ImageButton("##DropTool", reinterpret_cast<ImTextureID>(static_cast<intptr_t>(dropIcon.id)), iconSize))
+    if (ImGui::ImageButton("##DropTool", (ImTextureID)(intptr_t)dropIcon.id, iconSize))
     {
         m_transformTools.DropToGrid(engine);
     }
@@ -661,8 +661,11 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 		// draw the scene texture to the ImGui window from the framebuffer, if the texture is valid
         if (sceneTexture != 0)
         {
-            ImGui::Image(
+            /*ImGui::Image(
                 reinterpret_cast<ImTextureID>(static_cast<intptr_t>(sceneTexture)),
+                availableSize, ImVec2(0, 1), ImVec2(1, 0));*/
+            ImGui::Image(
+                (ImTextureID)(static_cast<intptr_t>(sceneTexture)),
                 availableSize, ImVec2(0, 1), ImVec2(1, 0));
 
             m_sceneViewportPos = ImGui::GetItemRectMin();

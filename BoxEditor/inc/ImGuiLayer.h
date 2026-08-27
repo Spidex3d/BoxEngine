@@ -1,12 +1,4 @@
-
-//enum class MenuAction
-//{
-//    None,
-//    Exit,
-//    NewScene,
-//    OpenScene,
-//    SaveScene
-//};
+// Ok update 27/08/26 moved to Imgui vertion 1.93.0 docking branch
 
 struct GLFWwindow;
 

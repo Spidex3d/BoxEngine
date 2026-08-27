@@ -128,7 +128,7 @@ void ImGuiLayer::RenderImGui()
     if (!m_initialized)
         return;
 
-    ImGui::RenderPreview();
+    ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
     ImGuiIO& io = ImGui::GetIO();
