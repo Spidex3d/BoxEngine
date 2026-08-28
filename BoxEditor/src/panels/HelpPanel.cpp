@@ -89,7 +89,13 @@ void HelpPanel::Draw()
                 " Press x to move on x, press y to move on y, press z to move on z."
                 " The face button works the same way."
             );
-			// Helper Function to center text with color
+
+            ImGui::TextWrapped(
+                "To Use select a vertex around a loop Ctrl + click each vertex."
+                "To Use select a vertex around a compleat loop Alt + click a vertex and the whole loop will be selected."
+            );
+
+			// #################### Helper Function to center text with color #####################
             g_helpers.CenterTextColored(COLOR_LIGHTGREEN, ICON_FA_CAMERA" Camera Controls");
 
 			ImGui::Separator();
@@ -141,7 +147,7 @@ void HelpPanel::Draw()
 
             ImGui::EndTabItem();
         }
-		// Modes tab
+		// ########################## Modes tab ########################## Not in use yet
         if (ImGui::BeginTabItem(
             "Modes"))
         {
@@ -172,7 +178,7 @@ void HelpPanel::Draw()
 
             ImGui::EndTabItem();
         }
-		// Modifiers tab
+		// ################################ Modifiers tab ########################################
         if (ImGui::BeginTabItem(ICON_FA_TOOLS" Modifiers"))
         {
             ImGui::TextWrapped("To Select a Modifiers right click in the main screen.");
@@ -195,17 +201,17 @@ void HelpPanel::Draw()
             );
 
             ImGui::BulletText(
-                "Left-click to confirm."
+                "Left-click to confirm changes."
             );
 
             ImGui::BulletText(
-                "Right-click "
+                "Escape to cancel changes."
             );
 
             ImGui::EndTabItem();
         }
 
-		// Materials tab
+		// ########################## Materials tab ##########################
         if (ImGui::BeginTabItem(
             "Materials"))
         {
@@ -239,7 +245,7 @@ void HelpPanel::Draw()
 
             ImGui::EndTabItem();
         }
-		// Shortcuts tab
+		// ########################## Shortcuts tab ##########################
         if (ImGui::BeginTabItem("Shortcuts"))
         {
             ImGui::SeparatorText(ICON_FA_CAMERA" Camera Controls");
@@ -283,6 +289,7 @@ void HelpPanel::Draw()
                 ImGui::EndTable();
             }
 
+			// ############################ Move tool table ############################
             ImGui::SeparatorText(ICON_FA_ARROWS_ALT" Move Controls");
 
             if (ImGui::BeginTable(
@@ -344,7 +351,7 @@ void HelpPanel::Draw()
                 
                 ImGui::EndTable();
             }
-			// next table for scale tool
+			// ######################### Next table for scale tool #########################
 			ImGui::SeparatorText(ICON_FA_EXPAND" Scale Controls");
 
             if (ImGui::BeginTable(
@@ -455,7 +462,7 @@ void HelpPanel::Draw()
                 ImGui::EndTable();
             }
 
-			// Edit Mode Shortcuts
+			// ####################### Edit Mode Shortcuts #############################
             ImGui::SeparatorText(ICON_FA_COG" Edit Mode Controls");
 
             if (ImGui::BeginTable(
@@ -490,6 +497,18 @@ void HelpPanel::Draw()
                     "Use Tab Key",
                     "Switch Object Mode"
                 );
+                AddShortcut(
+                    "Use Key 1",
+                    "Switch to vertex"
+                );
+                AddShortcut(
+                    "Use Key 2",
+                    "Switch to edge"
+				);
+                AddShortcut(
+                    "Use Key 3",
+                    "Switch to face"
+				);
                 
 
                 ImGui::EndTable();
@@ -523,7 +542,7 @@ void HelpPanel::Draw()
                 };
                 AddShortcut(
                     "Escape",
-                    "Close application & go to bed"
+                    "Reset all actions"
                 );
 
                 ImGui::EndTable();

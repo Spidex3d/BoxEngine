@@ -7,6 +7,7 @@
 #include <EditorInput.h>
 #include <imgui/imgui.h>
 #include "panels/HelpPanel.h"
+#include <panels/MaterialEditorPanel.h>
 
 #include <FileDialog.h>
 
@@ -97,6 +98,18 @@ bool App::Init()
     }
     
     m_helpPanel = std::make_unique<HelpPanel>();
+
+    m_materialEditorPanel = std::make_unique<MaterialEditorPanel>();
+
+    if (!m_materialEditorPanel->Initialize())
+    {
+        BOX_LOG_ERROR(
+            "MaterialEditorPanel failed to initialize"
+        );
+
+        m_materialEditorPanel.reset();
+        return false;
+    }
    
     m_mbxManager = std::make_unique<mbxManager>();
 
@@ -145,7 +158,7 @@ int App::Run()
         MenuAction menuAction = m_imgMenu->DrawMainMenu();
 
         HandleMenuAction(menuAction, *m_engine);
-        /*bool Look = true;
+       /* bool Look = true;
         if (Look)
         {
             ImGui::ShowDemoWindow();
@@ -162,6 +175,16 @@ int App::Run()
         {
             m_imgObjectExplorer->DrawObjectExplorer(*m_engine, m_sceneViewport->GetFaceEditController(),
                 m_sceneViewport->GetEdgeEditController());
+        }
+
+        if (m_materialEditorPanel)
+        {
+            Entity* entity = m_engine->GetSelectedEntity();
+
+            if (entity)
+            {
+                m_materialEditorPanel->Draw(*m_engine, *entity, m_sceneViewport->GetFaceEditController());
+            }
         }
 
         if (m_helpPanel)
@@ -371,6 +394,15 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
 
         break;
 
+        case ViewportAction::AddMaterial:
+        {
+            if (m_materialEditorPanel)
+            {
+                m_materialEditorPanel->Open();
+            }
+
+            break;
+		}
 
     case ViewportAction::None:
     default:

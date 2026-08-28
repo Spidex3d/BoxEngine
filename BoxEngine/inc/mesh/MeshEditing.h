@@ -69,11 +69,19 @@ public:
     const std::vector<EditEdge>& GetEdges() const;
     const std::vector<EditFace>& GetFaces() const;
 
+    
+	std::vector<std::size_t>FindEdgeRing(std::size_t startEdgeIndex) const; // Finds an edge loop starting from a given edge index.
+	std::vector<std::size_t>FindEdgeLoop(std::size_t startEdgeIndex) const; // Finds an edge loop starting from a given edge index.
+
 private:
     float pi = 3.14159265358979323846f;
 
     std::vector<EditVertex> m_vertices;
     std::vector<EditEdge> m_edges;
     std::vector<EditFace> m_faces;
+
+	std::size_t FindEdgeIndex(std::size_t vertexA, std::size_t vertexB) const; // Finds the index of an edge given its two vertex indices. Returns -1 if not found.
+
+	bool FaceContainsEdge(const EditFace& face, std::size_t vertexA, std::size_t vertexB) const; // Checks if a given face contains an edge defined by two vertex indices.
 
 };

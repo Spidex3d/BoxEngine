@@ -143,6 +143,7 @@
     <ClCompile Include="src\panels\HelpPanel.cpp" />
     <ClCompile Include="src\panels\MainMenuBar.cpp" />
     <ClCompile Include="src\panels\MaterialEditor.cpp" />
+    <ClCompile Include="src\panels\MaterialEditorPanel.cpp" />
     <ClCompile Include="src\panels\ObjectExplorerPanel.cpp" />
     <ClCompile Include="src\panels\SceneCollectionPanel.cpp" />
     <ClCompile Include="src\panels\SceneViewportPanel.cpp" />
@@ -179,6 +180,7 @@
     <ClInclude Include="inc\panels\HelpPanel.h" />
     <ClInclude Include="inc\panels\MainMenuBar.h" />
     <ClInclude Include="inc\panels\MaterialEditor.h" />
+    <ClInclude Include="inc\panels\MaterialEditorPanel.h" />
     <ClInclude Include="inc\panels\ObjectExplorerPanel.h" />
     <ClInclude Include="inc\panels\SceneCollectionPanel.h" />
     <ClInclude Include="inc\panels\SceneViewportPanel.h" />

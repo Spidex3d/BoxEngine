@@ -98,7 +98,7 @@ void ObjectExplorerPanel::DrawObjectExplorer(BoxEngine& engine, FaceEditControll
         }
 
         // ####################################################
-        // Textures tab
+		// Textures tab NOT USED FOR NOW, MATERIAL EDITOR PANEL IS USED INSTEAD
         // ####################################################
         if (ImGui::BeginTabItem("Textures"))
         {
@@ -305,25 +305,25 @@ void ObjectExplorerPanel::DrawTexturesTab(BoxEngine& engine, Entity& entity,
 {
     
 
-    ImGui::Separator();
+    //ImGui::Separator();
 
-    ImGui::TextDisabled(
-        "No textures assigned."
-    );
+    //ImGui::TextDisabled(
+    //    "No textures assigned."
+    //);
 
-    ImGui::Spacing();
-    
-    // Draw the material editor for the selected entity.
-    if (m_materialEditor)
-    {
-        m_materialEditor->Draw(engine, entity, faceEditController);
-    }
-    else
-    {
-        ImGui::TextDisabled(
-            "Material editor is not initialized."
-        );
-    }
+    //ImGui::Spacing();
+    //
+    //// Draw the material editor for the selected entity.
+    //if (m_materialEditor)
+    //{
+    //    m_materialEditor->Draw(engine, entity, faceEditController);
+    //}
+    //else
+    //{
+    //    ImGui::TextDisabled(
+    //        "Material editor is not initialized."
+    //    );
+    //}
 
 }
 

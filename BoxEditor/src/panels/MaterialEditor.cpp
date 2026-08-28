@@ -27,13 +27,9 @@ bool MaterialEditor::Initialize()
 
     m_preview = std::make_unique<MaterialPreview>();
 
-    if (!m_preview->Initialize(
-        200,
-        200))
+    if (!m_preview->Initialize(200, 200))
     {
-        BOX_LOG_ERROR(
-            "MaterialPreview initialization failed"
-        );
+        BOX_LOG_ERROR("MaterialPreview initialization failed");
 
         m_preview.reset();
         return false;
@@ -47,13 +43,6 @@ void MaterialEditor::Draw(
     Entity& entity,
     FaceEditController& faceEditController)
 {
-    if (!ImGui::CollapsingHeader(
-        "Material Editor"))
-    {
-        return;
-    }
-
-
     // -------------------------------------------------
     // Choose which material the preview should show.
     //
@@ -144,13 +133,12 @@ void MaterialEditor::Draw(
 void MaterialEditor::DrawMaterialProperties(BoxEngine& engine, Entity& entity, Material& material)
 {
 
-    if (ImGui::CollapsingHeader("Material Properties")) // ImGuiTreeNodeFlags_DefaultOpen
-    {
+    
 		// put a imgui image of the material preview here.
 		// display a sphere with the material applied to it.
 
         ImGui::Spacing();
-        ImGui::Text("Textures for: %s", entity.GetName().c_str());
+       // ImGui::Text("Editing: %s", entity.GetName().c_str());
         ImGui::Spacing();
 
         glm::vec4 baseColor = material.GetBaseColor();
@@ -159,18 +147,27 @@ void MaterialEditor::DrawMaterialProperties(BoxEngine& engine, Entity& entity, M
             material.SetBaseColor(baseColor);
         }
         float metallic = material.GetMetallic();
-        if (ImGui::SliderFloat("Metallic", &metallic, 0.0f, 1.0f))
+       
+        if (ImGui::InputFloat("Metallic", &metallic, 0.01f, 1.0f))
         {
+            metallic = std::clamp(metallic, 0.0f, 1.0f);
+
             material.SetMetallic(metallic);
         }
         float roughness = material.GetRoughness();
-        if (ImGui::SliderFloat("Roughness", &roughness, 0.0f, 1.0f))
+        
+        if (ImGui::InputFloat("Roughness", &roughness, 0.01f, 1.0f))
         {
+            roughness = std::clamp(roughness, 0.0f, 1.0f);
+
             material.SetRoughness(roughness);
         }
         float alpha = material.GetAlpha();
-        if (ImGui::SliderFloat("Alpha", &alpha, 0.0f, 1.0f))
+       
+        if (ImGui::InputFloat("Alpha", &alpha, 0.01f, 1.0f))
         {
+            alpha = std::clamp(alpha, 0.01f, 1.0f);
+
             material.SetAlpha(alpha);
         }
 
@@ -180,45 +177,6 @@ void MaterialEditor::DrawMaterialProperties(BoxEngine& engine, Entity& entity, M
         {
             material.SetUseBaseColorTexture(useTexture);
         }
-        
-        if (ImGui::Button("Load Texture"))
-        {
-                       
-            const std::string path = FileDialog::OpenTexture();
-            
-            if (!path.empty())
-            {
-                const GLuint textureID =
-                    engine.LoadTexture(path);
-
-                if (textureID != 0)
-                {
-                    
-                    material.SetBaseColorTexture(
-                        textureID,
-                        path
-                    );
-
-                    material.SetUseBaseColorTexture(
-                        true
-                    );
-                }
-            }
-                        
-        }
-		ImGui::SameLine();
-        if (ImGui::Button("Map UVs"))
-        {
-
-			// open a panel to map the UVs of the selected entity, this will be a simple UV mapping tool that allows
-            // the user to select a texture and map it to the entity's mesh.
-            // This will be a simple implementation for now, but can be expanded later.
-			// at some point we will need to unwrap the mesh and allow the user to manually adjust the UVs,
-            // but for now we will just use a simple planar mapping.
-			// we need to make this intuitive and easy to use, Blender seems very complex for UV mapping,
-        }
-
-	}
     
 }
 
@@ -234,8 +192,11 @@ void MaterialEditor::DrawEmissionControls(Material& material)
             material.SetEmissionColor(emissionColor);
         }
         float emissionStrength = material.GetEmissionStrength();
-        if (ImGui::SliderFloat("Emission Strength", &emissionStrength, 0.0f, 10.0f))
+       
+        if (ImGui::InputFloat("Emission Strength", &emissionStrength, 0.05f, 0.25f))
         {
+            emissionStrength = std::clamp(emissionStrength, 0.01f, 0.500f);
+
             material.SetEmissionStrength(emissionStrength);
         }
 	}
@@ -249,13 +210,6 @@ void MaterialEditor::DrawTextureProperties(BoxEngine& engine, Entity& entity, Ma
 
 void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entity, FaceEditController& faceEditController)
 {
-    if (!ImGui::CollapsingHeader(
-        "Face Material",
-        ImGuiTreeNodeFlags_DefaultOpen))
-    {
-        return;
-    }
-
     
     // -------------------------------------------------
     // No face selected.
@@ -287,29 +241,14 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
 
         return;
     }
-    // push
-    //ImGui::PushID("MaterialButtons");
-
-    //ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // normal
-    //ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.16f, 0.70f, 0.16f, 1.0f)); // hover
-    //ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.10f, 0.50f, 0.10f, 1.0f)); // active/click
-    //ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.8f, 1.0f)); // active/click
-
-    //ImGui::GetStyle().FrameBorderSize = 0.3f; // Add a border to the button
-    //ImGui::GetStyle().FrameRounding = 6.0f; // rounded corners of buttons
-
-
+    
     EditFace& face = mesh.GetFace(faceIndex);
 
+	ImGui::Text("Editing: %s", entity.GetName().c_str());   // Name of the entity being edited
 
-    ImGui::Text(
-        "Selected Face: %zu",
-        faceIndex
-    );
+	ImGui::Text("Selected Face: %zu", faceIndex);           // Index of the selected face
 
-    ImGui::Text(
-        "Material Slot: %zu",
-        face.materialIndex
+	ImGui::Text("Material Slot: %zu", face.materialIndex    // Index of the material slot assigned to the selected face
     );
 
 
@@ -319,7 +258,7 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
     // =================================================
     // NEW MATERIAL SLOT
     // =================================================
-
+    // [ New ] [ Open ] [ Save ] [ Save As ]
     if (ImGui::Button("Add New Material"))
     {
         // Shader currently supports 8 slots.
@@ -377,10 +316,25 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
         }
         else
         {
-            BOX_LOG_WARNING(
-                "Maximum material slots reached"
-            );
+            BOX_LOG_WARNING("Maximum material slots reached");
         }
+    }
+
+    ImGui::SameLine();
+    if (ImGui::Button("Open"))
+    {
+
+    }
+	ImGui::SameLine();
+    if (ImGui::Button("Save"))
+    {
+    }
+
+    
+    ImGui::SameLine();
+    if (ImGui::Button("Save As"))
+    {
+
     }
 
     ImGui::Spacing();
@@ -419,6 +373,8 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
         slotItems.push_back(name.c_str());
     }
 
+	
+
 	// ############################################ New Material Name Selection #######################
     Material& material = entity.GetMaterialSlot(face.materialIndex);
 
@@ -440,6 +396,53 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
             materialNameBuffer
         );
     }
+
+    ImGui::SeparatorText("Material Tools");
+	// ############################################# Buttons for Material Slot Management ##############
+    if (ImGui::Button("Load Texture"))
+    {
+
+        const std::string path = FileDialog::OpenTexture();
+
+        if (!path.empty())
+        {
+            const GLuint textureID =
+                engine.LoadTexture(path);
+
+            if (textureID != 0)
+            {
+
+                material.SetBaseColorTexture(
+                    textureID,
+                    path
+                );
+
+                material.SetUseBaseColorTexture(
+                    true
+                );
+            }
+        }
+
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Map UVs"))
+    {
+
+        // open a panel to map the UVs of the selected entity, this will be a simple UV mapping tool that allows
+        // the user to select a texture and map it to the entity's mesh.
+        // This will be a simple implementation for now, but can be expanded later.
+        // at some point we will need to unwrap the mesh and allow the user to manually adjust the UVs,
+        // but for now we will just use a simple planar mapping.
+        // we need to make this intuitive and easy to use, Blender seems very complex for UV mapping,
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Node Editor"))
+    {
+
+		// open a new panel to add a node editor for the material,
+        // this will allow the user to create complex materials using a node-based system.
+    }
+
 	// ############################################# New Material List Selection #######################
 
     if (ImGui::ListBox(
@@ -467,18 +470,6 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
         }
 	}
 
-	// ############################################# New Material Color Selection #######################
-    glm::vec4 color = material.GetBaseColor();
-
-
-    if (ImGui::ColorEdit4("Face Color", &color[0]))
-    {
-        material.SetBaseColor(color);
-    }
-
-	
-   // ImGui::PopStyleColor(4); // pop all 4 pushed colors has to match top
-   
 }
 
 void MaterialEditor::Shutdown()

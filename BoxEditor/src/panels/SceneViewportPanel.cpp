@@ -109,41 +109,29 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     // If you already have a member, use that one instead.
     const ImVec2 editTypeSize(18, 18);
     const ImVec2 iconSize(18, 18);
-	// need add keyboard shortcuts for switching between edit targets, for example: 1 = vertex, 2 = edge, 3 = face
-	/*if (!ImGui::GetIO().WantTextInput && ImGui::IsKeyPressed(ImGuiKey_1, false))
-    {
-        if (m_editType == 0)
-        {
-            m_editType = 1;
-			action = ViewportAction::vertexEditMode;
-        }
-        else if (m_editType == 1)
-        {
-            m_editType = 2;
-			action = ViewportAction::edgeEditMode;
-        }
-        else
-        {
-            m_editType = 0;
-			action = ViewportAction::faceEditMode;
-        }
-	}*/
-
-
 
     // AddVertexMode AddEdgeMode AddFaceMode
     ImGui::SameLine();
 
 	const bool EditModeActive = m_EditMode == 2; // set it editing mode active if the combo box is set to edit mode
 
+    if (EditModeActive && !ImGui::GetIO().WantTextInput)
+    {
+        if (ImGui::IsKeyPressed(ImGuiKey_1))
+            m_editType = 0;
+        else if (ImGui::IsKeyPressed(ImGuiKey_2))
+            m_editType = 1;
+        else if (ImGui::IsKeyPressed(ImGuiKey_3))
+            m_editType = 2;
+    }
+
     if (!EditModeActive)
     {
         ImGui::BeginDisabled();
     }
-
-    
+        
     ImGui::PushID("editTargetIcons");
-    // ########### Vertex #############
+    // Vertex 
     if (ImGui::ImageButton("##VertexTool", (ImTextureID)(intptr_t)vertexIcon.id,iconSize))
     {
         m_editType = 0;
@@ -400,6 +388,16 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             // other menu items...
             ImGui::EndMenu();
         }
+
+        if (ImGui::BeginMenu("Add a new Material")) {
+            if (ImGui::MenuItem("Add a new Material")) {
+                // Request engine to add a plane via action callback
+                //if (m_actionCallback) m_actionCallback("AddMaterial");
+				action = ViewportAction::AddMaterial;
+            }
+            ImGui::EndMenu();
+		}
+
         // Lighting call to action callback to add a new light to the scene,
         // the type of light will be determined by the menu item clicked and passed as a string argument to the callback
         if (ImGui::BeginMenu("Add a new Light")) {
@@ -661,12 +659,8 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 		// draw the scene texture to the ImGui window from the framebuffer, if the texture is valid
         if (sceneTexture != 0)
         {
-            /*ImGui::Image(
-                reinterpret_cast<ImTextureID>(static_cast<intptr_t>(sceneTexture)),
-                availableSize, ImVec2(0, 1), ImVec2(1, 0));*/
-            ImGui::Image(
-                (ImTextureID)(static_cast<intptr_t>(sceneTexture)),
-                availableSize, ImVec2(0, 1), ImVec2(1, 0));
+            
+            ImGui::Image((ImTextureID)(static_cast<intptr_t>(sceneTexture)), availableSize, ImVec2(0, 1), ImVec2(1, 0));
 
             m_sceneViewportPos = ImGui::GetItemRectMin();
             m_sceneViewportSize = ImGui::GetItemRectSize();

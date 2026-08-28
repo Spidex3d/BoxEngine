@@ -117,6 +117,21 @@ public:
 
     void ConfirmBevel(Entity& entity);
 
+    struct LogicalEdge
+    {
+        // Actual edge index inside MeshEditing.
+        std::size_t editableEdgeIndex = static_cast<std::size_t>(-1);
+
+        // Logical endpoint vertex indices.
+        std::size_t vertexA = 0;
+        std::size_t vertexB = 0;
+
+        // Current logical positions.
+        glm::vec3 positionA{ 0.0f };
+        glm::vec3 positionB{ 0.0f };
+
+    };
+
 	
 private: // loopcuts - facecut
     // face cut variables
@@ -139,20 +154,7 @@ private: // loopcuts - facecut
 	
 
 private:
-    struct LogicalEdge
-    {
-        // Actual edge index inside MeshEditing.
-        std::size_t editableEdgeIndex = static_cast<std::size_t>(-1);
-
-        // Logical endpoint vertex indices.
-        std::size_t vertexA = 0;
-        std::size_t vertexB = 0;
-
-        // Current logical positions.
-        glm::vec3 positionA{ 0.0f };
-        glm::vec3 positionB{ 0.0f };
-
-    };
+    
    
     std::vector<LogicalEdge>BuildLogicalEdges(const Entity& entity) const;
 

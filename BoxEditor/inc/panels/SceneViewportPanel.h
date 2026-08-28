@@ -41,6 +41,8 @@ enum class ViewportAction
     AddEditableCone,
     AddEditableTorus,
 
+	AddMaterial,
+
 	AddAmbientLight,
     AddSpotLight,
     AddAreaLight,

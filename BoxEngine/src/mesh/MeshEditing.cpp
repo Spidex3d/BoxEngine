@@ -1,6 +1,8 @@
 #include <mesh\MeshEditing.h>
 #include <miniBoxLog.h>
 #include <cmath>
+#include <tools\EdgeEditController.h>
+#include <algorithm>
 
 void MeshEditing::Clear()
 {
@@ -923,4 +925,662 @@ MeshEditing::GetFaces() const
 {
     return m_faces;
 }
+// ####################################################################################################################
+// ############################################ Mesh Editing add edge LoopCut #########################################
+// ####################################################################################################################
+std::vector<std::size_t> MeshEditing::FindEdgeRing(std::size_t startEdgeIndex) const
+//std::vector<std::size_t> MeshEditing::FindEdgeLoop(std::size_t startEdgeIndex) const
+
+{
+    //std::vector<std::size_t> loopEdges;
+    std::vector<std::size_t> ringEdges;
+
+    // -------------------------------------------------
+    // Validate starting edge.
+    // -------------------------------------------------
+
+    if (startEdgeIndex >= m_edges.size())
+    {
+        return ringEdges;
+    }
+
+
+    // Always include the clicked edge.
+    ringEdges.push_back(
+        startEdgeIndex
+    );
+
+
+    // -------------------------------------------------
+    // Walk in one direction from an edge.
+    // -------------------------------------------------
+
+    auto WalkDirection =
+        [&](std::size_t firstEdge,
+            std::size_t firstFace)
+    {
+        std::size_t currentEdge =
+            firstEdge;
+
+       // std::size_t previousFace = static_cast<std::size_t>(-1);
+
+        std::size_t currentFace =
+            firstFace;
+
+
+        // Safety guard against malformed topology.
+        const std::size_t maxSteps =
+            m_edges.size() + 1;
+
+
+        for (std::size_t step = 0;
+            step < maxSteps;
+            ++step)
+        {
+            if (currentFace >= m_faces.size())
+            {
+                break;
+            }
+
+
+            const EditFace& face =
+                m_faces[currentFace];
+
+
+            // -----------------------------------------
+            // For now edge loops only travel cleanly
+            // through quad faces.
+            // -----------------------------------------
+
+            if (face.vertices.size() != 4)
+            {
+                break;
+            }
+
+
+            const EditEdge& edge =
+                m_edges[currentEdge];
+
+
+            // -----------------------------------------
+            // Find which side of this quad is our
+            // current edge.
+            // -----------------------------------------
+
+            int edgeSide = -1;
+
+            for (int side = 0;
+                side < 4;
+                ++side)
+            {
+                const std::size_t a =
+                    face.vertices[side];
+
+                const std::size_t b =
+                    face.vertices[
+                        (side + 1) % 4
+                    ];
+
+
+                if ((a == edge.vertexA &&
+                    b == edge.vertexB) ||
+                    (a == edge.vertexB &&
+                        b == edge.vertexA))
+                {
+                    edgeSide = side;
+                    break;
+                }
+            }
+
+
+            if (edgeSide == -1)
+            {
+                break;
+            }
+
+
+            // -----------------------------------------
+            // Opposite side of a quad is two sides
+            // away.
+            //
+            // 0 -> 2
+            // 1 -> 3
+            // 2 -> 0
+            // 3 -> 1
+            // -----------------------------------------
+
+            const int oppositeSide =
+                (edgeSide + 2) % 4;
+
+
+            const std::size_t oppositeA =
+                face.vertices[
+                    oppositeSide
+                ];
+
+            const std::size_t oppositeB =
+                face.vertices[
+                    (oppositeSide + 1) % 4
+                ];
+
+
+            const std::size_t oppositeEdge =
+                FindEdgeIndex(
+                    oppositeA,
+                    oppositeB
+                );
+
+
+            if (oppositeEdge ==
+                static_cast<std::size_t>(-1))
+            {
+                break;
+            }
+
+
+            // We've returned to the beginning.
+            if (oppositeEdge ==
+                startEdgeIndex)
+            {
+                break;
+            }
+
+
+            // Prevent duplicates.
+            if (std::find(
+                ringEdges.begin(),
+                ringEdges.end(),
+                oppositeEdge) ==
+                ringEdges.end())
+            {
+                ringEdges.push_back(
+                    oppositeEdge
+                );
+            }
+            else
+            {
+                break;
+            }
+
+
+            // -----------------------------------------
+            // Find the next quad connected to the
+            // opposite edge.
+            // -----------------------------------------
+
+            const EditEdge& nextEdge =
+                m_edges[oppositeEdge];
+
+            std::size_t nextFace =
+                static_cast<std::size_t>(-1);
+
+
+            for (std::size_t faceIndex = 0;
+                faceIndex < m_faces.size();
+                ++faceIndex)
+            {
+                if (faceIndex == currentFace)
+                {
+                    continue;
+                }
+
+
+                const EditFace& candidate =
+                    m_faces[faceIndex];
+
+
+                if (FaceContainsEdge(
+                    candidate,
+                    nextEdge.vertexA,
+                    nextEdge.vertexB))
+                {
+                    nextFace =
+                        faceIndex;
+
+                    break;
+                }
+            }
+
+
+            if (nextFace ==
+                static_cast<std::size_t>(-1))
+            {
+                break;
+            }
+
+
+            // previousFace = currentFace;
+
+            currentFace =
+                nextFace;
+
+            currentEdge =
+                oppositeEdge;
+        }
+    };
+
+
+    // -------------------------------------------------
+    // Find every face touching the starting edge.
+    //
+    // Normally:
+    // interior edge = 2 faces
+    // boundary edge = 1 face
+    // -------------------------------------------------
+
+    const EditEdge& startEdge =
+        m_edges[startEdgeIndex];
+
+
+    std::vector<std::size_t>
+        startFaces;
+
+
+    for (std::size_t faceIndex = 0;
+        faceIndex < m_faces.size();
+        ++faceIndex)
+    {
+        if (FaceContainsEdge(
+            m_faces[faceIndex],
+            startEdge.vertexA,
+            startEdge.vertexB))
+        {
+            startFaces.push_back(
+                faceIndex
+            );
+        }
+    }
+
+
+    // -------------------------------------------------
+    // Walk away from the clicked edge through each
+    // attached face.
+    //
+    // Walking both directions is important for an
+    // open edge loop.
+    // -------------------------------------------------
+
+    for (const std::size_t faceIndex :
+    startFaces)
+    {
+        WalkDirection(
+            startEdgeIndex,
+            faceIndex
+        );
+    }
+
+
+    
+
+    return ringEdges;
+}
+
+std::vector<std::size_t> MeshEditing::FindEdgeLoop(std::size_t startEdgeIndex) const
+{
+   
+    std::vector<std::size_t> loopEdges;
+
+    const std::size_t invalid =
+        static_cast<std::size_t>(-1);
+
+
+    if (startEdgeIndex >= m_edges.size())
+    {
+        return loopEdges;
+    }
+
+
+    // Always include clicked edge.
+    loopEdges.push_back(
+        startEdgeIndex
+    );
+
+
+    const EditEdge& startEdge =
+        m_edges[startEdgeIndex];
+
+    // =================================================
+    // N-GON BOUNDARY LOOP
+    //
+    // Cylinder top/bottom caps are n-gons.
+    // If the selected edge belongs to one,
+    // select the complete boundary of that face.
+    // =================================================
+
+    for (const EditFace& face :
+        m_faces)
+    {
+        // Regular quad topology is handled
+        // by the normal edge-loop code below.
+        if (face.vertices.size() <= 4)
+        {
+            continue;
+        }
+
+
+        // Does this n-gon contain our clicked edge?
+        if (!FaceContainsEdge(
+            face,
+            startEdge.vertexA,
+            startEdge.vertexB))
+        {
+            continue;
+        }
+
+
+        // We found the n-gon containing the edge.
+        // Replace the current result with the
+        // complete boundary of that face.
+        loopEdges.clear();
+
+
+        for (std::size_t index = 0;
+            index < face.vertices.size();
+            ++index)
+        {
+            const std::size_t vertexA =
+                face.vertices[index];
+
+            const std::size_t vertexB =
+                face.vertices[
+                    (index + 1) %
+                        face.vertices.size()
+                ];
+
+
+            const std::size_t edgeIndex =
+                FindEdgeIndex(
+                    vertexA,
+                    vertexB
+                );
+
+
+            if (edgeIndex != invalid)
+            {
+                loopEdges.push_back(
+                    edgeIndex
+                );
+            }
+        }
+
+
+        // We have the complete n-gon boundary,
+        // so no normal traversal is required.
+        return loopEdges;
+    }
+
+
+    // -------------------------------------------------
+    // Returns true if two edges belong to the
+    // same face.
+    // -------------------------------------------------
+
+    auto EdgesShareFace =
+        [&](std::size_t edgeAIndex,
+            std::size_t edgeBIndex)
+    {
+        if (edgeAIndex >= m_edges.size() ||
+            edgeBIndex >= m_edges.size())
+        {
+            return false;
+        }
+
+
+        const EditEdge& edgeA =
+            m_edges[edgeAIndex];
+
+        const EditEdge& edgeB =
+            m_edges[edgeBIndex];
+
+
+        for (const EditFace& face :
+            m_faces)
+        {
+            const bool containsA =
+                FaceContainsEdge(
+                    face,
+                    edgeA.vertexA,
+                    edgeA.vertexB
+                );
+
+            if (!containsA)
+            {
+                continue;
+            }
+
+
+            const bool containsB =
+                FaceContainsEdge(
+                    face,
+                    edgeB.vertexA,
+                    edgeB.vertexB
+                );
+
+
+            if (containsB)
+            {
+                return true;
+            }
+        }
+
+
+        return false;
+    };
+
+
+    // -------------------------------------------------
+    // Walk from one endpoint of the clicked edge.
+    // -------------------------------------------------
+
+    auto WalkDirection =
+        [&](std::size_t startVertex)
+    {
+        std::size_t currentVertex =
+            startVertex;
+
+        std::size_t incomingEdge =
+            startEdgeIndex;
+
+
+        const std::size_t maxSteps =
+            m_edges.size() + 1;
+
+
+        for (std::size_t step = 0;
+            step < maxSteps;
+            ++step)
+        {
+            std::size_t nextEdge =
+                invalid;
+
+
+            // -----------------------------------------
+            // Examine every edge attached to the
+            // current vertex.
+            // -----------------------------------------
+
+            for (std::size_t edgeIndex = 0;
+                edgeIndex < m_edges.size();
+                ++edgeIndex)
+            {
+                if (edgeIndex == incomingEdge)
+                {
+                    continue;
+                }
+
+
+                const EditEdge& candidate =
+                    m_edges[edgeIndex];
+
+
+                const bool connected =
+                    candidate.vertexA ==
+                    currentVertex ||
+                    candidate.vertexB ==
+                    currentVertex;
+
+
+                if (!connected)
+                {
+                    continue;
+                }
+
+
+                // -------------------------------------
+                // A real loop continuation should be
+                // the edge opposite the incoming edge
+                // in the topology.
+                //
+                // Therefore it must NOT share a face
+                // with the incoming edge.
+                // -------------------------------------
+
+                if (!EdgesShareFace(
+                    incomingEdge,
+                    edgeIndex))
+                {
+                    // More than one valid candidate
+                    // means ambiguous / irregular
+                    // topology.
+                    if (nextEdge != invalid)
+                    {
+                        nextEdge =
+                            invalid;
+
+                        break;
+                    }
+
+
+                    nextEdge =
+                        edgeIndex;
+                }
+            }
+
+
+            // No clean continuation.
+            if (nextEdge == invalid)
+            {
+                break;
+            }
+
+
+            // Closed loop.
+            if (nextEdge ==
+                startEdgeIndex)
+            {
+                break;
+            }
+
+
+            // Prevent duplicates / infinite walks.
+            if (std::find(
+                loopEdges.begin(),
+                loopEdges.end(),
+                nextEdge) !=
+                loopEdges.end())
+            {
+                break;
+            }
+
+
+            loopEdges.push_back(
+                nextEdge
+            );
+
+
+            // -----------------------------------------
+            // Move to the other end of nextEdge.
+            // -----------------------------------------
+
+            const EditEdge& edge =
+                m_edges[nextEdge];
+
+
+            const std::size_t nextVertex =
+                edge.vertexA == currentVertex
+                ? edge.vertexB
+                : edge.vertexA;
+
+
+            currentVertex =
+                nextVertex;
+
+            incomingEdge =
+                nextEdge;
+        }
+    };
+
+
+    // Walk both ways from the clicked edge.
+    WalkDirection(
+        startEdge.vertexA
+    );
+
+    WalkDirection(
+        startEdge.vertexB
+    );
+
+
+    return loopEdges;
+}
+
+
+std::size_t MeshEditing::FindEdgeIndex(std::size_t vertexA, std::size_t vertexB) const
+{
+    for (std::size_t edgeIndex = 0;
+        edgeIndex < m_edges.size();
+        ++edgeIndex)
+    {
+        const EditEdge& edge =
+            m_edges[edgeIndex];
+
+        const bool same =
+            edge.vertexA == vertexA &&
+            edge.vertexB == vertexB;
+
+        const bool reversed =
+            edge.vertexA == vertexB &&
+            edge.vertexB == vertexA;
+
+        if (same || reversed)
+        {
+            return edgeIndex;
+        }
+    }
+
+    return static_cast<std::size_t>(-1);
+}
+
+
+bool MeshEditing::FaceContainsEdge(const EditFace & face, std::size_t vertexA, std::size_t vertexB) const
+{
+        if (face.vertices.size() < 2)
+        {
+            return false;
+        }
+
+        for (std::size_t index = 0;
+            index < face.vertices.size();
+            ++index)
+        {
+            const std::size_t a =
+                face.vertices[index];
+
+            const std::size_t b =
+                face.vertices[
+                    (index + 1) %
+                        face.vertices.size()
+                ];
+
+            if ((a == vertexA &&
+                b == vertexB) ||
+                (a == vertexB &&
+                    b == vertexA))
+            {
+                return true;
+            }
+        }
+    return false;
+}
+
 

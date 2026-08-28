@@ -1138,6 +1138,9 @@ bool EdgeEditController::PickEdge(BoxEngine& engine, const ImVec2& viewportPosit
 
 	const bool ctrlHeld = ImGui::GetIO().KeyCtrl; // Check if the Ctrl key is held down for multi-selection
 
+    const bool altHeld =  ImGui::GetIO().KeyAlt;
+    //const bool shiftHeld =  ImGui::GetIO().KeyShift; // temp
+
     if (!entity)
     {
         return false;
@@ -1239,8 +1242,9 @@ bool EdgeEditController::PickEdge(BoxEngine& engine, const ImVec2& viewportPosit
 
         return false;
 
-        /*ClearSelection(engine);
-        return false;*/
+        
+
+
     }
 
     const std::size_t pickedEdge =
@@ -1255,15 +1259,42 @@ bool EdgeEditController::PickEdge(BoxEngine& engine, const ImVec2& viewportPosit
     // GetSelectedEdge() exactly as before.
     // -------------------------------------------------
 
-    m_selectedEdge =
-        pickedEdge;
-
+    m_selectedEdge = pickedEdge;
 
     // -------------------------------------------------
     // Selection behaviour.
     // -------------------------------------------------
 
-    if (ctrlHeld)
+    if (altHeld)
+	//if (shiftHeld) // Temp: Shift+Click selects the entire edge ring.
+    {
+        MeshEditing& editableMesh = entity->GetEditableMesh();
+
+        const auto loop = editableMesh.FindEdgeLoop(pickedEdge);
+       
+
+        //const auto loop = editableMesh.FindEdgeRing(pickedEdge);
+
+        // Normal Alt+Click replaces the
+        // previous edge selection.
+        if (!ctrlHeld)
+        {
+            entity->ClearSelectedEdges();
+        }
+
+        // Add every edge in the loop.
+        for (const std::size_t edgeIndex :
+        loop)
+        {
+            entity->AddSelectedEdge(
+                edgeIndex
+            );
+        }
+
+        BOX_LOG_INFO("Selected edge loop: " << loop.size() << " edges");
+       // BOX_LOG_INFO("Selected edge ring: " << loop.size() << " edges");
+    }
+    else if (ctrlHeld)
     {
         entity->AddSelectedEdge(
             pickedEdge
@@ -1275,7 +1306,6 @@ bool EdgeEditController::PickEdge(BoxEngine& engine, const ImVec2& viewportPosit
             pickedEdge
         );
     }
-
 
     BOX_LOG_INFO(
         "Selected edge index: "
