@@ -876,6 +876,153 @@ bool MeshEditing::BuildRenderMesh(MeshData& meshData) const
         }
     }
 
+    
+
+    // =================================================
+    // CALCULATE TANGENTS
+    // =================================================
+
+    // Start all tangents at zero.
+    for (MeshVertex& vertex : meshData.vertices)
+    {
+        vertex.tangent =
+            glm::vec3(0.0f);
+    }
+
+
+    // Calculate a tangent for every triangle.
+    for (std::size_t index = 0;
+        index + 2 < meshData.indices.size();
+        index += 3)
+    {
+        const std::uint32_t i0 =
+            meshData.indices[index + 0];
+
+        const std::uint32_t i1 =
+            meshData.indices[index + 1];
+
+        const std::uint32_t i2 =
+            meshData.indices[index + 2];
+
+
+        if (i0 >= meshData.vertices.size() ||
+            i1 >= meshData.vertices.size() ||
+            i2 >= meshData.vertices.size())
+        {
+            continue;
+        }
+
+
+        MeshVertex& v0 =
+            meshData.vertices[i0];
+
+        MeshVertex& v1 =
+            meshData.vertices[i1];
+
+        MeshVertex& v2 =
+            meshData.vertices[i2];
+
+
+        const glm::vec3 edge1 =
+            v1.position -
+            v0.position;
+
+        const glm::vec3 edge2 =
+            v2.position -
+            v0.position;
+
+
+        const glm::vec2 deltaUV1 =
+            v1.uv -
+            v0.uv;
+
+        const glm::vec2 deltaUV2 =
+            v2.uv -
+            v0.uv;
+
+
+        const float denominator =
+            deltaUV1.x * deltaUV2.y -
+            deltaUV2.x * deltaUV1.y;
+
+
+        // Degenerate UV mapping.
+        if (std::abs(denominator) <=
+            0.000001f)
+        {
+            continue;
+        }
+
+
+        const float inverse =
+            1.0f /
+            denominator;
+
+
+        glm::vec3 tangent =
+            inverse *
+            (
+                edge1 * deltaUV2.y -
+                edge2 * deltaUV1.y
+                );
+
+
+        v0.tangent += tangent;
+        v1.tangent += tangent;
+        v2.tangent += tangent;
+    }
+
+
+    // =================================================
+    // NORMALIZE TANGENTS
+    // =================================================
+    for (MeshVertex& vertex :
+        meshData.vertices)
+    {
+        // Make tangent perpendicular
+        // to the vertex normal.
+        vertex.tangent =
+            vertex.tangent -
+            vertex.normal *
+            glm::dot(
+                vertex.normal,
+                vertex.tangent
+            );
+
+
+        const float tangentLength =
+            glm::length(
+                vertex.tangent
+            );
+
+
+        if (tangentLength >
+            0.000001f)
+        {
+            vertex.tangent /=
+                tangentLength;
+        }
+        else
+        {
+            glm::vec3 reference =
+                std::abs(vertex.normal.y) <
+                0.999f
+                ? glm::vec3(0.0f, 1.0f, 0.0f)
+                : glm::vec3(1.0f, 0.0f, 0.0f);
+
+
+            vertex.tangent =
+                glm::normalize(
+                    glm::cross(
+                        reference,
+                        vertex.normal
+                    )
+                );
+        }
+    }
+   
+	// ================================================= End Tangent Calculation =================================================
+
     if (meshData.vertices.empty())
     {
         BOX_LOG_ERROR(

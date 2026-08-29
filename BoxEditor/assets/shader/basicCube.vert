@@ -4,6 +4,7 @@ layout(location = 0) in vec3 aPosition;
 layout(location = 1) in vec3 aNormal;
 layout(location = 2) in vec2 aTexCoord;
 layout(location = 3) in int aMaterialIndex;
+layout(location = 4) in vec3 aTangent;
 
 uniform mat4 uModel;
 uniform mat4 uView;
@@ -12,6 +13,9 @@ uniform mat4 uProjection;
 out vec3 vWorldPosition;
 out vec3 vNormal;
 out vec2 vTexCoord;
+
+out vec3 vTangent;
+out vec3 vBitangent;
 
 flat out int vMaterialIndex;
 
@@ -24,12 +28,37 @@ void main()
     vWorldPosition =
         worldPosition.xyz;
 
-    vNormal =
+    mat3 normalMatrix =
         mat3(
             transpose(
                 inverse(uModel)
             )
-        ) * aNormal;
+        );
+
+    vNormal =
+        normalize(
+            normalMatrix * aNormal
+        );
+
+    vTangent =
+        normalize(
+            normalMatrix * aTangent
+        );
+
+    vTangent =
+        normalize(
+            vTangent -
+            dot(vTangent, vNormal) *
+            vNormal
+        );
+
+    vBitangent =
+        normalize(
+            cross(
+                vNormal,
+                vTangent
+            )
+        );
 
     vTexCoord =
         aTexCoord;
@@ -43,10 +72,11 @@ void main()
         worldPosition;
 }
 
-
 //layout(location = 0) in vec3 aPosition;
 //layout(location = 1) in vec3 aNormal;
 //layout(location = 2) in vec2 aTexCoord;
+//layout(location = 3) in int aMaterialIndex;
+//layout(location = 4) in vec3 aTangent;
 //
 //uniform mat4 uModel;
 //uniform mat4 uView;
@@ -55,6 +85,10 @@ void main()
 //out vec3 vWorldPosition;
 //out vec3 vNormal;
 //out vec2 vTexCoord;
+//out vec3 vTangent;
+//out vec3 vBitangent;
+//
+//flat out int vMaterialIndex;
 //
 //void main()
 //{
@@ -72,14 +106,12 @@ void main()
 //            )
 //        ) * aNormal;
 //
-//    // This line is essential.
-//    vTexCoord =
-//        aTexCoord;
+//    vTexCoord =  aTexCoord;
+//
+//    vMaterialIndex = aMaterialIndex;
 //
 //    gl_Position =
 //        uProjection *
 //        uView *
 //        worldPosition;
 //}
-//
-//

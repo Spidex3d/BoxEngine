@@ -7,6 +7,9 @@ in vec3 vWorldPosition;
 
 in vec2 vTexCoord;
 
+in vec3 vTangent;
+in vec3 vBitangent;
+
 // Matirials
 uniform vec4 uMaterialColors[8];
 flat in int vMaterialIndex;
@@ -19,6 +22,10 @@ uniform float uMaterialRoughness[8];
 // Emission
 uniform vec3  uMaterialEmissionColor[8];
 uniform float uMaterialEmissionStrength[8];
+// Normal Maps
+uniform sampler2D uMaterialNormalTextures[8];
+uniform int uMaterialUsesNormalTexture[8];
+uniform float uMaterialNormalStrength[8];
 
 out vec4 FragColor;
 
@@ -40,9 +47,61 @@ uniform vec3 uLightColor;
 void main()
 {
     
-    vec3 normal = normalize(vNormal);
+    //vec3 normal = normalize(vNormal);
+    // Normal Mapping
+   
 
-    int materialIndex = clamp(vMaterialIndex, 0, 7);
+    vec3 normal =
+    normalize(vNormal);
+
+int materialIndex =
+    clamp(
+        vMaterialIndex,
+        0,
+        7
+    );
+
+if (uMaterialUsesNormalTexture[
+        materialIndex] != 0)
+{
+    vec3 normalSample =
+        texture(
+            uMaterialNormalTextures[
+                materialIndex
+            ],
+            vTexCoord
+        ).rgb;
+
+    normalSample =
+        normalSample *
+        2.0 -
+        1.0;
+
+    normalSample.xy *=
+        uMaterialNormalStrength[
+            materialIndex
+        ];
+
+    normalSample =
+        normalize(normalSample);
+
+    mat3 TBN =
+        mat3(
+            normalize(vTangent),
+            normalize(vBitangent),
+            normalize(vNormal)
+        );
+
+    normal =
+        normalize(
+            TBN *
+            normalSample
+        );
+}
+
+    // #########
+
+   // int materialIndex = clamp(vMaterialIndex, 0, 7);
 
     vec4 materialColor = uMaterialColors[materialIndex];
 

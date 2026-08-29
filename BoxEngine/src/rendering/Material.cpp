@@ -103,4 +103,66 @@ const std::string& Material::GetBaseColorTexturePath() const
     return m_baseColorTexturePath;
 }
 
+// Normal map management
+GLuint Material::GetNormalTexture() const
+{
+    return m_normalTexture;
+}
+
+
+bool Material::UsesNormalTexture() const
+{
+    return
+        m_useNormalTexture &&
+        m_normalTexture != 0;
+}
+
+
+void Material::SetUseNormalTexture(
+    bool useTexture)
+{
+    m_useNormalTexture =
+        useTexture;
+}
+
+
+void Material::SetNormalTexture(
+    GLuint textureID,
+    const std::string& sourcePath)
+{
+    m_normalTexture =
+        textureID;
+
+    m_normalTexturePath =
+        sourcePath;
+
+    m_useNormalTexture =
+        textureID != 0;
+}
+
+
+const std::string&
+Material::GetNormalTexturePath() const
+{
+    return m_normalTexturePath;
+}
+
+
+float Material::GetNormalStrength() const
+{
+    return m_normalStrength;
+}
+
+
+void Material::SetNormalStrength(
+    float strength)
+{
+    m_normalStrength =
+        std::clamp(
+            strength,
+            0.0f,
+            2.0f
+        );
+}
+
 

@@ -67,6 +67,32 @@ public:
         m_name = name;
     }
 
+    // Normal map
+    GLuint GetNormalTexture() const;
+
+    bool UsesNormalTexture() const;
+
+    void SetUseNormalTexture(
+        bool useTexture
+    );
+
+    void SetNormalTexture(
+        GLuint textureID,
+        const std::string& sourcePath
+    );
+
+    const std::string&
+        GetNormalTexturePath() const;
+
+    float GetNormalStrength() const;
+
+    void SetNormalStrength(
+        float strength
+    );
+
+
+
+
 private:
 
     std::string m_name = "Material";
@@ -76,7 +102,7 @@ private:
 
     float m_metallic = 0.0f;
 
-    float m_roughness = 0.0f;
+    float m_roughness = 0.5f;
 
     float m_alpha = 1.0f;
 
@@ -89,10 +115,17 @@ private:
 
     bool m_useBaseColorTexture = false;
 
-    //std::shared_ptr<Texture> m_baseColorTexture;
 	// Store the source path of the base color texture for saving and loading purposes
     std::string m_baseColorTexturePath;
 
+    // Normal Map
+    GLuint m_normalTexture = 0;
+
+    bool m_useNormalTexture = false;
+
+    std::string m_normalTexturePath;
+
+    float m_normalStrength = 1.0f;
 
 	
 };

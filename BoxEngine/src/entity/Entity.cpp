@@ -605,7 +605,23 @@ bool Entity::SetVertexPosition(
 
 bool Entity::UploadMeshData()
 {
-    if (m_vbo == 0 || m_meshData.vertices.empty())
+
+    if (m_vbo == 0 ||
+        m_meshData.vertices.empty())
+    {
+        return false;
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+
+    glBufferSubData(GL_ARRAY_BUFFER, 0, m_meshData.vertices.size() * sizeof(MeshVertex), m_meshData.vertices.data());
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    return true;
+
+
+    /*if (m_vbo == 0 || m_meshData.vertices.empty())
     {
         return false;
     }
@@ -639,7 +655,7 @@ bool Entity::UploadMeshData()
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    return true;
+    return true;*/
 }
 
 void Entity::AddSelectedVertex(std::size_t index)
@@ -915,22 +931,16 @@ bool Entity::CreateBuffersFromMeshData()
 
 
     // Material index
-    glEnableVertexAttribArray(
-        3
-    );
+    glEnableVertexAttribArray(3);
 
-    glVertexAttribIPointer(
-        3,
-        1,
-        GL_UNSIGNED_INT,
-        sizeof(MeshVertex),
-        reinterpret_cast<void*>(
-            offsetof(
-                MeshVertex,
-                materialIndex
-            )
-            )
-    );
+    glVertexAttribIPointer(3, 1, GL_UNSIGNED_INT, sizeof(MeshVertex), reinterpret_cast<void*>(offsetof(
+                MeshVertex, materialIndex)));
+
+	// Tangent
+    glEnableVertexAttribArray(4);
+
+    glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(MeshVertex), reinterpret_cast<void*>(offsetof(MeshVertex, tangent)));
+
 
 
     // ------------------------------------------------
@@ -1557,6 +1567,8 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
 
         GLuint textureID = 0;
 
+		GLuint normalTextureID = 0; // tangent space normal map texture ID
+
         float metallic = 0.0f;
         float roughness = 0.5f;
         // Emission
@@ -1564,6 +1576,10 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
         float emissionStrength = 0.0f;
 
         bool useTexture = false;
+
+		bool useNormalTexture = false; // tangent space normal map usage flag
+
+		float normalStrength = 1.0f; // tangent space normal map strength
 
 
         // --------------------------------
@@ -1595,6 +1611,16 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
 
             emissionStrength =
                 material.GetEmissionStrength();
+
+			// Normal map tangent space texture information
+            normalTextureID =
+                material.GetNormalTexture();
+
+            useNormalTexture =
+                material.UsesNormalTexture();
+
+            normalStrength =
+                material.GetNormalStrength();
         }
 		// Metallic
         const std::string metallicUniform =
@@ -1617,6 +1643,22 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
             roughnessUniform.c_str(),
             roughness
         );
+		// tangent space normal map strength
+
+        const std::string useNormalTextureUniform =
+            "uMaterialUsesNormalTexture[" +
+            std::to_string(index) +
+            "]";
+
+        shader.SetUniformInt(
+            useNormalTextureUniform.c_str(),
+            useNormalTexture ? 1 : 0
+        );
+
+
+
+
+
 		// Emission strength
         const std::string
             emissionColorUniform =
@@ -1710,6 +1752,26 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
             ? textureID
             : 0
         );
+
+        // --------------------------------
+        // Normal Map
+        // --------------------------------
+
+        glActiveTexture(
+            GL_TEXTURE0 +
+            static_cast<GLenum>(
+                index + MaxMaterialSlots
+                )
+        );
+
+        glBindTexture(
+            GL_TEXTURE_2D,
+            useNormalTexture
+            ? normalTextureID
+            : 0
+        );
+
+
     }
 
 
@@ -1737,11 +1799,10 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
         glm::vec3(1.0f)
     );
 
-    // Cube, sphere, or any other mesh
+    // Cube, plane, sphere, Cylinder or any other mesh
     DrawMesh();
 
-    //glBindTexture(GL_TEXTURE_2D, 0);
-
+    
     for (std::size_t index = 0;
         index < MaxMaterialSlots;
         ++index)
@@ -1755,8 +1816,22 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
             GL_TEXTURE_2D,
             0
         );
-    }
 
+
+        // Normal map
+        glActiveTexture(
+            GL_TEXTURE0 +
+            static_cast<GLenum>(
+                index + MaxMaterialSlots
+                )
+        );
+
+        glBindTexture(
+            GL_TEXTURE_2D,
+            0
+        );
+
+    }
 
     // Restore normal default texture unit.
     glActiveTexture(GL_TEXTURE0);

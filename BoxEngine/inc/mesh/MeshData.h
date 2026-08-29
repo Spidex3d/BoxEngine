@@ -11,6 +11,9 @@ struct MeshVertex
     glm::vec2 uv{ 0.0f };
 
     std::uint32_t materialIndex = 0;
+
+    glm::vec3 tangent = glm::vec3(0.0f);
+
 };
 
 // logical edge structure for mesh data

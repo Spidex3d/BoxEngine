@@ -266,18 +266,11 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
         {
             Material newMaterial;
 
-            const std::size_t nextSlot =
-                entity.GetMaterialSlotCount();
+            const std::size_t nextSlot = entity.GetMaterialSlotCount();
 
-            newMaterial.SetName(
-                "Material " +
-                std::to_string(nextSlot)
-            );
+            newMaterial.SetName("Material " + std::to_string(nextSlot));
 
-            const std::size_t newSlot =
-                entity.AddMaterialSlot(
-                    newMaterial
-                );
+            const std::size_t newSlot = entity.AddMaterialSlot(newMaterial);
 
 
             // -----------------------------------------
@@ -285,10 +278,7 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
             // the material for the selected face.
             // -----------------------------------------
 
-            entity.SetFaceMaterial(
-                faceIndex,
-                newSlot
-            );
+            entity.SetFaceMaterial(faceIndex, newSlot);
 
 
             // -----------------------------------------
@@ -399,10 +389,42 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
 
     ImGui::SeparatorText("Material Tools");
 	// ############################################# Buttons for Material Slot Management ##############
-    if (ImGui::Button("Load Texture"))
+
+    // =================================================
+    // Base Color
+    // =================================================
+
+    if (ImGui::Button("Load Base Color"))
     {
 
         const std::string path = FileDialog::OpenTexture();
+
+        if (!path.empty())
+        {
+            const GLuint textureID = engine.LoadTexture(path);
+
+            if (textureID != 0)
+            {
+
+                material.SetBaseColorTexture(textureID, path);
+
+                material.SetUseBaseColorTexture(true);
+
+                BOX_LOG_INFO("Loaded base color texture: " << path);
+            }
+        }
+
+    }
+
+    // =================================================
+    // NORMAL MAP
+    // =================================================
+
+    ImGui::SameLine();
+    if (ImGui::Button("Load Normal Map"))
+    {
+        const std::string path =
+            FileDialog::OpenTexture();
 
         if (!path.empty())
         {
@@ -411,19 +433,18 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
 
             if (textureID != 0)
             {
-
-                material.SetBaseColorTexture(
+                material.SetNormalTexture(
                     textureID,
                     path
                 );
 
-                material.SetUseBaseColorTexture(
-                    true
-                );
+               // material.SetUseNormalTexture(true);
+
+                BOX_LOG_INFO("Loaded normal map: " << path);
             }
         }
-
     }
+
     ImGui::SameLine();
     if (ImGui::Button("Map UVs"))
     {
@@ -442,6 +463,43 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
 		// open a new panel to add a node editor for the material,
         // this will allow the user to create complex materials using a node-based system.
     }
+
+    // ================================
+	// Normal Selection
+	// ================================
+
+    bool useNormalMap =
+        material.UsesNormalTexture();
+
+    if (ImGui::Checkbox(
+        "Use Normal Map",
+        &useNormalMap))
+    {
+        material.SetUseNormalTexture(
+            useNormalMap
+        );
+    }
+
+
+    float normalStrength =
+        material.GetNormalStrength();
+
+    ImGui::SetNextItemWidth(
+        100.0f
+    );
+
+    if (ImGui::InputFloat(
+        "Normal Strength",
+        &normalStrength,
+        0.05f,
+        0.10f,
+        "%.2f"))
+    {
+        material.SetNormalStrength(
+            normalStrength
+        );
+    }
+
 
 	// ############################################# New Material List Selection #######################
 
