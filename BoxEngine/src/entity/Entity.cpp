@@ -204,11 +204,11 @@ bool Entity::CreateFromMeshData(const MeshData& meshData)
     // Vertex layout
     // ------------------------------------------------
 
-
+    // ------------------------------------------------
     // Position
-    glEnableVertexAttribArray(
-        0
-    );
+    // ------------------------------------------------
+
+    glEnableVertexAttribArray(0);
 
     glVertexAttribPointer(
         0,
@@ -224,11 +224,11 @@ bool Entity::CreateFromMeshData(const MeshData& meshData)
             )
     );
 
-
+    // ------------------------------------------------
     // Normal
-    glEnableVertexAttribArray(
-        1
-    );
+    // ------------------------------------------------
+
+    glEnableVertexAttribArray(1);
 
     glVertexAttribPointer(
         1,
@@ -246,9 +246,7 @@ bool Entity::CreateFromMeshData(const MeshData& meshData)
 
 
     // UV
-    glEnableVertexAttribArray(
-        2
-    );
+    glEnableVertexAttribArray(2);
 
     glVertexAttribPointer(
         2,
@@ -264,11 +262,11 @@ bool Entity::CreateFromMeshData(const MeshData& meshData)
             )
     );
 
-
+    // ------------------------------------------------
     // Material index
-    glEnableVertexAttribArray(
-        3
-    );
+    // ------------------------------------------------
+
+    glEnableVertexAttribArray(3);
 
     glVertexAttribIPointer(
         3,
@@ -283,6 +281,25 @@ bool Entity::CreateFromMeshData(const MeshData& meshData)
             )
     );
 
+    // ------------------------------------------------
+	// Tangent
+    // ------------------------------------------------
+
+	glEnableVertexAttribArray(4);
+
+    glVertexAttribPointer(
+        4,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        sizeof(MeshVertex),
+        reinterpret_cast<void*>(
+            offsetof(
+                MeshVertex,
+                tangent
+            )
+            )
+	);
 
     // ------------------------------------------------
     // Counts
@@ -871,9 +888,7 @@ bool Entity::CreateBuffersFromMeshData()
 
 
     // Position
-    glEnableVertexAttribArray(
-        0
-    );
+    glEnableVertexAttribArray(0);
 
     glVertexAttribPointer(
         0,
@@ -891,9 +906,7 @@ bool Entity::CreateBuffersFromMeshData()
 
 
     // Normal
-    glEnableVertexAttribArray(
-        1
-    );
+    glEnableVertexAttribArray(1);
 
     glVertexAttribPointer(
         1,
@@ -911,9 +924,7 @@ bool Entity::CreateBuffersFromMeshData()
 
 
     // UV
-    glEnableVertexAttribArray(
-        2
-    );
+    glEnableVertexAttribArray(2);
 
     glVertexAttribPointer(
         2,
@@ -940,7 +951,7 @@ bool Entity::CreateBuffersFromMeshData()
     glEnableVertexAttribArray(4);
 
     glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(MeshVertex), reinterpret_cast<void*>(offsetof(MeshVertex, tangent)));
-
+    
 
 
     // ------------------------------------------------
@@ -1571,7 +1582,10 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
 
         float metallic = 0.0f;
         float roughness = 0.5f;
+		// --------------------------------
         // Emission
+		// --------------------------------
+
         glm::vec3 emissionColor(0.0f);
         float emissionStrength = 0.0f;
 
@@ -1622,7 +1636,10 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
             normalStrength =
                 material.GetNormalStrength();
         }
+		// --------------------------------
 		// Metallic
+		// --------------------------------
+
         const std::string metallicUniform =
             "uMaterialMetallic[" +
             std::to_string(index) +
@@ -1632,8 +1649,9 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
             metallicUniform.c_str(),
             metallic
         );
-
+		// --------------------------------
 		// Roughness
+		// --------------------------------
         const std::string roughnessUniform =
             "uMaterialRoughness[" +
             std::to_string(index) +
@@ -1643,23 +1661,45 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
             roughnessUniform.c_str(),
             roughness
         );
+
+        // ===================================
 		// tangent space normal map strength
+		// ===================================
+
+        const std::string normalTextureUniform =
+            "uMaterialNormalTextures[" +
+            std::to_string(index) +
+            "]";
 
         const std::string useNormalTextureUniform =
             "uMaterialUsesNormalTexture[" +
             std::to_string(index) +
             "]";
 
+        const std::string normalStrengthUniform =
+            "uMaterialNormalStrength[" +
+            std::to_string(index) +
+            "]";
+
+
+        shader.SetUniformInt(
+            normalTextureUniform.c_str(),
+            static_cast<int>(index + 8)
+        );
+
         shader.SetUniformInt(
             useNormalTextureUniform.c_str(),
             useNormalTexture ? 1 : 0
         );
 
-
-
-
-
+        shader.SetUniformFloat(
+            normalStrengthUniform.c_str(),
+            normalStrength
+        );
+		// --------------------------------
 		// Emission strength
+		// --------------------------------
+
         const std::string
             emissionColorUniform =
             "uMaterialEmissionColor[" +
@@ -1740,18 +1780,9 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
         // etc.
         // --------------------------------
 
-        glActiveTexture(
-            GL_TEXTURE0 +
-            static_cast<GLenum>(index)
-        );
+        glActiveTexture(GL_TEXTURE0 + static_cast<GLenum>(index));
 
-
-        glBindTexture(
-            GL_TEXTURE_2D,
-            useTexture
-            ? textureID
-            : 0
-        );
+        glBindTexture(GL_TEXTURE_2D, useTexture ? textureID : 0);
 
         // --------------------------------
         // Normal Map
@@ -1774,13 +1805,6 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
 
     }
 
-
-
-    // --------------------------------
-    // Base-colour texture
-    // --------------------------------
-   
-
     // --------------------------------
     // Lighting
     // --------------------------------
@@ -1802,7 +1826,7 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
     // Cube, plane, sphere, Cylinder or any other mesh
     DrawMesh();
 
-    
+	// cleanup: unbind textures to avoid affecting other objects
     for (std::size_t index = 0;
         index < MaxMaterialSlots;
         ++index)
@@ -1818,25 +1842,21 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
         );
 
 
-        // Normal map
         glActiveTexture(
             GL_TEXTURE0 +
-            static_cast<GLenum>(
-                index + MaxMaterialSlots
-                )
+            static_cast<GLenum>(index + 8)
         );
 
-        glBindTexture(
-            GL_TEXTURE_2D,
-            0
-        );
-
+        glBindTexture(GL_TEXTURE_2D, 0 );
     }
-
-    // Restore normal default texture unit.
+    
+    // Restore default texture unit.
     glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, 0);
 
 }
+
+   
 
 // New RenderPreview function that takes Shader and Camera objects as parameters
 void Entity::RenderScene(const Shader& shader, const Camera& camera, float aspectRatio)

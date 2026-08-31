@@ -47,12 +47,9 @@ uniform vec3 uLightColor;
 void main()
 {
     
-    //vec3 normal = normalize(vNormal);
+  
     // Normal Mapping
-   
-
-    vec3 normal =
-    normalize(vNormal);
+    vec3 normal = normalize(vNormal);
 
 int materialIndex =
     clamp(
@@ -176,14 +173,16 @@ finalColor += emission;
 
 FragColor = vec4(finalColor, materialColor.a);
 
+//FragColor = vec4(
+//    texture(
+//        uMaterialNormalTextures[materialIndex],
+//        vTexCoord
+//    ).rgb,
+//    1.0
+//);
 
 
-//    vec3 finalColor = ambient + diffuse + specular;
-//        
-//
-//    finalColor *= uLightColor;
-//
-//    FragColor = vec4(finalColor, materialColor.a);
-   
+
+//FragColor = vec4(normal * 0.5 + 0.5, 1.0);
  
 }
