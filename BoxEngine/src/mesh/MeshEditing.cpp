@@ -16,6 +16,8 @@ bool MeshEditing::CreateCube()
 {
     Clear();
 
+    m_shadingMode = ShadingMode::Flat;
+
     // 8 logical cube corners.
     m_vertices =
     {
@@ -77,6 +79,10 @@ bool MeshEditing::CreateCube()
 bool MeshEditing::CreatePlane()
 {
     Clear();
+
+    m_shadingMode = ShadingMode::Flat;
+
+
     // 4 logical plane corners.
     m_vertices =
     {
@@ -110,6 +116,10 @@ bool MeshEditing::CreatePlane()
 bool MeshEditing::CreatePyramid()
 {
 	Clear();
+
+    m_shadingMode = ShadingMode::Flat;
+
+
     m_vertices =
         {
         {{-0.5f, 0.0f, -0.5f}}, // 0 bottom left
@@ -150,6 +160,10 @@ bool MeshEditing::CreateSphere(
 {
     Clear();
 
+    //-------------------------------------------------
+    // Set default shading mode to smooth for spheres.
+    // -------------------------------------------------
+    m_shadingMode = ShadingMode::Smooth;
 
     if (sectors < 3)
     {
@@ -415,7 +429,7 @@ bool MeshEditing::CreateSphere(
             }
         );
     }
-
+    
 
     // =================================================
     // BUILD EDITABLE EDGES
@@ -452,6 +466,8 @@ bool MeshEditing::CreateCylinder(
     float height)
 {
     Clear();
+
+    m_shadingMode = ShadingMode::Smooth;
 
     if (sectors < 3)
     {
@@ -851,6 +867,131 @@ bool MeshEditing::BuildRenderMesh(MeshData& meshData) const
     meshData.vertices.clear();
     meshData.indices.clear();
 
+    // =================================================
+    // SMOOTH VERTEX NORMALS
+    // =================================================
+    //
+    // MeshEditing vertices are logical modelling
+    // vertices.
+    //
+    // When smooth shading is enabled, each logical
+    // vertex gets the average normal of all faces
+    // that touch it.
+    //
+    // BuildRenderMesh can still duplicate vertices
+    // for materials and UVs, but those duplicates
+    // will share the same smooth normal.
+    // =================================================
+
+    std::vector<glm::vec3> smoothNormals;
+
+    if (m_shadingMode ==
+        ShadingMode::Smooth)
+    {
+        smoothNormals.resize(
+            m_vertices.size(),
+            glm::vec3(0.0f)
+        );
+
+
+        // ---------------------------------------------
+        // Accumulate face normals into each vertex.
+        // ---------------------------------------------
+
+        for (const EditFace& face :
+            m_faces)
+        {
+            if (face.vertices.size() < 3)
+            {
+                continue;
+            }
+
+
+            bool validFace = true;
+
+            for (std::size_t vertexIndex :
+            face.vertices)
+            {
+                if (vertexIndex >=
+                    m_vertices.size())
+                {
+                    validFace = false;
+                    break;
+                }
+            }
+
+
+            if (!validFace)
+            {
+                continue;
+            }
+
+
+            const glm::vec3& a =
+                m_vertices[
+                    face.vertices[0]
+                ].position;
+
+            const glm::vec3& b =
+                m_vertices[
+                    face.vertices[1]
+                ].position;
+
+            const glm::vec3& c =
+                m_vertices[
+                    face.vertices[2]
+                ].position;
+
+
+            const glm::vec3 crossProduct =
+                glm::cross(
+                    b - a,
+                    c - a
+                );
+
+
+            const float length =
+                glm::length(
+                    crossProduct
+                );
+
+
+            if (length <= 0.000001f)
+            {
+                continue;
+            }
+
+
+            const glm::vec3 normal = crossProduct / length;
+
+
+            for (std::size_t vertexIndex :
+            face.vertices)
+            {
+                //smoothNormals[vertexIndex] += normal;
+                smoothNormals[vertexIndex] += crossProduct;
+            }
+        }
+
+
+        // ---------------------------------------------
+        // Normalize accumulated normals.
+        // ---------------------------------------------
+
+        for (glm::vec3& normal :
+            smoothNormals)
+        {
+            const float length =
+                glm::length(normal);
+
+            if (length >
+                0.000001f)
+            {
+                normal /= length;
+            }
+        }
+    }
+
     /*
      * Build every modelling face separately.
      *
@@ -963,8 +1104,31 @@ bool MeshEditing::BuildRenderMesh(MeshData& meshData) const
                     face.vertices[corner]
                 ].position;
 
-            renderVertex.normal =
-                faceNormal;
+            /*renderVertex.normal =
+                faceNormal;*/
+
+            const std::size_t logicalVertexIndex =
+                face.vertices[corner];
+
+
+            if (m_shadingMode ==
+                ShadingMode::Smooth &&
+                logicalVertexIndex <
+                smoothNormals.size())
+            {
+                renderVertex.normal =
+                    smoothNormals[
+                        logicalVertexIndex
+                    ];
+            }
+            else
+            {
+                renderVertex.normal =
+                    faceNormal;
+            }
+
+
+
             // ################### new for matirials ##########################
             renderVertex.materialIndex = face.materialIndex;
 

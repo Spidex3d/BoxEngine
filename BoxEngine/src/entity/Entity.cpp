@@ -1790,6 +1790,47 @@ bool Entity::RebuildModifiers()
     );
 }
 
+// ###############################################################################################################
+// ########################################### Shading ##########################################################
+// ###############################################################################################################
+
+void Entity::SetSmoothShading(bool smooth)
+{
+    if (smooth)
+    {
+        m_editableMesh.SetShadingMode(
+            ShadingMode::Smooth
+        );
+    }
+    else
+    {
+        m_editableMesh.SetShadingMode(
+            ShadingMode::Flat
+        );
+    }
+
+
+    // Rebuild the render mesh because
+    // changing shading changes the normals.
+    MeshData renderMesh;
+
+    if (m_editableMesh.BuildRenderMesh(
+        renderMesh))
+    {
+        CreateFromMeshData(
+            renderMesh
+        );
+    }
+}
+
+
+bool Entity::IsSmoothShading() const
+{
+    return
+        m_editableMesh.GetShadingMode() ==
+        ShadingMode::Smooth;
+}
+
 
 
 // ########################################################################################################

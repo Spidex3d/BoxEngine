@@ -157,6 +157,24 @@ void ObjectExplorerPanel::DrawObjectTab(BoxEngine& engine, Entity& entity)
 	ImGui::Spacing();
     ImGui::Separator();
    
+    // =================================================
+    // SHADING
+    // =================================================
+
+    bool smoothShading =
+        entity.IsSmoothShading();
+
+    if (ImGui::Checkbox(
+        "Smooth Shading",
+        &smoothShading))
+    {
+        entity.SetSmoothShading(
+            smoothShading
+        );
+    }
+
+    ImGui::Spacing();
+
 
 	// -------------------------------------------
 	//  Objects properties 
@@ -568,14 +586,13 @@ void ObjectExplorerPanel::ExtrudeControls(Entity& entity, FaceEditController& fa
         // Amount
         // ---------------------------------------------
 
-        float amount =
-            faceEditController
-            .GetExtrudeAmount();
+        float amount = faceEditController.GetExtrudeAmount();
 
-        if (ImGui::DragFloat(
+        if (ImGui::InputFloat(
             "Amount",
             &amount,
-            0.01f))
+            0.01f,
+            0.1f))
         {
             faceEditController
                 .SetExtrudeAmount(
@@ -583,7 +600,6 @@ void ObjectExplorerPanel::ExtrudeControls(Entity& entity, FaceEditController& fa
                     amount
                 );
         }
-
 
         ImGui::Spacing();
 
@@ -653,8 +669,7 @@ void ObjectExplorerPanel::ExtrudeControls(Entity& entity, FaceEditController& fa
             "Z"
         };
 
-        bool changed =
-            false;
+        bool changed = false;
 
         if (ImGui::Combo(
             "Extrude Axis",
@@ -680,8 +695,7 @@ void ObjectExplorerPanel::ExtrudeControls(Entity& entity, FaceEditController& fa
                 break;
             }
 
-            changed =
-                true;
+            changed = true;
         }
 
 
@@ -689,15 +703,14 @@ void ObjectExplorerPanel::ExtrudeControls(Entity& entity, FaceEditController& fa
         // Amount
         // ---------------------------------
 
-        if (ImGui::DragFloat(
-            "Extrude Amount",
+        if (ImGui::InputFloat(
+            "Amount",
             &lastExtrude.extrudeAmount,
-            0.01f))
+            0.01f,
+            0.1f))
         {
-            changed =
-                true;
+            changed = true;
         }
-
 
         // ---------------------------------
         // Update geometry
@@ -742,16 +755,13 @@ void ObjectExplorerPanel::InsetControls(Entity& entity, FaceEditController& face
 
         ImGui::Spacing();
 
-        float amount =
-            faceEditController
-            .GetInsetAmount();
+        float amount = faceEditController.GetInsetAmount();
 
-        if (ImGui::DragFloat(
+        if (ImGui::InputFloat(
             "Inset Amount",
             &amount,
             0.01f,
-            0.0f,
-            0.95f))
+            0.1f))
         {
             faceEditController
                 .SetInsetAmount(
@@ -802,20 +812,19 @@ void ObjectExplorerPanel::InsetControls(Entity& entity, FaceEditController& face
             "Face Inset"
         );
 
-        InsetModifierData lastInset =
-            entity.GetLastInset();
+        InsetModifierData lastInset = entity.GetLastInset();
 
-        if (ImGui::DragFloat(
+        if (ImGui::InputFloat(
             "Inset Amount",
             &lastInset.insetAmount,
             0.01f,
-            0.0f,
-            0.95f))
+            0.1f))
         {
             entity.UpdateLastInset(
                 lastInset.insetAmount
-            );
+                );
         }
+
 
         return;
     }

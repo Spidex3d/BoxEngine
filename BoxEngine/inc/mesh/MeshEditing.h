@@ -23,6 +23,12 @@ struct EditFace
     std::size_t materialIndex = 0;
 };
 
+enum class ShadingMode
+{
+    Flat,
+    Smooth
+};
+
 class MeshEditing
 {
 public:
@@ -60,6 +66,24 @@ public:
 
     bool SetFace(std::size_t faceIndex, const std::vector<std::size_t>& vertices);
 
+    // -------------------------------------
+	// Shading mode
+	// -------------------------------------
+
+    void SetShadingMode(ShadingMode mode)
+    {
+        m_shadingMode = mode;
+    }
+
+    ShadingMode GetShadingMode() const
+    {
+        return m_shadingMode;
+    }
+
+	// -------------------------------------
+	// Rebuild edges based on the current faces and vertices.
+	// -------------------------------------
+
     void RebuildEdges();
 
 	
@@ -79,6 +103,9 @@ private:
     std::vector<EditVertex> m_vertices;
     std::vector<EditEdge> m_edges;
     std::vector<EditFace> m_faces;
+
+	// shading mode for the mesh, either flat or smooth.
+    ShadingMode m_shadingMode = ShadingMode::Flat;
 
 	std::size_t FindEdgeIndex(std::size_t vertexA, std::size_t vertexB) const; // Finds the index of an edge given its two vertex indices. Returns -1 if not found.
 
