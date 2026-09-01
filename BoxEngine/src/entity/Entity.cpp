@@ -968,6 +968,110 @@ bool Entity::IsFaceSelected(std::size_t index) const
     return std::find(m_selectedFaces.begin(),
         m_selectedFaces.end(), index) != m_selectedFaces.end();
 }
+
+void Entity::AddSelectedFace(std::size_t index)
+{
+    if (index >= m_editableMesh.GetFaceCount())
+    {
+        return;
+    }
+    // Don't add the same face twice.
+    if (std::find(
+        m_selectedFaces.begin(),
+        m_selectedFaces.end(),
+        index) ==
+        m_selectedFaces.end())
+    {
+        m_selectedFaces.push_back(
+            index
+        );
+	}
+
+}
+// shiftHeld
+void Entity::ToggleSelectedFace(std::size_t index)
+{
+    if (index >= m_editableMesh.GetFaceCount())
+    {
+        return;
+    }
+    auto it = std::find(
+        m_selectedFaces.begin(),
+        m_selectedFaces.end(),
+        index
+    );
+    if (it != m_selectedFaces.end())
+    {
+        // Face is already selected, remove it
+        m_selectedFaces.erase(it);
+    }
+    else
+    {
+        // Face is not selected, add it
+        m_selectedFaces.push_back(index);
+    }
+}
+// Ctrl + A select all faces
+void Entity::SelectAllFaces()
+{
+    m_selectedFaces.clear();
+
+    const std::size_t faceCount =
+        m_editableMesh.GetFaceCount();
+
+    m_selectedFaces.reserve(
+        faceCount
+    );
+
+    for (std::size_t index = 0;
+        index < faceCount;
+        ++index)
+    {
+        m_selectedFaces.push_back(
+            index
+        );
+    }
+}
+
+bool Entity::SetSelectedFacesMaterial(
+    std::size_t materialIndex)
+{
+    if (materialIndex >=
+        m_materialSlots.size())
+    {
+        return false;
+    }
+
+    if (m_selectedFaces.empty())
+    {
+        return false;
+    }
+
+    for (std::size_t faceIndex :
+    m_selectedFaces)
+    {
+        if (faceIndex >=
+            m_editableMesh.GetFaceCount())
+        {
+            continue;
+        }
+
+        m_editableMesh
+            .GetFace(faceIndex)
+            .materialIndex =
+            materialIndex;
+    }
+
+    return true;
+}
+
+
+
+
+
+
+
+
 // ############################################# Mesh Data ##########################################
 bool Entity::CreateBuffersFromMeshData()
 {
@@ -2162,7 +2266,6 @@ std::size_t Entity::AddMaterialSlot(const Material& material)
 
     return m_materialSlots.size() - 1;
 }
-
 
 
 

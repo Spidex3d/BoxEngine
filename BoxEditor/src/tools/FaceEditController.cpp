@@ -44,6 +44,22 @@ void FaceEditController::HandleInput(
         return;
     }
 
+    // =================================================
+    // SELECT ALL FACES
+    // =================================================
+
+    if (!m_isMoving &&
+        !m_isExtruding &&
+        !m_isInsetting)
+    {
+        if (ImGui::IsKeyPressed(ImGuiKey_A, false))
+        {
+            entity->SelectAllFaces();
+
+            BOX_LOG_INFO("Selected all faces");
+        }
+    }
+
 
     // =================================================
     // ACTIVE EXTRUSION
@@ -482,8 +498,7 @@ void FaceEditController::DrawFace(BoxEngine& engine, const ImVec2& viewportPosit
             continue;
         }
 
-        const bool selected = faces[index].editableFaceIndex == m_selectedFace;
-
+        const bool selected = entity->IsFaceSelected(faces[index].editableFaceIndex);
         // ############### New
 
         if (selected)
@@ -1172,13 +1187,14 @@ bool FaceEditController::ProjectToScreen(const glm::vec3& localPosition, const g
 // pick a face in the viewport based on the mouse position and return true if a face was selected, false otherwise
 bool FaceEditController::PickFace(BoxEngine& engine, const ImVec2& viewportPosition, const ImVec2& viewportSize)
 {
-    Entity* entity =
-        engine.GetSelectedEntity();
+    Entity* entity = engine.GetSelectedEntity();
 
     if (!entity)
     {
         return false;
     }
+
+    const bool shiftHeld = ImGui::GetIO().KeyShift; // Check if the Shift key is held down for multi-selection
 
     const std::vector<LogicalFace> faces =
         BuildLogicalFace(*entity);
@@ -1322,35 +1338,84 @@ bool FaceEditController::PickFace(BoxEngine& engine, const ImVec2& viewportPosit
 
     if (closestFace == InvalidFace)
     {
-        ClearSelection(engine);
+        // Only clear the current selection when
+        // Shift is NOT being held.
+        //
+        // This prevents a missed Shift-click
+        // destroying our multi-selection.
+        if (!ImGui::GetIO().KeyShift)
+        {
+            ClearSelection(engine);
+        }
+
         return false;
     }
 
-    m_selectedFace = faces[closestFace].editableFaceIndex;
 
-    /*const LogicalFace& selected = faces[closestFace];
+    // -------------------------------------------------
+    // Convert the picked logical face into the real
+    // editable MeshEditing face index.
+    // -------------------------------------------------
+
+    const std::size_t pickedFace =
+        faces[closestFace].editableFaceIndex;
+
+
+    // -------------------------------------------------
+    // SHIFT + LEFT CLICK
+    //
+    // Toggle this face in the multi-selection.
+    // -------------------------------------------------
+
+    if (ImGui::GetIO().KeyShift)
+    {
+        entity->ToggleSelectedFace(pickedFace);
+
+
+        // m_selectedFace remains the "active" face.
+        //
+        // This is useful because your existing
+        // extrude / inset / move tools still operate
+        // on one active face.
+        if (entity->IsFaceSelected(
+            pickedFace))
+        {
+            m_selectedFace =
+                pickedFace;
+        }
+        else
+        {
+            // We removed the active face.
+            //
+            // For now simply mark the active face
+            // as invalid.
+            if (m_selectedFace ==
+                pickedFace)
+            {
+                m_selectedFace =
+                    InvalidFace;
+            }
+        }
+    }
+    else
+    {
+        // -------------------------------------------------
+        // NORMAL CLICK
+        //
+        // Clear previous selection and select one face.
+        // -------------------------------------------------
+
+        entity->SelectFace(pickedFace);
+
+        m_selectedFace = pickedFace;
+    }
+
 
     BOX_LOG_INFO(
-        "Selected editable face: "
-        << selected.editableFaceIndex
-        << " A=("
-        << selected.positionA.x << ", "
-        << selected.positionA.y << ", "
-        << selected.positionA.z << ")"
-        << " B=("
-        << selected.positionB.x << ", "
-        << selected.positionB.y << ", "
-        << selected.positionB.z << ")"
-        << " C=("
-        << selected.positionC.x << ", "
-        << selected.positionC.y << ", "
-        << selected.positionC.z << ")"
-        << " D=("
-        << selected.positionD.x << ", "
-        << selected.positionD.y << ", "
-        << selected.positionD.z << ")" );*/
+        "Selected face index: "
+        << pickedFace
+    );
 
-    BOX_LOG_INFO("Selected face index: " << m_selectedFace);
 
     return true;
 

@@ -254,6 +254,10 @@ void ObjectExplorerPanel::DrawObjectTab(BoxEngine& engine, Entity& entity)
 
         if (cylinderChanged)
         {
+            entity.ClearSelectedVertices();
+            entity.ClearSelectedEdges();
+            entity.ClearSelectedFace();
+
             entity.UpdateCylinder();
         }
 
@@ -303,8 +307,14 @@ void ObjectExplorerPanel::DrawObjectTab(BoxEngine& engine, Entity& entity)
             sphereChanged = true;
         }
 
+        
+
         if (sphereChanged)
         {
+            entity.ClearSelectedVertices();
+            entity.ClearSelectedEdges();
+            entity.ClearSelectedFace();
+
             entity.UpdateSphere();
         }
 

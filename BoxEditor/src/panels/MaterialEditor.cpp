@@ -246,7 +246,7 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
 
 	ImGui::Text("Editing: %s", entity.GetName().c_str());   // Name of the entity being edited
 
-	ImGui::Text("Selected Face: %zu", faceIndex);           // Index of the selected face
+	ImGui::Text("Active  Face: %zu", faceIndex);           // Index of the selected face
 
 	ImGui::Text("Material Slot: %zu", face.materialIndex    // Index of the material slot assigned to the selected face
     );
@@ -278,8 +278,10 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
             // the material for the selected face.
             // -----------------------------------------
 
-            entity.SetFaceMaterial(faceIndex, newSlot);
+           // entity.SetFaceMaterial(faceIndex, newSlot);
 
+            entity.SetSelectedFacesMaterial(newSlot);
+            
 
             // -----------------------------------------
             // Rebuild so the face gets its new
@@ -512,13 +514,14 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
             ),
         4))
     {
-        entity.SetFaceMaterial(
-            faceIndex,
+        entity.SetSelectedFacesMaterial(
             static_cast<std::size_t>(
                 selectedSlot
                 )
         );
+
         MeshData renderMesh;
+
         if (mesh.BuildRenderMesh(
             renderMesh))
         {
@@ -526,7 +529,7 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
                 renderMesh
             );
         }
-	}
+    }
 
 }
 

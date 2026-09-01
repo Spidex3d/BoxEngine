@@ -122,7 +122,17 @@ public:
 
     void SelectFace(std::size_t index);
 
+    void AddSelectedFace(std::size_t index);
+    void ToggleSelectedFace(std::size_t index);
+    void SelectAllFaces();
+
+    bool SetSelectedFacesMaterial(std::size_t materialIndex);
+
+
     bool IsFaceSelected(std::size_t index) const;
+
+
+
     // ##################################### Mesh Edit ##########################################
     MeshEditing& GetEditableMesh()
     {
