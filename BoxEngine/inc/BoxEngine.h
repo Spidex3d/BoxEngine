@@ -3,7 +3,7 @@
 #include <entity\Entity.h>
 #include <glm/glm.hpp>
 #include <rendering/Textures.h>
-
+#include "lighting/Lighting.h"
 #include <memory>
 #include <vector>
 
@@ -79,6 +79,22 @@ public:
 
 	Entity* AddImportedMesh(const std::string& name, const MeshData& meshData); // Add an imported mesh to the scene as an entity
 
+    // ----------------------------------------
+    // Lighting
+    // ----------------------------------------
+
+    Lighting& GetLighting()
+    {
+        return m_lighting;
+    }
+
+    const Lighting& GetLighting() const
+    {
+        return m_lighting;
+    }
+
+
+
 private:
     void RenderSelectedEntityOutline(const glm::mat4& view, const glm::mat4& projection); // RenderPreview the outline of the selected entity
 
@@ -113,8 +129,12 @@ private:
         const glm::mat4& modelMatrix,
         const glm::vec3& aabbMinLocal,
         const glm::vec3& aabbMaxLocal,
-        float& outDistanceWorld
-    ) const;
+        float& outDistanceWorld) const;
+
+    // ----------------------------------------
+	// Lighting
+	// ----------------------------------------
+	Lighting m_lighting; // Lighting system for the scene
 
 };
 

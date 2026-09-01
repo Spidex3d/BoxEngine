@@ -150,6 +150,7 @@
     <ClInclude Include="inc\BoxEngine.h" />
     <ClInclude Include="inc\camera\Camera.h" />
     <ClInclude Include="inc\entity\Entity.h" />
+    <ClInclude Include="inc\lighting\Lighting.h" />
     <ClInclude Include="inc\mesh\MeshData.h" />
     <ClInclude Include="inc\mesh\MeshEditing.h" />
     <ClInclude Include="inc\mesh\modifiers\Bevel.h" />
@@ -169,6 +170,7 @@
     <ClCompile Include="src\BoxEngine.cpp" />
     <ClCompile Include="src\camera\Camera.cpp" />
     <ClCompile Include="src\entity\Entity.cpp" />
+    <ClCompile Include="src\lighting\Lighting.cpp" />
     <ClCompile Include="src\mesh\MeshEditing.cpp" />
     <ClCompile Include="src\mesh\modifiers\Bevel.cpp" />
     <ClCompile Include="src\mesh\modifiers\FaceCut.cpp" />

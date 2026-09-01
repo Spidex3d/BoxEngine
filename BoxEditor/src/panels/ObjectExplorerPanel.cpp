@@ -100,9 +100,9 @@ void ObjectExplorerPanel::DrawObjectExplorer(BoxEngine& engine, FaceEditControll
         // ####################################################
 		// Textures tab NOT USED FOR NOW, MATERIAL EDITOR PANEL IS USED INSTEAD
         // ####################################################
-        if (ImGui::BeginTabItem("Textures"))
+        if (ImGui::BeginTabItem("Lighting"))
         {
-            DrawTexturesTab(engine,*selected, faceEditController);
+            DrawLightingTab(engine);
 
             ImGui::EndTabItem();
         }
@@ -358,13 +358,6 @@ void ObjectExplorerPanel::DrawObjectTab(BoxEngine& engine, Entity& entity)
     }
     }
 
-
-
-
-
-
-
-
  
     bool visible = entity.IsVisible();
     if (ImGui::Checkbox("Visible", &visible)) {
@@ -375,30 +368,88 @@ void ObjectExplorerPanel::DrawObjectTab(BoxEngine& engine, Entity& entity)
 
 
 // Textures and Material tab.
-void ObjectExplorerPanel::DrawTexturesTab(BoxEngine& engine, Entity& entity,
-    FaceEditController& faceEditController)
+//void ObjectExplorerPanel::DrawTexturesTab(BoxEngine& engine, Entity& entity, FaceEditController& faceEditController)
+void ObjectExplorerPanel::DrawLightingTab(BoxEngine& engine)
 {
-    
+    Lighting& lighting = engine.GetLighting();
 
-    //ImGui::Separator();
+    ImGui::SeparatorText(
+        "Scene Lighting"
+    );
 
-    //ImGui::TextDisabled(
-    //    "No textures assigned."
-    //);
 
-    //ImGui::Spacing();
-    //
-    //// Draw the material editor for the selected entity.
-    //if (m_materialEditor)
-    //{
-    //    m_materialEditor->Draw(engine, entity, faceEditController);
-    //}
-    //else
-    //{
-    //    ImGui::TextDisabled(
-    //        "Material editor is not initialized."
-    //    );
-    //}
+    // =================================================
+    // Enabled
+    // =================================================
+
+    bool enabled =
+        lighting.IsEnabled();
+
+    if (ImGui::Checkbox(
+        "Enabled",
+        &enabled))
+    {
+        lighting.SetEnabled(
+            enabled
+        );
+    }
+
+
+    // =================================================
+    // Direction
+    // =================================================
+
+    glm::vec3 direction =
+        lighting.GetDirection();
+
+    if (ImGui::DragFloat3(
+        "Direction",
+        &direction.x,
+        0.01f,
+        -1.0f,
+        1.0f))
+    {
+        lighting.SetDirection(
+            direction
+        );
+    }
+
+
+    // =================================================
+    // Colour
+    // =================================================
+
+    glm::vec3 color =
+        lighting.GetColor();
+
+    if (ImGui::ColorEdit3(
+        "Light Colour",
+        &color.x))
+    {
+        lighting.SetColor(
+            color
+        );
+    }
+
+
+    // =================================================
+    // Intensity
+    // =================================================
+
+    float intensity =
+        lighting.GetIntensity();
+
+    if (ImGui::DragFloat(
+        "Intensity",
+        &intensity,
+        0.05f,
+        0.0f,
+        10.0f))
+    {
+        lighting.SetIntensity(
+            intensity
+        );
+    }
 
 }
 

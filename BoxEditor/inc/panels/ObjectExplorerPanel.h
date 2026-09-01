@@ -26,9 +26,9 @@ private:
     void DrawObjectTab(BoxEngine& engine, Entity& entity);
 
 	// NOT IN USE FOR NOW, MATERIAL EDITOR PANEL IS USED INSTEAD go to line 100 in ObjectExplorerPanel.cpp
-    void DrawTexturesTab(BoxEngine& engine, Entity& entity,
-        FaceEditController& faceEditController);
-
+    /*void DrawTexturesTab(BoxEngine& engine, Entity& entity,
+        FaceEditController& faceEditController);*/
+    void DrawLightingTab(BoxEngine& engine);
     
 	// modifiers tab for extrude and inset ect. controls, with the ability to confirm or cancel the operation.
     void DrawModifiersTab(BoxEngine& engine, Entity& entity, FaceEditController& faceEditController, EdgeEditController& edgeEditController);
