@@ -4,6 +4,7 @@
 #include <tools\EdgeEditController.h>
 #include <algorithm>
 
+#include <glm\gtc\constants.hpp>
 void MeshEditing::Clear()
 {
     m_vertices.clear();
@@ -143,46 +144,305 @@ bool MeshEditing::CreatePyramid()
 		m_faces.size() == 5;
 }
 
-bool MeshEditing::CreateSphere(int sectors, int stacks)
+bool MeshEditing::CreateSphere(
+    int sectors,
+    int stacks)
 {
     Clear();
-    if (sectors < 3 || stacks < 2)
+
+
+    if (sectors < 3)
     {
-        BOX_LOG_ERROR("MeshEditing::CreateSphere: Invalid sector or stack count");
-        return false;
+        sectors = 3;
     }
-    const float radius = 0.5f;
-    for (int stack = 0; stack <= stacks; ++stack)
+
+    if (stacks < 2)
     {
-        const float stackAngle = pi / 2.0f - stack * pi / stacks;
-        const float xy = radius * cos(stackAngle);
-        const float z = radius * sin(stackAngle);
-        for (int sector = 0; sector <= sectors; ++sector)
+        stacks = 2;
+    }
+
+
+    constexpr float radius =
+        0.5f;
+
+
+    // =================================================
+    // TOP POLE
+    // =================================================
+
+    const std::size_t topPole =
+        AddVertex(
+            glm::vec3(
+                0.0f,
+                radius,
+                0.0f
+            )
+        );
+
+
+    // =================================================
+    // INTERMEDIATE RINGS
+    //
+    // We deliberately do NOT duplicate the UV seam.
+    //
+    // This is modelling topology rather than
+    // render topology, so the first and last vertex
+    // of each ring are connected using modulo.
+    // =================================================
+
+    for (int stack = 1;
+        stack < stacks;
+        ++stack)
+    {
+        const float stackAngle =
+            glm::half_pi<float>() -
+            static_cast<float>(stack) *
+            glm::pi<float>() /
+            static_cast<float>(stacks);
+
+
+        const float ringRadius =
+            radius *
+            std::cos(stackAngle);
+
+
+        const float y =
+            radius *
+            std::sin(stackAngle);
+
+
+        for (int sector = 0;
+            sector < sectors;
+            ++sector)
         {
-            const float sectorAngle = sector * 2.0f * pi / sectors;
-            const float x = xy * cos(sectorAngle);
-            const float y = xy * sin(sectorAngle);
-            m_vertices.push_back({ {x, y, z} });
+            const float sectorAngle =
+                static_cast<float>(sector) *
+                glm::two_pi<float>() /
+                static_cast<float>(sectors);
+
+
+            const float x =
+                ringRadius *
+                std::cos(sectorAngle);
+
+
+            const float z =
+                ringRadius *
+                std::sin(sectorAngle);
+
+
+            AddVertex(
+                glm::vec3(
+                    x,
+                    y,
+                    z
+                )
+            );
         }
     }
-    for (int stack = 0; stack < stacks; ++stack)
+
+
+    // =================================================
+    // BOTTOM POLE
+    // =================================================
+
+    const std::size_t bottomPole =
+        AddVertex(
+            glm::vec3(
+                0.0f,
+                -radius,
+                0.0f
+            )
+        );
+
+
+    // =================================================
+    // TOP CAP
+    // =================================================
+
+    const std::size_t firstRing =
+        1;
+
+
+    for (int sector = 0;
+        sector < sectors;
+        ++sector)
     {
-        for (int sector = 0; sector < sectors; ++sector)
+        const int next =
+            (sector + 1) %
+            sectors;
+
+
+        const std::size_t currentVertex =
+            firstRing +
+            static_cast<std::size_t>(
+                sector
+                );
+
+
+        const std::size_t nextVertex =
+            firstRing +
+            static_cast<std::size_t>(
+                next
+                );
+
+
+        AddFace(
+            {
+                topPole,
+                nextVertex,
+                currentVertex
+            }
+        );
+    }
+
+
+    // =================================================
+    // MIDDLE QUADS
+    // =================================================
+
+    const int ringCount =
+        stacks - 1;
+
+
+    for (int ring = 0;
+        ring < ringCount - 1;
+        ++ring)
+    {
+        const std::size_t upperRing =
+            1 +
+            static_cast<std::size_t>(
+                ring * sectors
+                );
+
+
+        const std::size_t lowerRing =
+            upperRing +
+            static_cast<std::size_t>(
+                sectors
+                );
+
+
+        for (int sector = 0;
+            sector < sectors;
+            ++sector)
         {
-            const std::size_t first = stack * (sectors + 1) + sector;
-            const std::size_t second = first + sectors + 1;
-            if (stack != 0)
-            {
-                m_faces.push_back({ {first, second, first + 1} });
-            }
-            if (stack != stacks - 1)
-            {
-                m_faces.push_back({ {first + 1, second, second + 1} });
-            }
+            const int next =
+                (sector + 1) %
+                sectors;
+
+
+            const std::size_t upperA =
+                upperRing +
+                static_cast<std::size_t>(
+                    sector
+                    );
+
+
+            const std::size_t upperB =
+                upperRing +
+                static_cast<std::size_t>(
+                    next
+                    );
+
+
+            const std::size_t lowerA =
+                lowerRing +
+                static_cast<std::size_t>(
+                    sector
+                    );
+
+
+            const std::size_t lowerB =
+                lowerRing +
+                static_cast<std::size_t>(
+                    next
+                    );
+
+
+            AddFace(
+                {
+                    upperA,
+                    upperB,
+                    lowerB,
+                    lowerA
+                }
+            );
         }
     }
+
+
+    // =================================================
+    // BOTTOM CAP
+    // =================================================
+
+    const std::size_t lastRing =
+        1 +
+        static_cast<std::size_t>(
+            (ringCount - 1) *
+            sectors
+            );
+
+
+    for (int sector = 0;
+        sector < sectors;
+        ++sector)
+    {
+        const int next =
+            (sector + 1) %
+            sectors;
+
+
+        const std::size_t currentVertex =
+            lastRing +
+            static_cast<std::size_t>(
+                sector
+                );
+
+
+        const std::size_t nextVertex =
+            lastRing +
+            static_cast<std::size_t>(
+                next
+                );
+
+
+        AddFace(
+            {
+                currentVertex,
+                nextVertex,
+                bottomPole
+            }
+        );
+    }
+
+
+    // =================================================
+    // BUILD EDITABLE EDGES
+    // =================================================
+
     RebuildEdges();
-    return true;
+
+
+    BOX_LOG_INFO(
+        "Created editable sphere. "
+        << "Sectors="
+        << sectors
+        << " Stacks="
+        << stacks
+        << " Vertices="
+        << GetVertexCount()
+        << " Edges="
+        << GetEdgeCount()
+        << " Faces="
+        << GetFaceCount()
+    );
+
+
+    return
+        !m_vertices.empty() &&
+        !m_edges.empty() &&
+        !m_faces.empty();
 }
 
 bool MeshEditing::CreateCylinder(

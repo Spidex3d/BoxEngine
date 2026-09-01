@@ -339,8 +339,28 @@ public:
 		return m_cylinderHeight;
     }
 
-
     bool UpdateCylinder();
+
+    // -------------------------------------------------------
+	// Sphere specific parameters
+    // -------------------------------------------------------
+    void SetSphereSectors(int sectors) {
+        m_sphereSectors = sectors; // Reusing cylinder parameters for sphere
+    }
+    void SetSphereStacks(int stacks) {
+        m_sphereStacks = stacks; // Reusing cylinder parameters for sphere
+    }
+    int GetSphereSectors() const {
+        return m_sphereSectors; // Reusing cylinder parameters for sphere
+    }
+    int GetSphereStacks() const {
+        return m_sphereStacks; // Reusing cylinder parameters for sphere
+	}
+
+    
+
+	bool UpdateSphere(); // Function to update sphere parameters and rebuild mesh if necessary
+
 
 	// ###################################### Visibility #####################################
     void SetVisible(bool visible)  {
@@ -479,7 +499,9 @@ private:
 	int m_cylinderStacks = 1;
 	float m_cylinderRadius = 0.5f;
 	float m_cylinderHeight = 1.0f;
-
+	// Sphere specific parameters
+	int m_sphereSectors = 32;
+	int m_sphereStacks = 16;
 
     bool m_visible = true;
 

@@ -291,9 +291,7 @@ bool BoxEngine::AddEditableSphere(const glm::vec3& position)
 {
     const int entityID = m_nextEntityID++;
 
-    const std::string name =
-        "Sphere " +
-        std::to_string(entityID);
+    const std::string name = "Sphere " + std::to_string(entityID);
 
     auto sphere = std::make_unique<Entity>(entityID, name);
 
@@ -312,9 +310,7 @@ bool BoxEngine::AddEditableSphere(const glm::vec3& position)
         return false;
     }
 
-    m_entities.push_back(
-        std::move(sphere)
-    );
+    m_entities.push_back(std::move(sphere));
 
     return true;
 }

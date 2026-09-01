@@ -6,7 +6,6 @@
 #include <miniBoxLog.h>
 
 #include <tools/FaceEditController.h>
-//#include "panels/MaterialEditor.h"
 
 
 // this is the new implementation of the MaterialEditorPanel class,

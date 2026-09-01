@@ -172,17 +172,5 @@ finalColor += emission;
 
 
 FragColor = vec4(finalColor, materialColor.a);
-
-//FragColor = vec4(
-//    texture(
-//        uMaterialNormalTextures[materialIndex],
-//        vTexCoord
-//    ).rgb,
-//    1.0
-//);
-
-
-
-//FragColor = vec4(normal * 0.5 + 0.5, 1.0);
  
 }

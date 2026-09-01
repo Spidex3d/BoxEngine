@@ -525,8 +525,186 @@ bool Entity::UpdateCylinder()
     return true;
 }
 
+// Create a Sphere primitive
+
+bool Entity::CreateSphere(
+    int sectors,
+    int stacks)
+{
+    Destroy();
 
 
+    if (sectors < 3)
+    {
+        sectors = 3;
+    }
+
+    if (stacks < 2)
+    {
+        stacks = 2;
+    }
+
+
+    // ------------------------------------------------
+    // Create editable sphere topology
+    // ------------------------------------------------
+
+    if (!m_editableMesh.CreateSphere(
+        sectors,
+        stacks))
+    {
+        BOX_LOG_ERROR(
+            "Entity::CreateSphere: "
+            "Failed to create editable sphere"
+        );
+
+        return false;
+    }
+
+
+    m_primitiveType =
+        EntityPrimitiveType::Sphere;
+
+
+    // Keep untouched primitive topology
+    // for the modifier system.
+    m_baseEditableMesh =
+        m_editableMesh;
+
+
+    // ------------------------------------------------
+    // Build render mesh
+    //
+    // This also generates:
+    //
+    // Position
+    // Normal
+    // UV
+    // Material index
+    // Tangent
+    // ------------------------------------------------
+
+    if (!m_editableMesh.BuildRenderMesh(
+        m_meshData))
+    {
+        BOX_LOG_ERROR(
+            "Entity::CreateSphere: "
+            "Failed to build render mesh"
+        );
+
+        return false;
+    }
+
+
+    // ------------------------------------------------
+    // Upload to GPU
+    // ------------------------------------------------
+
+    if (!CreateBuffersFromMeshData())
+    {
+        BOX_LOG_ERROR(
+            "Entity::CreateSphere: "
+            "Failed to create GPU buffers"
+        );
+
+        return false;
+    }
+
+
+    // ------------------------------------------------
+    // Bounds
+    // ------------------------------------------------
+
+    constexpr float radius =
+        0.5f;
+
+
+    m_aabbMin =
+        glm::vec3(-radius);
+
+    m_aabbMax =
+        glm::vec3(radius);
+
+
+    BOX_LOG_INFO(
+        "Created editable sphere entity: "
+        << m_name
+        << " ID="
+        << m_id
+        << " Vertices="
+        << m_editableMesh.GetVertexCount()
+        << " Edges="
+        << m_editableMesh.GetEdgeCount()
+        << " Faces="
+        << m_editableMesh.GetFaceCount()
+    );
+
+
+    return true;
+}
+
+bool Entity::UpdateSphere()
+{
+    if (!m_editableMesh.CreateSphere(
+        m_sphereSectors,
+        m_sphereStacks
+        ))
+    {
+        return false;
+    }
+
+
+    // This is now the new base primitive.
+    m_baseEditableMesh =  m_editableMesh;
+
+
+    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+    {
+        return false;
+    }
+
+
+    // Destroy only existing GPU buffers before
+    // recreating them.
+    if (m_ebo != 0)
+    {
+        glDeleteBuffers(1, &m_ebo);
+        m_ebo = 0;
+    }
+
+    if (m_vbo != 0)
+    {
+        glDeleteBuffers(1, &m_vbo);
+        m_vbo = 0;
+    }
+
+    if (m_vao != 0)
+    {
+        glDeleteVertexArrays(1, &m_vao);
+        m_vao = 0;
+    }
+
+
+    if (!CreateBuffersFromMeshData())
+    {
+        return false;
+    }
+
+
+    constexpr float radius = 0.5f;
+
+
+    m_aabbMin =
+        glm::vec3(-radius);
+
+    m_aabbMax =
+        glm::vec3(radius);
+
+    return true;
+
+}
+
+// Create a Pyramid primitive
 bool Entity::CreatePyramid()
 {
     Destroy();
@@ -1874,308 +2052,7 @@ void Entity::RenderPreview(const Shader& shader, const glm::mat4& view, const gl
 
 }
 
-bool Entity::CreateSphere(int sectors, int stacks)
-{
-    Destroy();
 
-    if (sectors < 3)
-    {
-        sectors = 3;
-    }
-
-    if (stacks < 2)
-    {
-        stacks = 2;
-    }
-
-	m_primitiveType = EntityPrimitiveType::Sphere;
-
-    constexpr float radius = 0.5f;
-
-    std::vector<float> vertices;
-    std::vector<unsigned int> indices;
-
-    const float sectorStep =
-        glm::two_pi<float>() /
-        static_cast<float>(sectors);
-
-    const float stackStep =
-        glm::pi<float>() /
-        static_cast<float>(stacks);
-
-    // Build sphere vertices.
-    for (unsigned int stack = 0;
-        stack <= stacks;
-        ++stack)
-    {
-        const float stackAngle =
-            glm::half_pi<float>() -
-            static_cast<float>(stack) *
-            stackStep;
-
-        const float xy =
-            radius *
-            std::cos(stackAngle);
-
-        const float y =
-            radius *
-            std::sin(stackAngle);
-
-        for (unsigned int sector = 0;
-            sector <= sectors;
-            ++sector)
-        {
-            const float sectorAngle =
-                static_cast<float>(sector) *
-                sectorStep;
-
-            const float x =
-                xy *
-                std::cos(sectorAngle);
-
-            const float z =
-                xy *
-                std::sin(sectorAngle);
-
-            const float u =
-                static_cast<float>(sector) /
-                static_cast<float>(sectors);
-
-            const float v =
-                static_cast<float>(stack) /
-                static_cast<float>(stacks);
-
-            // Position
-            vertices.push_back(x);
-            vertices.push_back(y);
-            vertices.push_back(z);
-
-            // Normal
-            const glm::vec3 normal =
-                glm::normalize(
-                    glm::vec3(x, y, z)
-                );
-
-            vertices.push_back(normal.x);
-            vertices.push_back(normal.y);
-            vertices.push_back(normal.z);
-
-            // UV
-            vertices.push_back(u);
-            vertices.push_back(v);
-        }
-        
-    }
-
-    // Build triangle indices.
-    for (unsigned int stack = 0;
-        stack < stacks;
-        ++stack)
-    {
-        unsigned int first =
-            stack * (sectors + 1);
-
-        unsigned int second =
-            first + sectors + 1;
-
-        for (unsigned int sector = 0;
-            sector < sectors;
-            ++sector,
-            ++first,
-            ++second)
-        {
-            // Do not create triangles above
-            // the upper pole.
-            if (stack != 0)
-            {
-                indices.push_back(first);
-                indices.push_back(first + 1);
-                indices.push_back(second);
-            }
-            
-
-            // Do not create triangles below
-            // the lower pole.
-            if (stack != stacks - 1)
-            {
-                indices.push_back(first + 1);
-                indices.push_back(second + 1);
-                indices.push_back(second);
-            }
-            
-        }
-    }
-
-	// ############################################### Mesh Data ####################################################
-    m_meshData.vertices.clear();
-    m_meshData.indices.clear();
-
-    constexpr std::size_t floatsPerVertex = 8;
-
-    m_meshData.vertices.reserve(
-        vertices.size() /
-        floatsPerVertex
-    );
-
-    for (std::size_t index = 0;
-        index < vertices.size();
-        index += floatsPerVertex)
-    {
-        MeshVertex vertex;
-
-        vertex.position =
-            glm::vec3(
-                vertices[index + 0],
-                vertices[index + 1],
-                vertices[index + 2]
-            );
-
-        vertex.normal =
-            glm::vec3(
-                vertices[index + 3],
-                vertices[index + 4],
-                vertices[index + 5]
-            );
-
-        vertex.uv =
-            glm::vec2(
-                vertices[index + 6],
-                vertices[index + 7]
-            );
-
-        m_meshData.vertices.push_back(
-            vertex
-        );
-    }
-
-    m_meshData.indices.assign(
-        indices.begin(),
-        indices.end()
-    );
-
-
-    glGenVertexArrays(1, &m_vao);
-    glGenBuffers(1, &m_vbo);
-    glGenBuffers(1, &m_ebo);
-
-    glBindVertexArray(m_vao);
-
-    glBindBuffer(
-        GL_ARRAY_BUFFER,
-        m_vbo
-    );
-
-    glBufferData(
-        GL_ARRAY_BUFFER,
-        vertices.size() * sizeof(float),
-        vertices.data(),
-        GL_STATIC_DRAW
-    );
-
-    glBindBuffer(
-        GL_ELEMENT_ARRAY_BUFFER,
-        m_ebo
-    );
-
-    glBufferData(
-        GL_ELEMENT_ARRAY_BUFFER,
-        indices.size() *
-        sizeof(unsigned int),
-        indices.data(),
-        GL_STATIC_DRAW
-    );
-
-    // Position: XYZ
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(
-        0,
-        3,
-        GL_FLOAT,
-        GL_FALSE,
-        8 * sizeof(float),
-        reinterpret_cast<void*>(0)
-    );
-
-    // Normal: XYZ
-    glEnableVertexAttribArray(1);
-
-    glVertexAttribPointer(
-        1,
-        3,
-        GL_FLOAT,
-        GL_FALSE,
-        8 * sizeof(float),
-        reinterpret_cast<void*>(
-            3 * sizeof(float)
-            )
-    );
-
-    // UV
-    glEnableVertexAttribArray(2);
-
-    glVertexAttribPointer(
-        2,
-        2,
-        GL_FLOAT,
-        GL_FALSE,
-        8 * sizeof(float),
-        reinterpret_cast<void*>(
-            6 * sizeof(float)
-            ));
-
-    glBindVertexArray(0);
-
-    m_vertexCount =
-        static_cast<GLsizei>(
-            m_meshData.vertices.size()
-            );
-   
-    m_indexCount =
-        static_cast<GLsizei>(
-            m_meshData.indices.size()
-            );
-
-   
-
-    m_useIndices = true;
-
-    // Local bounds for picking.
-    m_aabbMin =
-        glm::vec3(-radius);
-
-    m_aabbMax =
-        glm::vec3(radius);
-
-    const bool valid =
-        m_vao != 0 &&
-        m_vbo != 0 &&
-        m_ebo != 0 &&
-        m_indexCount > 0;
-
-    if (!valid)
-    {
-        BOX_LOG_ERROR(
-            "Entity::CreateSphere failed for entity "
-            << m_name
-        );
-
-        Destroy();
-        return false;
-    }
-
-    BOX_LOG_INFO(
-        "Created sphere entity: "
-        << m_name
-        << " ID=" << m_id
-        << " Vertices="
-        << m_meshData.vertices.size()
-        << " Indices="
-        << m_meshData.indices.size()
-    );
-
-    return true;
-}
 
 glm::mat4 Entity::GetModelMatrix() const
 {

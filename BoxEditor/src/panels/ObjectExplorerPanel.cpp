@@ -158,9 +158,9 @@ void ObjectExplorerPanel::DrawObjectTab(BoxEngine& engine, Entity& entity)
     ImGui::Separator();
    
 
-	// #####################################################################################################
-	// ########################################### cyilender properties ####################################
-	// #####################################################################################################
+	// -------------------------------------------
+	//  Objects properties 
+	// -------------------------------------------
 
     switch (entity.GetPrimitiveType())
     {
@@ -176,6 +176,10 @@ void ObjectExplorerPanel::DrawObjectTab(BoxEngine& engine, Entity& entity)
 
         break;
     }
+
+    // -----------------------------------------
+    //  Cylinder properties 
+    // -----------------------------------------
 
     case EntityPrimitiveType::Cylinder:
     {
@@ -256,10 +260,53 @@ void ObjectExplorerPanel::DrawObjectTab(BoxEngine& engine, Entity& entity)
         break;
     }
 
+    // -----------------------------------------
+    // Sphere properties
+    // -----------------------------------------
 
     case EntityPrimitiveType::Sphere:
     {
-        // Sphere properties later.
+        ImGui::SeparatorText("Sphere Properties");
+
+        bool sphereChanged = false;
+
+               
+        int sectors = entity.GetSphereSectors();
+
+        int stacks = entity.GetSphereStacks();
+
+        
+
+        // -----------------------------------------
+        // Sectors
+        // -----------------------------------------
+
+        if (ImGui::InputInt("Sectors", &sectors, 1, 4))
+        {
+            sectors = std::clamp(sectors, 8, 32);
+
+            entity.SetSphereSectors(sectors);
+
+            sphereChanged = true;
+        }
+
+        // -----------------------------------------
+        // Stacks
+        // -----------------------------------------
+
+        if (ImGui::InputInt("Stacks", &stacks, 1, 1))
+        {
+            stacks = std::clamp(stacks, 2, 16);
+
+            entity.SetSphereStacks(stacks);
+
+            sphereChanged = true;
+        }
+
+        if (sphereChanged)
+        {
+            entity.UpdateSphere();
+        }
 
         break;
     }
