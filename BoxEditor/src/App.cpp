@@ -260,6 +260,7 @@ void App::HandleMenuAction(
             break;
         }
 
+        importedEntity->SetScale(importedData.scale );
 
         RebuildImportedMaterialSlots(
             engine,
@@ -354,6 +355,9 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
         {
             break;
         }
+
+        // Apply the scale stored in the MBX file.
+        importedEntity->SetScale(importedData.scale);
 
 
         RebuildImportedMaterialSlots(

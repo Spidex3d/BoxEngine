@@ -8,10 +8,11 @@
 // Import mbx files from a specified directory
 // version 0.1
 // version 0.2 21/08/2026
+// version 0.3 06/09/2026
 class Entity;
 
 constexpr int MBX_VERSION_MAJOR = 0;
-constexpr int MBX_VERSION_MINOR = 2;
+constexpr int MBX_VERSION_MINOR = 3;
 
 struct MBXMaterialData
 {
@@ -40,6 +41,8 @@ struct MBXImportData
 	int versionMinor = 0;
 
 	std::string objectName;
+
+	glm::vec3 scale = glm::vec3(1.0f);
 
 	MeshData mesh;
 

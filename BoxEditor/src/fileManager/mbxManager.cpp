@@ -164,6 +164,13 @@ bool mbxManager::ImportMBX(const std::filesystem::path& mbxFilePath, MBXImportDa
         {
             stream >> outData.objectName;
         }
+        else if (command == "scale")
+        {
+            stream
+                >> outData.scale.x
+                >> outData.scale.y
+                >> outData.scale.z;
+        }
         else if (command == "v")
         {
             glm::vec3 position;
@@ -546,6 +553,19 @@ std::string mbxManager::BuildMBX(const Entity& entity, const std::string& copied
     output
         << "o "
         << MakeSafeName(entity.GetName())
+        << "\n\n";
+
+    // =================================================
+    // OBJECT TRANSFORM
+    // =================================================
+
+    const glm::vec3& scale = entity.GetScale();
+
+    output
+        << "scale "
+        << scale.x << ' '
+        << scale.y << ' '
+        << scale.z
         << "\n\n";
 
     /*
