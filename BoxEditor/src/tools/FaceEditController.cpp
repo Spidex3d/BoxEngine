@@ -11,6 +11,7 @@
 #include <mesh/modifiers/FaceExtrude.h>
 #include <mesh/modifiers/FaceInset.h>
 #include <mesh/modifiers/RoundInset.h>
+#include <mesh/modifiers/FaceRemove.h>
 
 
 void FaceEditController::HandleInput(
@@ -323,8 +324,8 @@ void FaceEditController::HandleInput(
     }
 
     // =================================================
-// ACTIVE ROUND INSET
-// =================================================
+    // ACTIVE ROUND INSET
+    // =================================================
 
     if (m_isRoundingInset)
     {
@@ -376,6 +377,53 @@ void FaceEditController::HandleInput(
         }
 
         return;
+    }
+
+    // =================================================
+    // DELETE SELECTED FACE
+    // =================================================
+
+    if (!m_isMoving &&
+        !m_isExtruding &&
+        !m_isInsetting &&
+        !m_isRoundingInset &&
+        m_selectedFace != InvalidFace)
+    {
+        if (ImGui::IsKeyPressed(
+            ImGuiKey_Delete,
+            false))
+        {
+            MeshEditing& editableMesh =
+                entity->GetEditableMesh();
+
+            FaceRemove removeFace;
+
+            if (removeFace.Use(
+                editableMesh,
+                m_selectedFace))
+            {
+                MeshData renderMesh;
+
+                if (editableMesh.BuildRenderMesh(
+                    renderMesh))
+                {
+                    entity->CreateFromMeshData(
+                        renderMesh
+                    );
+                }
+
+                entity->ClearSelectedFace();
+
+                m_selectedFace =
+                    InvalidFace;
+
+                BOX_LOG_INFO(
+                    "Deleted selected face"
+                );
+            }
+
+            return;
+        }
     }
 
 

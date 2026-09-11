@@ -66,6 +66,8 @@ public:
 
     bool SetFace(std::size_t faceIndex, const std::vector<std::size_t>& vertices);
 
+    bool RemoveFace(std::size_t faceIndex); // Remove a face
+
     // -------------------------------------
 	// Shading mode
 	// -------------------------------------

@@ -157,6 +157,7 @@
     <ClInclude Include="inc\mesh\modifiers\FaceCut.h" />
     <ClInclude Include="inc\mesh\modifiers\FaceExtrude.h" />
     <ClInclude Include="inc\mesh\modifiers\FaceInset.h" />
+    <ClInclude Include="inc\mesh\modifiers\FaceRemove.h" />
     <ClInclude Include="inc\mesh\modifiers\LoopCut.h" />
     <ClInclude Include="inc\mesh\modifiers\ModifierData.h" />
     <ClInclude Include="inc\mesh\modifiers\RoundInset.h" />
@@ -177,6 +178,7 @@
     <ClCompile Include="src\mesh\modifiers\FaceCut.cpp" />
     <ClCompile Include="src\mesh\modifiers\FaceExtrude.cpp" />
     <ClCompile Include="src\mesh\modifiers\FaceInset.cpp" />
+    <ClCompile Include="src\mesh\modifiers\FaceRemove.cpp" />
     <ClCompile Include="src\mesh\modifiers\LoopCut.cpp" />
     <ClCompile Include="src\mesh\modifiers\RoundInset.cpp" />
     <ClCompile Include="src\rendering\Framebuffer.cpp" />

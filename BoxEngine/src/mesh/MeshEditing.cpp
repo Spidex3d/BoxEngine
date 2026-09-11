@@ -792,6 +792,34 @@ bool MeshEditing::SetFace(
 
     return true;
 }
+// -----------------------------------------------
+// Remove a face from the mesh by its index.
+// -----------------------------------------------
+
+bool MeshEditing::RemoveFace(
+    std::size_t faceIndex)
+{
+    if (faceIndex >= m_faces.size())
+    {
+        BOX_LOG_ERROR(
+            "MeshEditing::RemoveFace: Invalid face index"
+        );
+
+        return false;
+    }
+
+    m_faces.erase(
+        m_faces.begin() +
+        static_cast<std::ptrdiff_t>(
+            faceIndex
+            )
+    );
+
+    RebuildEdges();
+
+    return true;
+}
+
 
 void MeshEditing::RebuildEdges()
 {

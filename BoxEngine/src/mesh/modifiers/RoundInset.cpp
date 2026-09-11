@@ -254,11 +254,32 @@ bool RoundInset::Use(MeshEditing& mesh, std::size_t faceIndex, float amount, int
         // Later Roundness will control this.
         // ---------------------------------------------
 
-        const float cornerRadius =
+
+        roundness =
+            glm::clamp(
+                roundness,
+                0.0f,
+                1.0f
+            );
+
+        const float minEdgeLength =
             std::min(
                 previousLength,
                 nextLength
-            ) * 0.25f;
+            );
+
+        const float cornerRadius =
+            glm::mix(
+                minEdgeLength * 0.05f,
+                minEdgeLength * 0.48f,
+                roundness
+            );
+
+        /*const float cornerRadius =
+            std::min(
+                previousLength,
+                nextLength
+            ) * 0.25f;*/
 
 
         // ---------------------------------------------
