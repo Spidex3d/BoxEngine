@@ -398,26 +398,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             ImGui::EndMenu();
 		}
 
-        // Lighting call to action callback to add a new light to the scene,
-        // the type of light will be determined by the menu item clicked and passed as a string argument to the callback
-        if (ImGui::BeginMenu("Add a new Light")) {
-
-            if (ImGui::MenuItem("Ambient")) {
-                //if (m_actionCallback) m_actionCallback("AddLight:Ambient");
-
-            }
-
-            if (ImGui::MenuItem("Spot")) {
-            }
-
-            if (ImGui::MenuItem("Area")) {
-                //  if (m_actionCallback) m_actionCallback("AddLight:Area");
-            }
-
-            // Environmental Atmosphere
-
-            ImGui::EndMenu();
-        }
+        
 
         if (ImGui::BeginMenu("Modifiers")) {
 
@@ -473,6 +454,31 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                 else
                 {
                     m_faceEditController.BeginInset(*selectedEntity);
+                }
+
+            }
+
+            if (ImGui::MenuItem("Round Inset"))
+            {
+
+                Entity* selectedEntity = engine.GetSelectedEntity();
+
+                if (!selectedEntity)
+                {
+                    BOX_LOG_WARNING(
+                        "Round Inset: no entity selected"
+                    );
+                }
+                else if (
+                    !m_faceEditController.HasSelectedFace())
+                {
+                    BOX_LOG_WARNING(
+                        "Round Inset: no face selected"
+                    );
+                }
+                else
+                {
+                    m_faceEditController.BeginRoundInset(*selectedEntity);
                 }
 
             }
@@ -571,6 +577,27 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             if (ImGui::MenuItem("Scatter"))
             {
             }
+            ImGui::EndMenu();
+        }
+
+        // Lighting call to action callback to add a new light to the scene,
+        // the type of light will be determined by the menu item clicked and passed as a string argument to the callback
+        if (ImGui::BeginMenu("Add a new Light")) {
+
+            if (ImGui::MenuItem("Ambient")) {
+                //if (m_actionCallback) m_actionCallback("AddLight:Ambient");
+
+            }
+
+            if (ImGui::MenuItem("Spot")) {
+            }
+
+            if (ImGui::MenuItem("Area")) {
+                //  if (m_actionCallback) m_actionCallback("AddLight:Area");
+            }
+
+            // Environmental Atmosphere
+
             ImGui::EndMenu();
         }
 

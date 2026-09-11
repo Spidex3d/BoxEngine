@@ -479,6 +479,17 @@ void ObjectExplorerPanel::DrawModifiersTab(BoxEngine& engine, Entity& entity, Fa
 
         return;
     }
+
+    // Round Inset
+    if (faceEditController.IsRoundingInset())
+    {
+        RoundInsetControls(entity, faceEditController);
+
+        return;
+    }
+
+
+
 	// Loop Cut
     if (edgeEditController.IsLoopCutting())
     {
@@ -511,6 +522,12 @@ void ObjectExplorerPanel::DrawModifiersTab(BoxEngine& engine, Entity& entity, Fa
         {
             InsetControls(entity, faceEditController);
             
+            break;
+        }
+        case LastOperationType::RoundInset:
+        {
+            RoundInsetControls(entity, faceEditController);
+
             break;
         }
         case LastOperationType::LoopCut:
@@ -785,9 +802,11 @@ void ObjectExplorerPanel::ExtrudeControls(Entity& entity, FaceEditController& fa
     }
 
 }
+
 // =================================================
 // Inset Controls
 // =================================================
+
 void ObjectExplorerPanel::InsetControls(Entity& entity, FaceEditController& faceEditController)
 {
     // =================================================
@@ -881,6 +900,192 @@ void ObjectExplorerPanel::InsetControls(Entity& entity, FaceEditController& face
     }
 
 }
+
+void ObjectExplorerPanel::RoundInsetControls(Entity& entity, FaceEditController& faceEditController)
+{
+
+    if (faceEditController.IsRoundingInset())
+    {
+        ImGui::SeparatorText("Active Operation");
+
+        ImGui::Text("Round Inset");
+
+        ImGui::Spacing();
+
+        float amount = faceEditController.GetRoundInsetAmount();
+
+        if (ImGui::InputFloat(
+            "Round Inset Amount",
+            &amount,
+            0.01f,
+            0.1f))
+        {
+            faceEditController
+                .SetRoundInsetAmount(
+                    entity, amount);
+        }
+        
+        int segments = faceEditController.GetRoundSegs();
+
+        if (ImGui::InputInt(
+            "Round Inset segments",
+            &segments,
+            1,
+            1))
+        {
+            faceEditController
+                .SetRoundSegs(
+                    entity, segments);
+        }
+
+		float roundness = faceEditController.GetRoundRound();
+
+        if (ImGui::InputFloat(
+            "Round Inset roundness",
+            &roundness,
+            0.01f,
+            0.1f))
+        {
+            faceEditController
+                .SetRoundRound(
+                    entity, roundness);
+        }
+
+        ImGui::Spacing();
+
+        if (ImGui::Button(
+            "Confirm",
+            ImVec2(90.0f, 0.0f)))
+        {
+            faceEditController
+                .ConfirmRoundInset(
+                    entity
+                );
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button(
+            "Cancel",
+            ImVec2(90.0f, 0.0f)))
+        {
+            faceEditController
+                .CancelRoundInset(
+                    entity
+                );
+        }
+
+        return;
+    }
+
+
+    // =================================================
+    // LAST CONFIRMED INSET
+    // =================================================
+
+    if (entity.HasLastRoundInset())
+    {
+        ImGui::SeparatorText(
+            "Last Operation"
+        );
+
+        ImGui::Text(
+            "Round Inset"
+        );
+
+        RoundInsetModifierData lastRoundInset =
+            entity.GetLastRoundInset();
+
+        bool changed = false;
+
+
+        // ---------------------------------------------
+        // Amount
+        // ---------------------------------------------
+
+        if (ImGui::InputFloat(
+            "Round Inset Amount",
+            &lastRoundInset.insetAmount,
+            0.01f,
+            0.1f))
+        {
+            lastRoundInset.insetAmount =
+                std::clamp(
+                    lastRoundInset.insetAmount,
+                    0.0f,
+                    0.95f
+                );
+
+            changed = true;
+        }
+
+
+        // ---------------------------------------------
+        // Segments
+        // ---------------------------------------------
+
+        if (ImGui::InputInt(
+            "Round Inset Segments",
+            &lastRoundInset.segments,
+            1,
+            1))
+        {
+            lastRoundInset.segments =
+                std::clamp(
+                    lastRoundInset.segments,
+                    1,
+                    16
+                );
+
+            changed = true;
+        }
+
+
+        // ---------------------------------------------
+        // Roundness
+        // ---------------------------------------------
+
+        if (ImGui::InputFloat(
+            "Round Inset Roundness",
+            &lastRoundInset.roundness,
+            0.01f,
+            0.1f))
+        {
+            lastRoundInset.roundness =
+                std::clamp(
+                    lastRoundInset.roundness,
+                    0.0f,
+                    1.0f
+                );
+
+            changed = true;
+        }
+
+
+        // ---------------------------------------------
+        // Rebuild last operation
+        // ---------------------------------------------
+
+        if (changed)
+        {
+            entity.UpdateLastRoundInset(
+                lastRoundInset.insetAmount,
+                lastRoundInset.segments,
+                lastRoundInset.roundness
+            );
+        }
+
+        return;
+    }
+
+
+
+
+}
+
+
+
+
 // =================================================
 // Loop Cut Controls
 // =================================================

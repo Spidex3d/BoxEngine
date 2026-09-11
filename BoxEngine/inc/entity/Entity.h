@@ -189,6 +189,23 @@ public:
         return m_lastInset;
     }
 
+    // ##################################### last Round Inset  ################################################
+	void SetLastRoundInset(std::size_t faceIndex, float amount, int segments, float roundness,
+		const MeshEditing& meshBeforeRoundInset);
+	
+    bool UpdateLastRoundInset(float amount, int segments, float roundness);
+
+	bool HasLastRoundInset() const
+	{
+		return m_hasLastRoundInset;
+	}
+
+    const RoundInsetModifierData& GetLastRoundInset() const
+    {
+        return m_lastRoundInset;
+    }
+
+
 	// ##################################### End last Inset  ##########################################
 	// ##################################################################################################
 	// ##################################### last LoopCut  ##########################################
@@ -463,6 +480,10 @@ private: // modifiers
         bool m_hasLastInset = false;
         InsetModifierData m_lastInset;
 		MeshEditing m_lastInsetBaseMesh;
+		// LastRoundInset
+		bool m_hasLastRoundInset = false;
+		RoundInsetModifierData m_lastRoundInset;
+		MeshEditing m_lastRoundInsetBaseMesh;
         // LastLoopCut
         bool m_hasLastLoopCut = false;
         LoopCutModifierData m_lastLoopCut;

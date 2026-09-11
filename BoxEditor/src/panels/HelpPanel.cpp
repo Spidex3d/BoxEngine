@@ -208,6 +208,62 @@ void HelpPanel::Draw()
                 "Escape to cancel changes."
             );
 
+            ImGui::SeparatorText(ICON_FA_COG" Edit Mode Controls");
+
+            if (ImGui::BeginTable(
+                "##ShortcutTableEditMode",
+                2,
+                ImGuiTableFlags_Borders |
+                ImGuiTableFlags_RowBg))
+            {
+                ImGui::TableSetupColumn(ICON_FA_KEYBOARD" Key");
+
+                ImGui::TableSetupColumn("Exstrude Modifier ");
+                ImGui::TableHeadersRow();
+
+                const auto AddShortcut =
+                    [](const char* key,
+                        const char* action)
+                {
+                    ImGui::TableNextRow();
+
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::TextUnformatted(key);
+
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::TextUnformatted(action);
+                };
+                AddShortcut(
+                    "Right Click",
+                    "Switch Edit Mode"
+                );
+
+                AddShortcut(
+                    "Right Click",
+                    "Switch Object Mode"
+                );
+                AddShortcut(
+                    "Use Key 1",
+                    "Switch to vertex"
+                );
+                AddShortcut(
+                    "Use Key 2",
+                    "Switch to edge"
+                );
+                AddShortcut(
+                    "Use Key 3",
+                    "Switch to face"
+                );
+
+
+                ImGui::EndTable();
+            }
+
+
+
+
+
+
             ImGui::EndTabItem();
         }
 

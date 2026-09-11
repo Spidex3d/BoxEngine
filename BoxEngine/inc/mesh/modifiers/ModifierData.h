@@ -15,6 +15,7 @@ enum class ModifierType
     // Destructive modelling operations
     Extrude,
     Inset,
+	RoundInset,
     LoopCut,
     Bevel,
     Bridge,
@@ -33,6 +34,7 @@ enum class LastOperationType
     None,
     Extrude,
     Inset,
+	RoundInset,
 	LoopCut,
     Bevel
 };
@@ -68,7 +70,7 @@ struct ExtrudeModifierData
 
 
 // =====================================================
-// Inset
+// Inset Data
 // =====================================================
 
 struct InsetModifierData
@@ -76,6 +78,17 @@ struct InsetModifierData
     std::size_t faceIndex = 0;
 
     float insetAmount = 0.0f;
+};
+// =====================================================
+// Round Inset Data
+// =====================================================
+
+struct RoundInsetModifierData
+{
+	std::size_t faceIndex = 0;
+	float insetAmount = 0.0f;
+	int segments = 1;
+	float roundness = 0.5f;
 };
 
 // ====================================================

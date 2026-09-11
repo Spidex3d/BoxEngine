@@ -10,6 +10,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <mesh/modifiers/FaceExtrude.h>
 #include <mesh/modifiers/FaceInset.h>
+#include <mesh/modifiers/RoundInset.h>
 
 
 void FaceEditController::HandleInput(
@@ -320,6 +321,63 @@ void FaceEditController::HandleInput(
 
         return;
     }
+
+    // =================================================
+// ACTIVE ROUND INSET
+// =================================================
+
+    if (m_isRoundingInset)
+    {
+        const ImVec2 currentMouse =
+            ImGui::GetMousePos();
+
+        const float deltaX =
+            currentMouse.x -
+            m_roundInsetStartMouse.x;
+
+        m_roundInsetAmount =
+            deltaX *
+            m_moveSensitivity;
+
+        m_roundInsetAmount =
+            glm::clamp(
+                m_roundInsetAmount,
+                0.0f,
+                0.95f
+            );
+
+        UpdateRoundInsetMesh(
+            *entity
+        );
+
+
+        // Confirm
+        if (ImGui::IsMouseClicked(
+            ImGuiMouseButton_Left))
+        {
+            ConfirmRoundInset(
+                *entity
+            );
+
+            return;
+        }
+
+
+        // Cancel
+        if (ImGui::IsKeyPressed(
+            ImGuiKey_Escape,
+            false))
+        {
+            CancelRoundInset(
+                *entity
+            );
+
+            return;
+        }
+
+        return;
+    }
+
 
 
     // =================================================
@@ -798,26 +856,53 @@ void FaceEditController::BeginInset(Entity& entity)
         return;
     }
 
-    MeshEditing& mesh = entity.GetEditableMesh();
+    MeshEditing& mesh =
+        entity.GetEditableMesh();
 
-    if (m_selectedFace >= mesh.GetFaceCount())
+    if (m_selectedFace >=
+        mesh.GetFaceCount())
     {
         return;
     }
 
-    m_meshBeforeInset = mesh;
+    // Stage 1 currently supports quads only.
+    if (mesh.GetFace(
+        m_selectedFace
+    ).vertices.size() != 4)
+    {
+        BOX_LOG_WARNING(
+            "Round Inset currently supports quad faces only"
+        );
 
-    m_insetFace = m_selectedFace;
+        return;
+    }
 
-    m_insetAmount = 0.0f;
+    // Save mesh before this operation.
+    m_meshBeforeRoundInset =
+        mesh;
 
-    m_insetStartMouse = ImGui::GetMousePos();
+    m_roundInsetFace =
+        m_selectedFace;
 
-    m_isInsetting = true;
+    m_roundInsetAmount =
+        0.0f;
 
-    BOX_LOG_INFO("Started inset on face " << m_insetFace);
+    m_roundSegs =
+        1;
 
+    m_roundRound =
+        1.0f;
 
+    m_roundInsetStartMouse =
+        ImGui::GetMousePos();
+
+    m_isRoundingInset =
+        true;
+
+    BOX_LOG_INFO(
+        "Started round inset on face "
+        << m_roundInsetFace
+    );
 }
 
 void FaceEditController::SetInsetAmount(Entity& entity, float amount)
@@ -872,6 +957,66 @@ void FaceEditController::CancelInset(Entity& entity)
     BOX_LOG_INFO("Inset cancelled");
 }
 
+void FaceEditController::BeginRoundInset(Entity& entity)
+{
+
+    if (m_selectedFace == InvalidFace)
+    {
+        return;
+    }
+
+    MeshEditing& mesh =
+        entity.GetEditableMesh();
+
+    if (m_selectedFace >=
+        mesh.GetFaceCount())
+    {
+        return;
+    }
+
+    // Stage 1 currently supports quads only.
+    if (mesh.GetFace(
+        m_selectedFace
+    ).vertices.size() != 4)
+    {
+        BOX_LOG_WARNING(
+            "Round Inset currently supports quad faces only"
+        );
+
+        return;
+    }
+
+    // Save mesh before this operation.
+    m_meshBeforeRoundInset =
+        mesh;
+
+    m_roundInsetFace =
+        m_selectedFace;
+
+    m_roundInsetAmount =
+        0.0f;
+
+    m_roundSegs =
+        1;
+
+    m_roundRound =
+        1.0f;
+
+    m_roundInsetStartMouse =
+        ImGui::GetMousePos();
+
+    m_isRoundingInset =
+        true;
+
+    BOX_LOG_INFO(
+        "Started round inset on face "
+        << m_roundInsetFace
+    );
+
+}
+
+
+
 void FaceEditController::UpdateInsetMesh(Entity& entity)
 {
     if (!m_isInsetting)
@@ -905,6 +1050,192 @@ void FaceEditController::UpdateInsetMesh(Entity& entity)
 
     entity.CreateFromMeshData(renderMesh);
 
+}
+// ####################################################################################################
+// ######################################## End Inset Face #############################################
+// ####################################################################################################
+
+
+void FaceEditController::SetRoundInsetAmount(Entity& entity, float amount)
+{
+    if (!m_isRoundingInset)
+    {
+        return;
+    }
+
+    m_roundInsetAmount =
+        glm::clamp(
+            amount,
+            0.0f,
+            0.95f
+        );
+
+    UpdateRoundInsetMesh(
+        entity
+    );
+}
+
+
+void FaceEditController::SetRoundSegs(
+    Entity& entity,
+    int segments)
+{
+    if (!m_isRoundingInset)
+    {
+        return;
+    }
+
+    m_roundSegs =
+        std::max(
+            segments,
+            1
+        );
+
+    UpdateRoundInsetMesh(
+        entity
+    );
+}
+
+
+void FaceEditController::SetRoundRound(
+    Entity& entity,
+    float roundness)
+{
+    if (!m_isRoundingInset)
+    {
+        return;
+    }
+
+    m_roundRound =
+        glm::clamp(
+            roundness,
+            0.0f,
+            1.0f
+        );
+
+    UpdateRoundInsetMesh(
+        entity
+    );
+
+}
+
+
+void FaceEditController::ConfirmRoundInset(Entity& entity)
+{
+    if (!m_isRoundingInset)
+    {
+        return;
+    }
+
+    entity.SetLastRoundInset(
+        m_roundInsetFace,
+        m_roundInsetAmount,
+        m_roundSegs,
+        m_roundRound,
+        m_meshBeforeRoundInset
+    );
+
+    m_isRoundingInset =
+        false;
+
+    BOX_LOG_INFO(
+        "Round Inset confirmed. Amount="
+        << m_roundInsetAmount
+        << " Segments="
+        << m_roundSegs
+        << " Roundness="
+        << m_roundRound
+    );
+}
+
+void FaceEditController::CancelRoundInset(Entity& entity)
+{
+    if (!m_isRoundingInset)
+    {
+        return;
+    }
+
+    entity.GetEditableMesh() =
+        m_meshBeforeRoundInset;
+
+    MeshData renderMesh;
+
+    if (entity
+        .GetEditableMesh()
+        .BuildRenderMesh(renderMesh))
+    {
+        entity.CreateFromMeshData(
+            renderMesh
+        );
+    }
+
+    m_isRoundingInset =
+        false;
+
+    m_roundInsetAmount =
+        0.0f;
+
+    m_roundSegs =
+        1;
+
+    m_roundRound =
+        1.0f;
+
+    BOX_LOG_INFO(
+        "Round Inset cancelled"
+    );
+}
+
+void FaceEditController::UpdateRoundInsetMesh(Entity& entity)
+{
+    if (!m_isRoundingInset)
+    {
+        return;
+    }
+
+    MeshEditing& editableMesh =
+        entity.GetEditableMesh();
+
+    // Always return to the mesh from before
+    // this round inset operation.
+    editableMesh =
+        m_meshBeforeRoundInset;
+
+    RoundInset roundInset;
+
+    if (!roundInset.Use(
+        editableMesh,
+        m_roundInsetFace,
+        m_roundInsetAmount,
+        m_roundSegs,
+        m_roundRound))
+    {
+        BOX_LOG_ERROR(
+            "Round Inset: failed to apply"
+        );
+
+        return;
+    }
+
+    MeshData renderMesh;
+
+    if (!editableMesh.BuildRenderMesh(
+        renderMesh))
+    {
+        BOX_LOG_ERROR(
+            "Round Inset: failed to build render mesh"
+        );
+
+        return;
+    }
+
+    if (!entity.CreateFromMeshData(
+        renderMesh))
+    {
+        BOX_LOG_ERROR(
+            "Round Inset: failed to update entity mesh"
+        );
+    }
 }
 
 

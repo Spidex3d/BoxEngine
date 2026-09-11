@@ -12,6 +12,7 @@
 
 #include <mesh\modifiers\FaceExtrude.h>
 #include <mesh\modifiers\FaceInset.h>
+#include <mesh/modifiers/RoundInset.h>
 #include <mesh/modifiers/LoopCut.h>
 #include <mesh/modifiers/Bevel.h>
 
@@ -1459,6 +1460,65 @@ bool Entity::UpdateLastInset(float amount)
 
     return true;
 }
+
+// -------------------------------------------------------------
+// Round Inset
+// -------------------------------------------------------------
+void Entity::SetLastRoundInset(std::size_t faceIndex, float amount, int segments, float roundness,
+    const MeshEditing& meshBeforeRoundInset)
+{
+    m_lastRoundInset.faceIndex = faceIndex;
+	m_lastRoundInset.insetAmount = amount;
+	m_lastRoundInset.segments = segments;
+	m_lastRoundInset.roundness = roundness;
+	m_lastRoundInsetBaseMesh = meshBeforeRoundInset;
+	m_hasLastRoundInset = true;
+	m_lastOperationType = LastOperationType::RoundInset; // so we know the last operation was a round inset
+}
+
+bool Entity::UpdateLastRoundInset(float amount, int segments, float roundness)
+{
+	if (!m_hasLastRoundInset)
+	{
+		return false;
+	}
+
+    amount = glm::clamp(amount, 0.0f, 0.95f);
+
+    segments = std::max(segments, 1);
+
+    roundness = glm::clamp(roundness, 0.0f, 1.0f);
+
+	// Restore mesh immediately before
+	// the last round inset operation.
+	m_editableMesh = m_lastRoundInsetBaseMesh;
+    RoundInset roundInset;
+	if (!roundInset.Use(
+		m_editableMesh,
+		m_lastRoundInset.faceIndex,
+		amount, segments, roundness))
+	{
+		BOX_LOG_ERROR(
+			"Failed to update last round inset"
+		);
+		return false;
+	}
+	MeshData renderMesh;
+	if (!m_editableMesh.BuildRenderMesh(renderMesh))
+	{
+		return false;
+	}
+	if (!CreateFromMeshData(renderMesh))
+	{
+		return false;
+	}
+	m_lastRoundInset.insetAmount = amount;
+	m_lastRoundInset.segments = segments;
+	m_lastRoundInset.roundness = roundness;
+	return true;
+}
+
+
 
 // ###############################################################################################################
 // ############################################ Loop Cut #########################################################

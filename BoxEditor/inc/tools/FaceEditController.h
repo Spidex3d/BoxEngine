@@ -112,6 +112,56 @@ public:
     {
         return m_insetAmount;
     }
+    // ##########################################################################################################
+    // ################################################### Round Inset ##########################################
+    // ##########################################################################################################
+
+    void BeginRoundInset(Entity& entity);
+
+    bool m_isRoundingInset = false;
+
+    std::size_t m_roundInsetFace = InvalidFace;
+
+    float m_roundInsetAmount = 0.0f;
+    int m_roundSegs = 1;
+    float m_roundRound = 1.0f;
+
+    ImVec2 m_roundInsetStartMouse = ImVec2(0.0f, 0.0f);
+
+    MeshEditing m_meshBeforeRoundInset;
+
+
+    float GetRoundInsetAmount() const
+    {
+        return m_roundInsetAmount;
+    }
+
+    int GetRoundSegs() const
+    {
+        return m_roundSegs;
+    }
+
+    float GetRoundRound() const
+    {
+        return m_roundRound;
+    }
+
+    // ######## Object Explorer ###########################
+    void SetRoundInsetAmount(Entity& entity, float amount); // Set the amount of round inset for the selected face
+    void SetRoundSegs(Entity& entity,int segments);
+    void SetRoundRound(Entity& entity, float roundness);
+
+    void ConfirmRoundInset(Entity& entity);
+
+    void CancelRoundInset(Entity& entity);
+
+
+    bool IsRoundingInset() const
+    {
+        return m_isRoundingInset;
+    }
+    
+
 
     // ############################## for modifying the selected face ##############################
         std::size_t GetSelectedFace() const
@@ -123,6 +173,8 @@ public:
     {
         return m_selectedFace != InvalidFace;
     }
+
+
 
     // #################################################################################################
 
@@ -181,6 +233,8 @@ private:
 
     // ######### Object Explorer Inset ############################
 	void UpdateInsetMesh(Entity& entity);
+
+    void UpdateRoundInsetMesh(Entity& entity);
 
 private:
     struct FaceStartPosition
