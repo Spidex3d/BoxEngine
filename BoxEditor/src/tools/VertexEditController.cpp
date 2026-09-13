@@ -7,6 +7,7 @@
 #include <limits>
 #include <algorithm>
 #include <glm/gtc/matrix_transform.hpp>
+#include <mesh/modifiers/FaceFill.h>
 
 void VertexEditController::HandleInput(BoxEngine& engine, bool viewportHovered, bool vertexModeActive, const ImVec2& viewportPosition,
     const ImVec2& viewportSize)
@@ -41,6 +42,73 @@ void VertexEditController::HandleInput(BoxEngine& engine, bool viewportHovered, 
     {
         return;
     }
+    // =================================================
+    // FILL FACE FROM SELECTED VERTICES
+    // =================================================
+
+    if (!m_isMoving)
+    {
+        if (ImGui::IsKeyPressed(
+            ImGuiKey_F,
+            false))
+        {
+            const std::vector<std::size_t>&
+                selectedVertices =
+                entity->GetSelectedVertices();
+
+            if (selectedVertices.size() < 3)
+            {
+                BOX_LOG_WARNING("Face Fill requires at least 3 selected vertices");
+
+                return;
+            }
+
+            MeshEditing& editableMesh =
+                entity->GetEditableMesh();
+
+            FaceFill faceFill;
+
+            if (!faceFill.Use(
+                editableMesh,
+                selectedVertices))
+            {
+                BOX_LOG_ERROR(
+                    "Face Fill failed"
+                );
+
+                return;
+            }
+
+            MeshData renderMesh;
+
+            if (!editableMesh.BuildRenderMesh(renderMesh))
+            {
+                BOX_LOG_ERROR("Face Fill: failed to rebuild render mesh");
+
+                return;
+            }
+
+            if (!entity->CreateFromMeshData(
+                renderMesh))
+            {
+                BOX_LOG_ERROR("Face Fill: failed to update entity mesh");
+
+                return;
+            }
+
+            BOX_LOG_INFO(
+                "Face Fill completed with "
+                << selectedVertices.size()
+                << " vertices"
+            );
+
+            return;
+        }
+    }
+	// ----------------------------------------- End of Face Fill ----------------------------------------- 
+
+
+
 
     /*
      * Start moving the selected logical vertex
@@ -195,8 +263,8 @@ void VertexEditController::DrawVertices(BoxEngine& engine, const ImVec2& viewpor
             screenY
         );
 
-        const bool selected =
-            index == m_selectedVertex;
+        const bool selected = entity->IsVertexSelected(index);
+       // const bool selected = index == m_selectedVertex;
 
         const ImU32 fillColor =
             selected
@@ -359,27 +427,68 @@ bool VertexEditController::PickVertex(BoxEngine& engine, const ImVec2& viewportP
 
     if (closestVertex == InvalidVertex)
     {
+        if (!ImGui::GetIO().KeyShift)
+        {
+            m_selectedVertex =
+                InvalidVertex;
+
+            entity->ClearSelectedVertices();
+        }
+
+        return false;
+    }
+    /*if (closestVertex == InvalidVertex)
+    {
         m_selectedVertex =
             InvalidVertex;
 
         entity->ClearSelectedVertices();
 
         return false;
-    }
+    }*/
+
+    const bool shiftHeld =
+        ImGui::GetIO().KeyShift;
 
     m_selectedVertex =
         closestVertex;
 
-    entity->ClearSelectedVertices();
+    if (shiftHeld)
+    {
+        // Add another vertex to the existing selection.
+        if (!entity->IsVertexSelected(
+            closestVertex))
+        {
+            entity->AddSelectedVertex(
+                closestVertex
+            );
+        }
+    }
+    else
+    {
+        // Normal click selects only one vertex.
+        entity->ClearSelectedVertices();
 
-    entity->AddSelectedVertex(
-        closestVertex
-    );
+        entity->AddSelectedVertex(
+            closestVertex
+        );
+    }
 
     BOX_LOG_INFO(
         "Selected editable vertex index: "
         << m_selectedVertex
     );
+
+
+    /*m_selectedVertex = closestVertex;
+
+    entity->ClearSelectedVertices();
+
+    entity->AddSelectedVertex(closestVertex);
+
+    BOX_LOG_INFO(
+        "Selected editable vertex index: "
+        << m_selectedVertex);*/
 
     return true;
     
