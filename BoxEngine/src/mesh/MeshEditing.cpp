@@ -792,6 +792,60 @@ bool MeshEditing::SetFace(
 
     return true;
 }
+// ----------------------------------------------
+// Add an edge, returns the index of the new edge or existing edge if it already exists. for free edges,
+// set loose to true. for edges that are part of a face, set loose to false.
+// ----------------------------------------------
+std::size_t MeshEditing::AddEdge(
+    std::size_t vertexA,
+    std::size_t vertexB,
+    bool loose)
+{
+    if (vertexA >= m_vertices.size() ||
+        vertexB >= m_vertices.size())
+    {
+        BOX_LOG_ERROR(
+            "MeshEditing::AddEdge: Invalid vertex index"
+        );
+
+        return static_cast<std::size_t>(-1);
+    }
+
+    if (vertexA == vertexB)
+    {
+        BOX_LOG_WARNING(
+            "MeshEditing::AddEdge: Cannot connect vertex to itself"
+        );
+
+        return static_cast<std::size_t>(-1);
+    }
+
+    const std::size_t existing =
+        FindEdgeIndex(
+            vertexA,
+            vertexB
+        );
+
+    if (existing !=
+        static_cast<std::size_t>(-1))
+    {
+        return existing;
+    }
+
+    m_edges.push_back(
+        {
+            vertexA,
+            vertexB,
+            loose
+        }
+    );
+
+    return m_edges.size() - 1;
+}
+
+
+
+
 // -----------------------------------------------
 // Remove a face from the mesh by its index.
 // -----------------------------------------------
@@ -823,14 +877,22 @@ bool MeshEditing::RemoveFace(
 
 void MeshEditing::RebuildEdges()
 {
+	// Preserve loose edges that are not part of any face.
+    std::vector<EditEdge>looseEdges;
+
+    for (const EditEdge& edge : m_edges)
+    {
+        if (edge.loose)
+        {
+            looseEdges.push_back(edge);
+        }
+    }
+
     m_edges.clear();
 
-    auto EdgeExists =
-        [&](std::size_t a,
-            std::size_t b)
+    auto EdgeExists = [&](std::size_t a, std::size_t b)
     {
-        for (const EditEdge& edge :
-            m_edges)
+        for (const EditEdge& edge : m_edges)
         {
             const bool same =
                 edge.vertexA == a &&
@@ -849,8 +911,7 @@ void MeshEditing::RebuildEdges()
         return false;
     };
 
-    for (const EditFace& face :
-        m_faces)
+    for (const EditFace& face : m_faces)
     {
         if (face.vertices.size() < 2)
         {
@@ -878,7 +939,48 @@ void MeshEditing::RebuildEdges()
             }
         }
     }
+
+    // -------------------------------------------------
+    // Restore manually created loose edges.
+    // -------------------------------------------------
+
+    for (const EditEdge& looseEdge :
+        looseEdges)
+    {
+        bool alreadyExists =
+            false;
+
+        for (const EditEdge& edge :
+            m_edges)
+        {
+            const bool same =
+                edge.vertexA ==
+                looseEdge.vertexA &&
+                edge.vertexB ==
+                looseEdge.vertexB;
+
+            const bool reversed =
+                edge.vertexA ==
+                looseEdge.vertexB &&
+                edge.vertexB ==
+                looseEdge.vertexA;
+
+            if (same || reversed)
+            {
+                alreadyExists =
+                    true;
+
+                break;
+            }
+        }
+
+        if (!alreadyExists)
+        {
+            m_edges.push_back(looseEdge);
+        }
+    }
 }
+
 // ####################################################################################################################
 // ############################################ Mesh Editing add edge LoopCut #########################################
 // ####################################################################################################################

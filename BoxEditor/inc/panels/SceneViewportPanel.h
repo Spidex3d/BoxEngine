@@ -10,6 +10,8 @@
 #include "tools/EdgeEditController.h"
 #include "tools/FaceEditController.h"
 #include <mesh\modifiers\FaceExtrude.h>
+#include <tools/VertexDrawController.h>
+
 
 class BoxEngine;
 class EditorIcons;
@@ -110,7 +112,8 @@ private:
 	TransformTools m_transformTools;                // move, scale, rotate, local, snap, drop
     VertexEditController m_vertexEditController;    // vertex
     EdgeEditController m_edgeEditController;        // edge
-    FaceEditController m_faceEditController;      // face    
+    FaceEditController m_faceEditController;      // face  
+	VertexDrawController m_vertexDrawController; // vertex draw tool
 
 	// ################################# modifiers ###############################
 	FaceExtrude m_faceExtrudeModifier; // face extrude modifier

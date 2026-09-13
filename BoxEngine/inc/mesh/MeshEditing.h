@@ -14,6 +14,8 @@ struct EditEdge
 {
     std::size_t vertexA = 0;
     std::size_t vertexB = 0;
+
+	bool loose = false; // Indicates if the edge is not part of any face.
 };
 
 struct EditFace
@@ -59,12 +61,17 @@ public:
 
     EditFace& GetFace(std::size_t index);
     const EditFace& GetFace(std::size_t index) const;
+
 	// ########################################## Mesh Editing add vertex, face,  #########################################
     std::size_t AddVertex(const glm::vec3& position);
 
     std::size_t AddFace(const std::vector<std::size_t>& vertices);
 
     bool SetFace(std::size_t faceIndex, const std::vector<std::size_t>& vertices);
+
+	// Add an edge, returns the index of the new edge or existing edge if it already exists. for free edges,
+    // set loose to true. for edges that are part of a face, set loose to false.
+	std::size_t AddEdge(std::size_t vertexA, std::size_t vertexB, bool loose = true); 
 
     bool RemoveFace(std::size_t faceIndex); // Remove a face
 

@@ -727,9 +727,58 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
              */
             const bool faceModeActive = (editModeActive && m_editType == 2) || materialModeActive;          
            
+            // ============================================================
+// Vertex Draw Controller
+// ============================================================
 
-            // vertex
-            m_vertexEditController.HandleInput(engine, viewportHovered, vertexModeActive, m_sceneViewportPos, m_sceneViewportSize);
+            m_vertexDrawController.HandleInput(
+                engine,
+                viewportHovered,
+                vertexModeActive,
+                m_sceneViewportPos,
+                m_sceneViewportSize
+            );
+
+
+            // ============================================================
+            // Normal Vertex Editing
+            //
+            // Disable normal picking/moving while Vertex Draw is active.
+            // ============================================================
+
+            if (!m_vertexDrawController.IsDrawing())
+            {
+                m_vertexEditController.HandleInput(
+                    engine,
+                    viewportHovered,
+                    vertexModeActive,
+                    m_sceneViewportPos,
+                    m_sceneViewportSize
+                );
+            }
+
+
+            // Draw editable vertices regardless.
+            m_vertexEditController.DrawVertices(
+                engine,
+                m_sceneViewportPos,
+                m_sceneViewportSize,
+                vertexModeActive
+            );
+
+
+
+
+			// Handle input for vertex, edge, and face editing controllers
+            //if (!m_vertexDrawController.IsDrawing())
+            //{
+            //    m_vertexEditController.HandleInput(engine, viewportHovered, vertexModeActive, m_sceneViewportPos, m_sceneViewportSize);
+            //}
+
+            //// vertex
+            //m_vertexEditController.HandleInput(engine, viewportHovered, vertexModeActive, m_sceneViewportPos, m_sceneViewportSize);
+
+
             m_vertexEditController.DrawVertices(engine, m_sceneViewportPos, m_sceneViewportSize, vertexModeActive);
             // edges
             m_edgeEditController.HandleInput(engine, viewportHovered, edgeModeActive, m_sceneViewportPos, m_sceneViewportSize);

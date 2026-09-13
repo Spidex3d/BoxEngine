@@ -105,6 +105,9 @@
     <ClCompile Include="src\panels\MaterialEditorPanel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\tools\VertexDrawController.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\App.h">
@@ -204,6 +207,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="inc\panels\MaterialEditorPanel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\tools\VertexDrawController.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
