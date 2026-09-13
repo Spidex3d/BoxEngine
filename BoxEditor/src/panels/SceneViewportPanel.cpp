@@ -431,6 +431,73 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 
 
             }
+            // -----------------------------------------
+			// Angle Extrude Modifier
+			// -----------------------------------------
+            if (ImGui::MenuItem("Angle Extrude"))
+            {
+                Entity* selectedEntity =
+                    engine.GetSelectedEntity();
+
+                if (!selectedEntity)
+                {
+                    BOX_LOG_WARNING(
+                        "Angle Extrude: no entity selected"
+                    );
+                }
+                else if (!m_faceEditController.HasSelectedFace())
+                {
+                    BOX_LOG_WARNING(
+                        "Angle Extrude: no face selected"
+                    );
+                }
+                else
+                {
+                    const std::size_t selectedFace =
+                        m_faceEditController.GetSelectedFace();
+
+                    AngleExtrudeSettings settings;
+
+                    settings.distance = 0.5f;
+					settings.angleDegrees = -90.0f; // 90.0f up - 90.0f down
+                    settings.segments = 4;
+
+                    settings.extrusionAxis =
+                        glm::vec3(
+                            1.0f,
+                            0.0f,
+                            0.0f
+                        );
+
+                    settings.rotationAxis =
+                        glm::vec3(
+                            0.0f,
+                            0.0f,
+                            1.0f
+                        );
+
+
+                    AngleExtrude angleExtrude;
+
+                    if (angleExtrude.Use(
+                        selectedEntity->GetEditableMesh(),
+                        selectedFace,
+                        settings))
+                    {
+                        MeshData renderMesh;
+
+                        if (selectedEntity
+                            ->GetEditableMesh()
+                            .BuildRenderMesh(renderMesh))
+                        {
+                            selectedEntity
+                                ->CreateFromMeshData(
+                                    renderMesh
+                                );
+                        }
+                    }
+                }
+            }
                    
 			// ############################################ Inset Modifier ############################################
             if (ImGui::MenuItem("Inset"))
@@ -767,16 +834,6 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             );
 
 
-
-
-			// Handle input for vertex, edge, and face editing controllers
-            //if (!m_vertexDrawController.IsDrawing())
-            //{
-            //    m_vertexEditController.HandleInput(engine, viewportHovered, vertexModeActive, m_sceneViewportPos, m_sceneViewportSize);
-            //}
-
-            //// vertex
-            //m_vertexEditController.HandleInput(engine, viewportHovered, vertexModeActive, m_sceneViewportPos, m_sceneViewportSize);
 
 
             m_vertexEditController.DrawVertices(engine, m_sceneViewportPos, m_sceneViewportSize, vertexModeActive);

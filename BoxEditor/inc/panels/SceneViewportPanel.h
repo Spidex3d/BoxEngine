@@ -10,6 +10,7 @@
 #include "tools/EdgeEditController.h"
 #include "tools/FaceEditController.h"
 #include <mesh\modifiers\FaceExtrude.h>
+#include <mesh\modifiers\AngleExtrude.h>
 #include <tools/VertexDrawController.h>
 
 
@@ -52,6 +53,7 @@ enum class ViewportAction
 
     AddModifierInset,
 	AddModifierExtrude,
+	AddModifierAngleExtrude,
     AddModifierEdgeloop,
 	AddModifierBevel,
     AddModifierSolidify,
@@ -117,7 +119,8 @@ private:
 
 	// ################################# modifiers ###############################
 	FaceExtrude m_faceExtrudeModifier; // face extrude modifier
-    
+
+    AngleExtrude m_angleExtrudeModifier; // angle extrude modifier
 
 	int m_AddMeshType = 0;
     		
