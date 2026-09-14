@@ -208,7 +208,7 @@ void HelpPanel::Draw()
                 "Escape to cancel changes."
             );
 
-            ImGui::SeparatorText(ICON_FA_COG" Edit Mode Controls");
+            ImGui::SeparatorText(ICON_FA_COG" Extrude Controls");
 
             if (ImGui::BeginTable(
                 "##ShortcutTableEditMode",
@@ -218,7 +218,58 @@ void HelpPanel::Draw()
             {
                 ImGui::TableSetupColumn(ICON_FA_KEYBOARD" Key");
 
-                ImGui::TableSetupColumn("Exstrude Modifier ");
+                ImGui::TableSetupColumn("Extrude Modifier ");
+                ImGui::TableHeadersRow();
+
+                const auto AddShortcut =
+                    [](const char* key,
+                        const char* action)
+                {
+                    ImGui::TableNextRow();
+
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::TextUnformatted(key);
+
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::TextUnformatted(action);
+                };
+               
+                AddShortcut(
+                    "Mouse Right",
+                    "Extrude"
+                );
+
+                AddShortcut(
+                    "Mouse Left",
+                    "Extrude"
+                );
+                AddShortcut(
+                    "Use X, Y, Z",
+                    "Extrude along axis"
+                );
+                AddShortcut(
+                    "Left click",
+                    "Confirm"
+                );
+                AddShortcut(
+                    "Use Esc",
+                    "Cancel Extrude"
+                );
+                
+
+
+                ImGui::EndTable();
+            }
+
+            ImGui::SeparatorText(ICON_FA_COG" Angle Exstrude Controls");
+
+            if (ImGui::BeginTable("##AngleExtrude", 2,
+                ImGuiTableFlags_Borders |
+                ImGuiTableFlags_RowBg))
+            {
+                ImGui::TableSetupColumn(ICON_FA_KEYBOARD" Key");
+
+                ImGui::TableSetupColumn("Angle Extrude Modifier ");
                 ImGui::TableHeadersRow();
 
                 const auto AddShortcut =
@@ -234,32 +285,56 @@ void HelpPanel::Draw()
                     ImGui::TextUnformatted(action);
                 };
                 AddShortcut(
-                    "Right Click",
-                    "Switch Edit Mode"
+                    "Move mouse right",
+                    "Larger bend radius"
                 );
 
                 AddShortcut(
-                    "Right Click",
-                    "Switch Object Mode"
+                    "Move mouse left",
+                    "Tighter bend radius"
                 );
                 AddShortcut(
-                    "Use Key 1",
-                    "Switch to vertex"
+                    "Wheel up",
+                    "More segments"
                 );
                 AddShortcut(
-                    "Use Key 2",
-                    "Switch to edge"
+                    "Wheel down",
+                    "Fewer segments"
                 );
                 AddShortcut(
-                    "Use Key 3",
-                    "Switch to face"
+                    "Use Key T",
+                    "Sideways bend plane"
                 );
-
+                AddShortcut(
+                    "Use Key B",
+                    "Downward bend plane"
+                );
+                AddShortcut(
+                    "Use Key F",
+                    "Opposite direction"
+                );
+                AddShortcut(
+                    "Left click",
+                    "Keep geometry"
+                );
+                AddShortcut(
+                    "Escape",
+                    "Restore original mesh"
+                );
 
                 ImGui::EndTable();
             }
 
-
+            /*Menu Angle Extrude → starts at 90°
+Move mouse right  → larger bend radius
+Move mouse left   → tighter bend radius
+Wheel up          → more segments
+Wheel down        → fewer segments
+T                  → sideways bend plane
+B                  → downward bend plane
+F                  → opposite direction
+Left click         → keep geometry
+Escape             → restore original mesh */
 
 
 

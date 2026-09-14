@@ -265,6 +265,245 @@ void FaceEditController::HandleInput(
 
         return;
     }
+    // =================================================
+    // ACTIVE ANGLE EXTRUDE
+    // =================================================
+
+    if (m_isAngleExtruding)
+    {
+        bool changed = false;
+
+
+        // -------------------------------------------------
+        // Mouse controls bend radius
+        // -------------------------------------------------
+
+        const ImVec2 currentMouse =
+            ImGui::GetMousePos();
+
+        const float deltaX =
+            currentMouse.x -
+            m_angleExtrudeStartMouse.x;
+
+
+        float newDistance =
+            0.5f +
+            deltaX *
+            m_moveSensitivity;
+
+
+        // AngleExtrude itself also protects against
+        // geometry collapse, but don't allow zero here.
+        newDistance =
+            std::max(
+                newDistance,
+                0.01f
+            );
+
+
+        if (std::abs(
+            newDistance -
+            m_angleExtrudeDistance) >
+            0.0001f)
+        {
+            m_angleExtrudeDistance =
+                newDistance;
+
+            changed =
+                true;
+        }
+
+        // -------------------------------------------------
+        // Numpad controls segments
+        // 1 - 9  = normal
+        // 10 - 16 = press 1 then 0 - 6
+        // -------------------------------------------------
+
+        int digit = -1;
+
+        if (ImGui::IsKeyPressed(ImGuiKey_Keypad0, false))
+            digit = 0;
+
+        if (ImGui::IsKeyPressed(ImGuiKey_Keypad1, false))
+            digit = 1;
+
+        if (ImGui::IsKeyPressed(ImGuiKey_Keypad2, false))
+            digit = 2;
+
+        if (ImGui::IsKeyPressed(ImGuiKey_Keypad3, false))
+            digit = 3;
+
+        if (ImGui::IsKeyPressed(ImGuiKey_Keypad4, false))
+            digit = 4;
+
+        if (ImGui::IsKeyPressed(ImGuiKey_Keypad5, false))
+            digit = 5;
+
+        if (ImGui::IsKeyPressed(ImGuiKey_Keypad6, false))
+            digit = 6;
+
+        if (ImGui::IsKeyPressed(ImGuiKey_Keypad7, false))
+            digit = 7;
+
+        if (ImGui::IsKeyPressed(ImGuiKey_Keypad8, false))
+            digit = 8;
+
+        if (ImGui::IsKeyPressed(ImGuiKey_Keypad9, false))
+            digit = 9;
+
+
+        if (digit >= 0)
+        {
+            // -------------------------------------------------
+            // If previous digit was 1, allow 10 - 16
+            // -------------------------------------------------
+
+            if (m_angleExtrudeSegmentInput == 1 &&
+                digit <= 6)
+            {
+                m_angleExtrudeSegments =
+                    10 + digit;
+
+                m_angleExtrudeSegmentInput = 0;
+            }
+            else
+            {
+                // Normal single digit 1 - 9
+                if (digit >= 1)
+                {
+                    m_angleExtrudeSegments =
+                        digit;
+
+                    m_angleExtrudeSegmentInput =
+                        digit;
+                }
+            }
+
+            changed = true;
+        }
+
+
+        // -------------------------------------------------
+        // T = Tangent bend plane
+        // -------------------------------------------------
+
+        if (ImGui::IsKeyPressed(
+            ImGuiKey_T,
+            false))
+        {
+            m_angleExtrudeAxis =
+                AngleExtrudeRotationAxis::Tangent;
+
+            changed =
+                true;
+
+            BOX_LOG_INFO(
+                "Angle Extrude axis: Tangent"
+            );
+        }
+
+
+        // -------------------------------------------------
+        // B = Bitangent bend plane
+        // -------------------------------------------------
+
+        if (ImGui::IsKeyPressed(
+            ImGuiKey_B,
+            false))
+        {
+            m_angleExtrudeAxis =
+                AngleExtrudeRotationAxis::Bitangent;
+
+            changed =
+                true;
+
+            BOX_LOG_INFO(
+                "Angle Extrude axis: Bitangent"
+            );
+        }
+
+
+        // -------------------------------------------------
+        // F = flip direction
+        // -------------------------------------------------
+
+        if (ImGui::IsKeyPressed(
+            ImGuiKey_F,
+            false))
+        {
+            if (m_angleExtrudeDirection ==
+                AngleExtrudeDirection::Positive)
+            {
+                m_angleExtrudeDirection =
+                    AngleExtrudeDirection::Negative;
+            }
+            else
+            {
+                m_angleExtrudeDirection =
+                    AngleExtrudeDirection::Positive;
+            }
+
+            changed =
+                true;
+
+            BOX_LOG_INFO(
+                "Angle Extrude direction flipped"
+            );
+        }
+
+
+        // -------------------------------------------------
+        // Rebuild preview
+        // -------------------------------------------------
+
+        if (changed)
+        {
+            UpdateAngleExtrudeMesh(
+                *entity
+            );
+        }
+
+
+        // -------------------------------------------------
+        // Escape = cancel
+        // -------------------------------------------------
+
+        if (ImGui::IsKeyPressed(
+            ImGuiKey_Escape,
+            false))
+        {
+            CancelAngleExtrude(
+                *entity
+            );
+
+            return;
+        }
+
+
+        // -------------------------------------------------
+        // Left click = confirm
+        // -------------------------------------------------
+
+        if (ImGui::IsMouseClicked(
+            ImGuiMouseButton_Left))
+        {
+            ConfirmAngleExtrude(
+                *entity
+            );
+
+            return;
+        }
+
+
+        // VERY IMPORTANT:
+        // Don't let normal face picking run while
+        // Angle Extrude owns the input.
+        return;
+    }
+
+
+
+
 
     // =================================================
     // ACTIVE INSET
@@ -892,6 +1131,186 @@ void FaceEditController::UpdateExtrudeMesh(Entity& entity)
         renderMesh
     );
 }
+
+// ------------------------------------------------------
+//Angle Extrude
+// ------------------------------------------------------
+void FaceEditController::BeginAngleExtrude(
+    Entity& entity)
+{
+    if (m_selectedFace ==
+        InvalidFace)
+    {
+        return;
+    }
+
+	m_angleExtrudeSegmentInput = 0; // Reset the segment input when starting a new angle extrude operation
+
+    MeshEditing& mesh =
+        entity.GetEditableMesh();
+
+    if (m_selectedFace >=
+        mesh.GetFaceCount())
+    {
+        return;
+    }
+
+    // Save mesh BEFORE Angle Extrude.
+    m_meshBeforeAngleExtrude =
+        mesh;
+
+    m_angleExtrudeFace =
+        m_selectedFace;
+
+    m_angleExtrudeDistance =
+        0.5f;
+
+    m_angleExtrudeAngle =
+        90.0f;
+
+    m_angleExtrudeSegments =
+        4;
+
+    m_angleExtrudeAxis =
+        AngleExtrudeRotationAxis::Bitangent;
+
+    m_angleExtrudeDirection =
+        AngleExtrudeDirection::Negative;
+
+    m_angleExtrudeStartMouse =
+        ImGui::GetMousePos();
+
+    m_isAngleExtruding =
+        true;
+
+    // Build initial preview.
+    UpdateAngleExtrudeMesh(
+        entity
+    );
+
+    BOX_LOG_INFO(
+        "Started Angle Extrude on face "
+        << m_angleExtrudeFace
+    );
+}
+
+void FaceEditController::UpdateAngleExtrudeMesh(
+    Entity& entity)
+{
+    if (!m_isAngleExtruding)
+    {
+        return;
+    }
+
+    MeshEditing& editableMesh =
+        entity.GetEditableMesh();
+
+    // Always return to the original mesh.
+    //
+    // Otherwise every mouse movement would
+    // Angle Extrude the previous preview again.
+    editableMesh =
+        m_meshBeforeAngleExtrude;
+
+
+    AngleExtrudeSettings settings;
+
+    settings.distance =
+        m_angleExtrudeDistance;
+
+    settings.angleDegrees =
+        m_angleExtrudeAngle;
+
+    settings.segments =
+        m_angleExtrudeSegments;
+
+    settings.rotationAxis =
+        m_angleExtrudeAxis;
+
+    settings.direction =
+        m_angleExtrudeDirection;
+
+
+    AngleExtrude angleExtrude;
+
+    if (!angleExtrude.Use(
+        editableMesh,
+        m_angleExtrudeFace,
+        settings))
+    {
+        return;
+    }
+
+
+    MeshData renderMesh;
+
+    if (!editableMesh.BuildRenderMesh(
+        renderMesh))
+    {
+        return;
+    }
+
+
+    entity.CreateFromMeshData(
+        renderMesh
+    );
+}
+void FaceEditController::ConfirmAngleExtrude(
+    Entity& entity)
+{
+    if (!m_isAngleExtruding)
+    {
+        return;
+    }
+
+    m_isAngleExtruding =
+        false;
+
+    BOX_LOG_INFO(
+        "Angle Extrude confirmed. "
+        << "Distance="
+        << m_angleExtrudeDistance
+        << " Angle="
+        << m_angleExtrudeAngle
+        << " Segments="
+        << m_angleExtrudeSegments
+    );
+}
+
+void FaceEditController::CancelAngleExtrude(
+    Entity& entity)
+{
+    if (!m_isAngleExtruding)
+    {
+        return;
+    }
+
+    entity.GetEditableMesh() =
+        m_meshBeforeAngleExtrude;
+
+
+    MeshData renderMesh;
+
+    if (entity
+        .GetEditableMesh()
+        .BuildRenderMesh(renderMesh))
+    {
+        entity.CreateFromMeshData(
+            renderMesh
+        );
+    }
+
+
+    m_isAngleExtruding =
+        false;
+
+    BOX_LOG_INFO(
+        "Angle Extrude cancelled"
+    );
+}
+
+
+
 // #################################### End Object Explorer ###########################################
 
 // ####################################################################################################
@@ -1143,7 +1562,6 @@ void FaceEditController::SetRoundSegs(
         entity
     );
 }
-
 
 void FaceEditController::SetRoundRound(
     Entity& entity,

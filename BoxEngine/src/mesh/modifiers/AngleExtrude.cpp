@@ -7,6 +7,56 @@
 
 #include <cmath>
 #include <vector>
+#include <algorithm>
+
+    // ---------------------------------------------------------
+    // calculate face normal direction
+    // ---------------------------------------------------------
+static glm::vec3 CalculateFaceNormal(
+    const MeshEditing& mesh,
+    const EditFace& face)
+{
+    if (face.vertices.size() < 3)
+    {
+        return glm::vec3(0.0f);
+    }
+
+    const glm::vec3& p0 =
+        mesh.GetVertex(
+            face.vertices[0]
+        ).position;
+
+    const glm::vec3& p1 =
+        mesh.GetVertex(
+            face.vertices[1]
+        ).position;
+
+    const glm::vec3& p2 =
+        mesh.GetVertex(
+            face.vertices[2]
+        ).position;
+
+
+    glm::vec3 normal =
+        glm::cross(
+            p1 - p0,
+            p2 - p0
+        );
+
+
+    const float length =
+        glm::length(normal);
+
+
+    if (length <= 0.000001f)
+    {
+        return glm::vec3(0.0f);
+    }
+
+
+    return glm::normalize(normal);
+}
+
 
 bool AngleExtrude::Use(MeshEditing& mesh, std::size_t faceIndex, const AngleExtrudeSettings& settings)
 {
@@ -25,9 +75,74 @@ bool AngleExtrude::Use(MeshEditing& mesh, std::size_t faceIndex, const AngleExtr
     }
 
 
-    const EditFace originalFace =
-        mesh.GetFace(faceIndex);
+    const EditFace originalFace = mesh.GetFace(faceIndex);
 
+    // ---------------------------------------------------------
+    // calculate face normal direction
+    // ---------------------------------------------------------
+
+    const glm::vec3 faceNormal = CalculateFaceNormal(mesh, originalFace);
+
+
+    if (glm::length(faceNormal) <=
+        0.000001f)
+    {
+        BOX_LOG_ERROR("AngleExtrude: Could not calculate face normal");
+
+        return false;
+    }
+
+    // ---------------------------------------------------------
+	// calculate tangent direction for the face
+    // ---------------------------------------------------------
+    const glm::vec3 p0 =
+        mesh.GetVertex(
+            originalFace.vertices[0]
+        ).position;
+
+    const glm::vec3 p1 =
+        mesh.GetVertex(
+            originalFace.vertices[1]
+        ).position;
+
+
+    glm::vec3 faceTangent =
+        p1 - p0;
+
+
+    if (glm::length(faceTangent) <=
+        0.000001f)
+    {
+        BOX_LOG_ERROR("AngleExtrude: Could not calculate face tangent");
+
+        return false;
+    }
+
+
+    faceTangent = glm::normalize(faceTangent);
+
+    // ---------------------------------------------------------
+	// third direction is the cross product of normal and tangent
+    // ---------------------------------------------------------
+    glm::vec3 faceBitangent =
+        glm::cross(
+            faceNormal,
+            faceTangent
+        );
+
+
+    if (glm::length(faceBitangent) <=
+        0.000001f)
+    {
+        BOX_LOG_ERROR("AngleExtrude: Could not calculate face bitangent");
+
+        return false;
+    }
+
+
+    faceBitangent = glm::normalize(faceBitangent);
+	
+	// -------------------------- End normal calculation -------------------------------
 
     if (originalFace.vertices.size() < 3)
     {
@@ -74,40 +189,38 @@ bool AngleExtrude::Use(MeshEditing& mesh, std::size_t faceIndex, const AngleExtr
         return false;
     }
 
+    //const float extrusionLength = glm::length(settings.extrusionAxis);
+    //const glm::vec3 extrusionAxis = faceNormal;
 
-    const float extrusionLength =
-        glm::length(
-            settings.extrusionAxis
-        );
+    //const float rotationLength = glm::length(settings.rotationAxis);
+    //const glm::vec3 rotationAxis = faceTangent;
+    //const glm::vec3 rotationAxis = faceBitangent;
 
+    const glm::vec3 extrusionAxis =
+        faceNormal;
 
-    const float rotationLength =
-        glm::length(
-            settings.rotationAxis
-        );
+    glm::vec3 rotationAxis;
 
-
-    if (extrusionLength <= 0.000001f ||
-        rotationLength <= 0.000001f)
+    if (settings.rotationAxis ==
+        AngleExtrudeRotationAxis::Tangent)
     {
-        BOX_LOG_ERROR(
-            "AngleExtrude: Invalid axis"
-        );
+        rotationAxis =
+            faceTangent;
+    }
+    else
+    {
+        rotationAxis =
+            faceBitangent;
+    }
+
+    
+
+    if (glm::length(extrusionAxis) <= 0.000001f || glm::length(rotationAxis) <= 0.000001f)
+    {
+        BOX_LOG_ERROR("AngleExtrude: Invalid axis");
 
         return false;
     }
-
-
-    const glm::vec3 extrusionAxis =
-        glm::normalize(
-            settings.extrusionAxis
-        );
-
-
-    const glm::vec3 rotationAxis =
-        glm::normalize(
-            settings.rotationAxis
-        );
 
 
     // ---------------------------------------------------------
@@ -160,36 +273,20 @@ bool AngleExtrude::Use(MeshEditing& mesh, std::size_t faceIndex, const AngleExtr
     // Negative angle bends in the opposite direction.
     // ---------------------------------------------------------
 
-    const float angleSign =
-        settings.angleDegrees < 0.0f
-        ? -1.0f
-        : 1.0f;
+    //const float angleSign = settings.angleDegrees < 0.0f ? -1.0f : 1.0f;
+    const float angleSign = settings.direction == AngleExtrudeDirection::Negative ? -1.0f : 1.0f;
+
+    bendDirection *= angleSign;
 
 
-    bendDirection *=
-        angleSign;
+    const float totalAngle = glm::radians(std::abs(settings.angleDegrees));
 
 
-    const float totalAngle =
-        glm::radians(
-            std::abs(
-                settings.angleDegrees
-            )
-        );
+   // const float signedTotalAngle = glm::radians(settings.angleDegrees);
 
+    const float signedTotalAngle = totalAngle * angleSign;
 
-    const float signedTotalAngle =
-        glm::radians(
-            settings.angleDegrees
-        );
-
-
-    /*const float radius =
-        std::abs(
-            settings.distance
-        );*/
-
-
+   
     // ---------------------------------------------------------
     // Find centre of original face.
     //

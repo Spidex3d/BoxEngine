@@ -5,6 +5,7 @@
 #include <cstddef>
 
 #include <mesh/MeshEditing.h>
+#include <mesh/modifiers/AngleExtrude.h>
 
 class BoxEngine;
 class Entity;
@@ -84,11 +85,51 @@ public:
 	// ##########################################################################################################
     void BeginAngleExtrude(Entity& entity);
 
+    bool IsAngleExtruding() const
+    {
+        return m_isAngleExtruding;
+    }
+    
+    void ConfirmAngleExtrude(Entity& entity);
+
+    void CancelAngleExtrude(Entity& entity);
+
+    
+
+    float GetAngleExtrudeDistance() const
+    {
+        return m_angleExtrudeDistance;
+    }
+
+    int GetAngleExtrudeSegments() const
+    {
+        return m_angleExtrudeSegments;
+    }
+
+    float GetAngleExtrudeAngle() const
+    {
+        return m_angleExtrudeAngle;
+    }
+
     bool m_isAngleExtruding = false;
 
-	std::size_t m_angleExtrudeFace = InvalidFace;
+    std::size_t m_angleExtrudeFace = InvalidFace;
 
+    float m_angleExtrudeDistance = 0.5f;
 
+    float m_angleExtrudeAngle = 90.0f;
+
+    int m_angleExtrudeSegments = 4;
+
+	int m_angleExtrudeSegmentInput = 0; // add number of segments input for the angle extrude operation
+
+    AngleExtrudeRotationAxis m_angleExtrudeAxis = AngleExtrudeRotationAxis::Bitangent;
+
+    AngleExtrudeDirection m_angleExtrudeDirection = AngleExtrudeDirection::Negative;
+
+    ImVec2 m_angleExtrudeStartMouse = ImVec2(0.0f, 0.0f);
+
+    MeshEditing m_meshBeforeAngleExtrude;
 
 	// ##########################################################################################################
     // ################################################### Inset Face ###########################################
@@ -246,6 +287,8 @@ private:
 	void UpdateInsetMesh(Entity& entity);
 
     void UpdateRoundInsetMesh(Entity& entity);
+
+	void UpdateAngleExtrudeMesh(Entity& entity); // for updating the mesh during angle extrude operation
 
 private:
     struct FaceStartPosition

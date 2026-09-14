@@ -476,11 +476,9 @@ void App::HandleInput()
         }
     }
 
-    const float scroll =
-        static_cast<float>(
-            m_input->GetScrollY()
-            );
+    const float scroll = static_cast<float>(m_input->GetScrollY());
 
+    
     if (scroll != 0.0f)
     {
         camera.ProcessOrbitZoom(scroll);

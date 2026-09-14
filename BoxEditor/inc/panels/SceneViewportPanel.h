@@ -99,6 +99,11 @@ public:
         return m_edgeEditController;
     }
 
+  //  bool IsAngleExtruding() const
+  //  {
+		//return m_faceEditController.IsAngleExtruding(); // Check if angle extrude is active for camera zoom
+  //  }
+
 	void Shutdown();
 
 private:

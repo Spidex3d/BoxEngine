@@ -1,9 +1,23 @@
 #pragma once
 #include <cstddef>
 #include <glm/glm.hpp>
+#include <imgui\imgui.h>
 
 class Entity;
 class MeshEditing;
+
+enum class AngleExtrudeDirection
+{
+    Positive,
+    Negative
+};
+
+enum class AngleExtrudeRotationAxis
+{
+    Tangent,
+    Bitangent
+};
+
 
 
 struct AngleExtrudeSettings
@@ -17,12 +31,11 @@ struct AngleExtrudeSettings
     // Number of sections making the bend.
     int segments = 4;
 
-    // Initial direction of travel.
-    glm::vec3 extrusionAxis = glm::vec3(1.0f, 0.0f, 0.0f);
-
-    // Axis that the bend rotates around.
-    glm::vec3 rotationAxis = glm::vec3(0.0f, 0.0f, 1.0f);
+    
+	AngleExtrudeDirection direction = AngleExtrudeDirection::Positive;
+    AngleExtrudeRotationAxis rotationAxis = AngleExtrudeRotationAxis::Bitangent;
 };
+
 
 class AngleExtrude
 {
@@ -30,6 +43,12 @@ public:
 
 	bool Use(MeshEditing& mesh, std::size_t faceIndex, const AngleExtrudeSettings& settings);
 	
+    
+
+
+private:
+
+   
 
 };
 

@@ -434,6 +434,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             // -----------------------------------------
 			// Angle Extrude Modifier
 			// -----------------------------------------
+            
             if (ImGui::MenuItem("Angle Extrude"))
             {
                 Entity* selectedEntity =
@@ -445,7 +446,8 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                         "Angle Extrude: no entity selected"
                     );
                 }
-                else if (!m_faceEditController.HasSelectedFace())
+                else if (!m_faceEditController
+                    .HasSelectedFace())
                 {
                     BOX_LOG_WARNING(
                         "Angle Extrude: no face selected"
@@ -453,51 +455,69 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                 }
                 else
                 {
-                    const std::size_t selectedFace =
-                        m_faceEditController.GetSelectedFace();
-
-                    AngleExtrudeSettings settings;
-
-                    settings.distance = 0.5f;
-					settings.angleDegrees = -90.0f; // 90.0f up - 90.0f down
-                    settings.segments = 4;
-
-                    settings.extrusionAxis =
-                        glm::vec3(
-                            1.0f,
-                            0.0f,
-                            0.0f
+                    m_faceEditController
+                        .BeginAngleExtrude(
+                            *selectedEntity
                         );
-
-                    settings.rotationAxis =
-                        glm::vec3(
-                            0.0f,
-                            0.0f,
-                            1.0f
-                        );
-
-
-                    AngleExtrude angleExtrude;
-
-                    if (angleExtrude.Use(
-                        selectedEntity->GetEditableMesh(),
-                        selectedFace,
-                        settings))
-                    {
-                        MeshData renderMesh;
-
-                        if (selectedEntity
-                            ->GetEditableMesh()
-                            .BuildRenderMesh(renderMesh))
-                        {
-                            selectedEntity
-                                ->CreateFromMeshData(
-                                    renderMesh
-                                );
-                        }
-                    }
                 }
             }
+     //       if (ImGui::MenuItem("Angle Extrude"))
+     //       {
+     //           Entity* selectedEntity =
+     //               engine.GetSelectedEntity();
+
+     //           if (!selectedEntity)
+     //           {
+     //               BOX_LOG_WARNING(
+     //                   "Angle Extrude: no entity selected"
+     //               );
+     //           }
+     //           else if (!m_faceEditController.HasSelectedFace())
+     //           {
+     //               BOX_LOG_WARNING(
+     //                   "Angle Extrude: no face selected"
+     //               );
+     //           }
+     //           else
+     //           {
+     //               const std::size_t selectedFace =
+     //                   m_faceEditController.GetSelectedFace();
+
+     //               AngleExtrudeSettings settings;
+
+     //               settings.distance = 0.5f;
+					//settings.angleDegrees = 90.0f; // 90.0f up - 90.0f down
+     //               settings.segments = 4;
+     //               									
+
+     //              // Bend plane
+     //               settings.rotationAxis = AngleExtrudeRotationAxis::Bitangent;
+
+     //               // Bend direction
+     //               settings.direction = AngleExtrudeDirection::Negative;
+
+
+     //               AngleExtrude angleExtrude;
+
+     //               if (angleExtrude.Use(
+     //                   selectedEntity->GetEditableMesh(),
+     //                   selectedFace,
+     //                   settings))
+     //               {
+     //                   MeshData renderMesh;
+
+     //                   if (selectedEntity
+     //                       ->GetEditableMesh()
+     //                       .BuildRenderMesh(renderMesh))
+     //                   {
+     //                       selectedEntity
+     //                           ->CreateFromMeshData(
+     //                               renderMesh
+     //                           );
+     //                   }
+     //               }
+     //           }
+     //       }
                    
 			// ############################################ Inset Modifier ############################################
             if (ImGui::MenuItem("Inset"))
