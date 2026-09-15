@@ -1,4 +1,4 @@
-#include "Rendering/Material.h"
+#include "material/Material.h"
 
 #include <algorithm>
 
@@ -164,5 +164,50 @@ void Material::SetNormalStrength(
             2.0f
         );
 }
+// -----------------------------------------------------
+// Material type management
+// -----------------------------------------------------
+MaterialType Material::GetType() const
+{
+    return m_type;
+}
+
+void Material::SetType(
+    MaterialType type)
+{
+    m_type = type;
+}
 
 
+float Material::GetTransmission() const
+{
+    return m_transmission;
+}
+
+void Material::SetTransmission(
+    float transmission)
+{
+    m_transmission =
+        std::clamp(
+            transmission,
+            0.0f,
+            1.0f
+        );
+}
+
+
+float Material::GetIOR() const
+{
+    return m_ior;
+}
+
+void Material::SetIOR(
+    float ior)
+{
+    m_ior =
+        std::clamp(
+            ior,
+            1.0f,
+            2.5f
+        );
+}

@@ -1,6 +1,6 @@
 #include <fileManager\mbxManager.h>
 #include <entity/Entity.h>
-#include <rendering/Material.h>
+#include <material/Material.h>
 #include <miniBoxLog.h>
 
 #include <fstream>

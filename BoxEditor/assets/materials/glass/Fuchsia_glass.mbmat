@@ -1,0 +1,14 @@
+MBMAT 1
+Name Fuchsia_glass
+Type 1
+BaseColor 0.953368 0.054337 0.753066
+Metallic 0
+Roughness 0.05
+Alpha 0.2
+Transmission 1
+IOR 1.5
+EmissionColor 0 0 0
+EmissionStrength 0
+BaseColorTexture none
+NormalTexture none
+NormalStrength 1

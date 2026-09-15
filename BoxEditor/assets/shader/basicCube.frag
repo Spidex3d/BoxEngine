@@ -26,6 +26,10 @@ uniform float uMaterialEmissionStrength[8];
 uniform sampler2D uMaterialNormalTextures[8];
 uniform int uMaterialUsesNormalTexture[8];
 uniform float uMaterialNormalStrength[8];
+// for transparency
+uniform int uMaterialType[8];
+uniform float uMaterialTransmission[8];
+uniform float uMaterialIOR[8];
 
 out vec4 FragColor;
 
@@ -117,6 +121,14 @@ if (uMaterialUsesNormalTexture[
 
    float roughness = uMaterialRoughness[materialIndex];
 
+   // glass 
+   int materialType = uMaterialType[materialIndex];
+
+   float transmission = uMaterialTransmission[materialIndex];
+
+   float ior = uMaterialIOR[materialIndex];
+
+
                 // Emission
     vec3 emissionColor = uMaterialEmissionColor[materialIndex];
     float emissionStrength = uMaterialEmissionStrength[materialIndex];
@@ -153,13 +165,63 @@ if (uMaterialUsesNormalTexture[
     //vec3 ambient = uBaseColor.rgb * ambientStrength;
     vec3 ambient = materialColor.rgb * ambientStrength;
 
-    vec3 finalColor =
-    ambient +
-    diffuse +
-    specular;
+    vec3 finalColor = ambient + diffuse + specular;
 
-finalColor *=
-    uLightColor;
+    // =================================================
+    // Glass Material
+    // =================================================
+
+if (materialType == 1)
+{
+    // Glass should remain dielectric.
+    metallic = 0.0;
+
+    // Fresnel reflectance at normal incidence.
+    float f0 =
+        pow(
+            (ior - 1.0) /
+            (ior + 1.0),
+            2.0
+        );
+
+    vec3 viewDir =
+        normalize(
+            uCameraPosition -
+            vWorldPosition
+        );
+
+    float fresnel =
+        f0 +
+        (1.0 - f0) *
+        pow(
+            1.0 -
+            max(
+                dot(normal, viewDir),
+                0.0
+            ),
+            5.0
+        );
+
+    // Keep some of the material tint,
+    // but make transmitted areas brighter.
+    vec3 glassTint =
+        mix(
+            materialColor.rgb,
+            vec3(1.0),
+            transmission * 0.65
+        );
+
+    // Stronger reflection around the silhouette.
+    finalColor = mix(glassTint, vec3(1.0), fresnel);
+
+    // Retain some of our existing lighting.
+    finalColor *= 0.65 + (diffuse * 0.35);
+}
+
+
+
+    // ---------------------------------
+    finalColor *= uLightColor;
 
 
 // --------------------------------

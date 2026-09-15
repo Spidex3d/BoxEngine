@@ -13,20 +13,13 @@ public:
     MaterialPreview() = default;
     ~MaterialPreview();
 
-    MaterialPreview(
-        const MaterialPreview&) = delete;
+    MaterialPreview(const MaterialPreview&) = delete;
 
-    MaterialPreview& operator=(
-        const MaterialPreview&) = delete;
+    MaterialPreview& operator=(const MaterialPreview&) = delete;
 
-    bool Initialize(
-        int width = 100,
-        int height = 100
-    );
+    bool Initialize(int width = 100, int height = 100);
 
-    void RenderPreview(
-        const Material& material
-    );
+    void RenderPreview(const Material& material);
 
     void Draw(const Material& material);
 

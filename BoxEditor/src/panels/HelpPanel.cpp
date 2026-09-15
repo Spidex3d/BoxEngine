@@ -325,6 +325,85 @@ void HelpPanel::Draw()
                 ImGui::EndTable();
             }
 
+            ImGui::SeparatorText(ICON_FA_COG" Fill Face Controls");
+
+            if (ImGui::BeginTable(
+                "##ShortcutTableEditMode",
+                2,
+                ImGuiTableFlags_Borders |
+                ImGuiTableFlags_RowBg))
+            {
+                ImGui::TableSetupColumn(ICON_FA_KEYBOARD" Key");
+
+                ImGui::TableSetupColumn("Fill Face Modifier ");
+                ImGui::TableHeadersRow();
+
+                const auto AddShortcut =
+                    [](const char* key,
+                        const char* action)
+                {
+                    ImGui::TableNextRow();
+
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::TextUnformatted(key);
+
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::TextUnformatted(action);
+                };
+
+                AddShortcut(
+                    "Edit mode (Tab)",
+                    "Select Vertex (Key 1) "
+                );
+
+                AddShortcut(
+                    "Select 4 vertices",
+                    "Click F to fill face"
+                );
+                
+                ImGui::EndTable();
+            }
+
+            ImGui::SeparatorText(ICON_FA_COG" Remove Face Controls");
+
+            if (ImGui::BeginTable(
+                "##ShortcutTableEditMode",
+                2,
+                ImGuiTableFlags_Borders |
+                ImGuiTableFlags_RowBg))
+            {
+                ImGui::TableSetupColumn(ICON_FA_KEYBOARD" Key");
+
+                ImGui::TableSetupColumn("Remove Face Modifier ");
+                ImGui::TableHeadersRow();
+
+                const auto AddShortcut =
+                    [](const char* key,
+                        const char* action)
+                {
+                    ImGui::TableNextRow();
+
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::TextUnformatted(key);
+
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::TextUnformatted(action);
+                };
+
+                AddShortcut(
+                    "Edit mode (Tab)",
+                    "Select Face (Key 3) "
+                );
+
+                AddShortcut(
+                    "Select Face",
+                    "Click Delete to remove face"
+                );
+
+                ImGui::EndTable();
+            }
+
+
             /*Menu Angle Extrude → starts at 90°
 Move mouse right  → larger bend radius
 Move mouse left   → tighter bend radius

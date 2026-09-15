@@ -151,6 +151,8 @@
     <ClInclude Include="inc\camera\Camera.h" />
     <ClInclude Include="inc\entity\Entity.h" />
     <ClInclude Include="inc\lighting\Lighting.h" />
+    <ClInclude Include="inc\material\MaterialLibrary.h" />
+    <ClInclude Include="inc\material\MaterialSerializer.h" />
     <ClInclude Include="inc\mesh\MeshData.h" />
     <ClInclude Include="inc\mesh\MeshEditing.h" />
     <ClInclude Include="inc\mesh\modifiers\AngleExtrude.h" />
@@ -166,7 +168,7 @@
     <ClInclude Include="inc\mesh\modifiers\RoundInset.h" />
     <ClInclude Include="inc\rendering\Framebuffer.h" />
     <ClInclude Include="inc\rendering\grid.h" />
-    <ClInclude Include="inc\rendering\Material.h" />
+    <ClInclude Include="inc\material\Material.h" />
     <ClInclude Include="inc\shader\Shader.h" />
     <ClInclude Include="inc\rendering\Textures.h" />
   </ItemGroup>
@@ -176,6 +178,8 @@
     <ClCompile Include="src\camera\Camera.cpp" />
     <ClCompile Include="src\entity\Entity.cpp" />
     <ClCompile Include="src\lighting\Lighting.cpp" />
+    <ClCompile Include="src\material\MaterialLibrary.cpp" />
+    <ClCompile Include="src\material\MaterialSerializer.cpp" />
     <ClCompile Include="src\mesh\MeshEditing.cpp" />
     <ClCompile Include="src\mesh\modifiers\AngleExtrude.cpp" />
     <ClCompile Include="src\mesh\modifiers\Bevel.cpp" />
@@ -188,7 +192,7 @@
     <ClCompile Include="src\mesh\modifiers\LoopCut.cpp" />
     <ClCompile Include="src\mesh\modifiers\RoundInset.cpp" />
     <ClCompile Include="src\rendering\Framebuffer.cpp" />
-    <ClCompile Include="src\rendering\Material.cpp" />
+    <ClCompile Include="src\material\Material.cpp" />
     <ClCompile Include="src\rendering\Textures.cpp" />
     <ClCompile Include="src\shader\Shader.cpp" />
   </ItemGroup>

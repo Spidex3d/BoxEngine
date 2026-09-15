@@ -1316,9 +1316,12 @@ void FaceEditController::CancelAngleExtrude(
 // ####################################################################################################
 // ######################################## Inset Face ################################################
 // ####################################################################################################
-void FaceEditController::BeginInset(Entity& entity)
+
+void FaceEditController::BeginInset(
+    Entity& entity)
 {
-    if (m_selectedFace == InvalidFace)
+    if (m_selectedFace ==
+        InvalidFace)
     {
         return;
     }
@@ -1332,45 +1335,82 @@ void FaceEditController::BeginInset(Entity& entity)
         return;
     }
 
-    // Stage 1 currently supports quads only.
-    if (mesh.GetFace(
-        m_selectedFace
-    ).vertices.size() != 4)
-    {
-        BOX_LOG_WARNING(
-            "Round Inset currently supports quad faces only"
-        );
-
-        return;
-    }
-
-    // Save mesh before this operation.
-    m_meshBeforeRoundInset =
+    // Save mesh before normal inset.
+    m_meshBeforeInset =
         mesh;
 
-    m_roundInsetFace =
+    m_insetFace =
         m_selectedFace;
 
-    m_roundInsetAmount =
+    m_insetAmount =
         0.0f;
 
-    m_roundSegs =
-        1;
-
-    m_roundRound =
-        1.0f;
-
-    m_roundInsetStartMouse =
+    m_insetStartMouse =
         ImGui::GetMousePos();
 
-    m_isRoundingInset =
+    m_isInsetting =
         true;
 
     BOX_LOG_INFO(
-        "Started round inset on face "
-        << m_roundInsetFace
+        "Started inset on face "
+        << m_insetFace
     );
 }
+//void FaceEditController::BeginInset(Entity& entity)
+//{
+//    if (m_selectedFace == InvalidFace)
+//    {
+//        return;
+//    }
+//
+//    MeshEditing& mesh =
+//        entity.GetEditableMesh();
+//
+//    if (m_selectedFace >=
+//        mesh.GetFaceCount())
+//    {
+//        return;
+//    }
+//
+//    // Stage 1 currently supports quads only.
+//    if (mesh.GetFace(
+//        m_selectedFace
+//    ).vertices.size() != 4)
+//    {
+//        BOX_LOG_WARNING(
+//            "Round Inset currently supports quad faces only"
+//        );
+//
+//        return;
+//    }
+//
+//    // Save mesh before this operation.
+//    m_meshBeforeRoundInset =
+//        mesh;
+//
+//    m_roundInsetFace =
+//        m_selectedFace;
+//
+//    m_roundInsetAmount =
+//        0.0f;
+//
+//    m_roundSegs =
+//        1;
+//
+//    m_roundRound =
+//        1.0f;
+//
+//    m_roundInsetStartMouse =
+//        ImGui::GetMousePos();
+//
+//    m_isRoundingInset =
+//        true;
+//
+//    BOX_LOG_INFO(
+//        "Started round inset on face "
+//        << m_roundInsetFace
+//    );
+//}
 
 void FaceEditController::SetInsetAmount(Entity& entity, float amount)
 {

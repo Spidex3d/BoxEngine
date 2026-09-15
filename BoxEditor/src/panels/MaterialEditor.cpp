@@ -1,10 +1,14 @@
 #include "panels/MaterialEditor.h"
 #include <imgui\imgui.h>
 #include <glm\glm.hpp>
+#include <filesystem>
 #include <entity\Entity.h>
 #include <BoxEngine.h>
 #include <FileDialog.h>
-#include <rendering\Material.h>
+#include <material/Material.h>
+#include "material/MaterialSerializer.h"
+#include <material/MaterialLibrary.h>
+#include <Helpers.h>
 #include <preview/MaterialPreview.h>
 #include <tools/FaceEditController.h>
 
@@ -133,16 +137,108 @@ void MaterialEditor::Draw(
 void MaterialEditor::DrawMaterialProperties(BoxEngine& engine, Entity& entity, Material& material)
 {
 
-    
-		// put a imgui image of the material preview here.
-		// display a sphere with the material applied to it.
+    // =================================================
+    // Material Type
+    // =================================================
+	ImGui::SeparatorText("Material Properties");
+    int materialType =
+        static_cast<int>(
+            material.GetType()
+            );
+
+    const char* materialTypes[] =
+    {
+        "Standard",
+        "Glass"
+    };
+    if (ImGui::Combo(
+        "Material Type",
+        &materialType,
+        materialTypes,
+        IM_ARRAYSIZE(materialTypes)))
+    {
+        const MaterialType newType =
+            static_cast<MaterialType>(
+                materialType
+                );
+
+        material.SetType(
+            newType
+        );
+
+        if (newType ==
+            MaterialType::Glass)
+        {
+            material.SetMetallic(0.0f);
+            material.SetRoughness(0.05f);
+            material.SetAlpha(0.20f);
+            material.SetTransmission(1.0f);
+            material.SetIOR(1.5f);
+        }
+    }
+    /*if (ImGui::Combo(
+        "Material Type",
+        &materialType,
+        materialTypes,
+        IM_ARRAYSIZE(materialTypes)))
+    {
+        material.SetType(
+            static_cast<MaterialType>(
+                materialType
+                )
+        );
+    }*/
+
+    // =================================================
+    // Glass Properties
+    // =================================================
+    ImGui::SeparatorText("Glass Properties");
+
+
+    if (material.GetType() ==
+        MaterialType::Glass)
+    {
+        float transmission =
+            material.GetTransmission();
+
+        if (ImGui::InputFloat(
+            "Transmission",
+            &transmission,
+            0.01f,
+            0.1f,
+            "%.2f"))
+        {
+            material.SetTransmission(
+                transmission
+            );
+        }
+
+
+        float ior =
+            material.GetIOR();
+
+        if (ImGui::InputFloat(
+            "IOR",
+            &ior,
+            0.01f,
+            0.1f,
+            "%.2f"))
+        {
+            material.SetIOR(
+                ior
+            );
+        }
+    }
+
+
+
 
         ImGui::Spacing();
        // ImGui::Text("Editing: %s", entity.GetName().c_str());
         ImGui::Spacing();
 
         glm::vec4 baseColor = material.GetBaseColor();
-        if (ImGui::ColorEdit4("Base Color", &baseColor[0]))
+        if (ImGui::ColorEdit3("Base Color", &baseColor[0]))
         {
             material.SetBaseColor(baseColor);
         }
@@ -312,21 +408,115 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
         }
     }
 
-    ImGui::SameLine();
+    // =================================================
+    // Material Library Category
+    // =================================================
+	//ImGui::SameLine();
+    const char* categoryNames[] =
+    {
+        "Glass",
+        "Metal",
+        "Plastic",
+        "Wood",
+        "Stone / Brick / Tile",
+        "Plant / Soil",
+        "Fabric",
+        "Misc"
+    };
+
+    int categoryIndex =
+        static_cast<int>(
+            m_selectedCategory
+            );
+
+    if (ImGui::Combo(
+        "Category",
+        &categoryIndex,
+        categoryNames,
+        IM_ARRAYSIZE(categoryNames)))
+    {
+        m_selectedCategory =
+            static_cast<MaterialCategory>(
+                categoryIndex
+                );
+    }
+
+
+
+
+
+    const std::size_t materialIndex = face.materialIndex;
+
+    Material& material = entity.GetMaterialSlot(materialIndex);
+
+
+   // ImGui::SameLine();
     if (ImGui::Button("Open"))
     {
+        Helpers helpers;
 
+        namespace fs = std::filesystem;
+
+        fs::path filePath =
+            helpers.GetAssetPath(
+                "assets/materials/glass/Glass.mbmat"
+            );
+
+        if (MaterialSerializer::Load(
+            filePath.string(),
+            material))
+        {
+            BOX_LOG_INFO(
+                "Material loaded: " +
+                filePath.string()
+            );
+        }
+        else
+        {
+            BOX_LOG_ERROR(
+                "Failed to load material: " +
+                filePath.string()
+            );
+        }
     }
 	ImGui::SameLine();
+
     if (ImGui::Button("Save"))
     {
-    }
+        namespace fs = std::filesystem;
 
-    
-    ImGui::SameLine();
-    if (ImGui::Button("Save As"))
-    {
+        /*fs::path materialDirectory =
+            MaterialLibrary::GetCategoryPath(
+                MaterialCategory::Glass
+            );*/
+        fs::path materialDirectory =
+            MaterialLibrary::GetCategoryPath(
+                m_selectedCategory
+            );
 
+        fs::path filePath =
+            materialDirectory /
+            (
+                material.GetName() +
+                ".mbmat"
+                );
+
+        if (MaterialSerializer::Save(
+            material,
+            filePath.string()))
+        {
+            BOX_LOG_INFO(
+                "Material saved: " +
+                filePath.string()
+            );
+        }
+        else
+        {
+            BOX_LOG_ERROR(
+                "Failed to save material: " +
+                filePath.string()
+            );
+        }
     }
 
     ImGui::Spacing();
@@ -368,7 +558,7 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
 	
 
 	// ############################################ New Material Name Selection #######################
-    Material& material = entity.GetMaterialSlot(face.materialIndex);
+   // Material& material = entity.GetMaterialSlot(face.materialIndex);
 
     char materialNameBuffer[128]{};
 

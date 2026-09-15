@@ -4,22 +4,26 @@
 #include <memory>
 #include <string>
 
-//The roadmap
-//
-//I would build this in this order:
-//
-//Add materialIndex to EditFace.
-//Let an Entity own multiple Material slots.
-//Add a simple Assign Material to Selected Face function.
-//Get different colours on different faces.
-//Make Extrude / Inset / LoopCut / Bevel preserve face material assignments.
-//Extend rendering to proper per - material draw ranges.
-//Assign different textures to individual materials / faces.
-//Improve UV generation / unwrap.
-//Add texture painting.
-
 
 class Texture;
+
+enum class MaterialType
+{
+    Standard = 0,
+    Glass
+};
+
+enum class MaterialCategory
+{
+    Glass = 0,
+    Metal,
+    Plastic,
+    Wood,
+    StoneBrickTile,
+    PlantSoil,
+    Fabric,
+    Misc
+};
 
 class Material
 {
@@ -90,12 +94,29 @@ public:
         float strength
     );
 
+	// Material type
+    MaterialType GetType() const;
+    void SetType(MaterialType type);
+
+    float GetTransmission() const;
+    void SetTransmission(float transmission);
+
+    float GetIOR() const;
+    void SetIOR(float ior);
+
 
 
 
 private:
 
     std::string m_name = "Material";
+
+	// Material type
+    MaterialType m_type = MaterialType::Standard;
+
+    float m_transmission = 0.0f;
+
+    float m_ior = 1.5f;
 
 private:
     glm::vec4 m_baseColor = glm::vec4(1.0f);

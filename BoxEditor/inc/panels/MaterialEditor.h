@@ -1,11 +1,12 @@
 #pragma once
 #include <memory>
 #include <string>
+#include <material\Material.h>
 
 class BoxEngine;
 class Entity;
 class MaterialPreview;
-class Material;
+//class Material;
 class FaceEditController;
 
 class MaterialEditor
@@ -31,7 +32,7 @@ private:
 
     void DrawFaceMaterialProperties(BoxEngine& engine, Entity& entity, FaceEditController& faceEditController);
 
-    
+    MaterialCategory m_selectedCategory = MaterialCategory::Glass;
 
     std::unique_ptr<MaterialPreview> m_preview;
 

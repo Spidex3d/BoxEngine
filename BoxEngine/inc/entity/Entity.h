@@ -4,7 +4,7 @@
 #include <glm/mat4x4.hpp>
 
 #include <string>
-#include <rendering\Material.h>
+#include <material/Material.h>
 #include <mesh/MeshData.h>
 #include <mesh/MeshEditing.h>
 #include <mesh/modifiers/ModifierData.h>

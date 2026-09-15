@@ -1,0 +1,14 @@
+MBMAT 1
+Name Glass
+Type 1
+BaseColor 0.854922 0.0974523 0.0974523
+Metallic 0
+Roughness 0.05
+Alpha 0.2
+Transmission 1
+IOR 1.5
+EmissionColor 0 0 0
+EmissionStrength 0
+BaseColorTexture none
+NormalTexture none
+NormalStrength 1

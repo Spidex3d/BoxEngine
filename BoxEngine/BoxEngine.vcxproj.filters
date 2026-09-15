@@ -33,7 +33,7 @@
     <ClInclude Include="inc\camera\Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="inc\rendering\Material.h">
+    <ClInclude Include="inc\material\Material.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="inc\rendering\Textures.h">
@@ -81,6 +81,12 @@
     <ClInclude Include="inc\mesh\modifiers\BridgeFaces.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="inc\material\MaterialSerializer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\material\MaterialLibrary.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\BoxEngine.cpp">
@@ -101,7 +107,7 @@
     <ClCompile Include="src\camera\Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\rendering\Material.cpp">
+    <ClCompile Include="src\material\Material.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\rendering\Textures.cpp">
@@ -141,6 +147,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\mesh\modifiers\BridgeFaces.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\material\MaterialSerializer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\material\MaterialLibrary.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

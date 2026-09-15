@@ -1,6 +1,6 @@
 #include "preview/MaterialPreview.h"
 #include <entity/Entity.h>
-#include <rendering/Material.h>
+#include <material/Material.h>
 
 #include <Helpers.h>
 #include <miniBoxLog.h>
@@ -22,11 +22,9 @@ bool MaterialPreview::Initialize(
 {
     Shutdown();
 
-    m_width =
-        width > 0 ? width : 200;
+    m_width = width > 0 ? width : 200;
 
-    m_height =
-        height > 0 ? height : 200;
+    m_height = height > 0 ? height : 200;
 
     Helpers helpers;
 

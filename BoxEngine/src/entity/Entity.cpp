@@ -1937,8 +1937,6 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
     glm::vec4 renderColor =
         m_material.GetBaseColor();
 
-    renderColor.a =
-        m_material.GetAlpha();
 
     shader.setVec4(
         "uBaseColor",
@@ -1965,6 +1963,10 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
 
         float metallic = 0.0f;
         float roughness = 0.5f;
+
+		int materialType = 0;       // glass or standard material type
+		float transmission = 0.0f;  // glass transmission factor
+		float ior = 1.5f;           // glass index of refraction
 		// --------------------------------
         // Emission
 		// --------------------------------
@@ -1988,8 +1990,9 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
             const Material& material =
                 m_materialSlots[index];
 
-            color =
-                material.GetBaseColor();
+            color = material.GetBaseColor();
+
+            color.a = material.GetAlpha();
 
             textureID =
                 material.GetBaseColorTexture();
@@ -2002,6 +2005,12 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
 
             roughness =
                 material.GetRoughness();
+
+			materialType = static_cast<int>(material.GetType()); // 0 = standard, 1 = glass
+
+			transmission = material.GetTransmission();           // only used for glass materials
+
+			ior = material.GetIOR();                             // only used for glass materials
 
             emissionColor =
                 material.GetEmissionColor();
@@ -2044,6 +2053,54 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
             roughnessUniform.c_str(),
             roughness
         );
+
+        // --------------------------------
+		// Material Type set standard or glass material type
+        // --------------------------------
+
+        const std::string materialTypeUniform =
+            "uMaterialType[" +
+            std::to_string(index) +
+            "]";
+
+        shader.SetUniformInt(
+            materialTypeUniform.c_str(),
+            materialType
+        );
+
+
+        // --------------------------------
+        // Transmission
+        // --------------------------------
+
+        const std::string transmissionUniform =
+            "uMaterialTransmission[" +
+            std::to_string(index) +
+            "]";
+
+        shader.SetUniformFloat(
+            transmissionUniform.c_str(),
+            transmission
+        );
+
+
+        // --------------------------------
+        // Index Of Refraction
+        // --------------------------------
+
+        const std::string iorUniform =
+            "uMaterialIOR[" +
+            std::to_string(index) +
+            "]";
+
+        shader.SetUniformFloat(
+            iorUniform.c_str(),
+            ior
+        );
+
+
+
+
 
         // ===================================
 		// tangent space normal map strength
@@ -2207,7 +2264,34 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
     );
 
     // Cube, plane, sphere, Cylinder or any other mesh
+    //DrawMesh();
+
+    /*glEnable(GL_BLEND);
+
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     DrawMesh();
+
+    glDisable(GL_BLEND);*/
+
+    glEnable(GL_BLEND);
+
+    glBlendFunc(
+        GL_SRC_ALPHA,
+        GL_ONE_MINUS_SRC_ALPHA
+    );
+
+    // Keep depth testing,
+    // but don't let this transparent object
+    // write into the depth buffer.
+    glDepthMask(GL_FALSE);
+
+    DrawMesh();
+
+    // IMPORTANT: restore depth writing.
+    glDepthMask(GL_TRUE);
+
+    glDisable(GL_BLEND);
 
 	// cleanup: unbind textures to avoid affecting other objects
     for (std::size_t index = 0;
