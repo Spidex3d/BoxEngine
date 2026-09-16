@@ -9,6 +9,12 @@ class MaterialPreview;
 //class Material;
 class FaceEditController;
 
+enum class MaterialEditorAction
+{
+    None = 0,
+    OpenMaterialLibrary
+};
+
 class MaterialEditor
 {
 public:
@@ -21,6 +27,7 @@ public:
 
     void Draw(BoxEngine& engine, Entity& entity, FaceEditController& faceEditController);
 
+    MaterialEditorAction GetAction();
        
 private:
 
@@ -35,6 +42,8 @@ private:
     MaterialCategory m_selectedCategory = MaterialCategory::Glass;
 
     std::unique_ptr<MaterialPreview> m_preview;
+
+    MaterialEditorAction m_action = MaterialEditorAction::None;
 
     
 

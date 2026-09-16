@@ -3,9 +3,11 @@
 #include <imgui/imgui.h>
 #include <rendering/Framebuffer.h>
 #include <shader/Shader.h>
+#include <entity/Entity.h>
 
-class Entity;
+//class Entity;
 class Material;
+
 
 class MaterialPreview
 {
@@ -22,6 +24,8 @@ public:
     void RenderPreview(const Material& material);
 
     void Draw(const Material& material);
+
+    bool DrawButton(const Material& material, const ImVec2& size);
 
     void Shutdown();
 

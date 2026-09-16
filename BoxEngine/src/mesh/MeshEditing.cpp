@@ -67,8 +67,7 @@ bool MeshEditing::CreateCube()
         {{4, 5, 1, 0}}  // Bottom
 
     };
-        m_faces[0].materialIndex = 1;
-       
+              
 
     return
         m_vertices.size() == 8 &&

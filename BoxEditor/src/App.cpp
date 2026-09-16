@@ -8,6 +8,7 @@
 #include <imgui/imgui.h>
 #include "panels/HelpPanel.h"
 #include <panels/MaterialEditorPanel.h>
+#include <panels/MaterialDisplayPanel.h>
 
 #include <FileDialog.h>
 
@@ -101,6 +102,7 @@ bool App::Init()
 
     m_materialEditorPanel = std::make_unique<MaterialEditorPanel>();
 
+
     if (!m_materialEditorPanel->Initialize())
     {
         BOX_LOG_ERROR(
@@ -110,6 +112,19 @@ bool App::Init()
         m_materialEditorPanel.reset();
         return false;
     }
+
+    m_materialDisplayPanel = std::make_unique<MaterialDisplayPanel>();
+
+    if (!m_materialDisplayPanel->Initialize())
+    {
+        BOX_LOG_ERROR("MaterialDisplayPanel failed to initialize");
+
+        m_materialDisplayPanel.reset();
+        return false;
+    }
+
+
+
    
     m_mbxManager = std::make_unique<mbxManager>();
 
@@ -177,7 +192,7 @@ int App::Run()
                 m_sceneViewport->GetEdgeEditController());
         }
 
-        if (m_materialEditorPanel)
+        /*if (m_materialEditorPanel)
         {
             Entity* entity = m_engine->GetSelectedEntity();
 
@@ -185,7 +200,37 @@ int App::Run()
             {
                 m_materialEditorPanel->Draw(*m_engine, *entity, m_sceneViewport->GetFaceEditController());
             }
+        }*/
+
+        if (m_materialEditorPanel)
+        {
+            Entity* entity = m_engine->GetSelectedEntity();
+
+            if (entity)
+            {
+                m_materialEditorPanel->Draw(*m_engine, *entity, m_sceneViewport->GetFaceEditController());
+
+                MaterialEditorAction action = m_materialEditorPanel->GetAction();
+
+                if (action == MaterialEditorAction::OpenMaterialLibrary)
+                {
+                    if (m_materialDisplayPanel)
+                    {
+                        m_materialDisplayPanel->Open();
+                    }
+                }
+            }
         }
+
+
+		if (m_materialDisplayPanel)
+		{
+			Entity* entity = m_engine->GetSelectedEntity();
+			if (entity)
+			{
+				m_materialDisplayPanel->Draw(*m_engine, *entity, m_sceneViewport->GetFaceEditController());
+			}
+		}
 
         if (m_helpPanel)
         {

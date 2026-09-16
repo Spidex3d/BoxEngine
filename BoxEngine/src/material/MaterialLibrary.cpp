@@ -46,6 +46,61 @@ MaterialLibrary::GetCategoryPath(MaterialCategory category)
     return basePath / GetCategoryFolder(category);
 }
 
+//std::vector<std::filesystem::path>
+//MaterialLibrary::GetMaterials(
+//    MaterialCategory category)
+//{
+//    namespace fs = std::filesystem;
+//
+//    std::vector<fs::path> materials;
+//
+//    const fs::path directory =
+//        GetCategoryPath(category);
+//
+//    if (!fs::exists(directory))
+//    {
+//        return materials;
+//    }
+//
+//    if (!fs::is_directory(directory))
+//    {
+//        return materials;
+//    }
+//
+//    for (const auto& entry :
+//        fs::directory_iterator(directory))
+//    {
+//        if (!entry.is_regular_file())
+//        {
+//            continue;
+//        }
+//
+//        const fs::path& path =
+//            entry.path();
+//
+//        if (path.extension() == ".mbmat")
+//        {
+//            materials.push_back(path);
+//        }
+//    }
+//
+//    std::sort(
+//        materials.begin(),
+//        materials.end(),
+//        [](const fs::path& a,
+//            const fs::path& b)
+//    {
+//        return
+//            a.filename().string() <
+//            b.filename().string();
+//    }
+//    );
+//
+//
+//
+//    return materials;
+//}
+
 std::vector<std::filesystem::path>
 MaterialLibrary::GetMaterials(
     MaterialCategory category)
@@ -75,7 +130,7 @@ MaterialLibrary::GetMaterials(
             continue;
         }
 
-        const fs::path& path =
+        const fs::path path =
             entry.path();
 
         if (path.extension() == ".mbmat")
@@ -86,17 +141,8 @@ MaterialLibrary::GetMaterials(
 
     std::sort(
         materials.begin(),
-        materials.end(),
-        [](const fs::path& a,
-            const fs::path& b)
-    {
-        return
-            a.filename().string() <
-            b.filename().string();
-    }
+        materials.end()
     );
-
-
 
     return materials;
 }

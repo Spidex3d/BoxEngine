@@ -78,4 +78,10 @@ void MaterialEditorPanel::Draw(BoxEngine& engine, Entity& entity,
     ImGui::End();
    
 }
+
+MaterialEditorAction
+MaterialEditorPanel::GetAction()
+{
+    return m_materialEditor->GetAction();
+}
 	

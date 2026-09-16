@@ -104,7 +104,9 @@ public:
     float GetIOR() const;
     void SetIOR(float ior);
 
+    void SetBaseColorTexturePath(const std::string& sourcePath);
 
+    void SetNormalTexturePath(const std::string& sourcePath);
 
 
 private:

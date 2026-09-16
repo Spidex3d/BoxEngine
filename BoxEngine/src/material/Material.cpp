@@ -98,10 +98,17 @@ void Material::SetBaseColorTexture(GLuint textureID, const std::string& sourcePa
     m_useBaseColorTexture = textureID != 0;
 }
 
+void Material::SetBaseColorTexturePath(const std::string& sourcePath)
+{
+    m_baseColorTexturePath = sourcePath;
+}
+
 const std::string& Material::GetBaseColorTexturePath() const
 {
     return m_baseColorTexturePath;
 }
+
+
 
 // Normal map management
 GLuint Material::GetNormalTexture() const
@@ -125,6 +132,10 @@ void Material::SetUseNormalTexture(
         useTexture;
 }
 
+void Material::SetNormalTexturePath(const std::string& sourcePath)
+{
+    m_normalTexturePath = sourcePath;
+}
 
 void Material::SetNormalTexture(
     GLuint textureID,

@@ -1,19 +1,14 @@
 #pragma once
+#include <glad/glad.h>
+#include <memory>
+#include <unordered_map>
+#include <string>
+#include <preview/MaterialPreview.h>
 
 class BoxEngine;
 class Entity;
 class FaceEditController;
-
-/*├── metal/
-        ├── plastic/
-        ├── glass/
-        ├── wood/
-        ├── stone_brick_tile/
-        ├── fabric/
-        ├── sky/
-        ├── plant_soil/
-        └── misc/ 
-This will have a combo at the top but MaterialEditor.cpp will set it up*/
+//class MaterialPreview;
 
 class MaterialDisplayPanel
 {
@@ -22,8 +17,27 @@ class MaterialDisplayPanel
 		~MaterialDisplayPanel();
 
 		bool Initialize();
+
+        void Open();
+        void Close();
+        bool IsOpen() const;
+
 		// display a saved material in the material display panel on image buttons
-		void Display(BoxEngine& engine, Entity& entity);
+		// void Draw(BoxEngine& engine, Entity& entity);
+        void Draw(BoxEngine& engine, Entity& entity, FaceEditController& faceEditController);
+
+        GLuint GetOrLoadTexture(BoxEngine& engine, const std::string& path);
+
+private:
+
+	bool m_isOpen = false;
+    int m_directorySelected = 0;
+
+    //std::unique_ptr<MaterialPreview>m_materialPreview;
+    std::unordered_map<std::string, std::unique_ptr<MaterialPreview>> m_materialPreviews;
+
+    std::unordered_map<std::string, GLuint>m_textureCache;
+
 };
 
 /*class NodeEditorPanel

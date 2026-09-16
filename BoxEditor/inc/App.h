@@ -17,6 +17,7 @@ class EditorInput;
 class ObjectExplorerPanel;
 class HelpPanel;
 class MaterialEditorPanel;
+class MaterialDisplayPanel;
 
 class App
 {
@@ -53,6 +54,8 @@ private:
 	std::unique_ptr<mbxManager>m_mbxManager;
 
 	std::unique_ptr<MaterialEditorPanel> m_materialEditorPanel; // Material Editor panel for ImGui
+
+	std::unique_ptr<MaterialDisplayPanel> m_materialDisplayPanel; // Material Display panel for ImGui
 
 	std::unique_ptr<HelpPanel> m_helpPanel; // Help panel for ImGui
 

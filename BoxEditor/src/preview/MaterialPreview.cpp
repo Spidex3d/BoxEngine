@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <string>
 
+
 MaterialPreview::~MaterialPreview()
 {
     Shutdown();
@@ -55,7 +56,7 @@ bool MaterialPreview::Initialize(
         return false;
     }
 
-    m_previewSphere =
+    /*m_previewSphere =
         std::make_unique<Entity>(
             -1000,
             "Material Preview Sphere"
@@ -68,6 +69,22 @@ bool MaterialPreview::Initialize(
         BOX_LOG_ERROR(
             "MaterialPreview failed to create sphere"
         );
+
+        m_previewSphere.reset();
+        m_shader.reset();
+
+        return false;
+    }*/
+
+    m_previewSphere =
+        std::make_unique<Entity>(
+            -1000,
+            "Material Preview Cube"
+        );
+
+    if (!m_previewSphere->CreateCube())
+    {
+        BOX_LOG_ERROR("MaterialPreview failed to create cube");
 
         m_previewSphere.reset();
         m_shader.reset();
@@ -237,6 +254,33 @@ void MaterialPreview::Draw(const Material& material)
 	// draw the sphere preview texture in the ImGui window
     ImGui::Image((ImTextureID)(static_cast<intptr_t>(previewTexture)), previewSize, ImVec2(0.0f, 1.0f),ImVec2(1.0f, 0.0f));
 
+}
+
+bool MaterialPreview::DrawButton(
+    const Material& material,
+    const ImVec2& size)
+{
+    if (!m_initialized)
+    {
+        return false;
+    }
+
+    // Render this material onto the preview sphere.
+    RenderPreview(material);
+
+    const GLuint previewTexture =
+        m_framebuffer.GetColorTexture();
+
+    if (previewTexture == 0)
+    {
+        return false;
+    }
+
+    // The framebuffer needs flipping vertically
+    // when displayed through ImGui.
+    return ImGui::ImageButton("##MaterialPreviewButton",
+        (ImTextureID)(static_cast<intptr_t>(previewTexture)),
+         size, ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
 }
 
 void MaterialPreview::Shutdown()

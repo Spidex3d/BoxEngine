@@ -363,16 +363,18 @@ bool MaterialSerializer::Load(
                 );
             }
 
-            // Texture loading will be added later.
-            // For now we only support materials
-            // with no saved base-color texture.
+            if (texturePath != "none")
+            {
+                material.SetBaseColorTexturePath(
+                    texturePath
+                );
             }
-
+            }
 
         // --------------------------------------------
         // Normal Texture
         // --------------------------------------------
-
+        // void SetNormalTexture(GLuint textureID, const std::string& sourcePath);
         else if (key == "NormalTexture")
         {
             std::string texturePath;
@@ -390,9 +392,13 @@ bool MaterialSerializer::Load(
                 );
             }
 
-            // Texture loading will be added later.
+            if (texturePath != "none")
+            {
+                material.SetNormalTexturePath(
+                    texturePath
+                );
             }
-
+            }
 
         // --------------------------------------------
         // Normal Strength

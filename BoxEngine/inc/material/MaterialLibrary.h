@@ -1,7 +1,7 @@
 #pragma once
 
 #include <filesystem>
-//#include <vector>
+#include <vector>
 #include "Material.h"
 
 
@@ -17,11 +17,8 @@ public:
     // assets/materials/glass
     static std::filesystem::path GetCategoryPath(MaterialCategory category);
 
-	
+    static std::vector<std::filesystem::path>GetMaterials(MaterialCategory category);
 
-    static std::vector<std::filesystem::path>
-        GetMaterials(
-            MaterialCategory category
-        );
+   
 
 };

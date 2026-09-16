@@ -6,12 +6,6 @@ class BoxEngine;
 class Entity;
 class FaceEditController;
 
-//class BoxEngine;
-//class Entity;
-//class MaterialEditor;
-//class FaceEditController;
-//class EdgeEditController;
-
 class MaterialEditorPanel
 {
 public:
@@ -26,6 +20,7 @@ public:
 
 	void Draw(BoxEngine& engine, Entity& entity, FaceEditController& faceEditController);
 
+	MaterialEditorAction GetAction();
 
 private:
 	bool m_isOpen = false;	

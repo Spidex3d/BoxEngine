@@ -14,6 +14,7 @@
 
 #include <miniBoxLog.h>
 
+
 MaterialEditor::MaterialEditor() = default;
 
 MaterialEditor::~MaterialEditor()
@@ -38,6 +39,8 @@ bool MaterialEditor::Initialize()
         m_preview.reset();
         return false;
     }
+
+    
 
 	return true;
 }
@@ -132,6 +135,18 @@ void MaterialEditor::Draw(
     DrawEmissionControls(*previewMaterial);
 
     DrawTextureProperties(engine, entity, *previewMaterial);
+}
+
+
+MaterialEditorAction MaterialEditor::GetAction()
+{
+    MaterialEditorAction action =
+        m_action;
+
+    m_action =
+        MaterialEditorAction::None;
+
+    return action;
 }
 
 void MaterialEditor::DrawMaterialProperties(BoxEngine& engine, Entity& entity, Material& material)
@@ -451,37 +466,14 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
 
 
    // ImGui::SameLine();
-    if (ImGui::Button("Open"))
+    if (ImGui::Button("Open material"))
     {
-        Helpers helpers;
-
-        namespace fs = std::filesystem;
-
-        fs::path filePath =
-            helpers.GetAssetPath(
-                "assets/materials/glass/Glass.mbmat"
-            );
-
-        if (MaterialSerializer::Load(
-            filePath.string(),
-            material))
-        {
-            BOX_LOG_INFO(
-                "Material loaded: " +
-                filePath.string()
-            );
-        }
-        else
-        {
-            BOX_LOG_ERROR(
-                "Failed to load material: " +
-                filePath.string()
-            );
-        }
+        m_action = MaterialEditorAction::OpenMaterialLibrary;
+        
     }
 	ImGui::SameLine();
 
-    if (ImGui::Button("Save"))
+    if (ImGui::Button("Save material"))
     {
         namespace fs = std::filesystem;
 
@@ -725,12 +717,8 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
 
 void MaterialEditor::Shutdown()
 {
+    // shutdown panel if needed
     
-    if (m_preview)
-    {
-        m_preview->Shutdown();
-        m_preview.reset();
-    }
-	
+    m_preview.reset();
     
 }

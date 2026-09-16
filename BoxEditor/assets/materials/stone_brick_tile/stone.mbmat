@@ -1,0 +1,14 @@
+MBMAT 1
+Name stone
+Type 0
+BaseColor 1 1 1
+Metallic 0
+Roughness 0.5
+Alpha 1
+Transmission 0
+IOR 1.5
+EmissionColor 0 0 0
+EmissionStrength 0
+BaseColorTexture C:\Users\marty\Desktop\BoxEditor\BoxEngine\BoxEditor\assets\model\pyramid.jpg
+NormalTexture none
+NormalStrength 1
