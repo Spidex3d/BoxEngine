@@ -178,6 +178,64 @@ void HelpPanel::Draw()
 
             ImGui::EndTabItem();
         }
+		// -------------------------------- Ecosystem tab --------------------------------
+        if (ImGui::BeginTabItem(
+            "Ecosystem"))
+        {
+            ImGui::SeparatorText(
+                "Ecosystem"
+            );
+
+            ImGui::TextWrapped(
+                "To use the Ecosystem you must have an object loaded on screen "
+                "just a cube."
+            );
+
+            ImGui::SeparatorText(ICON_FA_COG" Ecosystem Controls");
+
+            if (ImGui::BeginTable(
+                "##ShortcutTableEditMode",
+                2,
+                ImGuiTableFlags_Borders |
+                ImGuiTableFlags_RowBg))
+            {
+                ImGui::TableSetupColumn(ICON_FA_KEYBOARD" Key");
+
+                ImGui::TableSetupColumn("Ecosystem Controls ");
+                ImGui::TableHeadersRow();
+
+                const auto AddShortcut =
+                    [](const char* key,
+                        const char* action)
+                {
+                    ImGui::TableNextRow();
+
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::TextUnformatted(key);
+
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::TextUnformatted(action);
+                };
+
+                AddShortcut(
+                    "Top Menu Ecosystem",
+                    "Load Ecosystem Panel"
+                );
+                AddShortcut(
+                    "Right click main screen Ecosystem",
+                    "Load Ecosystem Panel"
+                );
+
+
+                
+                ImGui::EndTable();
+            }
+
+            
+
+            ImGui::EndTabItem();
+        }
+
 		// ################################ Modifiers tab ########################################
         if (ImGui::BeginTabItem(ICON_FA_TOOLS" Modifiers"))
         {

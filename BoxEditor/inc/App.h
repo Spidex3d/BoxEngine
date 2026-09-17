@@ -18,6 +18,7 @@ class ObjectExplorerPanel;
 class HelpPanel;
 class MaterialEditorPanel;
 class MaterialDisplayPanel;
+class EcosystemPanel;
 
 class App
 {
@@ -51,6 +52,9 @@ private:
 	std::unique_ptr<SceneViewportPanel> m_sceneViewport; // Scene Viewport panel for ImGui
 	std::unique_ptr<ObjectExplorerPanel> m_imgObjectExplorer; // Object Explorer panel for ImGui
 
+	// Ecosystem, Rocks, floor, water, terrain, grass, plants & tree generation 
+	std::unique_ptr<EcosystemPanel> m_ecosystemPanel;
+
 	std::unique_ptr<mbxManager>m_mbxManager;
 
 	std::unique_ptr<MaterialEditorPanel> m_materialEditorPanel; // Material Editor panel for ImGui
@@ -59,7 +63,7 @@ private:
 
 	std::unique_ptr<HelpPanel> m_helpPanel; // Help panel for ImGui
 
-private:
+private: 
 
 	void RebuildImportedMaterialSlots(BoxEngine& engine, Entity& entity,
 		const MBXImportData& importedData

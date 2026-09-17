@@ -9,6 +9,7 @@
 #include "panels/HelpPanel.h"
 #include <panels/MaterialEditorPanel.h>
 #include <panels/MaterialDisplayPanel.h>
+#include <panels/EcosystemPanel.h>
 
 #include <FileDialog.h>
 
@@ -122,7 +123,22 @@ bool App::Init()
         m_materialDisplayPanel.reset();
         return false;
     }
+    // ------------------------------------------------------------------------------
+    // Ecosystem, Rocks, floor, water, terrain, grass, plants & tree generation 
+	// ------------------------------------------------------------------------------
+    m_ecosystemPanel = std::make_unique<EcosystemPanel>();
 
+    if (!m_ecosystemPanel->Initialize())
+    {
+        BOX_LOG_ERROR(
+            "EcosystemPanel failed to initialize"
+        );
+
+        m_ecosystemPanel.reset();
+
+        return false;
+    }
+	// ------------------------------ End Ecosystem Panel ----------------------------------
 
 
    
@@ -192,16 +208,6 @@ int App::Run()
                 m_sceneViewport->GetEdgeEditController());
         }
 
-        /*if (m_materialEditorPanel)
-        {
-            Entity* entity = m_engine->GetSelectedEntity();
-
-            if (entity)
-            {
-                m_materialEditorPanel->Draw(*m_engine, *entity, m_sceneViewport->GetFaceEditController());
-            }
-        }*/
-
         if (m_materialEditorPanel)
         {
             Entity* entity = m_engine->GetSelectedEntity();
@@ -232,6 +238,20 @@ int App::Run()
 			}
 		}
 
+        // ------------------------------------------------------------------------------
+        // Ecosystem, Rocks, floor, water, terrain, grass, plants & tree generation 
+        // ------------------------------------------------------------------------------
+
+        if (m_ecosystemPanel)
+        {
+            Entity* entity = m_engine->GetSelectedEntity();
+
+            if (entity)
+            {
+                m_ecosystemPanel->Draw(*m_engine, *entity);
+            }
+        }
+        // ------------------------------ End Ecosystem Panel ----------------------------------
         if (m_helpPanel)
         {
             m_helpPanel->Draw();
@@ -351,6 +371,13 @@ void App::HandleMenuAction(
          BOX_LOG_INFO("Use Extrude Modifier menu action triggered");
            
 		break;
+	case MenuAction::Ecosystem:
+        if (m_ecosystemPanel)
+        {
+            m_ecosystemPanel->Open();
+        }
+        BOX_LOG_INFO("Ecosystem menu action triggered");
+        break;
 
     case MenuAction::Help:
         if (m_helpPanel)
@@ -443,15 +470,23 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
 
         break;
 
-        case ViewportAction::AddMaterial:
+    case ViewportAction::AddMaterial:
+        
+        if (m_materialEditorPanel)
         {
-            if (m_materialEditorPanel)
-            {
-                m_materialEditorPanel->Open();
-            }
+            m_materialEditorPanel->Open();
+        }
 
-            break;
-		}
+        break;
+		// -------------------------------------------- Ecosystem Panel --------------------------------------------
+	case ViewportAction::Ecosystem:
+
+        if (m_ecosystemPanel)
+        {
+            m_ecosystemPanel->Open();
+        }
+        BOX_LOG_INFO("Ecosystem Viewport action triggered");
+		break;
 
     case ViewportAction::None:
     default:

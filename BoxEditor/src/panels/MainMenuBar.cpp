@@ -168,6 +168,17 @@ MenuAction MainMenuBar::DrawMainMenu()
             ImGui::EndMenu();
         }
 
+        if (ImGui::BeginMenu("Ecosystem"))
+        {
+            if (ImGui::MenuItem("Ecosystem"))
+            {
+				action = MenuAction::Ecosystem; // open the ecosystem panel
+              
+            }
+            
+            ImGui::EndMenu();
+        }
+
         if (ImGui::BeginMenu("Help"))
         {
             if (ImGui::MenuItem("Help"))

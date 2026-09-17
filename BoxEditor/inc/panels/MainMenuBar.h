@@ -5,27 +5,28 @@
 // It handles menu actions like New, Open, Save, and Exit.
 enum class MenuAction
 {
-    None,
-    Exit,
-    NewScene,
-    OpenScene,
-    SaveScene,
+	None,
+	Exit,
+	NewScene,
+	OpenScene,
+	SaveScene,
 	SaveSceneAs,
-    Exportmbx,
-	Importmbx,  
+	Exportmbx,
+	Importmbx,
 
-    AddCube,
+	AddCube,
 	AddPlane,
-    AddSphere,
+	AddSphere,
 	AddPyramid,
 
 	UseExtrudeModifier,
 
-    Help,
-	About
+	Help,
+	About,
+
+	Ecosystem
+
 };
-
-
 
 // dedicated panel classes once they grow.
 class MainMenuBar

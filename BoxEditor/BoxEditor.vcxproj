@@ -140,6 +140,7 @@
     <ClCompile Include="src\Helpers.cpp" />
     <ClCompile Include="src\ImGuiLayer.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\panels\EcosystemPanel.cpp" />
     <ClCompile Include="src\panels\HelpPanel.cpp" />
     <ClCompile Include="src\panels\MainMenuBar.cpp" />
     <ClCompile Include="src\panels\MaterialDisplayPanel.cpp" />
@@ -179,6 +180,7 @@
     <ClInclude Include="inc\Helpers.h" />
     <ClInclude Include="inc\ImGuiLayer.h" />
     <ClInclude Include="inc\miniBoxLog.h" />
+    <ClInclude Include="inc\panels\EcosystemPanel.h" />
     <ClInclude Include="inc\panels\HelpPanel.h" />
     <ClInclude Include="inc\panels\MainMenuBar.h" />
     <ClInclude Include="inc\panels\MaterialDisplayPanel.h" />

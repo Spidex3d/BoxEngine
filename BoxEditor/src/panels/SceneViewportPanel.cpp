@@ -632,19 +632,13 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("Terrain")) {
+        if (ImGui::BeginMenu("Ecosystem")) {
 
-            if (ImGui::MenuItem("Add Terrain"))
+            if (ImGui::MenuItem("Add Ecosystem"))
             {
-
+                action = ViewportAction::Ecosystem;
             }
-            if (ImGui::MenuItem("Add Rock"))
-            {
-            }
-            ImGui::Separator();
-            if (ImGui::MenuItem("Add Rock Scatter"))
-            {
-            }
+            
             ImGui::EndMenu();
         }
 

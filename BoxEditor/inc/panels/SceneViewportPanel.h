@@ -65,9 +65,7 @@ enum class ViewportAction
     AddSkySphere,
     AddFog,
 
-	AddFloor,
-	AddTerrain,
-	AddWaterPlane,
+    Ecosystem,
 
     ResetCamera
 };
