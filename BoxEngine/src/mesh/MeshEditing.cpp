@@ -339,7 +339,7 @@ bool MeshEditing::CreateFloor(float width, float depth, int subdivisionsX, int s
 }
 
 // ----------------------------- Rock Creation -----------------------------
-bool MeshEditing::CreateRock(int rockSectors, int rockStacks, float rockRadius, float rockRoughness, std::uint32_t rockSeed)
+bool MeshEditing::CreateRock(int rockSectors, int rockStacks, float rockRadius, float rockRoughness, std::uint32_t rockSeed, float rockFlattening)
 {
     Clear();
 
@@ -367,7 +367,12 @@ bool MeshEditing::CreateRock(int rockSectors, int rockStacks, float rockRadius, 
     std::uniform_real_distribution<float> randomOffset(-rockRoughness, rockRoughness);
 
 
-    //m_primitiveType = EntityPrimitiveType::Rock;
+    BOX_LOG_INFO(
+        "CreateRock - Radius: " << rockRadius
+        << " Roughness: " << rockRoughness
+        << " Seed: " << rockSeed
+        << " Flattening: " << rockFlattening
+    );
     
     // =================================================
     // TOP POLE
@@ -379,7 +384,8 @@ bool MeshEditing::CreateRock(int rockSectors, int rockStacks, float rockRadius, 
         0.0f
     );
 
-    topPosition.y *= 0.82f;
+    //topPosition.y *= 0.82f;
+    topPosition.y *= (1.0f - rockFlattening);
 
     const std::size_t topPole =
         AddVertex(topPosition);
@@ -454,10 +460,15 @@ bool MeshEditing::CreateRock(int rockSectors, int rockStacks, float rockRadius, 
             // ----------------------------------------------------
             // Give the rock broader, less spherical proportions.
             // ----------------------------------------------------
+            const float heightScale =
+                1.0f - rockFlattening;
 
             position.x *= 1.10f;
-            position.y *= 0.82f;
+            position.y *= heightScale;
             position.z *= 0.95f;
+            /*position.x *= 1.10f;
+            position.y *= 0.82f;
+            position.z *= 0.95f;*/
 
 
             // ----------------------------------------------------

@@ -320,7 +320,9 @@ bool BoxEngine::AddEditableFloor(const glm::vec3& position, float width, float d
 	return true;
 
 }
-bool BoxEngine::AddEditableRock(const glm::vec3& position)
+//bool BoxEngine::AddEditableRock(const glm::vec3& position)
+bool BoxEngine::AddEditableRock(const glm::vec3& position, float radius, int subdivisions,
+    float roughness, std::uint32_t seed, float flattening)
 {
     const int entityID = m_nextEntityID++;
 
@@ -328,6 +330,9 @@ bool BoxEngine::AddEditableRock(const glm::vec3& position)
 
     auto rock = std::make_unique<Entity>(entityID, name);
 
+    const int rockSectors = 8 + subdivisions * 4;
+
+    const int rockStacks = 4 + subdivisions * 2;
 
     rock->GetMaterial().SetBaseColorTexture(m_defaultTexture.GetID(), m_defaultTexturePath);
 
@@ -338,8 +343,12 @@ bool BoxEngine::AddEditableRock(const glm::vec3& position)
 
     rock->SetPosition(position);
 
-    if (!rock->CreateRock())
+    if (!rock->CreateRock(rockSectors, rockStacks, radius, roughness, seed, flattening))
     {
+        BOX_LOG_ERROR(
+            "Failed to add editable rock"
+        );
+
         return false;
     }
 

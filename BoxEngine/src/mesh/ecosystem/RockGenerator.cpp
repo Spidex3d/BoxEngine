@@ -11,7 +11,8 @@ bool RockGenerator::Generate(
     float radius,
     int subdivisions,
     float roughness,
-    std::uint32_t seed)
+    std::uint32_t seed,
+    float rockFlattening)
 {
     if (radius <= 0.0f)
         return false;
@@ -25,7 +26,7 @@ bool RockGenerator::Generate(
     const int stacks =
         4 + subdivisions * 2;
 
-    return mesh.CreateRock(sectors, stacks, radius, roughness, seed);
+    return mesh.CreateRock(sectors, stacks, radius, roughness, seed, rockFlattening);
 }
 
 

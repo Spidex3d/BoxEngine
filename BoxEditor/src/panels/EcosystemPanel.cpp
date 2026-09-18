@@ -187,15 +187,26 @@ EcoSystemAction EcosystemPanel::Draw(BoxEngine& engine)
         // -------------------------------------------------
         // ROCKS
         // -------------------------------------------------
-
         if (ImGui::BeginTabItem("Rocks"))
+        {
+            const EcoSystemAction rockAction =
+                RocksTab(engine);
+
+            if (rockAction != EcoSystemAction::None)
+            {
+                Ecoaction = rockAction;
+            }
+
+            ImGui::EndTabItem();
+        }
+        /*if (ImGui::BeginTabItem("Rocks"))
         {
             RocksTab(
                 engine
             );
 
             ImGui::EndTabItem();
-        }
+        }*/
 
 
         // -------------------------------------------------
@@ -314,14 +325,140 @@ void EcosystemPanel::FloorTab(BoxEngine& engine)
     );
 }
 
-void EcosystemPanel::RocksTab(BoxEngine& engine)
+EcoSystemAction EcosystemPanel::RocksTab(
+    BoxEngine& engine)
 {
+    EcoSystemAction action =
+        EcoSystemAction::None;
 
     ImGui::Text("Rock Generator");
     ImGui::Separator();
+    ImGui::Spacing();
 
-    ImGui::TextDisabled("Procedural rocks and scatter coming soon...");
+
+    // =================================================
+    // ROCK SIZE
+    // =================================================
+
+    ImGui::Text("Rock Size");
+
+    ImGui::DragFloat(
+        "Radius",
+        &m_rockRadius,
+        0.05f,
+        0.1f,
+        5.0f,
+        "%.2f",
+        ImGuiSliderFlags_AlwaysClamp
+    );
+
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+
+    // =================================================
+    // ROCK SHAPE
+    // =================================================
+
+    
+
+    ImGui::DragInt(
+        "Subdivisions",
+        &m_rockSubdivisions,
+        1.0f,
+        0,
+        6
+    );
+
+	
+    ImGui::DragFloat(
+        "Roughness",
+        &m_rockRoughness,
+        0.01f,
+        0.0f,
+        1.0f,
+        "%.2f"
+    );
+
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+
+    // =================================================
+    // RANDOM SEED
+    // =================================================
+
+    ImGui::Text("Variation");
+
+    ImGui::InputInt(
+        "Seed",
+        &m_rockSeed
+    );
+
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+	// ------------------------------------------------
+	// ROCK FLATTENING
+	// ------------------------------------------------
+
+    ImGui::DragFloat(
+        "Flattening",
+        &m_rockFlattening,
+        0.01f,
+        0.0f,
+        0.75f,
+        "%.2f",
+        ImGuiSliderFlags_AlwaysClamp
+    );
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    // =================================================
+    // GENERATE
+    // =================================================
+
+    if (ImGui::Button(
+        "Generate Rock",
+        ImVec2(140.0f, 32.0f)))
+    {
+        action =
+            EcoSystemAction::AddRocks;
+    }
+
+    return action;
 }
+
+//EcoSystemAction EcosystemPanel::RocksTab(
+//    BoxEngine& engine)
+//{
+//    EcoSystemAction action = EcoSystemAction::None;
+//
+//    ImGui::Text("Rock Generator");
+//    ImGui::Separator();
+//    ImGui::Spacing();
+//
+//    ImGui::Text(
+//        "Generate a procedural editable rock."
+//    );
+//
+//    ImGui::Spacing();
+//
+//    if (ImGui::Button("Generate Rock", ImVec2(140.0f, 32.0f)))
+//    {
+//        action = EcoSystemAction::AddRocks;
+//    }
+//
+//    return action;
+//}
 
 void EcosystemPanel::TerrainTab(BoxEngine& engine)
 {

@@ -474,15 +474,14 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
 
         break;
         // ---------------------------------------------------------
-    // Ecosystem - Rock
-    // ---------------------------------------------------------
-    case ViewportAction::AddEditableRock:
+        // Ecosystem - Rock
+        // ---------------------------------------------------------
+    /*case ViewportAction::AddEditableRock:
 
-        engine.AddEditableRock(
-            glm::vec3(0.0f)
-        );
+        engine.AddEditableRock(glm::vec3(0.0f, 0.0f, 0.0f));
 
-        break;
+        break;*/
+
     case ViewportAction::AddMaterial:
         
         if (m_materialEditorPanel)
@@ -500,6 +499,11 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
         }
         BOX_LOG_INFO("Ecosystem Viewport action triggered");
 		break;
+
+
+
+
+
 
     case ViewportAction::None:
     default:
@@ -520,7 +524,7 @@ void App::HandleEcoSystemAction(
     case EcoSystemAction::AddFloor:
     {
         m_engine->AddEditableFloor(
-            glm::vec3(0.0f),
+            glm::vec3(0.0f, -0.48f, 0.0f),
             m_ecosystemPanel->GetFloorWidth(),
             m_ecosystemPanel->GetFloorDepth(),
             m_ecosystemPanel->GetFloorSubdivisionsX(),
@@ -528,9 +532,25 @@ void App::HandleEcoSystemAction(
         );
 
         break;
+
+    
     }
 	case EcoSystemAction::AddRocks:
-		m_engine->AddEditableRock(glm::vec3(0.0f));
+		//m_engine->AddEditableRock(glm::vec3(0.0f, -0.20f, 0.0f));
+
+        m_engine->AddEditableRock(
+            glm::vec3(0.0f),
+            m_ecosystemPanel->GetRockRadius(),
+            m_ecosystemPanel->GetRockSubdivisions(),
+            m_ecosystemPanel->GetRockRoughness(),
+            static_cast<std::uint32_t>(m_ecosystemPanel->GetRockSeed(),
+            m_ecosystemPanel->GetRockFlattening()));
+
+        BOX_LOG_INFO(
+            "UI Rock Flattening: "
+            << m_ecosystemPanel->GetRockFlattening()
+        );
+
 		break;  
 
     case EcoSystemAction::None:

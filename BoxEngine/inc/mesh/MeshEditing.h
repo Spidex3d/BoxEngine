@@ -54,7 +54,7 @@ public:
 
 	// ----------------------------- Ecosystem Mesh Creation -----------------------------
 	bool CreateFloor(float width, float depth, int subdivisionsX, int subdivisionsZ);
-    bool CreateRock(int rockSectors, int rockStacks, float rockRadius, float rockRoughness, std::uint32_t rockSeed);
+    bool CreateRock(int rockSectors, int rockStacks, float rockRadius, float rockRoughness, std::uint32_t rockSeed, float rockFlattening);
 
 
 

@@ -520,7 +520,8 @@ bool Entity::CreateRock(
     int rockStacks,
     float rockRadius,
     float rockRoughness,
-    std::uint32_t rockSeed)
+    std::uint32_t rockSeed,
+    float rockFlattening)
 {
     Destroy();
 
@@ -532,7 +533,8 @@ bool Entity::CreateRock(
         rockStacks,
         rockRadius,
         rockRoughness,
-        rockSeed))
+        rockSeed,
+        rockFlattening))
     {
         BOX_LOG_ERROR(
             "Entity::CreateRock: "

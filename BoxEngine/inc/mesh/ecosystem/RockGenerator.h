@@ -15,7 +15,8 @@ public:
         float radius,
         int subdivisions,
         float roughness,
-        std::uint32_t seed
+        std::uint32_t seed,
+        float rockFlattening
     );
 
 private:
