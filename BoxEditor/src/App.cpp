@@ -241,17 +241,15 @@ int App::Run()
         // ------------------------------------------------------------------------------
         // Ecosystem, Rocks, floor, water, terrain, grass, plants & tree generation 
         // ------------------------------------------------------------------------------
-
         if (m_ecosystemPanel)
         {
-            Entity* entity = m_engine->GetSelectedEntity();
+            const EcoSystemAction ecoAction =
+                m_ecosystemPanel->Draw(*m_engine);
 
-            if (entity)
-            {
-                m_ecosystemPanel->Draw(*m_engine, *entity);
-            }
+            // We'll handle ecoAction next.
         }
         // ------------------------------ End Ecosystem Panel ----------------------------------
+
         if (m_helpPanel)
         {
             m_helpPanel->Draw();
@@ -357,6 +355,10 @@ void App::HandleMenuAction(
         engine.AddEditablePlane();
         break;
 
+        /*case MenuAction::AddEditableFloor:
+        engine.AddEditableFloor();
+        break;*/
+
     case MenuAction::AddSphere:
 		engine.AddEditableSphere(glm::vec3(0.0f));
          
@@ -457,6 +459,8 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
         engine.AddEditablePlane();
 
         break;
+
+	
 	case ViewportAction::AddEditableSphere:
 		engine.AddEditableSphere(glm::vec3(0.0f));
 		break;

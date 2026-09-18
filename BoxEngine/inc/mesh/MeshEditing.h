@@ -40,7 +40,11 @@ public:
 
     bool CreateCube();
     bool CreatePlane();
-	
+	bool CreateFloor(float width, float depth, int subdivisionsX, int subdivisionsZ);
+
+    bool CreateFromMeshData(const MeshData& meshData);
+
+
 	bool CreatePyramid();
 	bool CreateSphere(int sectors = 32, int stacks = 16);
 	bool CreateIcoSphere(int recursionLevel = 2);

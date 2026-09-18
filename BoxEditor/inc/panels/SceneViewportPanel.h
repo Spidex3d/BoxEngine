@@ -66,6 +66,7 @@ enum class ViewportAction
     AddFog,
 
     Ecosystem,
+	AddEditableFloor,
 
     ResetCamera
 };

@@ -5,6 +5,8 @@
 #include "panels\SceneViewportPanel.h"
 #include "panels\SceneCollectionPanel.h"
 #include "panels\ObjectExplorerPanel.h"
+//#include "panels\MaterialEditorPanel.h"
+//#include "panels/HelpPanel.h"
 #include <UI/EditorIcons.h>
 #include <fileManager\mbxManager.h> 
 #include <miniBoxLog.h>
@@ -29,6 +31,22 @@ public:
 	bool Init(); // Initialize the window and ImGui context
 	int Run();        // set the main loop
 	void Shutdown();
+
+	/*float GetFloorWidth() const { return m_floorWidth; }
+	float GetFloorDepth() const { return m_floorDepth; }
+
+	int GetFloorSubdivisionsX() const
+	{
+		return m_floorSubdivisionsX;
+	}
+
+	int GetFloorSubdivisionsZ() const
+	{
+		return m_floorSubdivisionsZ;
+	}*/
+
+
+
 
 private:
 	float m_deltaTime = 0.0f;

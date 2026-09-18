@@ -107,7 +107,9 @@ Entity& Entity::operator=(Entity&& other) noexcept
 
     
 }
-// Create an entity from existing .mbx mesh data
+
+
+
 bool Entity::CreateFromMeshData(const MeshData& meshData)
 {
     Destroy();
@@ -121,30 +123,71 @@ bool Entity::CreateFromMeshData(const MeshData& meshData)
         return false;
     }
 
-    m_meshData =
-        meshData;
+    m_meshData = meshData;
+    // -------------------------------------------------
+    // Calculate local-space AABB from mesh vertices
+    // -------------------------------------------------
 
+    m_aabbMin = m_meshData.vertices[0].position;
+
+    m_aabbMax = m_meshData.vertices[0].position;
+
+    for (const MeshVertex& vertex :
+        m_meshData.vertices)
+    {
+        m_aabbMin =
+            glm::min(
+                m_aabbMin,
+                vertex.position
+            );
+
+        m_aabbMax =
+            glm::max(
+                m_aabbMax,
+                vertex.position
+            );
+    }
+
+    // Flat meshes need a small amount of thickness
+    // so ray/AABB picking remains reliable.
+    constexpr float minimumAABBThickness = 0.02f;
+
+    for (int axis = 0; axis < 3; ++axis)
+    {
+        const float size =
+            m_aabbMax[axis] -
+            m_aabbMin[axis];
+
+        if (size < minimumAABBThickness)
+        {
+            const float centre =
+                (m_aabbMin[axis] +
+                    m_aabbMax[axis]) * 0.5f;
+
+            m_aabbMin[axis] =
+                centre -
+                minimumAABBThickness * 0.5f;
+
+            m_aabbMax[axis] =
+                centre +
+                minimumAABBThickness * 0.5f;
+        }
+    }
+
+    
     // ------------------------------------------------
     // Create VAO
     // ------------------------------------------------
 
-    glGenVertexArrays(
-        1,
-        &m_vao
-    );
+    glGenVertexArrays(1, &m_vao);
 
-    glBindVertexArray(
-        m_vao
-    );
+    glBindVertexArray(m_vao);
 
     // ------------------------------------------------
     // Create VBO
     // ------------------------------------------------
 
-    glGenBuffers(
-        1,
-        &m_vbo
-    );
+    glGenBuffers(1, &m_vbo);
 
     glBindBuffer(
         GL_ARRAY_BUFFER,
@@ -422,6 +465,54 @@ bool Entity::CreatePlane()
     return true;
 
 }
+
+bool Entity::CreateFloor(float width, float depth, int subdivisionsX, int subdivisionsZ)
+{
+	Destroy();
+
+    if (!m_editableMesh.CreateFloor(width, depth, subdivisionsX, subdivisionsZ))
+    {
+        return false;
+    }
+
+    m_primitiveType = EntityPrimitiveType::Floor;
+
+    m_baseEditableMesh = m_editableMesh;
+
+    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+    {
+        return false;
+    }
+
+    if (!CreateBuffersFromMeshData())
+    {
+        return false;
+    }
+
+    //m_aabbMin = glm::vec3(-0.5f);
+    //m_aabbMax = glm::vec3(0.5f);
+
+    // ------------------------------------------------
+    // Bounds
+    // ------------------------------------------------
+
+    constexpr float pickingThickness = 0.02f;
+
+    m_aabbMin = glm::vec3(
+        -width * 0.5f,
+        -pickingThickness * 0.5f,
+        -depth * 0.5f
+    );
+
+    m_aabbMax = glm::vec3(
+        width * 0.5f,
+        pickingThickness * 0.5f,
+        depth * 0.5f
+    );
+
+    return true;
+}
+
 
 bool Entity::CreateCylinder(int sectors, int stacks, float radius, float height)
 {
@@ -2263,35 +2354,11 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
         glm::vec3(1.0f)
     );
 
-    // Cube, plane, sphere, Cylinder or any other mesh
-    //DrawMesh();
-
-    /*glEnable(GL_BLEND);
-
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    DrawMesh();
-
-    glDisable(GL_BLEND);*/
-
-    glEnable(GL_BLEND);
-
-    glBlendFunc(
-        GL_SRC_ALPHA,
-        GL_ONE_MINUS_SRC_ALPHA
-    );
-
-    // Keep depth testing,
-    // but don't let this transparent object
-    // write into the depth buffer.
-    glDepthMask(GL_FALSE);
-
-    DrawMesh();
-
-    // IMPORTANT: restore depth writing.
-    glDepthMask(GL_TRUE);
 
     glDisable(GL_BLEND);
+    glDepthMask(GL_TRUE);
+
+    DrawMesh();
 
 	// cleanup: unbind textures to avoid affecting other objects
     for (std::size_t index = 0;

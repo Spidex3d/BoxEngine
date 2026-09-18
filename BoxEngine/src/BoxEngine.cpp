@@ -287,6 +287,42 @@ bool BoxEngine::AddEditablePlane(const glm::vec3& position)
        
 }
 
+// -------------------------- My Create a floor primitive with subdivisions, width and depth --------------------------
+bool BoxEngine::AddEditableFloor(const glm::vec3& position, float width, float depth, int subdivisionsX, int subdivisionsZ)
+{
+    const int entityID = m_nextEntityID++;
+
+    const std::string entityName = "Floor " + std::to_string(entityID);
+
+    auto floor = std::make_unique<Entity>(entityID, entityName);
+
+    floor->GetMaterial().SetBaseColorTexture(m_defaultTexture.GetID(), m_defaultTexturePath);
+
+    Material& material = floor->GetMaterial();
+
+    material.SetUseBaseColorTexture(true);
+
+    floor->SetPosition(position);
+
+    if (!floor->CreateFloor(width, depth, subdivisionsX, subdivisionsZ))
+    {
+		BOX_LOG_ERROR("Failed to add editable floor");
+		return false;
+    }
+
+    m_entities.push_back(std::move(floor));
+
+    m_selectedEntityID = entityID; // set the newly added floor as the selected entity
+
+    BOX_LOG_INFO(
+        "Added editable floor. Entity count: " << m_entities.size());
+
+	return true;
+
+}
+
+
+
 bool BoxEngine::AddEditableSphere(const glm::vec3& position)
 {
     const int entityID = m_nextEntityID++;
@@ -722,8 +758,68 @@ bool BoxEngine::RayIntersectsAABB(
 
     constexpr float epsilon =
         0.000001f;
+    // --------------------------------------
+    glm::vec3 safeMin = aabbMinLocal;
+    glm::vec3 safeMax = aabbMaxLocal;
+
+    constexpr float minimumThickness = 0.02f;
 
     for (int axis = 0; axis < 3; ++axis)
+    {
+        if ((safeMax[axis] - safeMin[axis]) < minimumThickness)
+        {
+            const float centre =
+                (safeMin[axis] + safeMax[axis]) * 0.5f;
+
+            safeMin[axis] =
+                centre - minimumThickness * 0.5f;
+
+            safeMax[axis] =
+                centre + minimumThickness * 0.5f;
+        }
+    }
+
+    // --------------------------------------
+
+    for (int axis = 0; axis < 3; ++axis)
+    {
+        if (std::abs(rayDirectionLocal[axis]) < epsilon)
+        {
+            if (rayOriginLocal[axis] < safeMin[axis] ||
+                rayOriginLocal[axis] > safeMax[axis])
+            {
+                return false;
+            }
+
+            continue;
+        }
+
+        const float inverseDirection =
+            1.0f / rayDirectionLocal[axis];
+
+        float t1 =
+            (safeMin[axis] - rayOriginLocal[axis]) *
+            inverseDirection;
+
+        float t2 =
+            (safeMax[axis] - rayOriginLocal[axis]) *
+            inverseDirection;
+
+        if (t1 > t2)
+        {
+            std::swap(t1, t2);
+        }
+
+        tMin = std::max(tMin, t1);
+        tMax = std::min(tMax, t2);
+
+        if (tMin > tMax)
+        {
+            return false;
+        }
+    }
+
+    /*for (int axis = 0; axis < 3; ++axis)
     {
         if (std::abs(
             rayDirectionLocal[axis]) <
@@ -769,7 +865,7 @@ bool BoxEngine::RayIntersectsAABB(
         {
             return false;
         }
-    }
+    }*/
 
     const glm::vec3 localHitPoint =
         rayOriginLocal +

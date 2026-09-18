@@ -22,6 +22,7 @@ enum class EntityPrimitiveType
 
     Cube,
     Plane,
+	Floor,
     Sphere,
     Cylinder,
     Pyramid
@@ -45,6 +46,10 @@ public:
 
 	bool CreateCube();  // Create a cube from the new editable mesh data, buffers for rendering.
 	bool CreatePlane(); // Create a Plane from the new editable mesh data, buffers for rendering.
+
+    // Create a Floor from the new editable mesh data, buffers for rendering.
+	bool CreateFloor(float width, float depth, int subdivisionsX, int subdivisionsZ); 
+
     bool CreateSphere(int sectors = 32, int stacks = 16);
 	// bool CreateIcoSphere(int recursionLevel = 2);
 	bool CreateCylinder(int sectors = 32, int stacks = 1, float radius = 0.5f, float height = 1.0f); // follow to boxengine.h line 65

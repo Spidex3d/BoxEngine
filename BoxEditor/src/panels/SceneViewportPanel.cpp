@@ -637,8 +637,9 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             if (ImGui::MenuItem("Add Ecosystem"))
             {
                 action = ViewportAction::Ecosystem;
+               
             }
-            
+                        
             ImGui::EndMenu();
         }
 
@@ -794,7 +795,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 
 
 
-            m_vertexEditController.DrawVertices(engine, m_sceneViewportPos, m_sceneViewportSize, vertexModeActive);
+            //m_vertexEditController.DrawVertices(engine, m_sceneViewportPos, m_sceneViewportSize, vertexModeActive);
             // edges
             m_edgeEditController.HandleInput(engine, viewportHovered, edgeModeActive, m_sceneViewportPos, m_sceneViewportSize);
             m_edgeEditController.DrawEdge(engine, m_sceneViewportPos, m_sceneViewportSize, edgeModeActive);
@@ -813,7 +814,9 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             // ############################################################################################
             // This prevents the tool confirmation click from performing another picking operation.
             
-            const bool viewportClicked = !wasTransforming && viewportHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+           // const bool viewportClicked = !wasTransforming && viewportHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left);
+            const bool viewportClicked = !wasTransforming && !editModeActive && viewportHovered && ImGui::IsMouseClicked(
+                    ImGuiMouseButton_Left);
 
             if (viewportClicked)
             {

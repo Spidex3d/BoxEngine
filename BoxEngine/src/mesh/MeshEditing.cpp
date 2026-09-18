@@ -4,6 +4,7 @@
 #include <tools\EdgeEditController.h>
 #include <algorithm>
 
+
 #include <glm\gtc\constants.hpp>
 void MeshEditing::Clear()
 {
@@ -110,6 +111,326 @@ bool MeshEditing::CreatePlane()
 		m_faces.size() == 1;
 }
 
+// ----------------------------- Floor Creation -----------------------------
+
+ // I need to implement this function to create a floor mesh with the given width, depth,
+ // and subdivisions. For now, I will return false to indicate that it is not yet implemented.
+ // call mesh.CreateFloor(20.0f, 20.0f, 20, 20);
+bool MeshEditing::CreateFloor(float width, float depth, int subdivisionsX, int subdivisionsZ)
+{
+    Clear();
+
+    // A terrain-like floor is normally smooth shaded.
+    // Change this to Flat if you want each quad to have
+    // an independent flat normal.
+    m_shadingMode = ShadingMode::Smooth;
+
+    if (width <= 0.0f ||
+        depth <= 0.0f ||
+        subdivisionsX < 1 ||
+        subdivisionsZ < 1)
+    {
+        BOX_LOG_ERROR(
+            "MeshEditing::CreateFloor: "
+            "Invalid floor dimensions or subdivisions"
+        );
+
+        return false;
+    }
+
+    const std::size_t verticesX =
+        static_cast<std::size_t>(subdivisionsX) + 1;
+
+    const std::size_t verticesZ =
+        static_cast<std::size_t>(subdivisionsZ) + 1;
+
+    const float halfWidth =
+        width * 0.5f;
+
+    const float halfDepth =
+        depth * 0.5f;
+
+    const float stepX =
+        width /
+        static_cast<float>(subdivisionsX);
+
+    const float stepZ =
+        depth /
+        static_cast<float>(subdivisionsZ);
+
+    // Convert a grid coordinate into a vertex index.
+    auto VertexIndex =
+        [verticesX](std::size_t x, std::size_t z)
+    {
+        return z * verticesX + x;
+    };
+
+    // -------------------------------------------------
+    // CREATE GRID VERTICES
+    // -------------------------------------------------
+    //
+    // The floor is centered around the origin.
+    //
+    // x goes from -width / 2 to +width / 2
+    // z goes from -depth / 2 to +depth / 2
+    // y starts at zero and can be changed later
+    // to sculpt the terrain.
+    // -------------------------------------------------
+
+    m_vertices.reserve(
+        verticesX * verticesZ
+    );
+
+    for (std::size_t z = 0;
+        z < verticesZ;
+        ++z)
+    {
+        for (std::size_t x = 0;
+            x < verticesX;
+            ++x)
+        {
+            const float worldX =
+                -halfWidth +
+                static_cast<float>(x) * stepX;
+
+            const float worldZ =
+                -halfDepth +
+                static_cast<float>(z) * stepZ;
+
+            AddVertex(
+                glm::vec3(
+                    worldX,
+                    0.0f,
+                    worldZ
+                )
+            );
+        }
+    }
+
+    // -------------------------------------------------
+    // CREATE QUAD FACES
+    // -------------------------------------------------
+    //
+    // Each cell is one editable quad.
+    //
+    // Winding:
+    //
+    // bottom-left -> top-left -> top-right -> bottom-right
+    //
+    // This matches the winding used by CreatePlane()
+    // and produces an upward-facing normal.
+    // -------------------------------------------------
+
+    m_faces.reserve(
+        static_cast<std::size_t>(subdivisionsX) *
+        static_cast<std::size_t>(subdivisionsZ)
+    );
+
+    for (int z = 0;
+        z < subdivisionsZ;
+        ++z)
+    {
+        for (int x = 0;
+            x < subdivisionsX;
+            ++x)
+        {
+            const std::size_t bottomLeft =
+                VertexIndex(
+                    static_cast<std::size_t>(x),
+                    static_cast<std::size_t>(z)
+                );
+
+            const std::size_t topLeft =
+                VertexIndex(
+                    static_cast<std::size_t>(x),
+                    static_cast<std::size_t>(z + 1)
+                );
+
+            const std::size_t topRight =
+                VertexIndex(
+                    static_cast<std::size_t>(x + 1),
+                    static_cast<std::size_t>(z + 1)
+                );
+
+            const std::size_t bottomRight =
+                VertexIndex(
+                    static_cast<std::size_t>(x + 1),
+                    static_cast<std::size_t>(z)
+                );
+
+            AddFace(
+                {
+                    bottomLeft,
+                    topLeft,
+                    topRight,
+                    bottomRight
+                }
+            );
+        }
+    }
+
+    // Build all unique edges from the quad faces.
+    // This creates shared edges between neighboring faces.
+    RebuildEdges();
+
+    BOX_LOG_INFO(
+        "Created editable floor. "
+        << "Width="
+        << width
+        << " Depth="
+        << depth
+        << " SubdivisionsX="
+        << subdivisionsX
+        << " SubdivisionsZ="
+        << subdivisionsZ
+        << " Vertices="
+        << GetVertexCount()
+        << " Edges="
+        << GetEdgeCount()
+        << " Faces="
+        << GetFaceCount()
+    );
+
+    return
+        GetVertexCount() ==
+        verticesX * verticesZ &&
+        GetFaceCount() ==
+        static_cast<std::size_t>(subdivisionsX) *
+        static_cast<std::size_t>(subdivisionsZ) &&
+        !m_edges.empty();
+}
+
+// ----------------------------- End of Floor Creation -----------------------------
+
+
+bool MeshEditing::CreateFromMeshData(const MeshData& meshData)
+{
+    Clear();
+
+    m_shadingMode = ShadingMode::Flat;
+
+
+    // -------------------------------------------------
+    // Validate source mesh
+    // -------------------------------------------------
+
+    if (meshData.vertices.empty())
+    {
+        BOX_LOG_ERROR(
+            "MeshEditing::CreateFromMeshData: "
+            "Mesh has no vertices"
+        );
+
+        return false;
+    }
+
+
+    if (meshData.faces.empty())
+    {
+        BOX_LOG_ERROR(
+            "MeshEditing::CreateFromMeshData: "
+            "Mesh has no logical faces"
+        );
+
+        return false;
+    }
+
+
+    // -------------------------------------------------
+    // COPY LOGICAL VERTICES
+    // -------------------------------------------------
+
+    m_vertices.reserve(
+        meshData.vertices.size()
+    );
+
+
+    for (const MeshVertex& vertex :
+        meshData.vertices)
+    {
+        AddVertex(
+            vertex.position
+        );
+    }
+
+
+    // -------------------------------------------------
+    // COPY LOGICAL FACES
+    // -------------------------------------------------
+
+    m_faces.reserve(
+        meshData.faces.size()
+    );
+
+
+    for (const LogicalFace& sourceFace : meshData.faces)
+    {
+        if (sourceFace.vertexIndices.size() < 3)
+        {
+            continue;
+        }
+
+
+        bool validFace = true;
+
+
+        for (const std::size_t vertexIndex :
+        sourceFace.vertexIndices)
+        {
+            if (vertexIndex >=
+                m_vertices.size())
+            {
+                validFace = false;
+                break;
+            }
+        }
+
+
+        if (!validFace)
+        {
+            BOX_LOG_ERROR(
+                "MeshEditing::CreateFromMeshData: "
+                "Face contains invalid vertex index"
+            );
+
+            Clear();
+
+            return false;
+        }
+
+
+        AddFace(
+            sourceFace.vertexIndices
+        );
+    }
+
+
+    // -------------------------------------------------
+    // BUILD EDITABLE EDGES
+    // -------------------------------------------------
+
+    RebuildEdges();
+
+
+    BOX_LOG_INFO(
+        "Created editable mesh from MeshData. "
+        << "Vertices="
+        << GetVertexCount()
+        << " Edges="
+        << GetEdgeCount()
+        << " Faces="
+        << GetFaceCount()
+    );
+
+
+    return
+        !m_vertices.empty() &&
+        !m_edges.empty() &&
+        !m_faces.empty();
+}
+
+
+ 
 
 
 bool MeshEditing::CreatePyramid()

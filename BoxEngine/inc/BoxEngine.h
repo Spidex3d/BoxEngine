@@ -50,6 +50,8 @@ public:
     bool AddEditableCube(const glm::vec3& position = glm::vec3(0.0f));
 
     bool AddEditablePlane(const glm::vec3& position = glm::vec3(0.0f));
+	// my floor function with subdivisions
+	bool AddEditableFloor(const glm::vec3& position = glm::vec3(0.0f), float width = 10.0f, float depth = 10.0f, int subdivisionsX = 10, int subdivisionsZ = 10);
 
     bool AddEditableSphere(const glm::vec3& position);
 
