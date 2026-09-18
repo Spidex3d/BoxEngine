@@ -320,8 +320,35 @@ bool BoxEngine::AddEditableFloor(const glm::vec3& position, float width, float d
 	return true;
 
 }
+bool BoxEngine::AddEditableRock(const glm::vec3& position)
+{
+    const int entityID = m_nextEntityID++;
+
+    const std::string name = "Rock " + std::to_string(entityID);
+
+    auto rock = std::make_unique<Entity>(entityID, name);
 
 
+    rock->GetMaterial().SetBaseColorTexture(m_defaultTexture.GetID(), m_defaultTexturePath);
+
+    // Set the base color texture of the rock's material to the m_defaultTexture checkerboard texture
+    Material& material = rock->GetMaterial();
+
+    material.SetUseBaseColorTexture(true);
+
+    rock->SetPosition(position);
+
+    if (!rock->CreateRock())
+    {
+        return false;
+    }
+
+    m_entities.push_back(std::move(rock));
+
+    return true;
+}
+
+// ------------------------------ End Ecosystem Meshes ------------------------------
 
 bool BoxEngine::AddEditableSphere(const glm::vec3& position)
 {

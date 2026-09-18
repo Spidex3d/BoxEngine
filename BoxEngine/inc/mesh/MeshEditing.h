@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <vector>   
 #include "MeshData.h"
+#include <cstdint>
 
 // this will be dedicated to editing of the mesh data, such as adding vertices, edges, faces, and other mesh editing operations.
 struct EditVertex
@@ -40,7 +41,6 @@ public:
 
     bool CreateCube();
     bool CreatePlane();
-	bool CreateFloor(float width, float depth, int subdivisionsX, int subdivisionsZ);
 
     bool CreateFromMeshData(const MeshData& meshData);
 
@@ -51,6 +51,11 @@ public:
     bool CreateCylinder(int sectors = 32, int stacks = 1, float radius = 0.5f, float height = 1.0f);
 	bool CreateCone(int sectors = 32, float radius = 0.5f, float height = 1.0f);
 	bool CreateTorus(int sides = 16, int rings = 32, float innerRadius = 0.2f, float outerRadius = 0.5f);
+
+	// ----------------------------- Ecosystem Mesh Creation -----------------------------
+	bool CreateFloor(float width, float depth, int subdivisionsX, int subdivisionsZ);
+    bool CreateRock(int rockSectors, int rockStacks, float rockRadius, float rockRoughness, std::uint32_t rockSeed);
+
 
 
     std::size_t GetVertexCount() const;

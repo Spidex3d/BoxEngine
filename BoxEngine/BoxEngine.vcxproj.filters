@@ -87,6 +87,12 @@
     <ClInclude Include="inc\material\MaterialLibrary.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="inc\mesh\ecosystem\RockGenerator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\mesh\ecosystem\ScatterSystem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\BoxEngine.cpp">
@@ -153,6 +159,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\material\MaterialLibrary.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mesh\ecosystem\RockGenerator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mesh\ecosystem\ScatterSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

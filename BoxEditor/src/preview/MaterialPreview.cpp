@@ -56,25 +56,6 @@ bool MaterialPreview::Initialize(
         return false;
     }
 
-    /*m_previewSphere =
-        std::make_unique<Entity>(
-            -1000,
-            "Material Preview Sphere"
-        );
-
-    if (!m_previewSphere->CreateSphere(
-        48,
-        24))
-    {
-        BOX_LOG_ERROR(
-            "MaterialPreview failed to create sphere"
-        );
-
-        m_previewSphere.reset();
-        m_shader.reset();
-
-        return false;
-    }*/
 
     m_previewSphere =
         std::make_unique<Entity>(

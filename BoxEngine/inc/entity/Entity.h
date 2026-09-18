@@ -23,6 +23,7 @@ enum class EntityPrimitiveType
     Cube,
     Plane,
 	Floor,
+    Rock,   
     Sphere,
     Cylinder,
     Pyramid
@@ -47,8 +48,6 @@ public:
 	bool CreateCube();  // Create a cube from the new editable mesh data, buffers for rendering.
 	bool CreatePlane(); // Create a Plane from the new editable mesh data, buffers for rendering.
 
-    // Create a Floor from the new editable mesh data, buffers for rendering.
-	bool CreateFloor(float width, float depth, int subdivisionsX, int subdivisionsZ); 
 
     bool CreateSphere(int sectors = 32, int stacks = 16);
 	// bool CreateIcoSphere(int recursionLevel = 2);
@@ -56,6 +55,13 @@ public:
 	// bool CreateCone(int sectors = 32, float radius = 0.5f, float height = 1.0f);
 	// bool CreateTorus(int sides = 16, int rings = 32, float innerRadius = 0.2f, float outerRadius = 0.5f);
      bool CreatePyramid();
+
+	 // ------------------------------------------ Ecosystem Mesh Creation -----------------------------
+    // Create a Floor from the new editable mesh data, buffers for rendering.
+	bool CreateFloor(float width, float depth, int subdivisionsX, int subdivisionsZ); 
+	bool CreateRock(int rockSectors = 32, int rockStacks = 16,
+        float rockRadius = 0.5f, float rockRoughness = 0.2f, std::uint32_t rockSeed = 42);
+
 
      // this just gives us a primitive type
      EntityPrimitiveType GetPrimitiveType() const

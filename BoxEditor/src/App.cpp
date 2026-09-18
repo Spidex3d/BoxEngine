@@ -473,7 +473,16 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
 		engine.AddEditablePyramid(glm::vec3(0.0f, -0.5f, 0.0f)); // -0.5f on y to sit it on the ground plane
 
         break;
+        // ---------------------------------------------------------
+    // Ecosystem - Rock
+    // ---------------------------------------------------------
+    case ViewportAction::AddEditableRock:
 
+        engine.AddEditableRock(
+            glm::vec3(0.0f)
+        );
+
+        break;
     case ViewportAction::AddMaterial:
         
         if (m_materialEditorPanel)
@@ -520,6 +529,9 @@ void App::HandleEcoSystemAction(
 
         break;
     }
+	case EcoSystemAction::AddRocks:
+		m_engine->AddEditableRock(glm::vec3(0.0f));
+		break;  
 
     case EcoSystemAction::None:
     default:

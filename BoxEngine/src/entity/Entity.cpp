@@ -466,6 +466,8 @@ bool Entity::CreatePlane()
 
 }
 
+// ----------------------------- Ecosystem Mesh Creation -----------------------------
+
 bool Entity::CreateFloor(float width, float depth, int subdivisionsX, int subdivisionsZ)
 {
 	Destroy();
@@ -512,6 +514,83 @@ bool Entity::CreateFloor(float width, float depth, int subdivisionsX, int subdiv
 
     return true;
 }
+
+bool Entity::CreateRock(
+    int rockSectors,
+    int rockStacks,
+    float rockRadius,
+    float rockRoughness,
+    std::uint32_t rockSeed)
+{
+    Destroy();
+
+    // ---------------------------------------------
+    // Create the native editable rock topology.
+    // ---------------------------------------------
+    if (!m_editableMesh.CreateRock(
+        rockSectors,
+        rockStacks,
+        rockRadius,
+        rockRoughness,
+        rockSeed))
+    {
+        BOX_LOG_ERROR(
+            "Entity::CreateRock: "
+            "Failed to create editable rock"
+        );
+
+        return false;
+    }
+
+    // ---------------------------------------------
+    // Keep a copy of the original editable mesh.
+    // This is important for your modifier system.
+    // ---------------------------------------------
+    m_baseEditableMesh = m_editableMesh;
+
+    // ---------------------------------------------
+    // Build the render representation from the
+    // editable topology.
+    // ---------------------------------------------
+    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+    {
+        BOX_LOG_ERROR(
+            "Entity::CreateRock: "
+            "Failed to build render mesh"
+        );
+
+        return false;
+    }
+
+    // ---------------------------------------------
+    // Create OpenGL VAO/VBO/EBO.
+    // ---------------------------------------------
+    if (!CreateBuffersFromMeshData())
+    {
+        BOX_LOG_ERROR(
+            "Entity::CreateRock: "
+            "Failed to create GPU buffers"
+        );
+
+        return false;
+    }
+
+    // ---------------------------------------------
+    // Temporary rock bounds.
+    //
+    // Once we start applying procedural distortion
+    // we can calculate this from the actual vertices.
+    // ---------------------------------------------
+    m_aabbMin =
+        glm::vec3(-rockRadius);
+
+    m_aabbMax =
+        glm::vec3(rockRadius);
+
+    return true;
+}
+
+// ----------------------------- End Rock Creation -----------------------------
 
 
 bool Entity::CreateCylinder(int sectors, int stacks, float radius, float height)

@@ -639,6 +639,11 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                 action = ViewportAction::Ecosystem;
                
             }
+            if (ImGui::MenuItem("Add Rock"))
+            {
+                action = ViewportAction::AddEditableRock;
+
+            }
                         
             ImGui::EndMenu();
         }

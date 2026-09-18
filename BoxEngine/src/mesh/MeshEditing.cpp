@@ -3,9 +3,46 @@
 #include <cmath>
 #include <tools\EdgeEditController.h>
 #include <algorithm>
-
-
+#include <random>
 #include <glm\gtc\constants.hpp>
+
+namespace
+{
+    float RockNoise(const glm::vec3& p, std::uint32_t seed)
+    {
+        const float seedValue = static_cast<float>(seed) * 0.0137f;
+
+        const float noise1 =
+            std::sin(
+                p.x * 2.3f +
+                p.y * 1.7f +
+                p.z * 2.9f +
+                seedValue
+            );
+
+        const float noise2 =
+            std::sin(
+                p.x * 4.1f -
+                p.y * 3.3f +
+                p.z * 3.7f +
+                seedValue * 1.37f
+            );
+
+        const float noise3 =
+            std::sin(
+                p.x * 7.3f +
+                p.y * 5.1f -
+                p.z * 6.7f +
+                seedValue * 2.11f
+            );
+
+        return
+            noise1 * 0.55f +
+            noise2 * 0.30f +
+            noise3 * 0.15f;
+    }
+}
+
 void MeshEditing::Clear()
 {
     m_vertices.clear();
@@ -111,8 +148,9 @@ bool MeshEditing::CreatePlane()
 		m_faces.size() == 1;
 }
 
+// ----------------------------- Ecosystem Creation -------------------------
 // ----------------------------- Floor Creation -----------------------------
-
+// --------------------------------------------------------------------------
  // I need to implement this function to create a floor mesh with the given width, depth,
  // and subdivisions. For now, I will return false to indicate that it is not yet implemented.
  // call mesh.CreateFloor(20.0f, 20.0f, 20, 20);
@@ -123,7 +161,7 @@ bool MeshEditing::CreateFloor(float width, float depth, int subdivisionsX, int s
     // A terrain-like floor is normally smooth shaded.
     // Change this to Flat if you want each quad to have
     // an independent flat normal.
-    m_shadingMode = ShadingMode::Smooth;
+    m_shadingMode = ShadingMode::Flat;
 
     if (width <= 0.0f ||
         depth <= 0.0f ||
@@ -300,7 +338,355 @@ bool MeshEditing::CreateFloor(float width, float depth, int subdivisionsX, int s
         !m_edges.empty();
 }
 
-// ----------------------------- End of Floor Creation -----------------------------
+// ----------------------------- Rock Creation -----------------------------
+bool MeshEditing::CreateRock(int rockSectors, int rockStacks, float rockRadius, float rockRoughness, std::uint32_t rockSeed)
+{
+    Clear();
+
+    //-------------------------------------------------
+    // Set default shading mode to smooth for rocks.
+    // -------------------------------------------------
+    m_shadingMode = ShadingMode::Flat;
+
+    if (rockSectors < 3)
+    {
+        rockSectors = 3;
+    }
+
+    if (rockStacks < 2)
+    {
+        rockStacks = 2;
+    }
+
+
+   // constexpr float rockRadius = 0.5f;
+
+    std::mt19937 generator(rockSeed);
+    
+
+    std::uniform_real_distribution<float> randomOffset(-rockRoughness, rockRoughness);
+
+
+    //m_primitiveType = EntityPrimitiveType::Rock;
+    
+    // =================================================
+    // TOP POLE
+    // =================================================
+
+    glm::vec3 topPosition(
+        0.0f,
+        rockRadius,
+        0.0f
+    );
+
+    topPosition.y *= 0.82f;
+
+    const std::size_t topPole =
+        AddVertex(topPosition);
+
+
+    // =================================================
+    // INTERMEDIATE RINGS
+    //
+    // We deliberately do NOT duplicate the UV seam.
+    //
+    // This is modelling topology rather than
+    // render topology, so the first and last vertex
+    // of each ring are connected using modulo.
+    // =================================================
+
+    for (int stack = 1;
+        stack < rockStacks;
+        ++stack)
+    {
+        const float stackAngle =
+            glm::half_pi<float>() -
+            static_cast<float>(stack) *
+            glm::pi<float>() /
+            static_cast<float>(rockStacks);
+
+
+        const float ringRadius =
+            rockRadius *
+            std::cos(stackAngle);
+
+
+        const float y =
+            rockRadius *
+            std::sin(stackAngle);
+
+
+        for (int sector = 0;
+            sector < rockSectors;
+            ++sector)
+        {
+            const float sectorAngle =
+                static_cast<float>(sector) *
+                glm::two_pi<float>() /
+                static_cast<float>(rockSectors);
+
+
+            glm::vec3 position(
+                ringRadius * std::cos(sectorAngle),
+                y,
+                ringRadius * std::sin(sectorAngle)
+            );
+            // ----------------------------------------------------
+            // Smooth procedural rock deformation.
+            // ----------------------------------------------------
+
+            const glm::vec3 normalisedPosition =
+                glm::normalize(position);
+
+            const float noise =
+                RockNoise(
+                    normalisedPosition,
+                    rockSeed
+                );
+
+            const float distortion =
+                1.0f +
+                noise * rockRoughness;
+
+            position *= distortion;
+
+
+            // ----------------------------------------------------
+            // Give the rock broader, less spherical proportions.
+            // ----------------------------------------------------
+
+            position.x *= 1.10f;
+            position.y *= 0.82f;
+            position.z *= 0.95f;
+
+
+            // ----------------------------------------------------
+            // Flatten the underside slightly.
+            // This will eventually help rocks sit naturally on
+            // Floor/Terrain when Scatter arrives.
+            // ----------------------------------------------------
+
+            const float bottom =
+                -rockRadius * 0.65f;
+
+            if (position.y < bottom)
+            {
+                position.y =
+                    glm::mix(
+                        position.y,
+                        bottom,
+                        0.65f
+                    );
+            }
+
+            AddVertex(position);
+
+        }
+    }
+
+
+    // =================================================
+    // BOTTOM POLE
+    // =================================================
+
+    glm::vec3 bottomPosition(
+        0.0f,
+        -rockRadius * 0.65f,
+        0.0f
+    );
+
+    const std::size_t bottomPole =
+        AddVertex(bottomPosition);
+
+
+    //// =================================================
+    //// TOP CAP
+    //// =================================================
+    const std::size_t firstRing =
+        1;
+
+
+    for (int sector = 0;
+        sector < rockSectors;
+        ++sector)
+    {
+        const int next =
+            (sector + 1) %
+            rockSectors;
+
+
+        const std::size_t currentVertex =
+            firstRing +
+            static_cast<std::size_t>(
+                sector
+                );
+
+
+        const std::size_t nextVertex =
+            firstRing +
+            static_cast<std::size_t>(
+                next
+                );
+
+
+        AddFace(
+            {
+                topPole,
+                nextVertex,
+                currentVertex
+            }
+        );
+    }
+
+
+    // =================================================
+    // MIDDLE QUADS
+    // =================================================
+
+    const int ringCount =
+        rockStacks - 1;
+
+
+    for (int ring = 0;
+        ring < ringCount - 1;
+        ++ring)
+    {
+        const std::size_t upperRing =
+            1 +
+            static_cast<std::size_t>(
+                ring * rockSectors
+                );
+
+
+        const std::size_t lowerRing =
+            upperRing +
+            static_cast<std::size_t>(
+                rockSectors
+                );
+
+
+        for (int sector = 0;
+            sector < rockSectors;
+            ++sector)
+        {
+            const int next =
+                (sector + 1) %
+                rockSectors;
+
+
+            const std::size_t upperA =
+                upperRing +
+                static_cast<std::size_t>(
+                    sector
+                    );
+
+
+            const std::size_t upperB =
+                upperRing +
+                static_cast<std::size_t>(
+                    next
+                    );
+
+
+            const std::size_t lowerA =
+                lowerRing +
+                static_cast<std::size_t>(
+                    sector
+                    );
+
+
+            const std::size_t lowerB =
+                lowerRing +
+                static_cast<std::size_t>(
+                    next
+                    );
+
+
+            AddFace(
+                {
+                    upperA,
+                    upperB,
+                    lowerB,
+                    lowerA
+                }
+            );
+        }
+    }
+
+
+    // =================================================
+    // BOTTOM CAP
+    // =================================================
+
+    const std::size_t lastRing =
+        1 +
+        static_cast<std::size_t>(
+            (ringCount - 1) *
+            rockSectors
+            );
+
+
+    for (int sector = 0;
+        sector < rockSectors;
+        ++sector)
+    {
+        const int next =
+            (sector + 1) %
+            rockSectors;
+
+
+        const std::size_t currentVertex =
+            lastRing +
+            static_cast<std::size_t>(
+                sector
+                );
+
+
+        const std::size_t nextVertex =
+            lastRing +
+            static_cast<std::size_t>(
+                next
+                );
+
+
+        AddFace(
+            {
+                currentVertex,
+                nextVertex,
+                bottomPole
+            }
+        );
+    }
+
+
+    // =================================================
+    // BUILD EDITABLE EDGES
+    // =================================================
+
+    RebuildEdges();
+
+
+    BOX_LOG_INFO(
+        "Created editable rock. "
+        << "Sectors=" << rockSectors
+        << " Stacks=" << rockStacks
+        << " Radius=" << rockRadius
+        << " Roughness=" << rockRoughness
+        << " Seed=" << rockSeed
+        << " Vertices=" << GetVertexCount()
+        << " Edges=" << GetEdgeCount()
+        << " Faces=" << GetFaceCount()
+    );
+
+
+    return
+        !m_vertices.empty() &&
+        !m_edges.empty() &&
+        !m_faces.empty();
+}
+
+
+// ----------------------------- End of Ecosystem Creation -----------------------------
 
 
 bool MeshEditing::CreateFromMeshData(const MeshData& meshData)
@@ -778,7 +1164,7 @@ bool MeshEditing::CreateSphere(
         !m_edges.empty() &&
         !m_faces.empty();
 }
-
+// ############################################## Mesh Editing create cylinder  #########################################
 bool MeshEditing::CreateCylinder(
     int sectors,
     int stacks,
