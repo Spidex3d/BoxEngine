@@ -37,6 +37,27 @@ public:
 	//EcoSystemAction Draw(BoxEngine& engine, Entity& entity);
 	EcoSystemAction Draw(BoxEngine& engine);
 	
+	// -------------------------------- floor generator ----------------
+	float GetFloorWidth() const
+	{
+		return m_floorWidth;
+	}
+
+	float GetFloorDepth() const
+	{
+		return m_floorDepth;
+	}
+
+	int GetFloorSubdivisionsX() const
+	{
+		return m_floorSubdivisionsX;
+	}
+
+	int GetFloorSubdivisionsZ() const
+	{
+		return m_floorSubdivisionsZ;
+	}
+	// ------------------------------ floor generator End ----------------
 
 	// Rocks, floor, water, terrain, grass, plants & tree generation
 

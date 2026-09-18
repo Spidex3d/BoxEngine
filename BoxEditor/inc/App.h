@@ -10,6 +10,7 @@
 #include <UI/EditorIcons.h>
 #include <fileManager\mbxManager.h> 
 #include <miniBoxLog.h>
+#include "panels\EcosystemPanel.h"
 
 
 class BoxWindow;
@@ -31,22 +32,6 @@ public:
 	bool Init(); // Initialize the window and ImGui context
 	int Run();        // set the main loop
 	void Shutdown();
-
-	/*float GetFloorWidth() const { return m_floorWidth; }
-	float GetFloorDepth() const { return m_floorDepth; }
-
-	int GetFloorSubdivisionsX() const
-	{
-		return m_floorSubdivisionsX;
-	}
-
-	int GetFloorSubdivisionsZ() const
-	{
-		return m_floorSubdivisionsZ;
-	}*/
-
-
-
 
 private:
 	float m_deltaTime = 0.0f;
@@ -80,6 +65,10 @@ private:
 	std::unique_ptr<MaterialDisplayPanel> m_materialDisplayPanel; // Material Display panel for ImGui
 
 	std::unique_ptr<HelpPanel> m_helpPanel; // Help panel for ImGui
+
+	// ------------------------------- Ecosystem Panel -------------------------------
+
+	void HandleEcoSystemAction(EcoSystemAction action);
 
 private: 
 

@@ -246,7 +246,7 @@ int App::Run()
             const EcoSystemAction ecoAction =
                 m_ecosystemPanel->Draw(*m_engine);
 
-            // We'll handle ecoAction next.
+            HandleEcoSystemAction(ecoAction);
         }
         // ------------------------------ End Ecosystem Panel ----------------------------------
 
@@ -497,6 +497,37 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
         break;
     }
 }
+
+void App::HandleEcoSystemAction(
+    EcoSystemAction action)
+{
+    if (!m_engine || !m_ecosystemPanel)
+    {
+        return;
+    }
+
+    switch (action)
+    {
+    case EcoSystemAction::AddFloor:
+    {
+        m_engine->AddEditableFloor(
+            glm::vec3(0.0f),
+            m_ecosystemPanel->GetFloorWidth(),
+            m_ecosystemPanel->GetFloorDepth(),
+            m_ecosystemPanel->GetFloorSubdivisionsX(),
+            m_ecosystemPanel->GetFloorSubdivisionsZ()
+        );
+
+        break;
+    }
+
+    case EcoSystemAction::None:
+    default:
+        break;
+    }
+}
+
+
 
 void App::HandleInput()
 {

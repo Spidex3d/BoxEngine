@@ -1,5 +1,4 @@
 #include "panels/EcosystemPanel.h"
-//#include <mesh/MeshData.h>
 #include <BoxEngine.h>
 #include <imgui/imgui.h>
 #include <miniBoxLog.h>
@@ -35,7 +34,7 @@ bool EcosystemPanel::IsOpen() const
 // ----------------------------------------------------------------
 // My Ecosystem Panel Draw Function
 // ----------------------------------------------------------------
-//EcoSystemAction EcosystemPanel::Draw(BoxEngine& engine, Entity& entity)
+
 EcoSystemAction EcosystemPanel::Draw(BoxEngine& engine)
 {
 
@@ -172,12 +171,10 @@ EcoSystemAction EcosystemPanel::Draw(BoxEngine& engine)
 
 
             // =============================================
-            // GENERATE
+            // GENERATE BUTTON
             // =============================================
 
-            if (ImGui::Button(
-                "Generate Floor",
-                ImVec2(140.0f, 32.0f)))
+            if (ImGui::Button("Generate Floor", ImVec2(140.0f, 32.0f)))
             {
                 Ecoaction = EcoSystemAction::AddFloor;
             }
