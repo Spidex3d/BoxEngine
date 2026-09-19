@@ -1,0 +1,248 @@
+# BoxEditor Scene
+version 0 1
+
+entities 4
+
+entity
+id 0
+name Red cube
+primitive 1
+visible 1
+position 0.000000 0.000000 -2.540000
+rotation 0.000000 0.000000 0.000000
+scale 1.000000 1.000000 1.000000
+shading 0
+vertices 8
+v -0.500000 -0.500000 0.500000
+v 0.500000 -0.500000 0.500000
+v 0.500000 0.500000 0.500000
+v -0.500000 0.500000 0.500000
+v -0.500000 -0.500000 -0.500000
+v 0.500000 -0.500000 -0.500000
+v 0.500000 0.500000 -0.500000
+v -0.500000 0.500000 -0.500000
+faces 6
+f 4 0 1 2 3 m 1
+f 4 5 4 7 6 m 1
+f 4 4 0 3 7 m 0
+f 4 1 5 6 2 m 1
+f 4 3 2 6 7 m 1
+f 4 4 5 1 0 m 0
+loose_edges 0
+materials 2
+material 0
+material_name Default
+material_type 0
+base_color 1.000000 1.000000 1.000000 1.000000
+metallic 0.000000
+roughness 0.500000
+alpha 1.000000
+emission_color 0.000000 0.000000 0.000000
+emission_strength 0.000000
+transmission 0.000000
+ior 1.500000
+use_base_texture 0
+base_texture 
+use_normal_texture 0
+normal_texture 
+normal_strength 1.000000
+endmaterial
+material 1
+material_name Red Panel
+material_type 0
+base_color 1.000000 0.000000 0.000000 1.000000
+metallic 0.000000
+roughness 0.500000
+alpha 1.000000
+emission_color 0.000000 0.000000 0.000000
+emission_strength 0.000000
+transmission 0.000000
+ior 1.500000
+use_base_texture 0
+base_texture 
+use_normal_texture 0
+normal_texture 
+normal_strength 1.000000
+endmaterial
+endentity
+
+entity
+id 1
+name Blue Cube
+primitive 1
+visible 1
+position -2.550000 0.000000 0.000000
+rotation 0.000000 0.000000 0.000000
+scale 1.000000 1.000000 1.000000
+shading 1
+vertices 8
+v -0.500000 -0.500000 0.500000
+v 0.500000 -0.500000 0.500000
+v 0.500000 0.500000 0.500000
+v -0.500000 0.500000 0.500000
+v -0.500000 -0.500000 -0.500000
+v 0.500000 -0.500000 -0.500000
+v 0.500000 0.500000 -0.500000
+v -0.500000 0.500000 -0.500000
+faces 6
+f 4 0 1 2 3 m 0
+f 4 5 4 7 6 m 0
+f 4 4 0 3 7 m 0
+f 4 1 5 6 2 m 0
+f 4 3 2 6 7 m 0
+f 4 4 5 1 0 m 0
+loose_edges 0
+materials 2
+material 0
+material_name Blue
+material_type 0
+base_color 0.029638 0.077500 0.953368 1.000000
+metallic 0.000000
+roughness 0.500000
+alpha 1.000000
+emission_color 0.000000 0.000000 0.000000
+emission_strength 0.000000
+transmission 0.000000
+ior 1.500000
+use_base_texture 0
+base_texture 
+use_normal_texture 0
+normal_texture 
+normal_strength 1.000000
+endmaterial
+material 1
+material_name Material 1
+material_type 0
+base_color 1.000000 1.000000 1.000000 1.000000
+metallic 0.000000
+roughness 0.500000
+alpha 1.000000
+emission_color 0.000000 0.000000 0.000000
+emission_strength 0.000000
+transmission 0.000000
+ior 1.500000
+use_base_texture 0
+base_texture 
+use_normal_texture 0
+normal_texture 
+normal_strength 1.000000
+endmaterial
+endentity
+
+entity
+id 2
+name Rotated
+primitive 1
+visible 1
+position 0.000000 0.000000 1.960000
+rotation 0.000000 45.000000 0.000000
+scale 1.000000 1.000000 1.000000
+shading 0
+vertices 8
+v -0.500000 -0.500000 0.500000
+v 0.500000 -0.500000 0.500000
+v 0.500000 0.500000 0.500000
+v -0.500000 0.500000 0.500000
+v -0.500000 -0.500000 -0.500000
+v 0.500000 -0.500000 -0.500000
+v 0.500000 0.500000 -0.500000
+v -0.500000 0.500000 -0.500000
+faces 6
+f 4 0 1 2 3 m 0
+f 4 5 4 7 6 m 0
+f 4 4 0 3 7 m 0
+f 4 1 5 6 2 m 0
+f 4 3 2 6 7 m 1
+f 4 4 5 1 0 m 0
+loose_edges 0
+materials 2
+material 0
+material_name Default
+material_type 0
+base_color 1.000000 1.000000 1.000000 1.000000
+metallic 0.000000
+roughness 0.500000
+alpha 1.000000
+emission_color 0.000000 0.000000 0.000000
+emission_strength 0.000000
+transmission 0.000000
+ior 1.500000
+use_base_texture 0
+base_texture 
+use_normal_texture 0
+normal_texture 
+normal_strength 1.000000
+endmaterial
+material 1
+material_name Green top
+material_type 0
+base_color 0.117560 1.000000 0.015544 1.000000
+metallic 0.000000
+roughness 0.500000
+alpha 1.000000
+emission_color 0.000000 0.000000 0.000000
+emission_strength 0.000000
+transmission 0.000000
+ior 1.500000
+use_base_texture 0
+base_texture 
+use_normal_texture 0
+normal_texture 
+normal_strength 1.000000
+endmaterial
+endentity
+
+entity
+id 3
+name Plane Image
+primitive 2
+visible 1
+position 0.000000 -0.480000 0.000000
+rotation 0.000000 0.000000 0.000000
+scale 1.000000 1.000000 1.000000
+shading 0
+vertices 4
+v -0.500000 0.000000 -0.500000
+v 0.500000 0.000000 -0.500000
+v 0.500000 0.000000 0.500000
+v -0.500000 0.000000 0.500000
+faces 1
+f 4 0 3 2 1 m 1
+loose_edges 0
+materials 2
+material 0
+material_name Default
+material_type 0
+base_color 1.000000 1.000000 1.000000 1.000000
+metallic 0.000000
+roughness 0.500000
+alpha 1.000000
+emission_color 0.000000 0.000000 0.000000
+emission_strength 0.000000
+transmission 0.000000
+ior 1.500000
+use_base_texture 0
+base_texture 
+use_normal_texture 0
+normal_texture 
+normal_strength 1.000000
+endmaterial
+material 1
+material_name Image
+material_type 0
+base_color 1.000000 1.000000 1.000000 1.000000
+metallic 0.210000
+roughness 0.500000
+alpha 1.000000
+emission_color 0.000000 0.000000 0.000000
+emission_strength 0.000000
+transmission 0.000000
+ior 1.500000
+use_base_texture 1
+base_texture C:\Users\marty\Desktop\BoxEditor\BoxEngine\BoxEditor\assets\model\crate.jpg
+use_normal_texture 1
+normal_texture C:\Users\marty\Desktop\BoxEditor\BoxEngine\BoxEditor\assets\textures\texture\crate_norm.jpg
+normal_strength 1.000000
+endmaterial
+endentity
+

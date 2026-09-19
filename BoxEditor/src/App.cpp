@@ -274,6 +274,16 @@ void App::HandleMenuAction(
 	
     switch (action)
     {
+
+	case MenuAction::SaveScene:
+        if (m_engine)
+        {
+            m_engine->SaveScene("assets/scenes/test_scene.mbs"
+            );
+        }
+		BOX_LOG_INFO("New Scene menu action triggered");
+		break;
+
 		// ################################## save and load mbx actions #####################################################
     case MenuAction::Exportmbx:
         {

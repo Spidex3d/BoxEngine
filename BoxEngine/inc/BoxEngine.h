@@ -101,8 +101,14 @@ public:
     {
         return m_lighting;
     }
+	// ----------------------------------------
+	// Serialization
+	// ----------------------------------------
+    
+    bool SaveScene(const std::filesystem::path& filePath);
 
 
+	// ---------------------- End Serialization ----------------------
 
 private:
     void RenderSelectedEntityOutline(const glm::mat4& view, const glm::mat4& projection); // RenderPreview the outline of the selected entity

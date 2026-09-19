@@ -114,6 +114,9 @@
     <ClCompile Include="src\panels\EcosystemPanel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\fileManager\SceneSerializer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\App.h">
@@ -222,6 +225,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="inc\panels\EcosystemPanel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\fileManager\SceneSerializer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

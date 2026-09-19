@@ -22,6 +22,7 @@ MenuAction MainMenuBar::DrawMainMenu()
 
             if (ImGui::MenuItem("Save Scene"))
             {
+				action = MenuAction::SaveScene;
             }
 
             if (ImGui::MenuItem("Save Scene As"))

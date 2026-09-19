@@ -18,8 +18,14 @@
 
 #include <glm/gtc/matrix_inverse.hpp>
 
+
+
+#include <fileManager/SceneSerializer.h>
+
 BoxEngine::BoxEngine() = default;
 BoxEngine::~BoxEngine() = default;
+
+
 
 bool BoxEngine::Initialize()
 {
@@ -1044,4 +1050,14 @@ void BoxEngine::RenderSelectedEntityOutline(
     glCullFace(GL_BACK);
     glDepthMask(GL_TRUE);
     
+}
+
+bool BoxEngine::SaveScene(const std::filesystem::path& filePath)
+{
+    SceneSerializer serializer;
+
+    return serializer.SerializeScene(
+        filePath,
+        m_entities
+    );
 }
