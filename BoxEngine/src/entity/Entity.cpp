@@ -466,6 +466,66 @@ bool Entity::CreatePlane()
 
 }
 
+bool Entity::CreateIcoSphere(int recursionLevel)
+{
+	// Create an icosphere using the editable mesh system, then build the render mesh and create OpenGL buffers.
+    Destroy();
+
+	if (!m_editableMesh.CreateIcoSphere(recursionLevel))
+	{
+		return false;
+	}
+	m_primitiveType = EntityPrimitiveType::IcoSphere;
+    
+    m_baseEditableMesh = m_editableMesh;
+
+    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+    {
+        return false;
+    }
+
+    if (!CreateBuffersFromMeshData())
+    {
+        return false;
+    }
+
+    m_aabbMin = glm::vec3(-0.5f);
+
+    m_aabbMax = glm::vec3(0.5f);
+
+    return true;
+}
+
+bool Entity::UpdateIcoSphere()
+{
+    Destroy();
+
+    if (!m_editableMesh.CreateIcoSphere(m_icoSphereRecursionLevel))
+    {
+        return false;
+    }
+
+    m_primitiveType = EntityPrimitiveType::IcoSphere;
+
+    m_baseEditableMesh = m_editableMesh;
+
+    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+    {
+        return false;
+    }
+
+    if (!CreateBuffersFromMeshData())
+    {
+        return false;
+    }
+
+    m_aabbMin = glm::vec3(-0.5f);
+
+    m_aabbMax = glm::vec3(0.5f);
+
+    return true;
+}
+
 // ----------------------------- Ecosystem Mesh Creation -----------------------------
 
 bool Entity::CreateFloor(float width, float depth, int subdivisionsX, int subdivisionsZ)

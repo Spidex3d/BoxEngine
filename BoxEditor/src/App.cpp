@@ -457,8 +457,6 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
        
     }
 
-
-
     case ViewportAction::AddEditableCube:
 
         engine.AddEditableCube();
@@ -469,11 +467,15 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
         engine.AddEditablePlane();
 
         break;
-
 	
 	case ViewportAction::AddEditableSphere:
 		engine.AddEditableSphere(glm::vec3(0.0f));
 		break;
+
+	case ViewportAction::AddEditableIcoSphere:
+		engine.AddEditableIcoSphere(glm::vec3(0.0f, 0.0f, 0.0f), 2); // 2 is the recursion level for the IcoSphere
+		break;
+
     case ViewportAction::AddEditableCylinder:
         engine.AddEditableCylinder(glm::vec3(0.0f, 0.0f, 0.0f)); 
 		break;

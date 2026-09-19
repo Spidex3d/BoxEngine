@@ -42,9 +42,7 @@ bool BoxEngine::Initialize()
         );
 
     m_sceneShader = std::make_unique<Shader>(
-        cubeVertexShaderPath,
-        cubeFragmentShaderPath
-    );
+        cubeVertexShaderPath, cubeFragmentShaderPath);
 
     if (!m_sceneShader ||
         m_sceneShader->ID() == 0)
@@ -364,6 +362,38 @@ bool BoxEngine::AddEditableRock(const glm::vec3& position, float radius, int sub
 }
 
 // ------------------------------ End Ecosystem Meshes ------------------------------
+
+bool BoxEngine::AddEditableIcoSphere(const glm::vec3& position, int recursionLevel)
+{
+
+	const int entityID = m_nextEntityID++;
+    
+    const std::string name = "IcoSphere " + std::to_string(entityID);
+
+    auto icoSphere = std::make_unique<Entity>(entityID, name);
+
+    icoSphere->GetMaterial().SetBaseColorTexture(m_defaultTexture.GetID(), m_defaultTexturePath);
+
+    Material& material = icoSphere->GetMaterial();
+
+    material.SetUseBaseColorTexture(true);
+
+    icoSphere->SetPosition(position);
+
+    if (!icoSphere->CreateIcoSphere(recursionLevel))
+    {
+        BOX_LOG_ERROR("Failed to add editable icosphere");
+        return false;
+    }
+
+    m_entities.push_back(std::move(icoSphere));
+
+    m_selectedEntityID = entityID; // set the newly added icosphere as the selected entity
+
+    BOX_LOG_INFO("Added editable icosphere. Entity count: " << m_entities.size());
+
+    return true;
+}
 
 bool BoxEngine::AddEditableSphere(const glm::vec3& position)
 {

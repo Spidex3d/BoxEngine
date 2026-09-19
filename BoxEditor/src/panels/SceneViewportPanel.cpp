@@ -363,8 +363,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             }
 
             if (ImGui::MenuItem("Editable ICO Sphere")) {
-                // Request engine to add a plane via action callback
-                //if (m_actionCallback) m_actionCallback("AddEditableICOSphere");
+				action = ViewportAction::AddEditableIcoSphere;
             }
 
             if (ImGui::MenuItem("Editable Cylinder")) {

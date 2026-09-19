@@ -23,7 +23,8 @@ enum class EntityPrimitiveType
     Cube,
     Plane,
 	Floor,
-    Rock,   
+    Rock,
+	IcoSphere,
     Sphere,
     Cylinder,
     Pyramid
@@ -48,6 +49,7 @@ public:
 	bool CreateCube();  // Create a cube from the new editable mesh data, buffers for rendering.
 	bool CreatePlane(); // Create a Plane from the new editable mesh data, buffers for rendering.
 
+	bool CreateIcoSphere(int recursionLevel = 2);
 
     bool CreateSphere(int sectors = 32, int stacks = 16);
 	// bool CreateIcoSphere(int recursionLevel = 2);
@@ -403,11 +405,21 @@ public:
     }
     int GetSphereStacks() const {
         return m_sphereStacks; // Reusing cylinder parameters for sphere
-	}
-
-    
+	}  
 
 	bool UpdateSphere(); // Function to update sphere parameters and rebuild mesh if necessary
+
+	// -------------------------------------------------------
+	// IcoSphere specific parameters
+	// -------------------------------------------------------
+	void SetIcoSphereRecursionLevel(int level) {
+		m_icoSphereRecursionLevel = level;
+	}
+	int GetIcoSphereRecursionLevel() const {
+		return m_icoSphereRecursionLevel;
+	}
+
+	bool UpdateIcoSphere(); // Function to update IcoSphere parameters and rebuild mesh if necessary
 
 
 	// ###################################### Visibility #####################################
@@ -554,6 +566,9 @@ private:
 	// Sphere specific parameters
 	int m_sphereSectors = 32;
 	int m_sphereStacks = 16;
+	// IcoSphere specific parameters
+	int m_icoSphereRecursionLevel = 2;
+
 
     bool m_visible = true;
 

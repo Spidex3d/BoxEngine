@@ -51,6 +51,7 @@ public:
 
     bool AddEditablePlane(const glm::vec3& position = glm::vec3(0.0f));
 	// my floor function with subdivisions
+	bool AddEditableIcoSphere(const glm::vec3& position = glm::vec3(0.0f), int recursionLevel = 2);
 
     bool AddEditableSphere(const glm::vec3& position);
 

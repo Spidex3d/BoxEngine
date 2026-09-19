@@ -57,11 +57,7 @@ bool MaterialPreview::Initialize(
     }
 
 
-    m_previewSphere =
-        std::make_unique<Entity>(
-            -1000,
-            "Material Preview Cube"
-        );
+    m_previewSphere = std::make_unique<Entity>(-1000, "Material Preview Cube");
 
     if (!m_previewSphere->CreateCube())
     {

@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <random>
 #include <glm\gtc\constants.hpp>
+#include <unordered_map>
 
 namespace
 {
@@ -1175,6 +1176,228 @@ bool MeshEditing::CreateSphere(
         !m_edges.empty() &&
         !m_faces.empty();
 }
+// ----------------------------- IcoSphere Creation -----------------------------
+
+bool MeshEditing::CreateIcoSphere(int recursionLevel)
+{
+    Clear();
+
+    m_shadingMode = ShadingMode::Flat;
+
+    if (recursionLevel < 0)
+    {
+        recursionLevel = 0;
+    }
+
+    if (recursionLevel > 5)
+    {
+        BOX_LOG_WARNING("MeshEditing::CreateIcoSphere: " "Recursion level too high, clamping to 5");
+
+        recursionLevel = 5;
+    }
+
+    constexpr float radius = 0.5f;
+
+    // -------------------------------------------------
+    // CREATE 12 BASE ICOSAHEDRON VERTICES
+    // -------------------------------------------------
+    //
+    // Golden ratio based construction - three
+    // orthogonal "golden rectangles".
+    // -------------------------------------------------
+
+    const float goldenRatio =
+        (1.0f + std::sqrt(5.0f)) * 0.5f;
+
+    std::vector<glm::vec3> baseVertices =
+    {
+        { -1.0f,  goldenRatio, 0.0f },
+        {  1.0f,  goldenRatio, 0.0f },
+        { -1.0f, -goldenRatio, 0.0f },
+        {  1.0f, -goldenRatio, 0.0f },
+
+        { 0.0f, -1.0f,  goldenRatio },
+        { 0.0f,  1.0f,  goldenRatio },
+        { 0.0f, -1.0f, -goldenRatio },
+        { 0.0f,  1.0f, -goldenRatio },
+
+        {  goldenRatio, 0.0f, -1.0f },
+        {  goldenRatio, 0.0f,  1.0f },
+        { -goldenRatio, 0.0f, -1.0f },
+        { -goldenRatio, 0.0f,  1.0f }
+    };
+
+    // Normalize each base vertex onto the sphere
+    // and add it as an editable vertex.
+    for (const glm::vec3& position : baseVertices)
+    {
+        AddVertex(
+            glm::normalize(position) * radius
+        );
+    }
+
+    // -------------------------------------------------
+    // 20 BASE TRIANGLE FACES
+    // -------------------------------------------------
+
+    struct Triangle
+    {
+        std::size_t a;
+        std::size_t b;
+        std::size_t c;
+    };
+
+    std::vector<Triangle> triangles =
+    {
+        { 0, 11, 5 },
+        { 0, 5, 1 },
+        { 0, 1, 7 },
+        { 0, 7, 10 },
+        { 0, 10, 11 },
+
+        { 1, 5, 9 },
+        { 5, 11, 4 },
+        { 11, 10, 2 },
+        { 10, 7, 6 },
+        { 7, 1, 8 },
+
+        { 3, 9, 4 },
+        { 3, 4, 2 },
+        { 3, 2, 6 },
+        { 3, 6, 8 },
+        { 3, 8, 9 },
+
+        { 4, 9, 5 },
+        { 2, 4, 11 },
+        { 6, 2, 10 },
+        { 8, 6, 7 },
+        { 9, 8, 1 }
+    };
+
+    // -------------------------------------------------
+    // SUBDIVISION
+    // -------------------------------------------------
+    //
+    // Each subdivision step splits every triangle into
+    // four smaller triangles by inserting a new vertex
+    // at the midpoint of each edge, then projecting it
+    // back onto the sphere.
+    //
+    // A midpoint cache avoids creating duplicate
+    // vertices along shared edges.
+    // -------------------------------------------------
+
+    std::unordered_map<std::uint64_t, std::size_t>midpointCache;
+
+    // Combine two vertex indices into a single cache
+    // key regardless of order.
+    auto MakeEdgeKey =
+        [](std::size_t first, std::size_t second) -> std::uint64_t
+    {
+        std::size_t low = std::min(first, second);
+        std::size_t high = std::max(first, second);
+
+        return (static_cast<std::uint64_t>(low) << 32) |
+            static_cast<std::uint64_t>(high);
+    };
+
+    auto GetMidpointVertex =
+        [&](std::size_t first, std::size_t second) -> std::size_t
+    {
+        const std::uint64_t key =
+            MakeEdgeKey(first, second);
+
+        const auto existing =
+            midpointCache.find(key);
+
+        if (existing != midpointCache.end())
+        {
+            return existing->second;
+        }
+
+        const glm::vec3 midpoint =
+            (m_vertices[first].position +
+                m_vertices[second].position) * 0.5f;
+
+        const glm::vec3 projected =
+            glm::normalize(midpoint) * radius;
+
+        const std::size_t newIndex =
+            AddVertex(projected);
+
+        midpointCache[key] = newIndex;
+
+        return newIndex;
+    };
+
+    for (int level = 0; level < recursionLevel; ++level)
+    {
+        std::vector<Triangle> subdivided;
+        subdivided.reserve(triangles.size() * 4);
+
+        for (const Triangle& triangle : triangles)
+        {
+            const std::size_t ab =
+                GetMidpointVertex(triangle.a, triangle.b);
+
+            const std::size_t bc =
+                GetMidpointVertex(triangle.b, triangle.c);
+
+            const std::size_t ca =
+                GetMidpointVertex(triangle.c, triangle.a);
+
+            subdivided.push_back({ triangle.a, ab, ca });
+            subdivided.push_back({ triangle.b, bc, ab });
+            subdivided.push_back({ triangle.c, ca, bc });
+            subdivided.push_back({ ab, bc, ca });
+        }
+
+        triangles = std::move(subdivided);
+    }
+
+    // -------------------------------------------------
+    // ADD FINAL FACES
+    // -------------------------------------------------
+
+    m_faces.reserve(triangles.size());
+
+    for (const Triangle& triangle : triangles)
+    {
+        AddFace(
+            {
+                triangle.a,
+                triangle.b,
+                triangle.c
+            }
+        );
+    }
+
+    // -------------------------------------------------
+    // BUILD EDITABLE EDGES
+    // -------------------------------------------------
+
+    RebuildEdges();
+
+    BOX_LOG_INFO(
+        "Created editable icosphere. "
+        << "RecursionLevel="
+        << recursionLevel
+        << " Vertices="
+        << GetVertexCount()
+        << " Edges="
+        << GetEdgeCount()
+        << " Faces="
+        << GetFaceCount()
+    );
+
+    return
+        !m_vertices.empty() &&
+        !m_edges.empty() &&
+        !m_faces.empty();
+}
+// --------------------------------------- End of IcoSphere Creation ---------------------------------------
+
+
 // ############################################## Mesh Editing create cylinder  #########################################
 bool MeshEditing::CreateCylinder(
     int sectors,

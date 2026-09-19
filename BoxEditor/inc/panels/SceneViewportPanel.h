@@ -24,7 +24,6 @@ enum class ViewportAction
 
     SetObjectMode,
     SetEditMode,
-    //SetMaterialMode,
 	SetSelectMode,
 
 	vertexEditMode,
@@ -38,7 +37,7 @@ enum class ViewportAction
     AddEditableCube,
     AddEditablePlane,
     AddEditableSphere,
-    AddEditableICOSphere,
+    AddEditableIcoSphere,
     AddEditableCylinder,
 	AddEditablePyramid,
     AddEditableCone,
