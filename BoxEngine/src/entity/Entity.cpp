@@ -1527,6 +1527,112 @@ bool Entity::CreateBuffersFromMeshData()
 
 }
 
+// -----------------------------------------------
+// Rebuild the render mesh from the editable mesh for DeserializeScene
+// -----------------------------------------------
+bool Entity::RebuildFromEditableMesh()
+{
+    // ------------------------------------------------
+    // Destroy the old GPU buffers and render MeshData.
+    //
+    // IMPORTANT:
+    // Destroy() does NOT destroy m_editableMesh.
+    // ------------------------------------------------
+    Destroy();
+
+    // ------------------------------------------------
+    // Build fresh render data from the logical
+    // editable topology.
+    // ------------------------------------------------
+    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+    {
+        BOX_LOG_ERROR(
+            "RebuildFromEditableMesh: "
+            "Failed to build render mesh"
+        );
+
+        return false;
+    }
+
+    // ------------------------------------------------
+    // Create the OpenGL buffers from the new
+    // render mesh.
+    // ------------------------------------------------
+    if (!CreateBuffersFromMeshData())
+    {
+        BOX_LOG_ERROR(
+            "RebuildFromEditableMesh: "
+            "Failed to create GPU buffers"
+        );
+
+        return false;
+    }
+
+    // ------------------------------------------------
+    // The loaded editable mesh becomes the new
+    // base mesh for this Entity.
+    // ------------------------------------------------
+    m_baseEditableMesh = m_editableMesh;
+
+    // ------------------------------------------------
+    // Calculate AABB from the logical vertices.
+    // ------------------------------------------------
+    if (m_editableMesh.GetVertexCount() > 0)
+    {
+        glm::vec3 minBounds =
+            m_editableMesh.GetVertex(0).position;
+
+        glm::vec3 maxBounds =
+            minBounds;
+
+        for (std::size_t i = 1;
+            i < m_editableMesh.GetVertexCount();
+            ++i)
+        {
+            const glm::vec3& position =
+                m_editableMesh.GetVertex(i).position;
+
+            minBounds =
+                glm::min(minBounds, position);
+
+            maxBounds =
+                glm::max(maxBounds, position);
+        }
+
+        // Give flat geometry such as planes/floors
+        // a small amount of picking thickness.
+        constexpr float minimumThickness = 0.02f;
+
+        for (int axis = 0; axis < 3; ++axis)
+        {
+            if ((maxBounds[axis] - minBounds[axis]) <
+                minimumThickness)
+            {
+                
+                const float centre =
+                    (minBounds[axis] + maxBounds[axis]) *
+                    0.5f;
+
+                minBounds[axis] =
+                    centre - minimumThickness * 0.5f;
+
+                maxBounds[axis] =
+                    centre + minimumThickness * 0.5f;
+            }
+        }
+
+        m_aabbMin = minBounds;
+        m_aabbMax = maxBounds;
+    }
+
+    BOX_LOG_INFO(
+        "Entity rebuilt from editable mesh: "
+        << m_name
+    );
+
+    return true;
+}
+
 // #####################################################################################################################
 // ################################################### Last Extrude ####################################################
 // #####################################################################################################################

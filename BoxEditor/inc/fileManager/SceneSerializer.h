@@ -25,36 +25,10 @@ public:
 	~SceneSerializer();
 
 	bool SerializeScene(const std::filesystem::path& filePath, const std::vector<std::unique_ptr<Entity>>& entities); // save scene to file
-
-
-
+	//bool DeserializeScene(const std::filesystem::path& filePath);
+	bool DeserializeScene(const std::filesystem::path& filePath, std::vector<std::unique_ptr<Entity>>& loadedEntities);
 private:
 	bool SerializeEntity(std::ostream& output, const Entity& entity);
 
 };
 
-/*
-# BoxEditor Scene
-version 0 1
-
-entities 3
-
-entity
-id 1
-name Cube_1
-primitive Cube
-
-position 0 0 0
-rotation 0 0 0
-scale 1 1 1
-
-...editable vertices...
-...editable faces...
-...material slots...
-
-endentity
-
-entity
-...
-endentity
-*/

@@ -236,7 +236,7 @@ EcoSystemAction EcosystemPanel::Draw(BoxEngine& engine)
             ImGui::EndTabItem();
         }
 
-
+        
         // -------------------------------------------------
         // GRASS
         // -------------------------------------------------
@@ -477,6 +477,7 @@ void EcosystemPanel::WaterTab(BoxEngine& engine)
 
     ImGui::TextDisabled("Procedural water generation coming soon...");
 }
+
 
 void EcosystemPanel::PlantsTab(BoxEngine& engine)
 {

@@ -169,6 +169,8 @@ public:
     }
 
     bool CreateBuffersFromMeshData();
+
+	bool RebuildFromEditableMesh(); // Rebuild the render mesh from the editable mesh and update buffers for DeserializeScene
     // ##################################### last Extrude  ##########################################
     void SetLastExtrude(std::size_t faceIndex, ModifierAxis axis, float amount,
         const MeshEditing& meshBeforeExtrude);

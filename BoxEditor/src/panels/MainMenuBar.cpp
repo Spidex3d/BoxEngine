@@ -18,6 +18,7 @@ MenuAction MainMenuBar::DrawMainMenu()
 
             if (ImGui::MenuItem("Open Scene"))
             {
+				action = MenuAction::OpenScene;
             }
 
             if (ImGui::MenuItem("Save Scene"))

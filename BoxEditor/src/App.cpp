@@ -274,12 +274,18 @@ void App::HandleMenuAction(
 	
     switch (action)
     {
+    case MenuAction::OpenScene:
+        if (m_engine)
+        {
+            m_engine->LoadScene("assets/scenes/test_scene.mbs");
+        }
+        BOX_LOG_INFO("New Scene menu action triggered");
+        break;
 
 	case MenuAction::SaveScene:
         if (m_engine)
         {
-            m_engine->SaveScene("assets/scenes/test_scene.mbs"
-            );
+            m_engine->SaveScene("assets/scenes/test_scene.mbs");
         }
 		BOX_LOG_INFO("New Scene menu action triggered");
 		break;

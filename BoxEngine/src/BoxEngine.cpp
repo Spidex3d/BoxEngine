@@ -1091,3 +1091,69 @@ bool BoxEngine::SaveScene(const std::filesystem::path& filePath)
         m_entities
     );
 }
+bool BoxEngine::LoadScene(
+    const std::filesystem::path& filePath)
+{
+    SceneSerializer serializer;
+
+    std::vector<std::unique_ptr<Entity>>
+        loadedEntities;
+
+    if (!serializer.DeserializeScene(
+        filePath,
+        loadedEntities))
+    {
+        BOX_LOG_ERROR(
+            "Failed to load scene: "
+            << filePath.string()
+        );
+
+        return false;
+    }
+
+    // -----------------------------------------
+    // Find the next available entity ID.
+    // -----------------------------------------
+    int nextEntityID = 0;
+
+    for (const auto& entity : loadedEntities)
+    {
+        if (!entity)
+            continue;
+
+        nextEntityID =
+            std::max(
+                nextEntityID,
+                entity->GetID() + 1
+            );
+    }
+
+    // -----------------------------------------
+    // Scene loaded successfully.
+    // Replace the current scene.
+    // -----------------------------------------
+    ClearSelectedEntity();
+
+    m_entities =
+        std::move(loadedEntities);
+
+    m_nextEntityID =
+        nextEntityID;
+
+    BOX_LOG_INFO(
+        "Scene loaded successfully. Entities="
+        << m_entities.size()
+    );
+
+    return true;
+}
+
+//bool BoxEngine::LoadScene(
+//    const std::filesystem::path& filePath)
+//{
+//    SceneSerializer serializer;
+//
+//    return serializer.DeserializeScene(
+//        filePath
+//    );
+//}
