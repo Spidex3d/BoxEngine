@@ -11,7 +11,7 @@
 #include <fileManager\mbxManager.h> 
 #include <miniBoxLog.h>
 #include "panels\EcosystemPanel.h"
-
+#include <fileManager/objManager.h>
 
 class BoxWindow;
 class EditorIcons;
@@ -76,4 +76,5 @@ private:
 		const MBXImportData& importedData
 	);
 
+	std::unique_ptr<objManager> m_objManager;
 };

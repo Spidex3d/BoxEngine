@@ -3,6 +3,7 @@
 #include <imgui/ImGuiAF.h>
 #include <miniBoxLog.h>
 
+
 MenuAction MainMenuBar::DrawMainMenu()
 {
     MenuAction action = MenuAction::None;
@@ -19,11 +20,13 @@ MenuAction MainMenuBar::DrawMainMenu()
             if (ImGui::MenuItem("Open Scene"))
             {
 				action = MenuAction::OpenScene;
+                
             }
 
             if (ImGui::MenuItem("Save Scene"))
             {
 				action = MenuAction::SaveScene;
+                
             }
 
             if (ImGui::MenuItem("Save Scene As"))
@@ -45,6 +48,11 @@ MenuAction MainMenuBar::DrawMainMenu()
             }
             if (ImGui::MenuItem("Export .obj"))
             {
+                action = MenuAction::ExportOBJ;
+            }
+            if (ImGui::MenuItem("Import .obj"))
+            {
+                action = MenuAction::ImportOBJ;
             }
 			// we can add gltf later if we want to support it.
             ImGui::Separator();

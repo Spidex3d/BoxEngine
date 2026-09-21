@@ -12,6 +12,7 @@
 #include <panels/EcosystemPanel.h>
 
 #include <FileDialog.h>
+#include <string>
 
 App::App() = default;
 App::~App() = default;
@@ -143,6 +144,7 @@ bool App::Init()
 
    
     m_mbxManager = std::make_unique<mbxManager>();
+    m_objManager = std::make_unique<objManager>();
 
     m_isRunning = true;
 
@@ -274,23 +276,38 @@ void App::HandleMenuAction(
 	
     switch (action)
     {
+        // -------------------------------------
+		// Handle scene actions Open, Save, New, Exit
+		// -------------------------------------
+
     case MenuAction::OpenScene:
-        if (m_engine)
+    {
+        
+        std::string path = FileDialog::OpenScene();
+
+        if (!path.empty())
         {
-            m_engine->LoadScene("assets/scenes/test_scene.mbs");
+            engine.LoadScene(path);
         }
-        BOX_LOG_INFO("New Scene menu action triggered");
+        BOX_LOG_INFO("Scene Load menu action triggered");
         break;
+    }
 
-	case MenuAction::SaveScene:
-        if (m_engine)
+    case MenuAction::SaveScene:
+    {
+        
+        std::string path = FileDialog::SaveScene();
+
+        if (!path.empty())
         {
-            m_engine->SaveScene("assets/scenes/test_scene.mbs");
+            engine.SaveScene(path);
         }
-		BOX_LOG_INFO("New Scene menu action triggered");
-		break;
-
-		// ################################## save and load mbx actions #####################################################
+        BOX_LOG_INFO("Scene Save menu action triggered");
+        break;
+    }
+	// ---------------------------------------------
+	//  save and load mbx actions 
+	// ---------------------------------------------
     case MenuAction::Exportmbx:
         {
             Entity* selectedEntity = engine.GetSelectedEntity();
@@ -353,6 +370,41 @@ void App::HandleMenuAction(
         break;
         
     }
+
+	// ---------------------------------------------
+	// ObjImport and Export actions
+	// ---------------------------------------------
+
+	case MenuAction::ExportOBJ:
+	{
+        Entity* selectedEntity = engine.GetSelectedEntity();
+
+        if (!selectedEntity)
+        {
+            BOX_LOG_WARNING("No entity selected for OBJ export");
+
+            break;
+        }
+
+        const std::string path = FileDialog::SaveOBJ();
+
+        if (path.empty())
+        {
+            break;
+        }
+
+        if (!m_objManager->ExportOBJ(*selectedEntity, path))
+        {
+            BOX_LOG_ERROR("Failed to export OBJ: " << path
+            );
+
+            break;
+        }
+
+        BOX_LOG_INFO("OBJ exported successfully: " << path);
+		break;
+	}
+	
 
 	// ############################################ Handle other menu actions #####################################################
 

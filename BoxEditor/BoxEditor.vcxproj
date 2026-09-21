@@ -136,6 +136,7 @@
     <ClCompile Include="src\EditorInput.cpp" />
     <ClCompile Include="src\FileDialog.cpp" />
     <ClCompile Include="src\fileManager\mbxManager.cpp" />
+    <ClCompile Include="src\fileManager\objManager.cpp" />
     <ClCompile Include="src\fileManager\SceneSerializer.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\Helpers.cpp" />
@@ -178,6 +179,7 @@
     <ClInclude Include="inc\EditorInput.h" />
     <ClInclude Include="inc\FileDialog.h" />
     <ClInclude Include="inc\fileManager\mbxManager.h" />
+    <ClInclude Include="inc\fileManager\objManager.h" />
     <ClInclude Include="inc\fileManager\SceneSerializer.h" />
     <ClInclude Include="inc\Helpers.h" />
     <ClInclude Include="inc\ImGuiLayer.h" />

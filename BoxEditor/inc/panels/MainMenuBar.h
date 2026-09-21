@@ -13,6 +13,8 @@ enum class MenuAction
 	SaveSceneAs,
 	Exportmbx,
 	Importmbx,
+	ExportOBJ,
+	ImportOBJ,
 
 	AddCube,
 	AddPlane,

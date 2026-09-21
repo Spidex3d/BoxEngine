@@ -89,7 +89,7 @@ std::string FileDialog::OpenMBX(const char* defaultExt, const char* filter)
     ofn.lpstrInitialDir = NULL;
 
     // Flags: require existing path/file, Explorer-style dialog
-    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_EXPLORER;
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_EXPLORER | OFN_NOCHANGEDIR;
 
     if (GetOpenFileNameW(&ofn)) {
         // Convert selected wide string to UTF-8
@@ -141,7 +141,7 @@ std::string FileDialog::SaveMBX(const char* defaultExt, const char* filter)
     ofn.lpstrInitialDir = NULL;
 
     // Prompt to overwrite existing files
-    ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_EXPLORER;
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_EXPLORER | OFN_NOCHANGEDIR;
 
     std::string result;
 
@@ -164,37 +164,253 @@ std::string FileDialog::SaveMBX(const char* defaultExt, const char* filter)
     return result;
 }
 
+std::string FileDialog::OpenScene()
+{
+    OPENFILENAMEW ofn;
+    std::vector<wchar_t> filename(MAX_PATH, L'\0');
+
+    ZeroMemory(&ofn, sizeof(ofn));
+
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = NULL;
+
+    ofn.lpstrFile = filename.data();
+    ofn.nMaxFile =
+        static_cast<DWORD>(filename.size());
+
+    static const wchar_t sceneFilter[] =
+        L"BoxEditor Scene Files (*.mbs)\0"
+        L"*.mbs\0"
+        L"All Files (*.*)\0"
+        L"*.*\0\0";
+
+    ofn.lpstrFilter = sceneFilter;
+    ofn.nFilterIndex = 1;
+
+    ofn.lpstrDefExt = L"mbs";
+
+    ofn.lpstrFileTitle = NULL;
+    ofn.nMaxFileTitle = 0;
+    ofn.lpstrInitialDir = NULL;
+
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_EXPLORER | OFN_NOCHANGEDIR;
+
+    if (GetOpenFileNameW(&ofn))
+    {
+        int required = WideCharToMultiByte(CP_UTF8, 0, ofn.lpstrFile, -1,
+                nullptr, 0, nullptr, nullptr);
+
+        if (required > 0)
+        {
+            std::vector<char> utf8(
+                required,
+                0
+            );
+
+            WideCharToMultiByte(
+                CP_UTF8,
+                0,
+                ofn.lpstrFile,
+                -1,
+                utf8.data(),
+                required,
+                nullptr,
+                nullptr
+            );
+
+            return std::string(
+                utf8.data()
+            );
+        }
+    }
+    else
+    {
+        DWORD err = CommDlgExtendedError();
+
+        if (err != 0)
+        {
+            BOX_LOG_WARNING("OpenScene failed. Error=" << err);
+        }
+    }
+
+    return {};
+}
+
+std::string FileDialog::SaveScene()
+{
+    OPENFILENAMEW ofn;
+    std::vector<wchar_t> filename(MAX_PATH, L'\0');
+
+    ZeroMemory(&ofn, sizeof(ofn));
+
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = NULL;
+
+    ofn.lpstrFile = filename.data();
+    ofn.nMaxFile =
+        static_cast<DWORD>(filename.size());
+
+    static const wchar_t sceneFilter[] =
+        L"BoxEditor Scene Files (*.mbs)\0"
+        L"*.mbs\0"
+        L"All Files (*.*)\0"
+        L"*.*\0\0";
+
+    ofn.lpstrFilter = sceneFilter;
+    ofn.nFilterIndex = 1;
+
+    // Automatically adds .mbs
+    ofn.lpstrDefExt = L"mbs";
+
+    ofn.lpstrFileTitle = NULL;
+    ofn.nMaxFileTitle = 0;
+    ofn.lpstrInitialDir = NULL;
+
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_EXPLORER | OFN_NOCHANGEDIR;
+
+    if (GetSaveFileNameW(&ofn))
+    {
+        int required =
+            WideCharToMultiByte(
+                CP_UTF8,
+                0,
+                ofn.lpstrFile,
+                -1,
+                nullptr,
+                0,
+                nullptr,
+                nullptr
+            );
+
+        if (required > 0)
+        {
+            std::vector<char> utf8(
+                required,
+                0
+            );
+
+            WideCharToMultiByte(
+                CP_UTF8,
+                0,
+                ofn.lpstrFile,
+                -1,
+                utf8.data(),
+                required,
+                nullptr,
+                nullptr
+            );
+
+            return std::string(
+                utf8.data()
+            );
+        }
+    }
+    else
+    {
+        DWORD err =
+            CommDlgExtendedError();
+
+        if (err != 0)
+        {
+            BOX_LOG_WARNING(
+                "SaveScene failed. Error="
+                << err
+            );
+        }
+    }
+
+    return {};
+}
+
+std::string FileDialog::SaveOBJ()
+{
+    OPENFILENAMEW ofn;
+    std::vector<wchar_t> filename(MAX_PATH, L'\0');
+
+    ZeroMemory(&ofn, sizeof(ofn));
+
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = NULL;
+
+    ofn.lpstrFile = filename.data();
+    ofn.nMaxFile =
+        static_cast<DWORD>(filename.size());
+
+    static const wchar_t objFilter[] =
+        L"Wavefront OBJ Files (*.obj)\0"
+        L"*.obj\0"
+        L"All Files (*.*)\0"
+        L"*.*\0\0";
+
+    ofn.lpstrFilter = objFilter;
+    ofn.nFilterIndex = 1;
+
+    // Automatically add .obj if the user doesn't type it.
+    ofn.lpstrDefExt = L"obj";
+
+    ofn.lpstrFileTitle = NULL;
+    ofn.nMaxFileTitle = 0;
+    ofn.lpstrInitialDir = NULL;
+
+    ofn.Flags =
+        OFN_PATHMUSTEXIST |
+        OFN_OVERWRITEPROMPT |
+        OFN_EXPLORER |
+        OFN_NOCHANGEDIR;
+
+    if (GetSaveFileNameW(&ofn))
+    {
+        const int required =
+            WideCharToMultiByte(
+                CP_UTF8,
+                0,
+                ofn.lpstrFile,
+                -1,
+                nullptr,
+                0,
+                nullptr,
+                nullptr
+            );
+
+        if (required > 0)
+        {
+            std::vector<char> utf8(
+                required,
+                0
+            );
+
+            WideCharToMultiByte(
+                CP_UTF8,
+                0,
+                ofn.lpstrFile,
+                -1,
+                utf8.data(),
+                required,
+                nullptr,
+                nullptr
+            );
+
+            return std::string(
+                utf8.data()
+            );
+        }
+    }
+    else
+    {
+        const DWORD err =
+            CommDlgExtendedError();
+
+        if (err != 0)
+        {
+            BOX_LOG_WARNING(
+                "SaveOBJ failed. Error="
+                << err
+            );
+        }
+    }
+
+    return {};
+}
 
 
 
-
-
-
-// filter must be a double-null terminated wide string. We accept UTF-8 filter parameter.
-// Convert filter to wide char and ensure double-null termination.
-//std::wstring wfilter;
-//if (filter && filter[0]) {
-//    int required = MultiByteToWideChar(CP_UTF8, 0, filter, -1, nullptr, 0);
-//    if (required > 0) {
-//        wfilter.resize(required);
-//        MultiByteToWideChar(CP_UTF8, 0, filter, -1, &wfilter[0], required);
-//        // Ensure double null termination
-//        if (wfilter.size() == 0 || wfilter.back() != L'\0') wfilter.push_back(L'\0');
-//    }
-//}
-//else {
-//    wfilter = L"MBX Files\0*.mbx\0All Files\0*.*\0\0";
-//}
-//ofn.lpstrFilter = wfilter.c_str();
-//ofn.nFilterIndex = 1;
-
-//// Default extension (e.g. "json")
-//std::wstring wdefExt;
-//if (defaultExt && defaultExt[0]) {
-//    int req = MultiByteToWideChar(CP_UTF8, 0, defaultExt, -1, nullptr, 0);
-//    if (req > 0) {
-//        wdefExt.resize(req);
-//        MultiByteToWideChar(CP_UTF8, 0, defaultExt, -1, &wdefExt[0], req);
-//    }
-//}
-//ofn.lpstrDefExt = wdefExt.empty() ? nullptr : wdefExt.c_str();
