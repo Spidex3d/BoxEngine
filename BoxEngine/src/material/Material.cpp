@@ -82,11 +82,9 @@ bool Material::UsesBaseColorTexture() const
         m_baseColorTexture != 0;
 }
 
-void Material::SetUseBaseColorTexture(
-    bool useTexture)
+void Material::SetUseBaseColorTexture(bool useTexture)
 {
-    m_useBaseColorTexture =
-        useTexture;
+    m_useBaseColorTexture = useTexture;
 }
 
 void Material::SetBaseColorTexture(GLuint textureID, const std::string& sourcePath)

@@ -1111,6 +1111,161 @@ bool BoxEngine::LoadScene(
         return false;
     }
 
+    // =================================================
+    // RESTORE MATERIAL TEXTURES
+    // =================================================
+
+    for (auto& entity : loadedEntities)
+    {
+        if (!entity)
+            continue;
+
+        for (std::size_t i = 0;
+            i < entity->GetMaterialSlotCount();
+            ++i)
+        {
+            Material& material = entity->GetMaterialSlot(i);
+
+            BOX_LOG_INFO(
+                "Restoring material "
+                << i
+                << " Name=["
+                << material.GetName()
+                << "]"
+                << " UseBase="
+                << material.UsesBaseColorTexture()
+                << " BasePath=["
+                << material.GetBaseColorTexturePath()
+                << "]"
+                << " UseNormal="
+                << material.UsesNormalTexture()
+                << " NormalPath=["
+                << material.GetNormalTexturePath()
+                << "]"
+            );
+
+            // -----------------------------------------
+            // Base colour texture
+            // -----------------------------------------
+           
+            const std::string basePath =
+                material.GetBaseColorTexturePath();
+
+            if (!basePath.empty())
+            {
+                const GLuint textureID =
+                    LoadTexture(basePath);
+
+                if (textureID != 0)
+                {
+                    material.SetBaseColorTexture(
+                        textureID,
+                        basePath
+                    );
+
+                    BOX_LOG_INFO(
+                        "Restored base color texture: "
+                        << basePath
+                    );
+                }
+            }
+            
+            
+            //if (material.UsesBaseColorTexture())
+            //{
+                
+                /*const std::string texturePath =
+                    material.GetBaseColorTexturePath();
+
+                if (!texturePath.empty())
+                {
+                    const GLuint textureID =
+                        LoadTexture(texturePath);
+
+                    if (textureID != 0)
+                    {
+                        material.SetBaseColorTexture(
+                            textureID,
+                            texturePath
+                        );
+
+                        BOX_LOG_INFO(
+                            "Restored base color texture: "
+                            << texturePath
+                        );
+                    }
+                    else
+                    {
+                        BOX_LOG_ERROR(
+                            "Failed to restore base color texture: "
+                            << texturePath
+                        );
+                    }
+                }*/
+            //}
+
+            // -----------------------------------------
+            // Normal map
+            // -----------------------------------------
+            
+            const std::string normalPath =
+                material.GetNormalTexturePath();
+
+            if (!normalPath.empty())
+            {
+                const GLuint textureID =
+                    LoadTexture(normalPath);
+
+                if (textureID != 0)
+                {
+                    material.SetNormalTexture(
+                        textureID,
+                        normalPath
+                    );
+
+                    BOX_LOG_INFO(
+                        "Restored normal map: "
+                        << normalPath
+                    );
+                }
+            }
+
+            //if (material.UsesNormalTexture())
+            //{
+                
+                /*const std::string normalPath =
+                    material.GetNormalTexturePath();
+
+                if (!normalPath.empty())
+                {
+                    const GLuint normalID =
+                        LoadTexture(normalPath);
+
+                    if (normalID != 0)
+                    {
+                        material.SetNormalTexture(
+                            normalID,
+                            normalPath
+                        );
+
+                        BOX_LOG_INFO(
+                            "Restored normal map: "
+                            << normalPath
+                        );
+                    }
+                    else
+                    {
+                        BOX_LOG_ERROR(
+                            "Failed to restore normal map: "
+                            << normalPath
+                        );
+                    }
+                }*/
+            //}
+        }
+    }
+
+
     // -----------------------------------------
     // Find the next available entity ID.
     // -----------------------------------------
@@ -1126,6 +1281,90 @@ bool BoxEngine::LoadScene(
                 nextEntityID,
                 entity->GetID() + 1
             );
+    }
+
+    // =================================================
+// RESTORE MATERIAL TEXTURES
+// =================================================
+
+    for (auto& entity : loadedEntities)
+    {
+        if (!entity)
+            continue;
+
+        for (std::size_t i = 0;
+            i < entity->GetMaterialSlotCount();
+            ++i)
+        {
+            Material& material =
+                entity->GetMaterialSlot(i);
+
+            // -----------------------------------------
+            // Base colour texture
+            // -----------------------------------------
+            const std::string baseTexturePath =
+                material.GetBaseColorTexturePath();
+
+            if (material.UsesBaseColorTexture() &&
+                !baseTexturePath.empty())
+            {
+                const GLuint textureID =
+                    LoadTexture(baseTexturePath);
+
+                if (textureID != 0)
+                {
+                    material.SetBaseColorTexture(
+                        textureID,
+                        baseTexturePath
+                    );
+
+                    BOX_LOG_INFO(
+                        "Restored base texture: "
+                        << baseTexturePath
+                    );
+                }
+                else
+                {
+                    BOX_LOG_ERROR(
+                        "Failed to restore base texture: "
+                        << baseTexturePath
+                    );
+                }
+            }
+
+            // -----------------------------------------
+            // Normal texture
+            // -----------------------------------------
+            const std::string normalTexturePath =
+                material.GetNormalTexturePath();
+
+            if (material.UsesNormalTexture() &&
+                !normalTexturePath.empty())
+            {
+                const GLuint textureID =
+                    LoadTexture(normalTexturePath);
+
+                if (textureID != 0)
+                {
+                    material.SetNormalTexture(
+                        textureID,
+                        normalTexturePath
+                    );
+
+                    BOX_LOG_INFO(
+                        "Restored normal texture: "
+                        << normalTexturePath
+                    );
+                }
+                else
+                {
+                    BOX_LOG_ERROR(
+                        "Failed to restore normal texture: "
+                        << normalTexturePath
+                    );
+                }
+            }
+        }
     }
 
     // -----------------------------------------
@@ -1147,13 +1386,3 @@ bool BoxEngine::LoadScene(
 
     return true;
 }
-
-//bool BoxEngine::LoadScene(
-//    const std::filesystem::path& filePath)
-//{
-//    SceneSerializer serializer;
-//
-//    return serializer.DeserializeScene(
-//        filePath
-//    );
-//}

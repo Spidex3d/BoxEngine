@@ -11,8 +11,36 @@ bool SceneSerializer::SerializeScene(
     const std::filesystem::path& filePath,
     const std::vector<std::unique_ptr<Entity>>& entities)
 {
-    std::filesystem::path finalPath =
-        filePath;
+    std::filesystem::path finalPath = filePath;
+
+    BOX_LOG_INFO(
+        "Current working directory: "
+        << std::filesystem::current_path().string()
+    );
+
+    BOX_LOG_INFO(
+        "SerializeScene requested path: "
+        << filePath.string()
+    );
+
+    BOX_LOG_INFO(
+        "SerializeScene final path: "
+        << finalPath.string()
+    );
+
+    BOX_LOG_INFO(
+        "Absolute scene path: "
+        << std::filesystem::absolute(finalPath).string()
+    );
+
+    BOX_LOG_INFO(
+        "Scene exists before save: "
+        << (std::filesystem::exists(finalPath) ? "YES" : "NO")
+    );
+
+
+
+
 
     // ---------------------------------------------
     // Make sure this is a BoxEditor scene file.
@@ -57,6 +85,9 @@ bool SceneSerializer::SerializeScene(
         std::ios::trunc
     );
 
+    BOX_LOG_INFO("Scene file opened for writing: " << (file.is_open() ? "YES" : "NO"));
+
+
     if (!file.is_open())
     {
         BOX_LOG_ERROR(
@@ -67,8 +98,7 @@ bool SceneSerializer::SerializeScene(
         return false;
     }
 
-    file << std::fixed
-        << std::setprecision(6);
+    file << std::fixed << std::setprecision(6);
 
     // ---------------------------------------------
     // Scene header.
@@ -369,9 +399,20 @@ bool SceneSerializer::SerializeEntity(
         // ---------------------------------------------
         // Base color texture
         // ---------------------------------------------
+        BOX_LOG_INFO(
+            "Saving material "
+            << i
+            << " BaseTextureID="
+            << material.GetBaseColorTexture()
+            << " UseTexture="
+            << material.UsesBaseColorTexture()
+            << " Path=["
+            << material.GetBaseColorTexturePath()
+            << "]"
+        );
 
         output
-            << "use_base_texture "
+            << "use_base_texture  "
             << (material.UsesBaseColorTexture() ? 1 : 0)
             << '\n';
 
@@ -380,9 +421,22 @@ bool SceneSerializer::SerializeEntity(
             << material.GetBaseColorTexturePath()
             << '\n';
 
+       
+
         // ---------------------------------------------
         // Normal map
         // ---------------------------------------------
+        BOX_LOG_INFO(
+            "Saving material "
+            << i
+            << " NormalTextureID="
+            << material.GetNormalTexture()
+            << " UseNormal="
+            << material.UsesNormalTexture()
+            << " Path=["
+            << material.GetNormalTexturePath()
+            << "]"
+        );
 
         output
             << "use_normal_texture "
@@ -541,8 +595,8 @@ bool SceneSerializer::DeserializeScene(const std::filesystem::path& filePath, st
 
 
     // ---------------------------------------------
-// Read basic entity information.
-// ---------------------------------------------
+    // Read basic entity information.
+    // ---------------------------------------------
     for (std::size_t i = 0; i < entityCount; ++i)
     {
         std::string token;
@@ -580,15 +634,16 @@ bool SceneSerializer::DeserializeScene(const std::filesystem::path& filePath, st
         if (!(file >> token) ||
             token != "name")
         {
-            BOX_LOG_ERROR(
-                "Failed to read entity name"
-            );
+            BOX_LOG_ERROR("Failed to read entity name");
 
             return false;
         }
 
-        // Remove the space left after "name".
-        file >> std::ws;
+        // Remove only the space after "name".
+        if (file.peek() == ' ')
+        {
+            file.get();
+        }
 
         std::getline(
             file,
@@ -603,9 +658,7 @@ bool SceneSerializer::DeserializeScene(const std::filesystem::path& filePath, st
         if (!(file >> token >> primitiveType) ||
             token != "primitive")
         {
-            BOX_LOG_ERROR(
-                "Failed to read primitive type"
-            );
+            BOX_LOG_ERROR("Failed to read primitive type");
 
             return false;
         }
@@ -618,9 +671,7 @@ bool SceneSerializer::DeserializeScene(const std::filesystem::path& filePath, st
         if (!(file >> token >> visible) ||
             token != "visible")
         {
-            BOX_LOG_ERROR(
-                "Failed to read entity visibility"
-            );
+            BOX_LOG_ERROR("Failed to read entity visibility");
 
             return false;
         }
@@ -1283,14 +1334,20 @@ bool SceneSerializer::DeserializeScene(const std::filesystem::path& filePath, st
                 file,
                 baseTexturePath
             );
-           
-            material.SetBaseColorTexturePath(
-                baseTexturePath
+            
+            BOX_LOG_INFO(
+                "Loaded base texture settings: Use="
+                << useBaseTexture
+                << " Path=["
+                << baseTexturePath
+                << "]"
             );
 
-            material.SetUseBaseColorTexture(
-                useBaseTexture != 0
-            );
+
+            material.SetBaseColorTexturePath(baseTexturePath);
+
+            material.SetUseBaseColorTexture(useBaseTexture != 0);
+            
 
             // -----------------------------------------
             // Normal texture
@@ -1321,13 +1378,17 @@ bool SceneSerializer::DeserializeScene(const std::filesystem::path& filePath, st
                 normalTexturePath
             );
 
-            material.SetNormalTexturePath(
-                normalTexturePath
+            BOX_LOG_INFO(
+                "Loaded normal texture settings: Use="
+                << useNormalTexture
+                << " Path=["
+                << normalTexturePath
+                << "]"
             );
 
-            material.SetUseNormalTexture(
-                useNormalTexture != 0
-            );
+            material.SetNormalTexturePath(normalTexturePath);
+
+            material.SetUseNormalTexture(useNormalTexture != 0);
 
             float normalStrength = 1.0f;
 
@@ -1354,9 +1415,16 @@ bool SceneSerializer::DeserializeScene(const std::filesystem::path& filePath, st
                 return false;
             }
 
-            loadedMaterials.push_back(
-                std::move(material)
+            BOX_LOG_INFO(
+                "Before storing material: "
+                << material.GetName()
+                << " UseBase="
+                << material.UsesBaseColorTexture()
+                << " UseNormal="
+                << material.UsesNormalTexture()
             );
+
+            loadedMaterials.push_back(std::move(material));
 }
 
 

@@ -31,7 +31,7 @@ std::string FileDialog::OpenTexture()
         ofn.lpstrInitialDir = NULL;
 
         // Flags: require existing path/file, Explorer-style dialog
-        ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_EXPLORER;
+        ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_EXPLORER | OFN_NOCHANGEDIR;
 
         if (GetOpenFileNameW(&ofn)) {
             // Convert selected wide string to UTF-8
