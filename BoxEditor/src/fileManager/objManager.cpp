@@ -192,6 +192,115 @@ bool objManager::WriteMTL(const Entity& entity, const std::filesystem::path& mtl
             << material.GetAlpha()
             << "\n";
 
+        // ---------------------------------------------------------
+        // Base colour texture
+        // ---------------------------------------------------------
+
+        if (material.UsesBaseColorTexture())
+        {
+            const std::string& texturePath =
+                material.GetBaseColorTexturePath();
+
+            if (!texturePath.empty())
+            {
+                const std::filesystem::path sourcePath(
+                    texturePath
+                );
+
+                // -----------------------------------------------------
+                // Write texture reference to MTL
+                // -----------------------------------------------------
+
+                file
+                    << "map_Kd "
+                    << sourcePath.filename().string()
+                    << "\n";
+
+                // -----------------------------------------------------
+                // Copy texture beside OBJ / MTL
+                // -----------------------------------------------------
+
+                if (std::filesystem::exists(sourcePath))
+                {
+                    const std::filesystem::path destinationPath =
+                        mtlFilePath.parent_path() /
+                        sourcePath.filename();
+
+                    try
+                    {
+                        std::filesystem::copy_file(
+                            sourcePath,
+                            destinationPath,
+                            std::filesystem::copy_options::overwrite_existing
+                        );
+                    }
+                    catch (const std::filesystem::filesystem_error&)
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
+
+        // ---------------------------------------------------------
+        // Normal texture
+        // ---------------------------------------------------------
+
+        if (material.UsesNormalTexture())
+        {
+            const std::string& normalTexturePath =
+                material.GetNormalTexturePath();
+
+            if (!normalTexturePath.empty())
+            {
+                const std::filesystem::path sourcePath(
+                    normalTexturePath
+                );
+
+                // -----------------------------------------------------
+                // Write normal texture reference to MTL
+                // -----------------------------------------------------
+
+                file
+                    << "map_Bump "
+                    << sourcePath.filename().string()
+                    << "\n";
+
+                // -----------------------------------------------------
+                // Copy normal texture beside OBJ / MTL
+                // -----------------------------------------------------
+
+                if (std::filesystem::exists(sourcePath))
+                {
+                    const std::filesystem::path destinationPath =
+                        mtlFilePath.parent_path() /
+                        sourcePath.filename();
+
+                    try
+                    {
+                        std::filesystem::copy_file(
+                            sourcePath,
+                            destinationPath,
+                            std::filesystem::copy_options::overwrite_existing
+                        );
+                    }
+                    catch (const std::filesystem::filesystem_error&)
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
+
+
         file << "\n";
     }
 

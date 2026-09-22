@@ -4,11 +4,8 @@ newmtl Default
 Kd 1 1 1
 d 1
 
-newmtl red
-Kd 1 0 0
+newmtl box
+Kd 1 1 1
 d 1
-
-newmtl blue
-Kd 0 0 1
-d 1
+map_Kd crate.jpg
 
