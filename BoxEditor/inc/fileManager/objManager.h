@@ -41,4 +41,6 @@ public:
 
 private:	
 
+	bool WriteMTL(const Entity& entity, const std::filesystem::path& mtlFilePath);
+
 };

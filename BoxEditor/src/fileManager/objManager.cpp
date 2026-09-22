@@ -1,6 +1,7 @@
 #include "fileManager/objManager.h"
 #include <fstream>
 #include <entity/Entity.h>
+#include <material/Material.h>
 
 objManager::~objManager() = default;
 
@@ -15,12 +16,17 @@ bool objManager::ExportOBJ(
         return false;
     }
 
+	
+
     // ---------------------------------------------------------
     // OBJ header
     // ---------------------------------------------------------
 
     file << "# BoxEditor OBJ Export\n";
     file << "# Object: " << entity.GetName() << "\n\n";
+
+    // ----------------- mtl -----------------------------------
+    file << "mtllib " << objFilePath.stem().string() << ".mtl\n\n";
 
     file << "o " << entity.GetName() << "\n\n";
 
@@ -92,12 +98,101 @@ bool objManager::ExportOBJ(
 
         const unsigned int i2 =
             mesh.indices[i + 2] + 1;
+        // ---------------------------------------------------------
+        // Material used by this triangle
+        // ---------------------------------------------------------
+        const std::size_t materialIndex =
+            mesh.vertices[mesh.indices[i]].materialIndex;
 
+        if (materialIndex <
+            entity.GetMaterialSlotCount())
+        {
+            const Material& material =
+                entity.GetMaterialSlot(
+                    materialIndex
+                );
+
+            file
+                << "usemtl "
+                << material.GetName()
+                << "\n";
+        }
+
+        // ---------------------------------------------------------
+        // Triangle
+        // ---------------------------------------------------------
         file
             << "f "
             << i0 << "/" << i0 << "/" << i0 << " "
             << i1 << "/" << i1 << "/" << i1 << " "
             << i2 << "/" << i2 << "/" << i2 << "\n";
+    }
+
+    file.close();
+   
+    // ---------------------------------------------------------
+    // Write companion MTL file
+    // ---------------------------------------------------------
+
+    std::filesystem::path mtlFilePath =
+        objFilePath;
+
+    mtlFilePath.replace_extension(".mtl");
+
+    if (!WriteMTL(
+        entity,
+        mtlFilePath))
+    {
+        return false;
+    }
+
+
+    return true;
+}
+
+bool objManager::WriteMTL(const Entity& entity, const std::filesystem::path& mtlFilePath)
+{
+    std::ofstream file(mtlFilePath);
+
+    if (!file.is_open())
+    {
+        return false;
+    }
+
+    file << "# BoxEditor Material File\n\n";
+
+    const std::size_t materialCount =
+        entity.GetMaterialSlotCount();
+
+    for (std::size_t i = 0;
+        i < materialCount;
+        ++i)
+    {
+        const Material& material =
+            entity.GetMaterialSlot(i);
+
+        const glm::vec4& color =
+            material.GetBaseColor();
+
+        file
+            << "newmtl "
+            << material.GetName()
+            << "\n";
+
+        // Diffuse / base colour
+        file
+            << "Kd "
+            << color.r << " "
+            << color.g << " "
+            << color.b << "\n";
+
+        // Alpha
+        file
+            << "d "
+            << material.GetAlpha()
+            << "\n";
+
+        file << "\n";
     }
 
     file.close();

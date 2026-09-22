@@ -332,17 +332,19 @@ void App::HandleMenuAction(
         }
 		// implement import from .mbx file format
     case MenuAction::Importmbx:
-    {
+        {
         const std::string path = FileDialog::OpenMBX("mbx", "MBX Files\0*.mbx\0All Files\0*.*\0\0");
+
+        if (path.empty())
+        {
+            break;
+        }
 
         MBXImportData importedData;
 
         if (!m_mbxManager->ImportMBX(path, importedData))
         {
-            BOX_LOG_ERROR(
-                "Failed to import MBX: "
-                << path
-            );
+            BOX_LOG_ERROR("Failed to import MBX: " << path);
 
             break;
         }
@@ -369,41 +371,50 @@ void App::HandleMenuAction(
 
         break;
         
-    }
+       }
 
 	// ---------------------------------------------
 	// ObjImport and Export actions
 	// ---------------------------------------------
-
-	case MenuAction::ExportOBJ:
-	{
-        Entity* selectedEntity = engine.GetSelectedEntity();
+    case MenuAction::ExportOBJ:
+      {
+        Entity* selectedEntity =
+            engine.GetSelectedEntity();
 
         if (!selectedEntity)
         {
-            BOX_LOG_WARNING("No entity selected for OBJ export");
+            BOX_LOG_WARNING(
+                "No entity selected for OBJ export"
+            );
 
             break;
         }
 
-        const std::string path = FileDialog::SaveOBJ();
+        const std::string path =
+            FileDialog::SaveOBJ();
 
         if (path.empty())
         {
             break;
         }
 
-        if (!m_objManager->ExportOBJ(*selectedEntity, path))
+        if (!m_objManager->ExportOBJ(
+            *selectedEntity,
+            path))
         {
-            BOX_LOG_ERROR("Failed to export OBJ: " << path
+            BOX_LOG_ERROR(
+                "Failed to export OBJ: "
+                << path
             );
 
             break;
         }
 
         BOX_LOG_INFO("OBJ exported successfully: " << path);
-		break;
-	}
+
+        break;
+      }
+	
 	
 
 	// ############################################ Handle other menu actions #####################################################
