@@ -1,5 +1,6 @@
 #include "fileManager/objManager.h"
 #include <fstream>
+#include <limits>
 #include <entity/Entity.h>
 #include <material/Material.h>
 
@@ -85,6 +86,8 @@ bool objManager::ExportOBJ(
     // Faces
     // ---------------------------------------------------------
 
+    std::size_t currentMaterialIndex = std::numeric_limits<std::size_t>::max();
+
     for (std::size_t i = 0;
         i + 2 < mesh.indices.size();
         i += 3)
@@ -102,6 +105,26 @@ bool objManager::ExportOBJ(
         // Material used by this triangle
         // ---------------------------------------------------------
         const std::size_t materialIndex =
+            mesh.vertices[
+                mesh.indices[i]
+            ].materialIndex;
+
+        if (materialIndex != currentMaterialIndex &&
+            materialIndex < entity.GetMaterialSlotCount())
+        {
+            const Material& material =
+                entity.GetMaterialSlot(materialIndex);
+
+            file
+                << "usemtl "
+                << material.GetName()
+                << "\n";
+
+            currentMaterialIndex =
+                materialIndex;
+        }
+        
+        /*const std::size_t materialIndex =
             mesh.vertices[mesh.indices[i]].materialIndex;
 
         if (materialIndex <
@@ -116,7 +139,7 @@ bool objManager::ExportOBJ(
                 << "usemtl "
                 << material.GetName()
                 << "\n";
-        }
+        }*/
 
         // ---------------------------------------------------------
         // Triangle
