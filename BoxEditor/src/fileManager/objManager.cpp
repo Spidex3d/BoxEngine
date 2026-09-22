@@ -17,8 +17,6 @@ bool objManager::ExportOBJ(
         return false;
     }
 
-	
-
     // ---------------------------------------------------------
     // OBJ header
     // ---------------------------------------------------------
@@ -124,23 +122,6 @@ bool objManager::ExportOBJ(
                 materialIndex;
         }
         
-        /*const std::size_t materialIndex =
-            mesh.vertices[mesh.indices[i]].materialIndex;
-
-        if (materialIndex <
-            entity.GetMaterialSlotCount())
-        {
-            const Material& material =
-                entity.GetMaterialSlot(
-                    materialIndex
-                );
-
-            file
-                << "usemtl "
-                << material.GetName()
-                << "\n";
-        }*/
-
         // ---------------------------------------------------------
         // Triangle
         // ---------------------------------------------------------

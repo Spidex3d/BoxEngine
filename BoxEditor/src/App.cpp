@@ -610,29 +610,35 @@ void App::HandleEcoSystemAction(
             m_ecosystemPanel->GetFloorDepth(),
             m_ecosystemPanel->GetFloorSubdivisionsX(),
             m_ecosystemPanel->GetFloorSubdivisionsZ()
+			
         );
 
         break;
 
     
     }
-	case EcoSystemAction::AddRocks:
-		//m_engine->AddEditableRock(glm::vec3(0.0f, -0.20f, 0.0f));
-
+    case EcoSystemAction::AddRocks:
+    {
         m_engine->AddEditableRock(
             glm::vec3(0.0f),
             m_ecosystemPanel->GetRockRadius(),
             m_ecosystemPanel->GetRockSubdivisions(),
             m_ecosystemPanel->GetRockRoughness(),
-            static_cast<std::uint32_t>(m_ecosystemPanel->GetRockSeed(),
-            m_ecosystemPanel->GetRockFlattening()));
+            static_cast<std::uint32_t>(
+                m_ecosystemPanel->GetRockSeed()
+                ),
+            m_ecosystemPanel->GetRockFlattening()
+        );
 
         BOX_LOG_INFO(
-            "UI Rock Flattening: "
+            "UI Rock Seed: "
+            << m_ecosystemPanel->GetRockSeed()
+            << " Flattening: "
             << m_ecosystemPanel->GetRockFlattening()
         );
 
-		break;  
+        break;
+    }
 
     case EcoSystemAction::None:
     default:

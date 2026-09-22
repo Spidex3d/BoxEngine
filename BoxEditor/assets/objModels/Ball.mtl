@@ -1,0 +1,10 @@
+# BoxEditor Material File
+
+newmtl Default
+Kd 1 1 1
+d 1
+
+newmtl Red
+Kd 1 1 1
+d 1
+map_Kd crate.jpg

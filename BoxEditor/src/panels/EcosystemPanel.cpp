@@ -437,29 +437,6 @@ EcoSystemAction EcosystemPanel::RocksTab(
     return action;
 }
 
-//EcoSystemAction EcosystemPanel::RocksTab(
-//    BoxEngine& engine)
-//{
-//    EcoSystemAction action = EcoSystemAction::None;
-//
-//    ImGui::Text("Rock Generator");
-//    ImGui::Separator();
-//    ImGui::Spacing();
-//
-//    ImGui::Text(
-//        "Generate a procedural editable rock."
-//    );
-//
-//    ImGui::Spacing();
-//
-//    if (ImGui::Button("Generate Rock", ImVec2(140.0f, 32.0f)))
-//    {
-//        action = EcoSystemAction::AddRocks;
-//    }
-//
-//    return action;
-//}
-
 void EcosystemPanel::TerrainTab(BoxEngine& engine)
 {
     // TODO: Implement terrain generation logic here

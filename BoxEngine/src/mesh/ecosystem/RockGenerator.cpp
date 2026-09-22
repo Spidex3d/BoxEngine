@@ -15,18 +15,24 @@ bool RockGenerator::Generate(
     float rockFlattening)
 {
     if (radius <= 0.0f)
+    {
         return false;
+    }
 
     roughness =
-        glm::clamp(roughness, 0.0f, 1.0f);
+        glm::clamp(
+            roughness,
+            0.0f,
+            1.0f
+        );
 
-    const int sectors =
-        8 + subdivisions * 4;
-
-    const int stacks =
-        4 + subdivisions * 2;
-
-    return mesh.CreateRock(sectors, stacks, radius, roughness, seed, rockFlattening);
+    return mesh.CreateRock(
+        subdivisions,
+        radius,
+        roughness,
+        seed,
+        rockFlattening
+    );
 }
 
 

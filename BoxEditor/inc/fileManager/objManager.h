@@ -33,12 +33,7 @@ public:
 
 	bool ImportOBJ(const std::filesystem::path& objFilePath, OBJImportData& outData);
 
-	//wright a function to move the texture file to the same directory as the obj file
-	// and update the mtl file to point to the new texture file path
-
-	// wright a function to write the mtl file for the obj file, with the correct texture file path
-
-
+	
 private:	
 
 	bool WriteMTL(const Entity& entity, const std::filesystem::path& mtlFilePath);

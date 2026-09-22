@@ -576,8 +576,7 @@ bool Entity::CreateFloor(float width, float depth, int subdivisionsX, int subdiv
 }
 
 bool Entity::CreateRock(
-    int rockSectors,
-    int rockStacks,
+    int rockSubdivisions,
     float rockRadius,
     float rockRoughness,
     std::uint32_t rockSeed,
@@ -588,9 +587,7 @@ bool Entity::CreateRock(
     // ---------------------------------------------
     // Create the native editable rock topology.
     // ---------------------------------------------
-    if (!m_editableMesh.CreateRock(
-        rockSectors,
-        rockStacks,
+    if (!m_editableMesh.CreateRock(rockSubdivisions,
         rockRadius,
         rockRoughness,
         rockSeed,

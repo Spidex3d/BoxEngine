@@ -43,9 +43,7 @@ MenuAction MainMenuBar::DrawMainMenu()
             {
                 action = MenuAction::Importmbx;
             }
-            if (ImGui::MenuItem("Import .obj"))
-            {
-            }
+            ImGui::Separator();
             if (ImGui::MenuItem("Export .obj"))
             {
                 action = MenuAction::ExportOBJ;

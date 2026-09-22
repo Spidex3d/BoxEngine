@@ -325,29 +325,52 @@ bool BoxEngine::AddEditableFloor(const glm::vec3& position, float width, float d
 
 }
 //bool BoxEngine::AddEditableRock(const glm::vec3& position)
-bool BoxEngine::AddEditableRock(const glm::vec3& position, float radius, int subdivisions,
-    float roughness, std::uint32_t seed, float flattening)
+bool BoxEngine::AddEditableRock(const glm::vec3& position, float radius,
+    int subdivisions, float roughness, std::uint32_t seed, float flattening)
 {
+    BOX_LOG_INFO(
+        "AddEditableRock - Seed = "
+        << seed
+    );
+
     const int entityID = m_nextEntityID++;
 
-    const std::string name = "Rock " + std::to_string(entityID);
+    const std::string name =
+        "Rock " + std::to_string(entityID);
 
-    auto rock = std::make_unique<Entity>(entityID, name);
+    auto rock =
+        std::make_unique<Entity>(entityID, name);
 
-    const int rockSectors = 8 + subdivisions * 4;
+    // -------------------------------------------------
+    // Default material
+    // -------------------------------------------------
 
-    const int rockStacks = 4 + subdivisions * 2;
+    rock->GetMaterial().SetBaseColorTexture(
+        m_defaultTexture.GetID(),
+        m_defaultTexturePath
+    );
 
-    rock->GetMaterial().SetBaseColorTexture(m_defaultTexture.GetID(), m_defaultTexturePath);
-
-    // Set the base color texture of the rock's material to the m_defaultTexture checkerboard texture
-    Material& material = rock->GetMaterial();
+    Material& material =
+        rock->GetMaterial();
 
     material.SetUseBaseColorTexture(true);
 
+    // -------------------------------------------------
+    // Position
+    // -------------------------------------------------
+
     rock->SetPosition(position);
 
-    if (!rock->CreateRock(rockSectors, rockStacks, radius, roughness, seed, flattening))
+    // -------------------------------------------------
+    // Create IcoSphere based rock
+    // -------------------------------------------------
+
+    if (!rock->CreateRock(
+        subdivisions,
+        radius,
+        roughness,
+        seed,
+        flattening))
     {
         BOX_LOG_ERROR(
             "Failed to add editable rock"
@@ -356,7 +379,9 @@ bool BoxEngine::AddEditableRock(const glm::vec3& position, float radius, int sub
         return false;
     }
 
-    m_entities.push_back(std::move(rock));
+    m_entities.push_back(
+        std::move(rock)
+    );
 
     return true;
 }

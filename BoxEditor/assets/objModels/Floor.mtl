@@ -1,0 +1,11 @@
+# BoxEditor Material File
+
+newmtl Default
+Kd 1 1 1
+d 1
+
+newmtl grass
+Kd 1 1 1
+d 1
+map_Kd dead-leaves-sparse-on-grass_s.jpg
+
