@@ -58,13 +58,16 @@ public:
 	// bool CreateTorus(int sides = 16, int rings = 32, float innerRadius = 0.2f, float outerRadius = 0.5f);
      bool CreatePyramid();
 
-	 // ------------------------------------------ Ecosystem Mesh Creation -----------------------------
+	 // ------------------------------------------ Panel Creation (Greebles) --------------------------------------
+	 bool CreateWallPanel(float width, float height, int subdivisionsX, int subdivisionsY); 
+	 
+     // ------------------------------------------ Ecosystem Mesh Creation -----------------------------
     // Create a Floor from the new editable mesh data, buffers for rendering.
 	bool CreateFloor(float width, float depth, int subdivisionsX, int subdivisionsZ); 
 
-	/*bool CreateRock(int rockSectors = 32, int rockStacks = 16,
-        float rockRadius = 0.5f, float rockRoughness = 0.2f, std::uint32_t rockSeed = 42, float rockFlattening = 0.2f);*/
     bool CreateRock(int rockSubdivisions, float rockRadius, float rockRoughness, std::uint32_t rockSeed, float rockFlattening);
+
+
 
      // this just gives us a primitive type
      EntityPrimitiveType GetPrimitiveType() const
