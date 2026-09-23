@@ -187,6 +187,18 @@ MenuAction MainMenuBar::DrawMainMenu()
             ImGui::EndMenu();
         }
 
+		// UV menu for UV mapping tools
+        if (ImGui::BeginMenu("UV"))
+        {
+            if (ImGui::MenuItem("UVPanel"))
+            {
+                action = MenuAction::UV; // open the UV panel
+
+            }
+
+            ImGui::EndMenu();
+        }
+
         if (ImGui::BeginMenu("Help"))
         {
             if (ImGui::MenuItem("Help"))

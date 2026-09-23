@@ -1979,120 +1979,120 @@ bool MeshEditing::BuildRenderMesh(MeshData& meshData) const
              * For our first editable cube
              * every face contains four corners.
              */
-            if (face.vertices.size() == 4)
+            
+             // -------------------------------------------------
+ // Use stored face-corner UV coordinates when
+ // available.
+ //
+ // Each UV corresponds directly to the same corner
+ // in face.vertices.
+ // -------------------------------------------------
+
+            if (face.uvs.size() == face.vertices.size())
             {
-                switch (corner)
-                {
-                case 0:
-                    renderVertex.uv =
-                        glm::vec2(
-                            0.0f,
-                            0.0f
-                        );
-                    break;
-
-                case 1:
-                    renderVertex.uv =
-                        glm::vec2(
-                            1.0f,
-                            0.0f
-                        );
-                    break;
-
-                case 2:
-                    renderVertex.uv =
-                        glm::vec2(
-                            1.0f,
-                            1.0f
-                        );
-                    break;
-
-                case 3:
-                    renderVertex.uv =
-                        glm::vec2(
-                            0.0f,
-                            1.0f
-                        );
-                    break;
-                }
-            }
-            else if (face.vertices.size() == 3)
-            {
-                switch (corner)
-                {
-                case 0:
-                    renderVertex.uv =
-                        glm::vec2(0.0f, 0.0f);
-                    break;
-
-                case 1:
-                    renderVertex.uv =
-                        glm::vec2(1.0f, 0.0f);
-                    break;
-
-                case 2:
-                    renderVertex.uv =
-                        glm::vec2(0.5f, 1.0f);
-                    break;
-                }
+                // ---------------------------------------------
+                // Stored face-corner UV.
+                // ---------------------------------------------
+                renderVertex.uv =
+                    face.uvs[corner];
             }
             else
             {
-               
-                const glm::vec3& p = renderVertex.position;
+                // ---------------------------------------------
+                // Legacy fallback UV generation.
+                // ---------------------------------------------
 
-                /*
-                 * Temporary planar UV projection
-                 * for n-gons.
-                 *
-                 * Choose projection plane from the
-                 * dominant face-normal direction.
-                 */
-
-                const glm::vec3 absNormal =
-                    glm::abs(faceNormal);
-
-                if (absNormal.y >= absNormal.x &&
-                    absNormal.y >= absNormal.z)
+                if (face.vertices.size() == 4)
                 {
-                    // Mostly horizontal face:
-                    // project X/Z.
-                    renderVertex.uv =
-                        glm::vec2(
-                            p.x + 0.5f,
-                            p.z + 0.5f
-                        );
+                    switch (corner)
+                    {
+                    case 0:
+                        renderVertex.uv =
+                            glm::vec2(0.0f, 0.0f);
+                        break;
+
+                    case 1:
+                        renderVertex.uv =
+                            glm::vec2(1.0f, 0.0f);
+                        break;
+
+                    case 2:
+                        renderVertex.uv =
+                            glm::vec2(1.0f, 1.0f);
+                        break;
+
+                    case 3:
+                        renderVertex.uv =
+                            glm::vec2(0.0f, 1.0f);
+                        break;
+                    }
                 }
-                else if (
-                    absNormal.x >= absNormal.y &&
-                    absNormal.x >= absNormal.z)
+                else if (face.vertices.size() == 3)
                 {
-                    // Mostly X-facing:
-                    // project Z/Y.
-                    renderVertex.uv =
-                        glm::vec2(
-                            p.z + 0.5f,
-                            p.y + 0.5f
-                        );
+                    switch (corner)
+                    {
+                    case 0:
+                        renderVertex.uv =
+                            glm::vec2(0.0f, 0.0f);
+                        break;
+
+                    case 1:
+                        renderVertex.uv =
+                            glm::vec2(1.0f, 0.0f);
+                        break;
+
+                    case 2:
+                        renderVertex.uv =
+                            glm::vec2(0.5f, 1.0f);
+                        break;
+                    }
                 }
                 else
                 {
-                    // Mostly Z-facing:
-                    // project X/Y.
-                    renderVertex.uv =
-                        glm::vec2(
-                            p.x + 0.5f,
-                            p.y + 0.5f
-                        );
+                    // -----------------------------------------
+                    // Temporary planar UV projection for n-gons.
+                    // -----------------------------------------
+
+                    const glm::vec3& p =
+                        renderVertex.position;
+
+                    const glm::vec3 absNormal =
+                        glm::abs(faceNormal);
+
+                    if (absNormal.y >= absNormal.x &&
+                        absNormal.y >= absNormal.z)
+                    {
+                        // Mostly horizontal face:
+                        // project X/Z.
+                        renderVertex.uv =
+                            glm::vec2(
+                                p.x + 0.5f,
+                                p.z + 0.5f
+                            );
+                    }
+                    else if (
+                        absNormal.x >= absNormal.y &&
+                        absNormal.x >= absNormal.z)
+                    {
+                        // Mostly X-facing:
+                        // project Z/Y.
+                        renderVertex.uv =
+                            glm::vec2(
+                                p.z + 0.5f,
+                                p.y + 0.5f
+                            );
+                    }
+                    else
+                    {
+                        // Mostly Z-facing:
+                        // project X/Y.
+                        renderVertex.uv =
+                            glm::vec2(
+                                p.x + 0.5f,
+                                p.y + 0.5f
+                            );
+                    }
                 }
-
-
-
-
-
-
-
-
             }
            
             meshData.vertices.push_back(renderVertex);

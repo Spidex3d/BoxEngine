@@ -151,6 +151,7 @@
     <ClCompile Include="src\panels\ObjectExplorerPanel.cpp" />
     <ClCompile Include="src\panels\SceneCollectionPanel.cpp" />
     <ClCompile Include="src\panels\SceneViewportPanel.cpp" />
+    <ClCompile Include="src\panels\UVPanel.cpp" />
     <ClCompile Include="src\preview\MaterialPreview.cpp" />
     <ClCompile Include="src\tools\EdgeEditController.cpp" />
     <ClCompile Include="src\tools\FaceEditController.cpp" />
@@ -193,6 +194,7 @@
     <ClInclude Include="inc\panels\ObjectExplorerPanel.h" />
     <ClInclude Include="inc\panels\SceneCollectionPanel.h" />
     <ClInclude Include="inc\panels\SceneViewportPanel.h" />
+    <ClInclude Include="inc\panels\UVPanel.h" />
     <ClInclude Include="inc\preview\MaterialPreview.h" />
     <ClInclude Include="inc\tools\EdgeEditController.h" />
     <ClInclude Include="inc\tools\FaceEditController.h" />

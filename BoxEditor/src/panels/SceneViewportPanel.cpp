@@ -733,12 +733,6 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             // ############################################################################################
             // #################################### Editing tools #########################################
             // ############################################################################################
-   //         const bool editModeActive = m_EditMode == 2;
-			//const bool vertexModeActive = editModeActive && m_editType == 0;    // combine edit mode and vertex edit type
-
-			//const bool edgeModeActive = editModeActive && m_editType == 1;      // combine edit mode and edge edit type
-			//
-   //         const bool faceModeActive = editModeActive && m_editType == 2;      // combine edit mode and face edit type
    
             const bool editModeActive = m_EditMode == 2;
 
@@ -758,8 +752,8 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             const bool faceModeActive = (editModeActive && m_editType == 2) || materialModeActive;          
            
             // ============================================================
-// Vertex Draw Controller
-// ============================================================
+            // Vertex Draw Controller
+            // ============================================================
 
             m_vertexDrawController.HandleInput(
                 engine,

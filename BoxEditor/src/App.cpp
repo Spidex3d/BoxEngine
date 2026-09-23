@@ -10,7 +10,7 @@
 #include <panels/MaterialEditorPanel.h>
 #include <panels/MaterialDisplayPanel.h>
 #include <panels/EcosystemPanel.h>
-
+#include <panels/UVPanel.h>
 #include <FileDialog.h>
 #include <string>
 
@@ -101,6 +101,8 @@ bool App::Init()
     }
     
     m_helpPanel = std::make_unique<HelpPanel>();
+
+	m_uvPanel = std::make_unique<UVPanel>();
 
     m_materialEditorPanel = std::make_unique<MaterialEditorPanel>();
 
@@ -203,7 +205,7 @@ int App::Run()
         HandleViewportAction(viewportAction, *m_engine);
         
 		m_imgSceneCollection->DrawSceneCollection(*m_engine); // Draw the Scene Collection panel cubes and other entities in the scene
-         
+		// ------------------------------ Object Explorer Panel --------------------------------------
         if (m_imgObjectExplorer)
         {
             m_imgObjectExplorer->DrawObjectExplorer(*m_engine, m_sceneViewport->GetFaceEditController(),
@@ -230,7 +232,7 @@ int App::Run()
             }
         }
 
-
+		// ----------------------- Draw the Material Display panel if it is open -----------------------
 		if (m_materialDisplayPanel)
 		{
 			Entity* entity = m_engine->GetSelectedEntity();
@@ -252,15 +254,19 @@ int App::Run()
         }
         // ------------------------------ End Ecosystem Panel ----------------------------------
 
+		// ----------------------- Draw the Help panel if it is open -----------------------
         if (m_helpPanel)
         {
             m_helpPanel->Draw();
         }
 
-        
-		m_imgui->RenderImGui();
+		// ----------------------- Draw the UV panel if it is open -----------------------
+        if (m_uvPanel)
+        {
+            m_uvPanel->Draw(*m_engine);
+        }
 
-        
+		m_imgui->RenderImGui();
 
         glfwSwapBuffers(nativeWindow);
     }
@@ -459,7 +465,14 @@ void App::HandleMenuAction(
         }
         BOX_LOG_INFO("Ecosystem menu action triggered");
         break;
+	case MenuAction::UV:
+		if (m_uvPanel)
+		{
+			m_uvPanel->Open();
+		}
 
+		BOX_LOG_INFO("UV Editor menu action triggered");
+		break;
     case MenuAction::Help:
         if (m_helpPanel)
         {
@@ -846,6 +859,12 @@ void App::Shutdown()
     if (m_helpPanel)
     {
     m_helpPanel.reset();
+    }
+    
+    // Shutdown the UV panel
+    if (m_uvPanel)
+    {
+        m_uvPanel.reset();
     }
 
     // ImGui requires a valid GLFW window and OpenGL context during shutdown.

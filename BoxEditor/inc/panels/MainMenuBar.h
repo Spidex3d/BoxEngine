@@ -26,7 +26,9 @@ enum class MenuAction
 	Help,
 	About,
 
-	Ecosystem
+	Ecosystem,
+
+	UV
 
 };
 

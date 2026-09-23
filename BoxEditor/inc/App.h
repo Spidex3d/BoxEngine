@@ -22,6 +22,7 @@ class HelpPanel;
 class MaterialEditorPanel;
 class MaterialDisplayPanel;
 class EcosystemPanel;
+class UVPanel;
 
 class App
 {
@@ -65,6 +66,8 @@ private:
 	std::unique_ptr<MaterialDisplayPanel> m_materialDisplayPanel; // Material Display panel for ImGui
 
 	std::unique_ptr<HelpPanel> m_helpPanel; // Help panel for ImGui
+
+	std::unique_ptr<UVPanel> m_uvPanel; // UV panel for ImGui
 
 	// ------------------------------- Ecosystem Panel -------------------------------
 

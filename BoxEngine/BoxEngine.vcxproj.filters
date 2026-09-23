@@ -93,6 +93,9 @@
     <ClInclude Include="inc\mesh\ecosystem\ScatterSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="inc\mesh\UV\UVMapping.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\BoxEngine.cpp">
@@ -165,6 +168,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\mesh\ecosystem\ScatterSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mesh\UV\UVMapping.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

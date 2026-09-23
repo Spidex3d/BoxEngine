@@ -21,7 +21,18 @@ struct EditEdge
 
 struct EditFace
 {
+    // Indices into MeshEditing::m_vertices.
     std::vector<std::size_t> vertices;
+
+    // UV coordinate for each corner of this face.
+    //
+    // uvs[i] belongs to vertices[i].
+    //
+    // UVs are stored per face-corner rather than
+    // per EditVertex because the same 3D vertex
+    // may have different UV coordinates on
+    // neighbouring faces.
+    std::vector<glm::vec2> uvs;
 
     std::size_t materialIndex = 0;
 };
