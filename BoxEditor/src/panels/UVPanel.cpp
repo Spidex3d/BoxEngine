@@ -6,6 +6,7 @@
 #include <mesh/MeshEditing.h>
 #include <mesh/MeshData.h>
 #include <miniBoxLog.h>
+//#include <cstdint>
 
 UVPanel::~UVPanel() = default;
 
@@ -175,10 +176,7 @@ void UVPanel::Draw(BoxEngine& engine)
     ImGui::End();
 }
 
-void UVPanel::DrawUVLayout(
-    const Entity& entity,
-    const ImVec2& canvasPosition,
-    const ImVec2& canvasSize)
+void UVPanel::DrawUVLayout(Entity& entity, const ImVec2& canvasPosition, const ImVec2& canvasSize)
 {
     ImDrawList* drawList =
         ImGui::GetWindowDrawList();
@@ -207,6 +205,46 @@ void UVPanel::DrawUVLayout(
             255
         )
     );
+
+    // -------------------------------------------------
+// Find the first material slot containing
+// a base colour texture.
+// -------------------------------------------------
+
+    GLuint textureID = 0;
+
+    for (std::size_t slot = 0;
+        slot < entity.GetMaterialSlotCount();
+        ++slot)
+    {
+        const Material& material =
+            entity.GetMaterialSlot(slot);
+
+        if (material.UsesBaseColorTexture() &&
+            material.GetBaseColorTexture() != 0)
+        {
+            textureID =
+                material.GetBaseColorTexture();
+
+            break;
+        }
+    }
+
+    if (textureID != 0)
+    {
+        drawList->AddImage(
+            (ImTextureID)(
+                static_cast<intptr_t>(
+                    textureID
+                    )
+                ),
+            canvasPosition,
+            canvasEnd,
+            ImVec2(0.0f, 0.0f),
+            ImVec2(1.0f, 1.0f)
+        );
+    }
+
 
     // -------------------------------------------------
     // Simple UV grid.
@@ -288,11 +326,10 @@ void UVPanel::DrawUVLayout(
 // Draw UV face layout.
 // -------------------------------------------------
 
-    const MeshEditing& mesh =
+     MeshEditing& mesh =
         entity.GetEditableMesh();
 
-    const auto& faces =
-        mesh.GetFaces();
+     auto& faces = mesh.GetFaces();
 
     const ImU32 uvColor =
         IM_COL32(
@@ -367,6 +404,167 @@ void UVPanel::DrawUVLayout(
             );
         }
     }
+
+    // -------------------------------------------------
+    // Draw and select UV vertices.
+    // -------------------------------------------------
+
+    const ImU32 uvVertexColor =
+        IM_COL32(
+            230,
+            230,
+            230,
+            255
+        );
+
+    const ImU32 selectedUVColor =
+        IM_COL32(
+            255,
+            150,
+            40,
+            255
+        );
+
+    constexpr float uvVertexRadius = 3.5f;
+    constexpr float uvSelectRadius = 7.0f;
+
+    const ImVec2 mousePosition =
+        ImGui::GetIO().MousePos;
+
+    for (std::size_t faceIndex = 0;
+        faceIndex < faces.size();
+        ++faceIndex)
+    {
+        const EditFace& face =
+            faces[faceIndex];
+
+        if (face.uvs.size() !=
+            face.vertices.size())
+        {
+            continue;
+        }
+
+        for (std::size_t corner = 0;
+            corner < face.uvs.size();
+            ++corner)
+        {
+            const glm::vec2& uv =
+                face.uvs[corner];
+
+            const ImVec2 point(
+                canvasPosition.x +
+                uv.x * canvasSize.x,
+
+                canvasPosition.y +
+                (1.0f - uv.y) *
+                canvasSize.y
+            );
+
+            // -----------------------------------------
+            // Distance from mouse to this UV point.
+            // -----------------------------------------
+
+            const float dx =
+                mousePosition.x - point.x;
+
+            const float dy =
+                mousePosition.y - point.y;
+
+            const float distanceSquared =
+                dx * dx + dy * dy;
+
+            const bool hovered =
+                distanceSquared <=
+                uvSelectRadius * uvSelectRadius;
+
+            // -----------------------------------------
+            // Select this UV point.
+            // -----------------------------------------
+            if (hovered &&
+                ImGui::IsMouseClicked(
+                    ImGuiMouseButton_Left))
+            {
+                m_selectedFace =
+                    static_cast<int>(faceIndex);
+
+                m_selectedCorner =
+                    static_cast<int>(corner);
+
+                m_draggingUV = true;
+            }
+            
+            // -----------------------------------------
+            // Is this the selected UV?
+            // -----------------------------------------
+
+            const bool selected =
+                m_selectedFace ==
+                static_cast<int>(faceIndex) &&
+                m_selectedCorner ==
+                static_cast<int>(corner);
+
+            drawList->AddCircleFilled(
+                point,
+                selected
+                ? 5.0f
+                : uvVertexRadius,
+                selected
+                ? selectedUVColor
+                : uvVertexColor
+            );
+        }
+        
+    }
+    if (ImGui::IsMouseReleased(
+        ImGuiMouseButton_Left))
+    {
+        m_draggingUV = false;
+    }
+
+    // -------------------------------------------------
+// Drag selected UV.
+// -------------------------------------------------
+
+    if (m_draggingUV &&
+        m_selectedFace >= 0 &&
+        m_selectedCorner >= 0)
+    {
+        const std::size_t faceIndex =
+            static_cast<std::size_t>(
+                m_selectedFace
+                );
+
+        const std::size_t cornerIndex =
+            static_cast<std::size_t>(
+                m_selectedCorner
+                );
+
+        if (faceIndex < faces.size())
+        {
+            //EditFace& face = faces[faceIndex];
+            EditFace& face = mesh.GetFace(faceIndex);
+
+            if (cornerIndex < face.uvs.size())
+            {
+                glm::vec2& uv =
+                    face.uvs[cornerIndex];
+
+                // Convert mouse screen position
+                // back into UV coordinates.
+                uv.x =
+                    (mousePosition.x -
+                        canvasPosition.x) /
+                    canvasSize.x;
+
+                uv.y =
+                    1.0f -
+                    ((mousePosition.y -
+                        canvasPosition.y) /
+                        canvasSize.y);
+            }
+        }
+    }
+
     drawList->PopClipRect();
 
 }

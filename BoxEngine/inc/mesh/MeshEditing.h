@@ -121,6 +121,7 @@ public:
     const std::vector<EditVertex>& GetVertices() const;
     const std::vector<EditEdge>& GetEdges() const;
     const std::vector<EditFace>& GetFaces() const;
+	
 
     
 	std::vector<std::size_t>FindEdgeRing(std::size_t startEdgeIndex) const; // Finds an edge loop starting from a given edge index.
