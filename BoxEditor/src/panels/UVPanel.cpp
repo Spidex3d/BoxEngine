@@ -6,7 +6,7 @@
 #include <mesh/MeshEditing.h>
 #include <mesh/MeshData.h>
 #include <miniBoxLog.h>
-//#include <cstdint>
+#include <algorithm>
 
 UVPanel::~UVPanel() = default;
 
@@ -69,7 +69,9 @@ void UVPanel::Draw(BoxEngine& engine)
     const char* projectionTypes[] =
     {
         "Box",
-        "Spherical"
+        "Spherical",
+        "Planar",
+        "Cylindrical"
     };
 
     ImGui::SetNextItemWidth(180.0f);
@@ -95,14 +97,19 @@ void UVPanel::Draw(BoxEngine& engine)
         switch (m_projectionType)
         {
         case 0:
-            generated =
-                UVMapping::Box(editableMesh);
+            generated = UVMapping::Box(editableMesh);
             break;
 
         case 1:
-            generated =
-                UVMapping::Spherical(editableMesh);
+            generated = UVMapping::Spherical(editableMesh);
             break;
+		case 2:
+			generated = UVMapping::Planar(editableMesh);
+			break;
+		case 3:
+			generated = UVMapping::Cylindrical(editableMesh);
+			break;
+
         }
 
         if (generated)
@@ -111,9 +118,7 @@ void UVPanel::Draw(BoxEngine& engine)
 
             if (editableMesh.BuildRenderMesh(renderMesh))
             {
-                selectedEntity->CreateFromMeshData(
-                    renderMesh
-                );
+                selectedEntity->CreateFromMeshData(renderMesh);
 
                 BOX_LOG_INFO("UV coordinates generated for object: " + selectedEntity->GetName());
             }
@@ -478,30 +483,188 @@ void UVPanel::DrawUVLayout(Entity& entity, const ImVec2& canvasPosition, const I
                 uvSelectRadius * uvSelectRadius;
 
             // -----------------------------------------
-            // Select this UV point.
+			// Select this UV point. Hoverd and click.
             // -----------------------------------------
+
             if (hovered &&
                 ImGui::IsMouseClicked(
                     ImGuiMouseButton_Left))
             {
+
+                const glm::vec2 clickedUV =
+                    face.uvs[corner];
+
+                constexpr float selectionEpsilon =
+                    0.0001f;
+
+                const bool shiftHeld =
+                    ImGui::GetIO().KeyShift;
+
+                // -------------------------------------------------
+                // Find all face-corners that occupy the same
+                // UV position as the clicked point.
+                // -------------------------------------------------
+
+                std::vector<UVSelection> clickedGroup;
+
+                for (std::size_t searchFace = 0;
+                    searchFace < mesh.GetFaceCount();
+                    ++searchFace)
+                {
+                    const EditFace& searchEditFace =
+                        mesh.GetFace(searchFace);
+
+                    for (std::size_t searchCorner = 0;
+                        searchCorner < searchEditFace.uvs.size();
+                        ++searchCorner)
+                    {
+                        const glm::vec2& searchUV =
+                            searchEditFace.uvs[searchCorner];
+
+                        const glm::vec2 difference =
+                            searchUV - clickedUV;
+
+                        if (glm::abs(difference.x) <= selectionEpsilon &&
+                            glm::abs(difference.y) <= selectionEpsilon)
+                        {
+                            clickedGroup.push_back(
+                                {
+                                    searchFace,
+                                    searchCorner
+                                }
+                            );
+                        }
+                    }
+                }
+
+                // -------------------------------------------------
+                // Check whether this visual UV point is already
+                // part of our current selection.
+                // -------------------------------------------------
+
+                bool groupAlreadySelected = true;
+
+                for (const UVSelection& groupUV :
+                    clickedGroup)
+                {
+                    const bool found =
+                        std::any_of(
+                            m_selectedUVs.begin(),
+                            m_selectedUVs.end(),
+                            [&](const UVSelection& selected)
+                    {
+                        return
+                            selected.faceIndex ==
+                            groupUV.faceIndex &&
+                            selected.cornerIndex ==
+                            groupUV.cornerIndex;
+                    }
+                        );
+
+                    if (!found)
+                    {
+                        groupAlreadySelected = false;
+                        break;
+                    }
+                }
+
+                
+
+                // -------------------------------------------------
+                // Normal click:
+                // replace selection with this entire UV group.
+                // -------------------------------------------------
+
+                if (!shiftHeld)
+                {
+                    m_selectedUVs.clear();
+
+                    for (const UVSelection& groupUV :
+                        clickedGroup)
+                    {
+                        m_selectedUVs.push_back(
+                            groupUV
+                        );
+                    }
+                }
+                // -------------------------------------------------
+                // Shift + Click:
+                // toggle the entire UV group.
+                // -------------------------------------------------
+                else
+                {
+                    if (groupAlreadySelected)
+                    {
+                        for (const UVSelection& groupUV :
+                            clickedGroup)
+                        {
+                            m_selectedUVs.erase(
+                                std::remove_if(
+                                    m_selectedUVs.begin(),
+                                    m_selectedUVs.end(),
+                                    [&](const UVSelection& selected)
+                            {
+                                return
+                                    selected.faceIndex ==
+                                    groupUV.faceIndex &&
+                                    selected.cornerIndex ==
+                                    groupUV.cornerIndex;
+                            }
+                                ),
+                                m_selectedUVs.end()
+                            );
+                        }
+                    }
+                    else
+                    {
+                        for (const UVSelection& groupUV :
+                            clickedGroup)
+                        {
+                            m_selectedUVs.push_back(
+                                groupUV
+                            );
+                        }
+                    }
+                }
+
+                // -------------------------------------------------
+                // Keep the clicked corner as the active UV.
+                // Our current dragging code still uses this.
+                // -------------------------------------------------
+
                 m_selectedFace =
                     static_cast<int>(faceIndex);
 
                 m_selectedCorner =
                     static_cast<int>(corner);
 
+                m_dragStartUV =
+                    clickedUV;
+
                 m_draggingUV = true;
+                
             }
+
+
+
+
             
             // -----------------------------------------
             // Is this the selected UV?
             // -----------------------------------------
 
             const bool selected =
-                m_selectedFace ==
-                static_cast<int>(faceIndex) &&
-                m_selectedCorner ==
-                static_cast<int>(corner);
+                std::any_of(
+                    m_selectedUVs.begin(),
+                    m_selectedUVs.end(),
+                    [&](const UVSelection& selection)
+            {
+                return
+                    selection.faceIndex == faceIndex &&
+                    selection.cornerIndex == corner;
+            }
+                );
+
 
             drawList->AddCircleFilled(
                 point,
@@ -522,48 +685,103 @@ void UVPanel::DrawUVLayout(Entity& entity, const ImVec2& canvasPosition, const I
     }
 
     // -------------------------------------------------
-// Drag selected UV.
-// -------------------------------------------------
+    // Drag selected UV.
+    //
+    // Move every UV corner currently coincident with
+    // the selected UV.
+    // -------------------------------------------------
+
+    bool uvChanged = false;
 
     if (m_draggingUV &&
         m_selectedFace >= 0 &&
         m_selectedCorner >= 0)
     {
-        const std::size_t faceIndex =
+        const std::size_t selectedFaceIndex =
             static_cast<std::size_t>(
                 m_selectedFace
                 );
 
-        const std::size_t cornerIndex =
+        const std::size_t selectedCornerIndex =
             static_cast<std::size_t>(
                 m_selectedCorner
                 );
 
-        if (faceIndex < faces.size())
+        if (selectedFaceIndex < mesh.GetFaceCount())
         {
-            //EditFace& face = faces[faceIndex];
-            EditFace& face = mesh.GetFace(faceIndex);
+            EditFace& selectedFace =
+                mesh.GetFace(selectedFaceIndex);
 
-            if (cornerIndex < face.uvs.size())
+            if (selectedCornerIndex <
+                selectedFace.uvs.size())
             {
-                glm::vec2& uv =
-                    face.uvs[cornerIndex];
+                // Current position of the selected UV.
+                const glm::vec2 selectedUV =
+                    selectedFace.uvs[
+                        selectedCornerIndex
+                    ];
 
-                // Convert mouse screen position
-                // back into UV coordinates.
-                uv.x =
-                    (mousePosition.x -
-                        canvasPosition.x) /
-                    canvasSize.x;
+                // Convert ImGui mouse movement into
+                // UV-space movement.
+                const ImVec2 mouseDelta =
+                    ImGui::GetIO().MouseDelta;
 
-                uv.y =
-                    1.0f -
-                    ((mousePosition.y -
-                        canvasPosition.y) /
-                        canvasSize.y);
+                const glm::vec2 uvDelta(
+                    mouseDelta.x / canvasSize.x,
+                    -mouseDelta.y / canvasSize.y
+                );
+
+                constexpr float uvEpsilon =
+                    0.0001f;
+
+                // Find every UV corner currently at
+                // the same position.
+                for (std::size_t faceIndex = 0;
+                    faceIndex < mesh.GetFaceCount();
+                    ++faceIndex)
+                {
+                    EditFace& editFace =
+                        mesh.GetFace(faceIndex);
+
+                    for (std::size_t corner = 0;
+                        corner < editFace.uvs.size();
+                        ++corner)
+                    {
+                        glm::vec2& uv =
+                            editFace.uvs[corner];
+
+                        const glm::vec2 difference =
+                            uv - selectedUV;
+
+                        if (glm::abs(difference.x) <=
+                            uvEpsilon &&
+                            glm::abs(difference.y) <=
+                            uvEpsilon)
+                        {
+                            uv += uvDelta;
+                            uvChanged = true;
+                        }
+                    }
+                }
             }
         }
     }
+    // -------------------------------------------------
+    // Rebuild the render mesh when UVs have changed.
+    // -------------------------------------------------
+
+    if (uvChanged)
+    {
+        MeshData renderMesh;
+
+        if (mesh.BuildRenderMesh(renderMesh))
+        {
+            entity.CreateFromMeshData(
+                renderMesh
+            );
+        }
+    }
+
 
     drawList->PopClipRect();
 

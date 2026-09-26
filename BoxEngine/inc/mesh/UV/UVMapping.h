@@ -14,4 +14,7 @@ public:
 
     // Generate UV coordinates using spherical projection.
     static bool Spherical(MeshEditing& mesh);
+
+    // Generate UV coordinates using cylindrical projection.
+    static bool Cylindrical(MeshEditing& mesh);
 };

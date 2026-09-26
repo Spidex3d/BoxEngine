@@ -5,7 +5,8 @@ enum class LightType
 {
     Directional,
     Point,
-    Spot
+	Spot, 
+    Area
 };
 
 class Lighting

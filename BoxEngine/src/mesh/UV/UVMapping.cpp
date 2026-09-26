@@ -3,6 +3,130 @@
 #include <algorithm>
 #include <cmath>
 
+
+bool UVMapping::Planar(MeshEditing& mesh)
+{
+    const auto& vertices = mesh.GetVertices();
+
+    if (vertices.empty() || mesh.GetFaceCount() == 0)
+    {
+        return false;
+    }
+
+    for (std::size_t faceIndex = 0; faceIndex < mesh.GetFaceCount(); ++faceIndex)
+    {
+        EditFace& face = mesh.GetFace(faceIndex);
+
+        if (face.vertices.size() < 3)
+        {
+            continue;
+        }
+
+        for (std::size_t vertexIndex : face.vertices)
+        {
+            if (vertexIndex >= vertices.size())
+            {
+                return false;
+            }
+        }
+
+        // Compute a face normal from the first three vertices.
+        const glm::vec3& a = vertices[face.vertices[0]].position;
+        const glm::vec3& b = vertices[face.vertices[1]].position;
+        const glm::vec3& c = vertices[face.vertices[2]].position;
+
+        const glm::vec3 faceNormal = glm::normalize(glm::cross(b - a, c - a));
+        const glm::vec3 absNormal = glm::abs(faceNormal);
+
+        // Choose the best projection plane based on the dominant axis.
+        // This reduces distortion for non-horizontal faces.
+        enum class ProjectionPlane
+        {
+            XY,
+            XZ,
+            YZ
+        };
+
+        ProjectionPlane plane = ProjectionPlane::XZ;
+
+        if (absNormal.y >= absNormal.x && absNormal.y >= absNormal.z)
+        {
+            plane = ProjectionPlane::XZ; // mostly horizontal
+        }
+        else if (absNormal.x >= absNormal.y && absNormal.x >= absNormal.z)
+        {
+            plane = ProjectionPlane::YZ; // mostly X-facing
+        }
+        else
+        {
+            plane = ProjectionPlane::XY; // mostly Z-facing
+        }
+
+        // Project all corners first.
+        std::vector<glm::vec2> projectedUVs;
+        projectedUVs.reserve(face.vertices.size());
+
+        float minU = std::numeric_limits<float>::max();
+        float minV = std::numeric_limits<float>::max();
+        float maxU = -std::numeric_limits<float>::max();
+        float maxV = -std::numeric_limits<float>::max();
+
+        for (std::size_t vertexIndex : face.vertices)
+        {
+            const glm::vec3& p = vertices[vertexIndex].position;
+
+            glm::vec2 uv(0.0f);
+
+            switch (plane)
+            {
+            case ProjectionPlane::XZ:
+                uv = glm::vec2(p.x, p.z);
+                break;
+            case ProjectionPlane::YZ:
+                uv = glm::vec2(p.z, p.y);
+                break;
+            case ProjectionPlane::XY:
+                uv = glm::vec2(p.x, p.y);
+                break;
+            }
+
+            projectedUVs.push_back(uv);
+
+            minU = std::min(minU, uv.x);
+            minV = std::min(minV, uv.y);
+            maxU = std::max(maxU, uv.x);
+            maxV = std::max(maxV, uv.y);
+        }
+
+        const float rangeU = maxU - minU;
+        const float rangeV = maxV - minV;
+
+        face.uvs.clear();
+        face.uvs.reserve(projectedUVs.size());
+
+        // Normalize to 0..1, with protection against degenerate faces.
+        for (const glm::vec2& uv : projectedUVs)
+        {
+            float u = 0.0f;
+            float v = 0.0f;
+
+            if (rangeU > 0.000001f)
+            {
+                u = (uv.x - minU) / rangeU;
+            }
+
+            if (rangeV > 0.000001f)
+            {
+                v = (uv.y - minV) / rangeV;
+            }
+
+            face.uvs.emplace_back(u, v);
+        }
+    }
+
+    return true;
+}
+
 bool UVMapping::Box(MeshEditing& mesh)
 {
     // -------------------------------------------------
@@ -309,6 +433,205 @@ bool UVMapping::Spherical(MeshEditing& mesh)
 
         }
        
+    }
+
+    return true;
+}
+
+// -------------------------------------------------
+// Generate cylindrical UV coordinates.
+//
+// U = angle around the Y axis.
+// V = height along Y, normalized 0..1.
+//
+// Faces whose normal points mostly along +Y or -Y
+// (caps) are treated as planar disks instead of
+// being wrapped cylindrically.
+// -------------------------------------------------
+bool UVMapping::Cylindrical(MeshEditing& mesh)
+{
+    const auto& vertices =
+        mesh.GetVertices();
+
+    if (vertices.empty() ||
+        mesh.GetFaceCount() == 0)
+    {
+        return false;
+    }
+
+    constexpr float PI =
+        3.14159265358979323846f;
+
+    // -------------------------------------------------
+    // Find the overall Y range so V can be normalized
+    // across the whole object, not per-face.
+    // -------------------------------------------------
+
+    float minY = vertices[0].position.y;
+    float maxY = vertices[0].position.y;
+
+    for (const EditVertex& vertex :
+        vertices)
+    {
+        minY = std::min(minY, vertex.position.y);
+        maxY = std::max(maxY, vertex.position.y);
+    }
+
+    const float heightRange =
+        maxY - minY;
+
+    const bool hasHeight =
+        heightRange > 0.000001f;
+
+    for (std::size_t faceIndex = 0;
+        faceIndex < mesh.GetFaceCount();
+        ++faceIndex)
+    {
+        EditFace& face =
+            mesh.GetFace(faceIndex);
+
+        if (face.vertices.size() < 3)
+        {
+            continue;
+        }
+
+        for (std::size_t vertexIndex :
+        face.vertices)
+        {
+            if (vertexIndex >= vertices.size())
+            {
+                return false;
+            }
+        }
+
+        // -----------------------------------------
+        // Determine the face normal so caps can be
+        // detected and treated as flat disks.
+        // -----------------------------------------
+
+        const glm::vec3& positionA =
+            vertices[face.vertices[0]].position;
+
+        const glm::vec3& positionB =
+            vertices[face.vertices[1]].position;
+
+        const glm::vec3& positionC =
+            vertices[face.vertices[2]].position;
+
+        const glm::vec3 crossProduct =
+            glm::cross(
+                positionB - positionA,
+                positionC - positionA
+            );
+
+        const float normalLength =
+            glm::length(crossProduct);
+
+        glm::vec3 faceNormal(0.0f, 1.0f, 0.0f);
+
+        if (normalLength > 0.000001f)
+        {
+            faceNormal =
+                crossProduct / normalLength;
+        }
+
+        const bool isCap =
+            std::abs(faceNormal.y) > 0.9f;
+
+        face.uvs.clear();
+        face.uvs.reserve(face.vertices.size());
+
+        if (isCap)
+        {
+            // -------------------------------------
+            // Planar disk projection for top/bottom
+            // caps, using X/Z directly.
+            // -------------------------------------
+
+            for (std::size_t vertexIndex :
+            face.vertices)
+            {
+                const glm::vec3& position =
+                    vertices[vertexIndex].position;
+
+                face.uvs.emplace_back(
+                    position.x + 0.5f,
+                    position.z + 0.5f
+                );
+            }
+
+            continue;
+        }
+
+        // ---------------------------------------------
+        // Cylindrical side projection.
+        // ---------------------------------------------
+
+        for (std::size_t vertexIndex :
+        face.vertices)
+        {
+            const glm::vec3& position =
+                vertices[vertexIndex].position;
+
+            const float radialLength =
+                std::sqrt(
+                    position.x * position.x +
+                    position.z * position.z
+                );
+
+            float u = 0.5f;
+
+            if (radialLength > 0.000001f)
+            {
+                u =
+                    0.5f +
+                    std::atan2(
+                        position.z,
+                        position.x
+                    ) / (2.0f * PI);
+            }
+
+            float v = 0.5f;
+
+            if (hasHeight)
+            {
+                v =
+                    (position.y - minY) /
+                    heightRange;
+            }
+
+            face.uvs.emplace_back(u, v);
+        }
+
+        // ---------------------------------------------
+        // Correct triangles/faces crossing the U seam,
+        // same approach as Spherical().
+        // ---------------------------------------------
+
+        if (!face.uvs.empty())
+        {
+            float minU = face.uvs[0].x;
+            float maxU = face.uvs[0].x;
+
+            for (const glm::vec2& uv :
+                face.uvs)
+            {
+                minU = std::min(minU, uv.x);
+                maxU = std::max(maxU, uv.x);
+            }
+
+            if ((maxU - minU) > 0.5f)
+            {
+                for (glm::vec2& uv :
+                    face.uvs)
+                {
+                    if (uv.x < 0.5f)
+                    {
+                        uv.x += 1.0f;
+                    }
+                }
+            }
+        }
     }
 
     return true;
