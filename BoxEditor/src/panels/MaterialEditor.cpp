@@ -151,168 +151,186 @@ MaterialEditorAction MaterialEditor::GetAction()
 
 void MaterialEditor::DrawMaterialProperties(BoxEngine& engine, Entity& entity, Material& material)
 {
+    // =================================================
+    // SURFACE
+    // =================================================
 
-    // =================================================
-    // Material Type
-    // =================================================
-	ImGui::SeparatorText("Material Properties");
-    int materialType =
-        static_cast<int>(
-            material.GetType()
+    if (ImGui::CollapsingHeader(
+        "Surface",
+        ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        glm::vec4 baseColor =
+            material.GetBaseColor();
+
+        if (ImGui::ColorEdit3(
+            "Base Color",
+            &baseColor[0]))
+        {
+            material.SetBaseColor(
+                baseColor
             );
+        }
 
-    const char* materialTypes[] =
+
+        float metallic =
+            material.GetMetallic();
+
+        if (ImGui::SliderFloat(
+            "Metallic",
+            &metallic,
+            0.0f,
+            1.0f))
+        {
+            material.SetMetallic(
+                metallic
+            );
+        }
+
+
+        float roughness =
+            material.GetRoughness();
+
+        if (ImGui::SliderFloat(
+            "Roughness",
+            &roughness,
+            0.0f,
+            1.0f))
+        {
+            material.SetRoughness(
+                roughness
+            );
+        }
+
+
+        float alpha =
+            material.GetAlpha();
+
+        if (ImGui::SliderFloat(
+            "Opacity",
+            &alpha,
+            0.0f,
+            1.0f))
+        {
+            material.SetAlpha(
+                alpha
+            );
+        }
+    }
+
+
+    // =================================================
+    // ADVANCED
+    // =================================================
+
+    if (ImGui::CollapsingHeader("Advanced"))
     {
-        "Standard",
-        "Glass"
-    };
-    if (ImGui::Combo(
-        "Material Type",
-        &materialType,
-        materialTypes,
-        IM_ARRAYSIZE(materialTypes)))
-    {
-        const MaterialType newType =
-            static_cast<MaterialType>(
-                materialType
+        int materialType =
+            static_cast<int>(
+                material.GetType()
                 );
 
-        material.SetType(
-            newType
-        );
+        const char* materialTypes[] =
+        {
+            "Standard",
+            "Glass"
+        };
 
-        if (newType ==
+        if (ImGui::Combo(
+            "Material Type",
+            &materialType,
+            materialTypes,
+            IM_ARRAYSIZE(materialTypes)))
+        {
+            const MaterialType newType =
+                static_cast<MaterialType>(
+                    materialType
+                    );
+
+            material.SetType(
+                newType
+            );
+
+            if (newType ==
+                MaterialType::Glass)
+            {
+                material.SetMetallic(0.0f);
+                material.SetRoughness(0.05f);
+                material.SetAlpha(0.20f);
+                material.SetTransmission(1.0f);
+                material.SetIOR(1.5f);
+            }
+        }
+
+
+        if (material.GetType() ==
             MaterialType::Glass)
         {
-            material.SetMetallic(0.0f);
-            material.SetRoughness(0.05f);
-            material.SetAlpha(0.20f);
-            material.SetTransmission(1.0f);
-            material.SetIOR(1.5f);
+            float transmission =
+                material.GetTransmission();
+
+            if (ImGui::SliderFloat(
+                "Transmission",
+                &transmission,
+                0.0f,
+                1.0f))
+            {
+                material.SetTransmission(
+                    transmission
+                );
+            }
+
+
+            float ior =
+                material.GetIOR();
+
+            if (ImGui::SliderFloat(
+                "IOR",
+                &ior,
+                1.0f,
+                2.5f))
+            {
+                material.SetIOR(
+                    ior
+                );
+            }
         }
     }
-    /*if (ImGui::Combo(
-        "Material Type",
-        &materialType,
-        materialTypes,
-        IM_ARRAYSIZE(materialTypes)))
-    {
-        material.SetType(
-            static_cast<MaterialType>(
-                materialType
-                )
-        );
-    }*/
-
-    // =================================================
-    // Glass Properties
-    // =================================================
-    ImGui::SeparatorText("Glass Properties");
-
-
-    if (material.GetType() ==
-        MaterialType::Glass)
-    {
-        float transmission =
-            material.GetTransmission();
-
-        if (ImGui::InputFloat(
-            "Transmission",
-            &transmission,
-            0.01f,
-            0.1f,
-            "%.2f"))
-        {
-            material.SetTransmission(
-                transmission
-            );
-        }
-
-
-        float ior =
-            material.GetIOR();
-
-        if (ImGui::InputFloat(
-            "IOR",
-            &ior,
-            0.01f,
-            0.1f,
-            "%.2f"))
-        {
-            material.SetIOR(
-                ior
-            );
-        }
-    }
-
-
-
-
-        ImGui::Spacing();
-       // ImGui::Text("Editing: %s", entity.GetName().c_str());
-        ImGui::Spacing();
-
-        glm::vec4 baseColor = material.GetBaseColor();
-        if (ImGui::ColorEdit3("Base Color", &baseColor[0]))
-        {
-            material.SetBaseColor(baseColor);
-        }
-        float metallic = material.GetMetallic();
-       
-        if (ImGui::InputFloat("Metallic", &metallic, 0.01f, 1.0f))
-        {
-            metallic = std::clamp(metallic, 0.0f, 1.0f);
-
-            material.SetMetallic(metallic);
-        }
-        float roughness = material.GetRoughness();
-        
-        if (ImGui::InputFloat("Roughness", &roughness, 0.01f, 1.0f))
-        {
-            roughness = std::clamp(roughness, 0.0f, 1.0f);
-
-            material.SetRoughness(roughness);
-        }
-        float alpha = material.GetAlpha();
-       
-        if (ImGui::InputFloat("Alpha", &alpha, 0.01f, 1.0f))
-        {
-            alpha = std::clamp(alpha, 0.01f, 1.0f);
-
-            material.SetAlpha(alpha);
-        }
-
-        bool useTexture = material.UsesBaseColorTexture();
-		// use this to toggle the use of the base color texture in the material. TEMP
-        if (ImGui::Checkbox("Use Base Color Texture", &useTexture))
-        {
-            material.SetUseBaseColorTexture(useTexture);
-        }
-    
 }
 
 
 void MaterialEditor::DrawEmissionControls(Material& material)
 {
-    ImGui::Spacing();
-    if (ImGui::CollapsingHeader("Emission Controls"))
+    if (ImGui::CollapsingHeader("Emission"))
     {
-        glm::vec3 emissionColor = material.GetEmissionColor();
-        if (ImGui::ColorEdit3("Emission Color", &emissionColor[0]))
-        {
-            material.SetEmissionColor(emissionColor);
-        }
-        float emissionStrength = material.GetEmissionStrength();
-       
-        if (ImGui::InputFloat("Emission Strength", &emissionStrength, 0.05f, 0.25f))
-        {
-            emissionStrength = std::clamp(emissionStrength, 0.01f, 0.500f);
+        glm::vec3 emissionColor =
+            material.GetEmissionColor();
 
-            material.SetEmissionStrength(emissionStrength);
+        if (ImGui::ColorEdit3(
+            "Emission Color",
+            &emissionColor[0]))
+        {
+            material.SetEmissionColor(
+                emissionColor
+            );
         }
-	}
-   
+
+
+        float emissionStrength =
+            material.GetEmissionStrength();
+
+        if (ImGui::SliderFloat(
+            "Strength",
+            &emissionStrength,
+            0.0f,
+            1.0f))
+        {
+            material.SetEmissionStrength(
+                emissionStrength
+            );
+        }
+    }
 }
+
 
 void MaterialEditor::DrawTextureProperties(BoxEngine& engine, Entity& entity, Material& material)
 {
@@ -365,50 +383,44 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
 
     ImGui::Spacing();
 
-
+    
     // =================================================
     // NEW MATERIAL SLOT
     // =================================================
-    // [ New ] [ Open ] [ Save ] [ Save As ]
+    // [ New ] [ Open ] [ Save ] 
+    ImGui::SeparatorText("Add New Material section");
+
     if (ImGui::Button("Add New Material"))
     {
-        // Shader currently supports 8 slots.
         if (entity.GetMaterialSlotCount() < 8)
         {
             Material newMaterial;
 
-            const std::size_t nextSlot = entity.GetMaterialSlotCount();
+            const std::size_t nextSlot =
+                entity.GetMaterialSlotCount();
 
-            newMaterial.SetName("Material " + std::to_string(nextSlot));
+            newMaterial.SetName(
+                "Material " +
+                std::to_string(nextSlot)
+            );
 
-            const std::size_t newSlot = entity.AddMaterialSlot(newMaterial);
+            const std::size_t newSlot =
+                entity.AddMaterialSlot(
+                    newMaterial
+                );
 
-
-            // -----------------------------------------
-            // Make the newly-created material
-            // the material for the selected face.
-            // -----------------------------------------
-
-           // entity.SetFaceMaterial(faceIndex, newSlot);
-
-            entity.SetSelectedFacesMaterial(newSlot);
-            
-
-            // -----------------------------------------
-            // Rebuild so the face gets its new
-            // materialIndex on the GPU.
-            // -----------------------------------------
+            entity.SetSelectedFacesMaterial(
+                newSlot
+            );
 
             MeshData renderMesh;
 
-            if (mesh.BuildRenderMesh(
-                renderMesh))
+            if (mesh.BuildRenderMesh(renderMesh))
             {
                 entity.CreateFromMeshData(
                     renderMesh
                 );
             }
-
 
             BOX_LOG_INFO(
                 "Created material slot "
@@ -416,71 +428,72 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
                 << " for face "
                 << faceIndex
             );
+
+            // IMPORTANT:
+            // Don't use any old references again this frame.
+            return;
         }
         else
         {
             BOX_LOG_WARNING("Maximum material slots reached");
         }
     }
-
+    
     // =================================================
-    // Material Library Category
+    // CURRENT MATERIAL 
     // =================================================
-	//ImGui::SameLine();
-    const char* categoryNames[] =
-    {
-        "Glass",
-        "Metal",
-        "Plastic",
-        "Wood",
-        "Stone / Brick / Tile",
-        "Plant / Soil",
-        "Fabric",
-        "Misc"
-    };
 
-    int categoryIndex =
-        static_cast<int>(
-            m_selectedCategory
-            );
-
-    if (ImGui::Combo(
-        "Category",
-        &categoryIndex,
-        categoryNames,
-        IM_ARRAYSIZE(categoryNames)))
+    if (face.materialIndex >=
+        entity.GetMaterialSlotCount())
     {
-        m_selectedCategory =
-            static_cast<MaterialCategory>(
-                categoryIndex
-                );
+        ImGui::TextDisabled(
+            "Face has invalid material slot."
+        );
+
+        return;
     }
 
 
+    // Get the material AFTER AddMaterialSlot()
+    // because AddMaterialSlot may reallocate the vector.
+    Material& material = entity.GetMaterialSlot(face.materialIndex);
 
 
+    char materialNameBuffer[128]{};
 
-    const std::size_t materialIndex = face.materialIndex;
+    strncpy_s(
+        materialNameBuffer,
+        sizeof(materialNameBuffer),
+        material.GetName().c_str(),
+        _TRUNCATE
+    );
 
-    Material& material = entity.GetMaterialSlot(materialIndex);
+    if (ImGui::InputText(
+        "Material Name",
+        materialNameBuffer,
+        sizeof(materialNameBuffer)))
+    {
+        material.SetName(
+            materialNameBuffer
+        );
+    }
 
+   
+    ImGui::Spacing();
+    ImGui::SeparatorText("Material Open - Save Section");
 
-   // ImGui::SameLine();
+    // ImGui::SameLine();
     if (ImGui::Button("Open material"))
     {
         m_action = MaterialEditorAction::OpenMaterialLibrary;
-        
+
     }
-	ImGui::SameLine();
+    ImGui::SameLine();
 
     if (ImGui::Button("Save material"))
     {
         namespace fs = std::filesystem;
 
-        /*fs::path materialDirectory =
-            MaterialLibrary::GetCategoryPath(
-                MaterialCategory::Glass
-            );*/
         fs::path materialDirectory =
             MaterialLibrary::GetCategoryPath(
                 m_selectedCategory
@@ -511,6 +524,38 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
         }
     }
 
+
+    // =================================================
+    // Material Library Category
+    // =================================================
+	//ImGui::SameLine();
+    const char* categoryNames[] =
+    {
+        "Glass",
+        "Metal",
+        "Plastic",
+        "Wood",
+        "Stone / Brick / Tile",
+        "Plant / Soil",
+        "Fabric",
+        "Misc"
+    };
+
+    int categoryIndex = static_cast<int>(m_selectedCategory);
+
+    if (ImGui::Combo(
+        "Category",
+        &categoryIndex,
+        categoryNames,
+        IM_ARRAYSIZE(categoryNames)))
+    {
+        m_selectedCategory =
+            static_cast<MaterialCategory>(
+                categoryIndex
+                );
+    }
+
+
     ImGui::Spacing();
 
 
@@ -518,15 +563,6 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
     // CURRENT FACE MATERIAL
     // =================================================
 
-    if (face.materialIndex >=
-        entity.GetMaterialSlotCount())
-    {
-        ImGui::TextDisabled(
-            "Face has invalid material slot."
-        );
-
-        return;
-    }
     // #############################################
     int selectedSlot = static_cast<int>(face.materialIndex);
 
@@ -548,30 +584,7 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
     }
 
 	
-
-	// ############################################ New Material Name Selection #######################
-   // Material& material = entity.GetMaterialSlot(face.materialIndex);
-
-    char materialNameBuffer[128]{};
-
-    strncpy_s(
-        materialNameBuffer,
-        sizeof(materialNameBuffer),
-        material.GetName().c_str(),
-        _TRUNCATE
-    );
-
-    if (ImGui::InputText(
-        "Material ",
-        materialNameBuffer,
-        sizeof(materialNameBuffer)))
-    {
-        material.SetName(
-            materialNameBuffer
-        );
-    }
-
-    ImGui::SeparatorText("Material Tools");
+    ImGui::SeparatorText("Load Material Textures");
 	// ############################################# Buttons for Material Slot Management ##############
 
     // =================================================

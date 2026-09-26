@@ -30,6 +30,7 @@ public:
     MaterialEditorAction GetAction();
        
 private:
+    
 
     void DrawMaterialProperties(BoxEngine& engine, Entity& entity, Material& material);
 
