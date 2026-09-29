@@ -204,6 +204,11 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 	const EditorTexture& localIcon = icons.GetLocalToolIcon();
 	const EditorTexture& snapIcon = icons.GetSnapToolIcon();
 	const EditorTexture& dropIcon = icons.GetDropToolIcon();
+    // --------------------- Engine Start - Stop -----------------------
+	const EditorTexture& playIcon = icons.GetPlayIcon();    // start the game engine
+	const EditorTexture& pauseIcon = icons.GetPauseIcon(); // pause the game engine
+	const EditorTexture& stopIcon = icons.GetStopIcon();   // stop the game engine
+
     ImGui::PushID("TransformIcons");
 
 	const bool ObjectModeActive = m_EditMode == 1; // set it object mode active if the combo box is set to object mode
@@ -307,6 +312,42 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     if (!ObjectModeActive)
     {
         ImGui::EndDisabled();
+    }
+
+    // ----------------------------------------------------
+	// Engine Start - Stop buttons
+    
+	// ----------------------------------------------------
+    ImGui::SameLine();
+    if (ImGui::ImageButton("##PlayButton", (ImTextureID)(intptr_t)playIcon.id, iconSize))
+    {
+       
+    }
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::SetTooltip("Play Level");
+    }
+    ImGui::SameLine();
+    if (ImGui::ImageButton("##PauseButton", (ImTextureID)(intptr_t)pauseIcon.id, iconSize))
+    {
+
+    }
+	// Add a tooltip for the pause button
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::SetTooltip("Pause Level");
+    }
+   
+
+    ImGui::SameLine();
+	// stop button later ask the engine to stop the level and reset the scene to the editor state ask to save game state if needed
+    if (ImGui::ImageButton("##StopButton", (ImTextureID)(intptr_t)stopIcon.id, iconSize))
+    {
+
+    }
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::SetTooltip("Stop Level");
     }
 
 	ImGui::PopID();

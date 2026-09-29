@@ -26,6 +26,10 @@ uniform float uMaterialEmissionStrength[8];
 uniform sampler2D uMaterialNormalTextures[8];
 uniform int uMaterialUsesNormalTexture[8];
 uniform float uMaterialNormalStrength[8];
+// Roughness
+uniform sampler2D uMaterialRoughnessTextures[8];
+uniform int uMaterialUsesRoughnessTexture[8];
+
 // for transparency
 uniform int uMaterialType[8];
 uniform float uMaterialTransmission[8];
@@ -121,6 +125,12 @@ if (uMaterialUsesNormalTexture[
 
    float roughness = uMaterialRoughness[materialIndex];
 
+   if (uMaterialUsesRoughnessTexture[materialIndex] != 0)
+{
+    roughness = texture(uMaterialRoughnessTextures[materialIndex], vTexCoord).r;
+}
+roughness = clamp(roughness, 0.0, 1.0);
+
    // glass 
    int materialType = uMaterialType[materialIndex];
 
@@ -144,6 +154,7 @@ if (uMaterialUsesNormalTexture[
 
     //float shininess = mix(128.0, 4.0, uRoughness);
     float shininess = mix(128.0, 4.0, roughness);
+    //float shininess = mix(256.0, 4.0, roughness);
 
     float specularAmount = pow(max(dot(viewDirection, reflectDirection), 0.0), shininess);
 
@@ -158,14 +169,21 @@ if (uMaterialUsesNormalTexture[
    // diffuse *= 1.0 - uMetallic;
     diffuse *= 1.0 - metallic;
 
-    vec3 specular = specularColor * specularAmount;
+    //vec3 specular = specularColor * specularAmount;
     
+    float specularStrength = mix(1.0, 0.15, roughness);
+    //float specularStrength = mix(2.0, 0.2, roughness);
+
+    vec3 specular = specularColor * specularAmount * specularStrength;
+
     float ambientStrength = 0.12;
 
     //vec3 ambient = uBaseColor.rgb * ambientStrength;
     vec3 ambient = materialColor.rgb * ambientStrength;
 
     vec3 finalColor = ambient + diffuse + specular;
+
+   
 
     // =================================================
     // Glass Material

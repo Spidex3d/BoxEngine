@@ -18,6 +18,10 @@ bool EditorIcons::Initialize()
 	m_LocalToolIcon = LoadEditorTexture("assets/textures/icons/local.png");
 	m_SnapToolIcon = LoadEditorTexture("assets/textures/icons/snap.png");
 	m_DropToolIcon = LoadEditorTexture("assets/textures/icons/drop.png");
+	// Engine Start - Stop buttons
+	m_PlayIcon = LoadEditorTexture("assets/textures/icons/play.png");
+	m_PauseIcon = LoadEditorTexture("assets/textures/icons/pause.png");
+	m_StopIcon = LoadEditorTexture("assets/textures/icons/stop.png");
 
     const bool allIconsLoaded =
         m_vertexIcon.IsValid() &&
@@ -29,7 +33,10 @@ bool EditorIcons::Initialize()
 		m_RotateToolIcon.IsValid() &&
 		m_LocalToolIcon.IsValid() &&
 		m_SnapToolIcon.IsValid() &&
-		m_DropToolIcon.IsValid();
+		m_DropToolIcon.IsValid() &&
+		m_PlayIcon.IsValid() &&
+		m_PauseIcon.IsValid() &&
+		m_StopIcon.IsValid();
 
 
     if (!allIconsLoaded)
@@ -50,6 +57,14 @@ void EditorIcons::Shutdown()
     DestroyEditorTexture(m_faceIcon);
     DestroyEditorTexture(m_materialIcon);
 	DestroyEditorTexture(m_moveToolIcon);
+	DestroyEditorTexture(m_ScaleToolIcon);
+	DestroyEditorTexture(m_RotateToolIcon);
+	DestroyEditorTexture(m_LocalToolIcon);
+	DestroyEditorTexture(m_SnapToolIcon);
+	DestroyEditorTexture(m_DropToolIcon);
+	DestroyEditorTexture(m_PlayIcon);
+	DestroyEditorTexture(m_PauseIcon);
+	DestroyEditorTexture(m_StopIcon);
 }
 
 const EditorTexture& EditorIcons::GetVertexIcon() const
@@ -101,3 +116,21 @@ const EditorTexture& EditorIcons::GetDropToolIcon() const
 {
 	return m_DropToolIcon;
 }
+
+// ----------------------------------------------
+// Engine Start - Stop icons
+// ----------------------------------------------
+
+const EditorTexture& EditorIcons::GetPlayIcon() const
+{
+    return m_PlayIcon;
+}
+const EditorTexture& EditorIcons::GetPauseIcon() const
+{
+    return m_PauseIcon;
+}
+const EditorTexture& EditorIcons::GetStopIcon() const
+{
+    return m_StopIcon;
+}
+

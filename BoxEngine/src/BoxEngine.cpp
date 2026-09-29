@@ -1255,38 +1255,6 @@ bool BoxEngine::LoadScene(
                 }
             }
 
-            //if (material.UsesNormalTexture())
-            //{
-                
-                /*const std::string normalPath =
-                    material.GetNormalTexturePath();
-
-                if (!normalPath.empty())
-                {
-                    const GLuint normalID =
-                        LoadTexture(normalPath);
-
-                    if (normalID != 0)
-                    {
-                        material.SetNormalTexture(
-                            normalID,
-                            normalPath
-                        );
-
-                        BOX_LOG_INFO(
-                            "Restored normal map: "
-                            << normalPath
-                        );
-                    }
-                    else
-                    {
-                        BOX_LOG_ERROR(
-                            "Failed to restore normal map: "
-                            << normalPath
-                        );
-                    }
-                }*/
-            //}
         }
     }
 

@@ -140,11 +140,9 @@ void MaterialEditor::Draw(
 
 MaterialEditorAction MaterialEditor::GetAction()
 {
-    MaterialEditorAction action =
-        m_action;
+    MaterialEditorAction action = m_action;
 
-    m_action =
-        MaterialEditorAction::None;
+    m_action = MaterialEditorAction::None;
 
     return action;
 }
@@ -585,10 +583,9 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
 
 	
     ImGui::SeparatorText("Load Material Textures");
-	// ############################################# Buttons for Material Slot Management ##############
 
     // =================================================
-    // Base Color
+    // Base Color Buttons for Material Slot Management
     // =================================================
 
     if (ImGui::Button("Load Base Color"))
@@ -641,18 +638,46 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
             }
         }
     }
+	// ------------------------------------------------
+	// add a button to load a roughness map, this will be used to control the roughness of the material, we will implement this next.
+	// ------------------------------------------------
+    if (ImGui::Button("Load Roughness Map"))
+    {
+        const std::string path =
+            FileDialog::OpenTexture();
+
+        if (!path.empty())
+        {
+            const GLuint textureID =
+                engine.LoadTexture(path);
+
+            if (textureID != 0)
+            {
+                material.SetRoughnessTexture(
+                    textureID,
+                    path
+                );
+
+                material.SetUseRoughnessTexture(
+                    true
+                );
+
+                BOX_LOG_INFO(
+                    "Loaded roughness map: "
+                    << path
+                );
+            }
+        }
+    }
 
     ImGui::SameLine();
+
     if (ImGui::Button("Map UVs"))
     {
-
-        // open a panel to map the UVs of the selected entity, this will be a simple UV mapping tool that allows
-        // the user to select a texture and map it to the entity's mesh.
-        // This will be a simple implementation for now, but can be expanded later.
-        // at some point we will need to unwrap the mesh and allow the user to manually adjust the UVs,
-        // but for now we will just use a simple planar mapping.
-        // we need to make this intuitive and easy to use, Blender seems very complex for UV mapping,
+        m_action = MaterialEditorAction::OpenUVPanel;
+        
     }
+
     ImGui::SameLine();
     if (ImGui::Button("Node Editor"))
     {
@@ -694,6 +719,20 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
     {
         material.SetNormalStrength(
             normalStrength
+        );
+    }
+
+	// roughness map selection
+
+    bool useRoughnessMap =
+        material.UsesRoughnessTexture();
+
+    if (ImGui::Checkbox(
+        "Use Roughness Map",
+        &useRoughnessMap))
+    {
+        material.SetUseRoughnessTexture(
+            useRoughnessMap
         );
     }
 

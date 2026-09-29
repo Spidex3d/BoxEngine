@@ -183,8 +183,7 @@ void UVPanel::Draw(BoxEngine& engine)
 
 void UVPanel::DrawUVLayout(Entity& entity, const ImVec2& canvasPosition, const ImVec2& canvasSize)
 {
-    ImDrawList* drawList =
-        ImGui::GetWindowDrawList();
+    ImDrawList* drawList = ImGui::GetWindowDrawList();
 
     if (!drawList)
     {

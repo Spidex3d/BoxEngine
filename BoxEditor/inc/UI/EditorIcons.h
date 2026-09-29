@@ -24,6 +24,10 @@ public:
 	const EditorTexture& GetLocalToolIcon() const;
 	const EditorTexture& GetSnapToolIcon() const;
 	const EditorTexture& GetDropToolIcon() const;
+	// Engine Start - Stop
+	const EditorTexture& GetPlayIcon() const;
+	const EditorTexture& GetPauseIcon() const;
+	const EditorTexture& GetStopIcon() const;
 
 private:
     EditorTexture m_vertexIcon;
@@ -37,5 +41,9 @@ private:
 	EditorTexture m_LocalToolIcon;
 	EditorTexture m_SnapToolIcon;
 	EditorTexture m_DropToolIcon;
+    // Engine Start - Stop
+    EditorTexture m_PlayIcon;
+	EditorTexture m_PauseIcon;
+	EditorTexture m_StopIcon;
 
 };

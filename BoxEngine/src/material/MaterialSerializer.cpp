@@ -96,7 +96,7 @@ bool MaterialSerializer::Save(const Material& material, const std::string& fileP
         << material.GetEmissionStrength()
         << '\n';
 
-
+	// Base Color Texture
     file << "BaseColorTexture "
         << (
             material.GetBaseColorTexturePath().empty()
@@ -105,12 +105,21 @@ bool MaterialSerializer::Save(const Material& material, const std::string& fileP
             )
         << '\n';
 
-
+	// Normal Texture
     file << "NormalTexture "
         << (
             material.GetNormalTexturePath().empty()
             ? "none"
             : material.GetNormalTexturePath()
+            )
+        << '\n';
+
+    // Roughness Texture
+    file << "RoughnessTexture "
+        << (
+            material.GetRoughnessTexturePath().empty()
+            ? "none"
+            : material.GetRoughnessTexturePath()
             )
         << '\n';
 
@@ -395,6 +404,35 @@ bool MaterialSerializer::Load(
             if (texturePath != "none")
             {
                 material.SetNormalTexturePath(
+                    texturePath
+                );
+            }
+        }
+
+        // --------------------------------------------
+        // Roughness Texture
+        // --------------------------------------------
+
+        else if (key == "RoughnessTexture")
+        {
+            std::string texturePath;
+
+            std::getline(
+                stream,
+                texturePath
+            );
+
+            if (!texturePath.empty() &&
+                texturePath.front() == ' ')
+            {
+                texturePath.erase(
+                    texturePath.begin()
+                );
+            }
+
+            if (texturePath != "none")
+            {
+                material.SetRoughnessTexturePath(
                     texturePath
                 );
             }

@@ -229,6 +229,14 @@ int App::Run()
                         m_materialDisplayPanel->Open();
                     }
                 }
+				// open the UV panel if the action is triggered from the Material Editor panel
+                else if (action == MaterialEditorAction::OpenUVPanel)
+                {
+                    if (m_uvPanel)
+                    {
+                        m_uvPanel->Open();
+                    }
+                }
             }
         }
 
@@ -275,9 +283,7 @@ int App::Run()
     return 0;
 }
 // handle the top menu actions from the MainMenuBar
-void App::HandleMenuAction(
-    MenuAction action,
-    BoxEngine& engine)
+void App::HandleMenuAction(MenuAction action, BoxEngine& engine)
 {
 	
     switch (action)

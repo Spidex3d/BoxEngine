@@ -173,6 +173,20 @@ void Material::SetNormalStrength(
             2.0f
         );
 }
+// ------------------------------------
+// Roughness map management
+// ------------------------------------
+
+void Material::SetRoughnessTexture(
+    GLuint textureID,
+    const std::string& path)
+{
+    m_roughnessTexture = textureID;
+    m_roughnessTexturePath = path;
+}
+
+
+
 // -----------------------------------------------------
 // Material type management
 // -----------------------------------------------------

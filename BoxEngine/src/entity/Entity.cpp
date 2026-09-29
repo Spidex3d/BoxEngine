@@ -2296,6 +2296,8 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
 
 		GLuint normalTextureID = 0; // tangent space normal map texture ID
 
+		GLuint roughnessTextureID = 0; // roughness texture ID
+
         float metallic = 0.0f;
         float roughness = 0.5f;
 
@@ -2312,6 +2314,8 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
         bool useTexture = false;
 
 		bool useNormalTexture = false; // tangent space normal map usage flag
+
+		bool useRoughnessTexture = false; // roughness texture usage flag
 
 		float normalStrength = 1.0f; // tangent space normal map strength
 
@@ -2338,8 +2342,11 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
             metallic =
                 material.GetMetallic();
 
-            roughness =
-                material.GetRoughness();
+            roughness = material.GetRoughness();
+
+			roughnessTextureID = material.GetRoughnessTexture(); // roughness texture ID
+
+			useRoughnessTexture = material.UsesRoughnessTexture(); // roughness texture usage flag
 
 			materialType = static_cast<int>(material.GetType()); // 0 = standard, 1 = glass
 
@@ -2384,10 +2391,39 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
             std::to_string(index) +
             "]";
 
+     
+
         shader.SetUniformFloat(
             roughnessUniform.c_str(),
             roughness
         );
+
+         // --------------------------------
+         // Roughness Map
+         // --------------------------------
+
+        const std::string roughnessTextureUniform =
+            "uMaterialRoughnessTextures[" +
+            std::to_string(index) +
+            "]";
+
+        const std::string useRoughnessTextureUniform =
+            "uMaterialUsesRoughnessTexture[" +
+            std::to_string(index) +
+            "]";
+
+        shader.SetUniformInt(
+            roughnessTextureUniform.c_str(),
+            static_cast<int>(
+                index + (MaxMaterialSlots * 2)
+                )
+        );
+
+        shader.SetUniformInt(
+            useRoughnessTextureUniform.c_str(),
+            useRoughnessTexture ? 1 : 0
+        );
+
 
         // --------------------------------
 		// Material Type set standard or glass material type
@@ -2577,6 +2613,24 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
             : 0
         );
 
+            // --------------------------------
+            // Roughness Map
+            // --------------------------------
+
+            glActiveTexture(
+                GL_TEXTURE0 +
+                static_cast<GLenum>(
+                    index + (MaxMaterialSlots * 2)
+                    )
+            );
+
+        glBindTexture(
+            GL_TEXTURE_2D,
+            useRoughnessTexture
+            ? roughnessTextureID
+            : 0
+        );
+
 
     }
 
@@ -2609,23 +2663,32 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
         index < MaxMaterialSlots;
         ++index)
     {
+		// Unbind the base color texture
         glActiveTexture(
             GL_TEXTURE0 +
             static_cast<GLenum>(index)
         );
 
-        glBindTexture(
-            GL_TEXTURE_2D,
-            0
-        );
+        glBindTexture(GL_TEXTURE_2D, 0);
 
-
+		// Normal Map
         glActiveTexture(
             GL_TEXTURE0 +
             static_cast<GLenum>(index + 8)
         );
 
-        glBindTexture(GL_TEXTURE_2D, 0 );
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+		// Roughness Map
+        glActiveTexture(
+            GL_TEXTURE0 +
+            static_cast<GLenum>(
+                index + (MaxMaterialSlots * 2)
+                )
+        );
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+
     }
     
     // Restore default texture unit.

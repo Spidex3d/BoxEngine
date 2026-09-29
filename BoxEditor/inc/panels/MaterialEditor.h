@@ -12,7 +12,8 @@ class FaceEditController;
 enum class MaterialEditorAction
 {
     None = 0,
-    OpenMaterialLibrary
+    OpenMaterialLibrary,
+    OpenUVPanel
 };
 
 class MaterialEditor

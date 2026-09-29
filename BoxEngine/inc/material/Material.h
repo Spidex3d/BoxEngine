@@ -93,6 +93,46 @@ public:
     void SetNormalStrength(
         float strength
     );
+    // ---------------------------------------
+	// Ruffness map (to be implemented)
+	// ---------------------------------------
+
+    // Roughness Map
+    GLuint GetRoughnessTexture() const
+    {
+        return m_roughnessTexture;
+    }
+
+    const std::string& GetRoughnessTexturePath() const
+    {
+        return m_roughnessTexturePath;
+    }
+
+    bool UsesRoughnessTexture() const
+    {
+        return m_useRoughnessTexture;
+    }
+
+    void SetRoughnessTexture(
+        GLuint textureID,
+        const std::string& path
+    );
+
+    void SetRoughnessTexturePath(
+        const std::string& path)
+    {
+        m_roughnessTexturePath = path;
+    }
+
+    void SetUseRoughnessTexture(bool use)
+    {
+        m_useRoughnessTexture = use;
+    }
+
+	// ------------------------- End of Roughness Map -------------------------
+
+
+
 
 	// Material type
     MaterialType GetType() const;
@@ -149,6 +189,13 @@ private:
     std::string m_normalTexturePath;
 
     float m_normalStrength = 1.0f;
+
+    // Roughness Map
+    GLuint m_roughnessTexture = 0;
+
+    std::string m_roughnessTexturePath;
+
+    bool m_useRoughnessTexture = false;
 
 	
 };
