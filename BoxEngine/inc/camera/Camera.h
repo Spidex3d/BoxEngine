@@ -39,8 +39,14 @@ public:
     float NearPlane = 0.1f;  // Default near clipping plane  
     float FarPlane = 1000.0f; // Default far clipping plane 100
 
-    //float orthoHalfHeight = 10.0f; // tune based on scene scale
-    //float heightAbove = 25.0f;     // camera altitude
+	// Orbit camera parameters or play mode parameters
+    enum class CameraMode
+    {
+        EditorOrbit,
+        Play
+    };
+
+    CameraMode Mode = CameraMode::EditorOrbit;
 
 
     enum class ProjectionMode { Perspective = 0, Orthographic = 1 };  // ortho vs perspective mode

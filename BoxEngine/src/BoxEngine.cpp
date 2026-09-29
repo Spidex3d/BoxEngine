@@ -1379,3 +1379,37 @@ bool BoxEngine::LoadScene(
 
     return true;
 }
+
+// ----------------------------------------
+// Game Engine
+// ----------------------------------------
+void BoxEngine::StartPlayMode()
+{
+    m_engineMode = EngineMode::Playing;
+
+    m_camera->Mode = Camera::CameraMode::Play;
+
+    m_camera->SetPerspectiveFromDefaults();
+
+    BOX_LOG_INFO("Play mode started");
+
+    
+}
+
+void BoxEngine::PausePlayMode()
+{
+    if (m_engineMode == EngineMode::Playing)
+    {
+        m_engineMode = EngineMode::Paused;
+
+        BOX_LOG_INFO("Play mode paused");
+    }
+}
+void BoxEngine::StopPlayMode()
+{
+    m_engineMode = EngineMode::Editor;
+
+    m_camera->Mode = Camera::CameraMode::EditorOrbit;
+
+    BOX_LOG_INFO("Play mode stopped");
+}

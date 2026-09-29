@@ -68,7 +68,12 @@ enum class ViewportAction
 	AddEditableFloor,
 	AddEditableRock,
 
-    ResetCamera
+    ResetCamera,
+
+    // Game engine
+    Play,
+    Pause,
+    Stop
 };
 
 class SceneViewportPanel
@@ -134,5 +139,12 @@ private:
         const ImVec2 max = ImGui::GetItemRectMax();
         ImGui::GetWindowDrawList()->AddRect(min, max, IM_COL32(50, 150, 255, 255), 4.0f, 0, 2.0f);
     }
+
+	// Engine Play Mouse Capture
+    bool m_playMouseCaptured = false;
+
+    bool m_firstPlayMouse = true;
+
+    ImVec2 m_lastPlayMousePos = ImVec2(0.0f, 0.0f);
 
 };

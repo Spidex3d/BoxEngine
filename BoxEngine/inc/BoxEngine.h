@@ -21,6 +21,13 @@ enum class TransformTool
     Scale
 };
 
+enum class EngineMode
+{
+    Editor,
+    Playing,
+    Paused
+};
+
 class BoxEngine
 {
 public:
@@ -111,6 +118,20 @@ public:
 
 	// ---------------------- End Serialization ----------------------
 
+	// ----------------------------------------
+	// Game Engine
+	// ----------------------------------------
+    void StartPlayMode();
+    void PausePlayMode();
+    void StopPlayMode();
+
+    bool IsPlaying() const
+    {
+        return m_engineMode == EngineMode::Playing;
+    }
+
+
+
 private:
     void RenderSelectedEntityOutline(const glm::mat4& view, const glm::mat4& projection); // RenderPreview the outline of the selected entity
 
@@ -152,6 +173,11 @@ private:
 	// ----------------------------------------
 	Lighting m_lighting; // Lighting system for the scene
 
+	// ----------------------------------------
+	// Game Engine
+	// ----------------------------------------
+private:
+        EngineMode m_engineMode = EngineMode::Editor;
 };
 
 

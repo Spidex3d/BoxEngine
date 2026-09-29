@@ -600,7 +600,23 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
         BOX_LOG_INFO("Ecosystem Viewport action triggered");
 		break;
 
+    case ViewportAction::Play:
+    {
+        m_engine->StartPlayMode();
+        break;
+    }
 
+    case ViewportAction::Pause:
+    {
+        m_engine->PausePlayMode();
+        break;
+    }
+
+    case ViewportAction::Stop:
+    {
+        m_engine->StopPlayMode();
+        break;
+    }
 
 
 

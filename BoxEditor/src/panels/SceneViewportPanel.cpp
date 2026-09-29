@@ -321,7 +321,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     ImGui::SameLine();
     if (ImGui::ImageButton("##PlayButton", (ImTextureID)(intptr_t)playIcon.id, iconSize))
     {
-       
+        action = ViewportAction::Play;
     }
     if (ImGui::IsItemHovered())
     {
@@ -330,7 +330,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     ImGui::SameLine();
     if (ImGui::ImageButton("##PauseButton", (ImTextureID)(intptr_t)pauseIcon.id, iconSize))
     {
-
+        action = ViewportAction::Pause;
     }
 	// Add a tooltip for the pause button
     if (ImGui::IsItemHovered())
@@ -343,7 +343,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 	// stop button later ask the engine to stop the level and reset the scene to the editor state ask to save game state if needed
     if (ImGui::ImageButton("##StopButton", (ImTextureID)(intptr_t)stopIcon.id, iconSize))
     {
-
+        action = ViewportAction::Stop;
     }
     if (ImGui::IsItemHovered())
     {
@@ -767,8 +767,232 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             // #################################### Transforme tools ######################################
             // ############################################################################################
             const bool viewportHovered = ImGui::IsItemHovered();
+
+            // ################################ Game Camera ########################################
+
+            // ########################################################################
+// Play Mode Camera Input
+// ########################################################################
+
+            if (engine.IsPlaying())
+            {
+                Camera& camera = engine.GetCamera();
+
+                const float deltaTime = ImGui::GetIO().DeltaTime;
+
+                // ---------------------------------------------------------
+                // Click viewport to capture Play Mode controls
+                // ---------------------------------------------------------
+
+                if (viewportHovered &&
+                    ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+                {
+                    m_playMouseCaptured = true;
+                    m_firstPlayMouse = true;
+                }
+
+                // ESC releases controls
+                if (ImGui::IsKeyPressed(ImGuiKey_Escape))
+                {
+                    m_playMouseCaptured = false;
+                    m_firstPlayMouse = true;
+                }
+
+                // ---------------------------------------------------------
+                // Mouse Look
+                // ---------------------------------------------------------
+
+                if (m_playMouseCaptured)
+                {
+                    ImVec2 mousePos = ImGui::GetMousePos();
+
+                    if (m_firstPlayMouse)
+                    {
+                        m_lastPlayMousePos = mousePos;
+                        m_firstPlayMouse = false;
+                    }
+                    else
+                    {
+                        float xOffset =
+                            mousePos.x - m_lastPlayMousePos.x;
+
+                        float yOffset =
+                            m_lastPlayMousePos.y - mousePos.y;
+
+                        m_lastPlayMousePos = mousePos;
+
+                        camera.ProcessMouseMovement(
+                            xOffset,
+                            yOffset
+                        );
+                    }
+
+                    // -----------------------------------------------------
+                    // Horizontal Walking
+                    // -----------------------------------------------------
+
+                    const float velocity =
+                        camera.MovementSpeed * deltaTime;
+
+                    glm::vec3 forward(
+                        camera.Front.x,
+                        0.0f,
+                        camera.Front.z
+                    );
+
+                    if (glm::length(forward) > 0.001f)
+                    {
+                        forward = glm::normalize(forward);
+                    }
+
+                    glm::vec3 right(
+                        camera.Right.x,
+                        0.0f,
+                        camera.Right.z
+                    );
+
+                    if (glm::length(right) > 0.001f)
+                    {
+                        right = glm::normalize(right);
+                    }
+
+                    // W
+                    if (ImGui::IsKeyDown(ImGuiKey_W))
+                    {
+                        camera.Position +=
+                            forward * velocity;
+                    }
+
+                    // S
+                    if (ImGui::IsKeyDown(ImGuiKey_S))
+                    {
+                        camera.Position -=
+                            forward * velocity;
+                    }
+
+                    // A
+                    if (ImGui::IsKeyDown(ImGuiKey_A))
+                    {
+                        camera.Position -=
+                            right * velocity;
+                    }
+
+                    // D
+                    if (ImGui::IsKeyDown(ImGuiKey_D))
+                    {
+                        camera.Position +=
+                            right * velocity;
+                    }
+                }
+            }
+            else
+            {
+                // Stop pressed - release Play Mode controls
+                m_playMouseCaptured = false;
+                m_firstPlayMouse = true;
+            }
+
+
+           /* if(engine.IsPlaying() && m_playMouseCaptured)
+            {
+                Camera& camera = engine.GetCamera();
+
+                const float deltaTime =
+                    ImGui::GetIO().DeltaTime;
+
+                if (ImGui::IsKeyDown(ImGuiKey_W))
+                    camera.ProcessKeyboard(
+                        FORWARD,
+                        deltaTime
+                    );
+
+                if (ImGui::IsKeyDown(ImGuiKey_S))
+                    camera.ProcessKeyboard(
+                        BACKWARD,
+                        deltaTime
+                    );
+
+                if (ImGui::IsKeyDown(ImGuiKey_A))
+                    camera.ProcessKeyboard(
+                        LEFT,
+                        deltaTime
+                    );
+
+                if (ImGui::IsKeyDown(ImGuiKey_D))
+                    camera.ProcessKeyboard(
+                        RIGHT,
+                        deltaTime
+                    );
+            }*/
+
+            
+			// ########################################################################
+            // ########################################################################
+                // Play Mode Mouse Look
+            // ############################# Game Mouse Look ###########################################
+
+            
+
+            //if (engine.IsPlaying())
+            //{
+            //    // Click the scene viewport to capture mouse control
+            //    if (viewportHovered &&
+            //        ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+            //    {
+            //        m_playMouseCaptured = true;
+            //        m_firstPlayMouse = true;
+            //    }
+
+            //    // ESC releases mouse control
+            //    if (ImGui::IsKeyPressed(ImGuiKey_Escape))
+            //    {
+            //        m_playMouseCaptured = false;
+            //        m_firstPlayMouse = true;
+            //    }
+
+            //    if (m_playMouseCaptured)
+            //    {
+            //        Camera& camera = engine.GetCamera();
+
+            //        ImVec2 mousePos = ImGui::GetMousePos();
+
+            //        if (m_firstPlayMouse)
+            //        {
+            //            m_lastPlayMousePos = mousePos;
+            //            m_firstPlayMouse = false;
+            //        }
+            //        else
+            //        {
+            //            float xOffset =
+            //                mousePos.x - m_lastPlayMousePos.x;
+
+            //            float yOffset =
+            //                m_lastPlayMousePos.y - mousePos.y;
+
+            //            m_lastPlayMousePos = mousePos;
+
+            //            camera.ProcessMouseMovement(
+            //                xOffset,
+            //                yOffset
+            //            );
+            //        }
+            //    }
+            //}
+            //else
+            //{
+            //    // Make sure mouse control is released when Stop is pressed
+            //    m_playMouseCaptured = false;
+            //    m_firstPlayMouse = true;
+            //}
+            // ########################################################################
             const bool objectModeActive = m_EditMode == 1;
-            m_transformTools.HandleInput(engine, viewportHovered, objectModeActive);
+           // m_transformTools.HandleInput(engine, viewportHovered, objectModeActive);
+
+			// Only allow transform tools to handle input when the engine is not playing 
+            const bool editorInputActive = !engine.IsPlaying();
+
+            m_transformTools.HandleInput(engine, viewportHovered, objectModeActive&& editorInputActive);
+			// ################################### End play mode check #####################################
 
 			const bool wasTransforming = m_transformTools.IsTransforming();
             // ############################################################################################
@@ -779,18 +1003,17 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 
             const bool materialModeActive = m_EditMode == 3;
 
-            const bool vertexModeActive = editModeActive && m_editType == 0;
+            //const bool vertexModeActive = editModeActive && m_editType == 0;
 
-            const bool edgeModeActive = editModeActive && m_editType == 1;
+            //const bool edgeModeActive = editModeActive && m_editType == 1;
 
-            /*
-             * Face selection is active in:
-             *
-             * Edit Mode     + Face tool
-             * OR
-             * Material Mode
-             */
-            const bool faceModeActive = (editModeActive && m_editType == 2) || materialModeActive;          
+           // const bool faceModeActive = (editModeActive && m_editType == 2) || materialModeActive;        
+
+            const bool vertexModeActive = editorInputActive && editModeActive && m_editType == 0;
+
+            const bool edgeModeActive = editorInputActive && editModeActive && m_editType == 1;
+
+            const bool faceModeActive = editorInputActive && ((editModeActive && m_editType == 2) || materialModeActive);
            
             // ============================================================
             // Vertex Draw Controller
