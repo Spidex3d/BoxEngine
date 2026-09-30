@@ -420,6 +420,27 @@ bool BoxEngine::AddEditableIcoSphere(const glm::vec3& position, int recursionLev
     return true;
 }
 
+bool BoxEngine::AddEditableCapsule(const glm::vec3& position, int sectors, int stacks, float radius, float height)
+{
+	const int entityID = m_nextEntityID++;
+	const std::string name = "Capsule " + std::to_string(entityID);
+	auto capsule = std::make_unique<Entity>(entityID, name);
+	capsule->GetMaterial().SetBaseColorTexture(m_defaultTexture.GetID(), m_defaultTexturePath);
+	Material& material = capsule->GetMaterial();
+	material.SetUseBaseColorTexture(true);
+	capsule->SetPosition(position);
+	if (!capsule->CreateCapsule(sectors, stacks, radius, height))
+	{
+		BOX_LOG_ERROR("Failed to add editable capsule");
+		return false;
+	}
+	m_entities.push_back(std::move(capsule));
+	m_selectedEntityID = entityID; // set the newly added capsule as the selected entity
+	BOX_LOG_INFO("Added editable capsule. Entity count: " << m_entities.size());
+	return true;
+}
+
+
 bool BoxEngine::AddEditableSphere(const glm::vec3& position)
 {
     const int entityID = m_nextEntityID++;

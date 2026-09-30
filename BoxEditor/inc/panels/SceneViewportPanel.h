@@ -38,6 +38,7 @@ enum class ViewportAction
     AddEditablePlane,
     AddEditableSphere,
     AddEditableIcoSphere,
+	AddEditableCapsule,
     AddEditableCylinder,
 	AddEditablePyramid,
     AddEditableCone,

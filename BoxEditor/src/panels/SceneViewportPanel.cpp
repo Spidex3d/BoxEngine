@@ -407,6 +407,10 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 				action = ViewportAction::AddEditableIcoSphere;
             }
 
+            if (ImGui::MenuItem("Editable Capsule")) {
+                action = ViewportAction::AddEditableCapsule ;
+            }
+
             if (ImGui::MenuItem("Editable Cylinder")) {
 				action = ViewportAction::AddEditableCylinder;
             }

@@ -563,7 +563,9 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
 	case ViewportAction::AddEditableIcoSphere:
 		engine.AddEditableIcoSphere(glm::vec3(0.0f, 0.0f, 0.0f), 2); // 2 is the recursion level for the IcoSphere
 		break;
-
+	case ViewportAction::AddEditableCapsule:
+		engine.AddEditableCapsule(glm::vec3(0.0f, 0.0f, 0.0f), 32, 8, 0.5f, 2.0f); // 32 sectors, 8 stacks, radius 0.5, height 2.0
+		break;
     case ViewportAction::AddEditableCylinder:
         engine.AddEditableCylinder(glm::vec3(0.0f, 0.0f, 0.0f)); 
 		break;

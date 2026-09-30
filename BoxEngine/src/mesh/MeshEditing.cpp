@@ -55,42 +55,7 @@ namespace
     }
 }
 
-//namespace
-//{
-//    float RockNoise(const glm::vec3& p, std::uint32_t seed)
-//    {
-//        const float seedValue = static_cast<float>(seed) * 0.0137f;
-//
-//        const float noise1 =
-//            std::sin(
-//                p.x * 2.3f +
-//                p.y * 1.7f +
-//                p.z * 2.9f +
-//                seedValue
-//            );
-//
-//        const float noise2 =
-//            std::sin(
-//                p.x * 4.1f -
-//                p.y * 3.3f +
-//                p.z * 3.7f +
-//                seedValue * 1.37f
-//            );
-//
-//        const float noise3 =
-//            std::sin(
-//                p.x * 7.3f +
-//                p.y * 5.1f -
-//                p.z * 6.7f +
-//                seedValue * 2.11f
-//            );
-//
-//        return
-//            noise1 * 0.55f +
-//            noise2 * 0.30f +
-//            noise3 * 0.15f;
-//    }
-//}
+
 
 void MeshEditing::Clear()
 {
@@ -1169,16 +1134,447 @@ bool MeshEditing::CreateIcoSphere(int recursionLevel)
 // --------------------------------------- End of IcoSphere Creation ---------------------------------------
 
 
-// ############################################## Mesh Editing create cylinder  #########################################
-bool MeshEditing::CreateCylinder(
-    int sectors,
-    int stacks,
-    float radius,
-    float height)
+// ---------------------------------------
+// Capsule Creation use for are player character
+// ---------------------------------------
+bool MeshEditing::CreateCapsule(int sectors, int stacks, float radius, float height)
 {
     Clear();
 
-    m_shadingMode = ShadingMode::Smooth;
+    m_shadingMode = ShadingMode::Flat;
+
+    if (sectors < 3)
+    {
+        sectors = 3;
+    }
+
+    if (stacks < 1)
+    {
+        stacks = 1;
+    }
+
+    if (radius <= 0.0f ||
+        height <= 0.0f)
+    {
+        BOX_LOG_ERROR(
+            "MeshEditing::CreateCapsule: "
+            "Invalid radius or height"
+        );
+
+        return false;
+    }
+
+    // A capsule cannot be shorter than its two hemispheres.
+    // If height is less than 2 * radius, make it sphere-like.
+    const float minimumHeight =
+        radius * 2.0f;
+
+    if (height < minimumHeight)
+    {
+        BOX_LOG_WARNING(
+            "MeshEditing::CreateCapsule: "
+            "Height is smaller than the capsule diameter. "
+            "Clamping height to 2 * radius."
+        );
+
+        height = minimumHeight;
+    }
+
+    const float halfHeight =
+        height * 0.5f;
+
+    // The distance from the origin to the centre of
+    // either hemispherical end.
+    //
+    // Example:
+    //
+    // total height = 2.0
+    // radius       = 0.5
+    // cylinder     = 1.0
+    //
+    const float hemisphereCenterOffset =
+        halfHeight - radius;
+
+    const float cylinderHeight =
+        hemisphereCenterOffset * 2.0f;
+
+    const float twoPi =
+        2.0f * pi;
+
+    // Each ring contains one vertex per sector.
+    std::vector<std::vector<std::size_t>> rings;
+
+    rings.reserve(
+        static_cast<std::size_t>(stacks * 2 + 2)
+    );
+
+    // -------------------------------------------------
+    // BOTTOM POLE
+    // -------------------------------------------------
+
+    const std::size_t bottomPole =
+        AddVertex(
+            glm::vec3(
+                0.0f,
+                -halfHeight,
+                0.0f
+            )
+        );
+
+    // -------------------------------------------------
+    // BOTTOM HEMISPHERE
+    // -------------------------------------------------
+    //
+    // The final ring of this section is the bottom
+    // equator of the cylindrical body.
+    // -------------------------------------------------
+
+    for (int stack = 1;
+        stack <= stacks;
+        ++stack)
+    {
+        const float angle =
+            -glm::half_pi<float>() +
+            static_cast<float>(stack) *
+            glm::half_pi<float>() /
+            static_cast<float>(stacks);
+
+        const float ringRadius =
+            radius * std::cos(angle);
+
+        const float y =
+            -hemisphereCenterOffset +
+            radius * std::sin(angle);
+
+        std::vector<std::size_t> ring;
+
+        ring.reserve(
+            static_cast<std::size_t>(sectors)
+        );
+
+        for (int sector = 0;
+            sector < sectors;
+            ++sector)
+        {
+            const float sectorAngle =
+                static_cast<float>(sector) *
+                twoPi /
+                static_cast<float>(sectors);
+
+            const float x =
+                ringRadius *
+                std::cos(sectorAngle);
+
+            const float z =
+                ringRadius *
+                std::sin(sectorAngle);
+
+            ring.push_back(
+                AddVertex(
+                    glm::vec3(
+                        x,
+                        y,
+                        z
+                    )
+                )
+            );
+        }
+
+        rings.push_back(
+            std::move(ring)
+        );
+    }
+
+    // -------------------------------------------------
+    // CYLINDRICAL BODY
+    // -------------------------------------------------
+    //
+    // The bottom hemisphere already created the
+    // bottom equator ring. Create the top equator
+    // ring only when the capsule has a cylindrical
+    // section.
+    // -------------------------------------------------
+
+    if (cylinderHeight > 0.000001f)
+    {
+        std::vector<std::size_t> topEquatorRing;
+
+        topEquatorRing.reserve(
+            static_cast<std::size_t>(sectors)
+        );
+
+        for (int sector = 0;
+            sector < sectors;
+            ++sector)
+        {
+            const float sectorAngle =
+                static_cast<float>(sector) *
+                twoPi /
+                static_cast<float>(sectors);
+
+            const float x =
+                radius *
+                std::cos(sectorAngle);
+
+            const float z =
+                radius *
+                std::sin(sectorAngle);
+
+            topEquatorRing.push_back(
+                AddVertex(
+                    glm::vec3(
+                        x,
+                        hemisphereCenterOffset,
+                        z
+                    )
+                )
+            );
+        }
+
+        rings.push_back(
+            std::move(topEquatorRing)
+        );
+    }
+
+    // -------------------------------------------------
+    // TOP HEMISPHERE
+    // -------------------------------------------------
+    //
+    // The top pole is added separately after the final
+    // curved ring.
+    // -------------------------------------------------
+
+    for (int stack = 1;
+        stack < stacks;
+        ++stack)
+    {
+        const float angle =
+            static_cast<float>(stack) *
+            glm::half_pi<float>() /
+            static_cast<float>(stacks);
+
+        const float ringRadius =
+            radius * std::cos(angle);
+
+        const float y =
+            hemisphereCenterOffset +
+            radius * std::sin(angle);
+
+        std::vector<std::size_t> ring;
+
+        ring.reserve(
+            static_cast<std::size_t>(sectors)
+        );
+
+        for (int sector = 0;
+            sector < sectors;
+            ++sector)
+        {
+            const float sectorAngle =
+                static_cast<float>(sector) *
+                twoPi /
+                static_cast<float>(sectors);
+
+            const float x =
+                ringRadius *
+                std::cos(sectorAngle);
+
+            const float z =
+                ringRadius *
+                std::sin(sectorAngle);
+
+            ring.push_back(
+                AddVertex(
+                    glm::vec3(
+                        x,
+                        y,
+                        z
+                    )
+                )
+            );
+        }
+
+        rings.push_back(
+            std::move(ring)
+        );
+    }
+
+    // -------------------------------------------------
+    // TOP POLE
+    // -------------------------------------------------
+
+    const std::size_t topPole =
+        AddVertex(
+            glm::vec3(
+                0.0f,
+                halfHeight,
+                0.0f
+            )
+        );
+
+    // -------------------------------------------------
+    // BOTTOM CAP
+    // -------------------------------------------------
+    //
+    // Reverse order produces an outward-facing
+    // downward normal.
+    // -------------------------------------------------
+
+    if (!rings.empty())
+    {
+        const std::vector<std::size_t>& bottomRing =
+            rings.front();
+
+        for (int sector = 0;
+            sector < sectors;
+            ++sector)
+        {
+            const int nextSector =
+                (sector + 1) % sectors;
+
+            AddFace(
+                {
+                    bottomPole,
+                    bottomRing[
+                        static_cast<std::size_t>(sector)
+                    ],
+                    bottomRing[
+                        static_cast<std::size_t>(nextSector)
+                    ]
+                }
+            );
+        }
+    }
+
+    // -------------------------------------------------
+    // CONNECT ALL RINGS
+    // -------------------------------------------------
+    //
+    // Every neighbouring pair of rings creates
+    // sectors quad faces.
+    // -------------------------------------------------
+
+    for (std::size_t ringIndex = 0;
+        ringIndex + 1 < rings.size();
+        ++ringIndex)
+    {
+        const std::vector<std::size_t>& lowerRing =
+            rings[ringIndex];
+
+        const std::vector<std::size_t>& upperRing =
+            rings[ringIndex + 1];
+
+        for (int sector = 0;
+            sector < sectors;
+            ++sector)
+        {
+            const int nextSector =
+                (sector + 1) % sectors;
+
+            const std::size_t lowerCurrent =
+                lowerRing[
+                    static_cast<std::size_t>(sector)
+                ];
+
+            const std::size_t lowerNext =
+                lowerRing[
+                    static_cast<std::size_t>(nextSector)
+                ];
+
+            const std::size_t upperCurrent =
+                upperRing[
+                    static_cast<std::size_t>(sector)
+                ];
+
+            const std::size_t upperNext =
+                upperRing[
+                    static_cast<std::size_t>(nextSector)
+                ];
+
+            // Outward-facing winding.
+            AddFace(
+                {
+                    lowerCurrent,
+                    upperCurrent,
+                    upperNext,
+                    lowerNext
+                }
+            );
+        }
+    }
+
+    // -------------------------------------------------
+    // TOP CAP
+    // -------------------------------------------------
+    //
+    // Reverse order produces an outward-facing
+    // upward normal.
+    // -------------------------------------------------
+
+    if (!rings.empty())
+    {
+        const std::vector<std::size_t>& topRing =
+            rings.back();
+
+        for (int sector = 0;
+            sector < sectors;
+            ++sector)
+        {
+            const int nextSector =
+                (sector + 1) % sectors;
+
+            AddFace(
+                {
+                    topPole,
+                    topRing[
+                        static_cast<std::size_t>(nextSector)
+                    ],
+                    topRing[
+                        static_cast<std::size_t>(sector)
+                    ]
+                }
+            );
+        }
+    }
+
+    // -------------------------------------------------
+    // BUILD UNIQUE EDITABLE EDGES
+    // -------------------------------------------------
+
+    RebuildEdges();
+
+    BOX_LOG_INFO(
+        "Created editable capsule. "
+        << "Sectors="
+        << sectors
+        << " Stacks="
+        << stacks
+        << " Radius="
+        << radius
+        << " Height="
+        << height
+        << " Vertices="
+        << GetVertexCount()
+        << " Edges="
+        << GetEdgeCount()
+        << " Faces="
+        << GetFaceCount()
+    );
+
+    return
+        !m_vertices.empty() &&
+        !m_edges.empty() &&
+        !m_faces.empty();
+}
+// -------------------------------------------- End of Capsule Creation --------------------------------------------
+
+
+// ############################################## Mesh Editing create cylinder  #########################################
+bool MeshEditing::CreateCylinder(int sectors, int stacks, float radius, float height)
+{
+    Clear();
+
+    m_shadingMode = ShadingMode::Flat;
 
     if (sectors < 3)
     {

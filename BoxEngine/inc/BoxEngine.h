@@ -57,14 +57,16 @@ public:
     bool AddEditableCube(const glm::vec3& position = glm::vec3(0.0f));
 
     bool AddEditablePlane(const glm::vec3& position = glm::vec3(0.0f));
-	// my floor function with subdivisions
 	bool AddEditableIcoSphere(const glm::vec3& position = glm::vec3(0.0f), int recursionLevel = 2);
+
+	bool AddEditableCapsule(const glm::vec3& position = glm::vec3(0.0f), int sectors = 32, int stacks = 8, float radius = 0.5f, float height = 2.0f);
 
     bool AddEditableSphere(const glm::vec3& position);
 
 	bool AddEditableCylinder(const glm::vec3& position = glm::vec3(0.0f), int sectors = 32, int stacks = 1, float radius = 0.5f, float height = 1.0f);
 
 	// ------------------------- Ecosystem Meshes -------------------------
+	// my floor function with subdivisions
 	bool AddEditableFloor(const glm::vec3& position = glm::vec3(0.0f), float width = 10.0f, float depth = 10.0f, int subdivisionsX = 10, int subdivisionsZ = 10);
 	
     bool AddEditableRock(const glm::vec3& position = glm::vec3(0.0f), float radius = 1.0f, int subdivisions = 2,

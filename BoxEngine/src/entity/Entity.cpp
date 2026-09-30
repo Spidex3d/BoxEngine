@@ -526,6 +526,72 @@ bool Entity::UpdateIcoSphere()
     return true;
 }
 
+bool Entity::CreateCapsule(int sectors, int stacks, float radius, float height)
+{
+	Destroy();
+	if (!m_editableMesh.CreateCapsule(sectors, stacks, radius, height))
+	{
+		return false;
+	}
+	m_capsuleSectors = sectors;
+	m_capsuleStacks = stacks;
+	m_capsuleRadius = radius;
+	m_capsuleHeight = height;
+	m_primitiveType = EntityPrimitiveType::Capsule;
+	m_baseEditableMesh = m_editableMesh;
+	if (!m_editableMesh.BuildRenderMesh(m_meshData))
+	{
+		return false;
+	}
+	if (!CreateBuffersFromMeshData())
+	{
+		return false;
+	}
+	m_aabbMin = glm::vec3(-radius, -height * 0.5f, -radius);
+	m_aabbMax = glm::vec3(radius, height * 0.5f, radius);
+	return true;
+}
+
+bool Entity::UpdateCapsule()
+{
+	// Recreate editable capsule using the currently stored primitive properties.
+	if (!m_editableMesh.CreateCapsule(m_capsuleSectors, m_capsuleStacks, m_capsuleRadius, m_capsuleHeight))
+	{
+		return false;
+	}
+	// This is now the new base primitive.
+	m_baseEditableMesh = m_editableMesh;
+	if (!m_editableMesh.BuildRenderMesh(m_meshData))
+	{
+		return false;
+	}
+	// Destroy only existing GPU buffers before recreating them.
+	if (m_ebo != 0)
+	{
+		glDeleteBuffers(1, &m_ebo);
+		m_ebo = 0;
+	}
+	if (m_vbo != 0)
+	{
+		glDeleteBuffers(1, &m_vbo);
+		m_vbo = 0;
+	}
+	if (m_vao != 0)
+	{
+		glDeleteVertexArrays(1, &m_vao);
+		m_vao = 0;
+	}
+	if (!CreateBuffersFromMeshData())
+	{
+		return false;
+	}
+	m_aabbMin = glm::vec3(-m_capsuleRadius, -m_capsuleHeight * 0.5f, -m_capsuleRadius);
+	m_aabbMax = glm::vec3(m_capsuleRadius, m_capsuleHeight * 0.5f, m_capsuleRadius);
+	return true;
+}
+
+
+
 // ----------------------------- Ecosystem Mesh Creation -----------------------------
 
 bool Entity::CreateFloor(float width, float depth, int subdivisionsX, int subdivisionsZ)

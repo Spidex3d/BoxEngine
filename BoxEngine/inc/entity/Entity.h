@@ -25,6 +25,7 @@ enum class EntityPrimitiveType
 	Floor,
     Rock,
 	IcoSphere,
+	Capsule,
     Sphere,
     Cylinder,
     Pyramid
@@ -50,6 +51,8 @@ public:
 	bool CreatePlane(); // Create a Plane from the new editable mesh data, buffers for rendering.
 
 	bool CreateIcoSphere(int recursionLevel = 2);
+
+	bool CreateCapsule(int sectors = 32, int stacks = 16, float radius = 0.5f, float height = 1.0f); // follow to boxengine.h line 62
 
     bool CreateSphere(int sectors = 32, int stacks = 16);
 	// bool CreateIcoSphere(int recursionLevel = 2);
@@ -426,6 +429,35 @@ public:
 
 	bool UpdateIcoSphere(); // Function to update IcoSphere parameters and rebuild mesh if necessary
 
+	// -------------------------------------------------------
+	// Capsule specific parameters
+	// -------------------------------------------------------
+	void SetCapsuleSectors(int sectors) {
+		m_capsuleSectors = sectors;
+	}
+	void SetCapsuleStacks(int stacks) {
+		m_capsuleStacks = stacks;
+	}
+	void SetCapsuleRadius(float radius) {
+		m_capsuleRadius = radius;
+	}
+	void SetCapsuleHeight(float height) {
+		m_capsuleHeight = height;
+	}
+	int GetCapsuleSectors() const {
+		return m_capsuleSectors;
+	}
+	int GetCapsuleStacks() const {
+		return m_capsuleStacks;
+	}
+	float GetCapsuleRadius() const {
+		return m_capsuleRadius;
+	}
+	float GetCapsuleHeight() const {
+		return m_capsuleHeight;
+	}
+	bool UpdateCapsule(); // Function to update capsule parameters and rebuild mesh if necessary
+
 
 	// ###################################### Visibility #####################################
     void SetVisible(bool visible)  {
@@ -573,6 +605,11 @@ private:
 	int m_sphereStacks = 16;
 	// IcoSphere specific parameters
 	int m_icoSphereRecursionLevel = 2;
+	// Capsule specific parameters
+	int m_capsuleSectors = 32;
+	int m_capsuleStacks = 16;
+	float m_capsuleRadius = 0.5f;
+	float m_capsuleHeight = 1.0f;
 
 
     bool m_visible = true;
