@@ -1032,7 +1032,121 @@ bool Entity::CreatePyramid()
 
 }
 
+bool Entity::CreateCone(int sectors, float radius, float height)
+{
+    Destroy();
 
+    if (!m_editableMesh.CreateCone(sectors, radius, height))
+    {
+        return false;
+    }
+
+    m_primitiveType = EntityPrimitiveType::Cone;
+
+    m_baseEditableMesh = m_editableMesh;
+
+    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+    {
+        return false;
+    }
+
+    if (!CreateBuffersFromMeshData())
+    {
+        return false;
+    }
+
+    m_aabbMin = glm::vec3(-0.5f);
+
+    m_aabbMax = glm::vec3(0.5f);
+
+    return true;
+}
+bool Entity::UpdateCone()
+{
+	if (!m_editableMesh.CreateCone(m_coneCylinderSectors, m_coneCylinderRadius, m_coneCylinderHeight))
+	{
+		return false;
+	}
+    
+    m_primitiveType = EntityPrimitiveType::Cone;
+
+    m_baseEditableMesh = m_editableMesh;
+
+    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+    {
+        return false;
+    }
+
+    if (!CreateBuffersFromMeshData())
+    {
+        return false;
+    }
+
+    m_aabbMin = glm::vec3(-0.5f);
+
+    m_aabbMax = glm::vec3(0.5f);
+
+    return true;
+}
+
+
+bool Entity::CreateTorus(int sides, int rings, float innerRadius, float outerRadius)
+{
+    Destroy();
+
+    if (!m_editableMesh.CreateTorus(sides, rings, innerRadius, outerRadius))
+    {
+        return false;
+    }
+
+    m_primitiveType = EntityPrimitiveType::Torus;
+
+    m_baseEditableMesh = m_editableMesh;
+
+    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+    {
+        return false;
+    }
+
+    if (!CreateBuffersFromMeshData())
+    {
+        return false;
+    }
+
+    m_aabbMin = glm::vec3(-0.5f);
+
+    m_aabbMax = glm::vec3(0.5f);
+
+    return true;
+}
+
+bool Entity::UpdateTorus()
+{
+	if (!m_editableMesh.CreateTorus(m_torusSides, m_torusRings, m_torusInnerRadius, m_torusOuterRadius))
+	{
+		return false;
+	}
+
+	m_primitiveType = EntityPrimitiveType::Torus;
+
+	m_baseEditableMesh = m_editableMesh;
+
+	if (!m_editableMesh.BuildRenderMesh(m_meshData))
+	{
+		return false;
+	}
+
+	if (!CreateBuffersFromMeshData())
+	{
+		return false;
+	}
+
+	m_aabbMin = glm::vec3(-0.5f);
+
+	m_aabbMax = glm::vec3(0.5f);
+
+	return true;
+}
 
 // shader for the selection outline effect
 void Entity::DrawMesh() const

@@ -416,8 +416,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             }
 
             if (ImGui::MenuItem("Editable Cone")) {
-                // Request engine to add a plane via action callback
-               // if (m_actionCallback) m_actionCallback("AddEditableCone");
+				action = ViewportAction::AddEditableCone;
             }
             // Pyramid
             if (ImGui::MenuItem("Editable Pyramid")) {
@@ -426,8 +425,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             }
 
             if (ImGui::MenuItem("Editable Torus")) {
-                // Request engine to add a plane via action callback
-               // if (m_actionCallback) m_actionCallback("AddEditableTorus");
+				action = ViewportAction::AddEditableTorus;
             }
             // other menu items...
             ImGui::EndMenu();

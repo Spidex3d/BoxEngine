@@ -536,6 +536,60 @@ bool BoxEngine::AddEditablePyramid(const glm::vec3& position)
     return true;
 }
 
+bool BoxEngine::AddEditableCone(const glm::vec3& position, int sectors, float radius, float height)
+{
+    const int entityID = m_nextEntityID++;
+
+    const std::string entityName = "Cone " + std::to_string(entityID);
+
+    auto cone = std::make_unique<Entity>(entityID, entityName);
+
+    cone->GetMaterial().SetBaseColorTexture(m_defaultTexture.GetID(), m_defaultTexturePath);
+
+    Material& material = cone->GetMaterial();
+
+    material.SetUseBaseColorTexture(true);
+
+    cone->SetPosition(position);
+
+    if (!cone->CreateCone(sectors, radius, height))
+    {
+        BOX_LOG_ERROR("Failed to add editable cone");
+        return false;
+    }
+
+    m_entities.push_back(std::move(cone));
+
+    m_selectedEntityID = entityID; // set the newly added cone as the selected entity
+
+    BOX_LOG_INFO(
+        "Added editable cone. Entity count: " << m_entities.size());
+
+    return true;
+}
+
+bool BoxEngine::AddEditableTorus(const glm::vec3& position, int sides, int rings, float innerRadius, float outerRadius)
+{
+    
+	const int entityID = m_nextEntityID++;
+	const std::string entityName = "Torus " + std::to_string(entityID);
+	auto torus = std::make_unique<Entity>(entityID, entityName);
+	torus->GetMaterial().SetBaseColorTexture(m_defaultTexture.GetID(), m_defaultTexturePath);
+	Material& material = torus->GetMaterial();
+	material.SetUseBaseColorTexture(true);
+	torus->SetPosition(position);
+	if (!torus->CreateTorus(sides, rings, innerRadius, outerRadius))
+	{
+		BOX_LOG_ERROR("Failed to add editable torus");
+		return false;
+	}
+	m_entities.push_back(std::move(torus));
+	m_selectedEntityID = entityID; // set the newly added torus as the selected entity
+	BOX_LOG_INFO(
+		"Added editable torus. Entity count: " << m_entities.size());
+	return true;
+}
+
 // Return a const reference to the vector of unique_ptr<Entity> for the editor panels to access the entities in the scene
 const std::vector<std::unique_ptr<Entity>>&
 BoxEngine::GetEntities() const

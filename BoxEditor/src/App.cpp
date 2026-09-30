@@ -575,6 +575,15 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
 		engine.AddEditablePyramid(glm::vec3(0.0f, -0.5f, 0.0f)); // -0.5f on y to sit it on the ground plane
 
         break;
+
+	case ViewportAction::AddEditableCone:
+
+        engine.AddEditableCone(glm::vec3(0.0f, 0.0f, 0.0f)); 
+        break;
+
+	case ViewportAction::AddEditableTorus:
+		engine.AddEditableTorus(glm::vec3(0.0f, 0.0f, 0.0f));
+		break;
         // ---------------------------------------------------------
         // Ecosystem - Rock
         // ---------------------------------------------------------

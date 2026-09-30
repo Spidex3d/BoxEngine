@@ -28,7 +28,9 @@ enum class EntityPrimitiveType
 	Capsule,
     Sphere,
     Cylinder,
-    Pyramid
+    Pyramid,
+	Cone,
+	Torus
 };
 
 
@@ -60,6 +62,10 @@ public:
 	// bool CreateCone(int sectors = 32, float radius = 0.5f, float height = 1.0f);
 	// bool CreateTorus(int sides = 16, int rings = 32, float innerRadius = 0.2f, float outerRadius = 0.5f);
      bool CreatePyramid();
+
+	 bool CreateCone(int sectors = 32, float radius = 0.5f, float height = 1.0f);
+
+	 bool CreateTorus(int sides = 16, int rings = 32, float innerRadius = 0.2f, float outerRadius = 0.5f);
 
 	 // ------------------------------------------ Panel Creation (Greebles) --------------------------------------
 	 bool CreateWallPanel(float width, float height, int subdivisionsX, int subdivisionsY); 
@@ -458,6 +464,59 @@ public:
 	}
 	bool UpdateCapsule(); // Function to update capsule parameters and rebuild mesh if necessary
 
+    // ----------------------------------------------------
+	// Cone specific parameters
+	// ----------------------------------------------------
+	void SetConeSectors(int sectors) {
+		m_cylinderSectors = sectors; // Reusing cylinder parameters for cone
+	}
+	void SetConeRadius(float radius) {
+		m_cylinderRadius = radius; // Reusing cylinder parameters for cone
+	}
+	void SetConeHeight(float height) {
+		m_coneCylinderHeight = height; // Reusing cylinder parameters for cone
+	}
+	int GetConeSectors() const {
+		return m_coneCylinderSectors; // Reusing cylinder parameters for cone
+	}
+	float GetConeRadius() const {
+		return m_coneCylinderRadius; // Reusing cylinder parameters for cone
+	}
+	float GetConeHeight() const {
+		return m_coneCylinderHeight; // Reusing cylinder parameters for cone
+	}
+	bool UpdateCone(); // Function to update cone parameters and rebuild mesh if necessary
+
+    // ----------------------------------------------
+	// Torus specific parameters
+	// ----------------------------------------------
+	void SetTorusSides(int sides) {
+		m_torusSides = sides;
+	}
+	void SetTorusRings(int rings) {
+		m_torusRings = rings;
+	}
+	void SetTorusInnerRadius(float innerRadius) {
+		m_torusInnerRadius = innerRadius;
+	}
+	void SetTorusOuterRadius(float outerRadius) {
+		m_torusOuterRadius = outerRadius;
+	}
+	int GetTorusSides() const {
+		return m_torusSides;
+	}
+	int GetTorusRings() const {
+		return m_torusRings;
+	}
+	float GetTorusInnerRadius() const {
+		return m_torusInnerRadius;
+	}
+	float GetTorusOuterRadius() const {
+		return m_torusOuterRadius;
+	}
+	bool UpdateTorus(); // Function to update torus parameters and rebuild mesh if necessary
+
+
 
 	// ###################################### Visibility #####################################
     void SetVisible(bool visible)  {
@@ -610,6 +669,15 @@ private:
 	int m_capsuleStacks = 16;
 	float m_capsuleRadius = 0.5f;
 	float m_capsuleHeight = 1.0f;
+	// Cone specific parameters
+	int m_coneCylinderSectors = 32; // Reusing cylinder parameters for cone
+	float m_coneCylinderRadius = 0.5f; // Reusing cylinder parameters for cone
+	float m_coneCylinderHeight = 1.0f; // Reusing cylinder parameters for cone
+	// Torus specific parameters
+	int m_torusSides = 16;
+	int m_torusRings = 32;
+	float m_torusInnerRadius = 0.2f;
+	float m_torusOuterRadius = 0.5f;
 
 
     bool m_visible = true;

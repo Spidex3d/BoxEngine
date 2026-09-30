@@ -1808,6 +1808,366 @@ bool MeshEditing::CreateCylinder(int sectors, int stacks, float radius, float he
         !m_faces.empty();
 }
 
+// ---------------------------------------------- End of Cylinder Creation ----------------------------------------------
+
+// ----------------------------------------------
+// Create a cone mesh with the specified number of sectors, radius, and height.
+// ----------------------------------------------
+
+bool MeshEditing::CreateCone(int sectors, float radius, float height)
+{
+    Clear();
+
+    // Flat shading is usually preferable for a low-poly cone,
+    // especially because the base and side should have different
+    // normals.
+    m_shadingMode = ShadingMode::Flat;
+
+    if (sectors < 3)
+    {
+        sectors = 3;
+    }
+
+    if (radius <= 0.0f ||
+        height <= 0.0f)
+    {
+        BOX_LOG_ERROR(
+            "MeshEditing::CreateCone: "
+            "Invalid radius or height"
+        );
+
+        return false;
+    }
+
+    const float halfHeight =
+        height * 0.5f;
+
+    const float twoPi =
+        2.0f * pi;
+
+    // -------------------------------------------------
+    // CREATE BASE RING
+    // -------------------------------------------------
+
+    std::vector<std::size_t> baseVertices;
+
+    baseVertices.reserve(
+        static_cast<std::size_t>(sectors)
+    );
+
+    for (int sector = 0;
+        sector < sectors;
+        ++sector)
+    {
+        const float angle =
+            static_cast<float>(sector) *
+            twoPi /
+            static_cast<float>(sectors);
+
+        const float x =
+            std::cos(angle) *
+            radius;
+
+        const float z =
+            std::sin(angle) *
+            radius;
+
+        baseVertices.push_back(
+            AddVertex(
+                glm::vec3(
+                    x,
+                    -halfHeight,
+                    z
+                )
+            )
+        );
+    }
+
+    // -------------------------------------------------
+    // CREATE APEX
+    // -------------------------------------------------
+
+    const std::size_t apex =
+        AddVertex(
+            glm::vec3(
+                0.0f,
+                halfHeight,
+                0.0f
+            )
+        );
+
+    // -------------------------------------------------
+    // CREATE SIDE TRIANGLES
+    // -------------------------------------------------
+    //
+    // Each triangle is:
+    //
+    // base current -> apex -> base next
+    //
+    // This winding produces outward-facing side
+    // normals.
+    // -------------------------------------------------
+
+    for (int sector = 0;
+        sector < sectors;
+        ++sector)
+    {
+        const int nextSector =
+            (sector + 1) % sectors;
+
+        const std::size_t currentBase =
+            baseVertices[
+                static_cast<std::size_t>(sector)
+            ];
+
+        const std::size_t nextBase =
+            baseVertices[
+                static_cast<std::size_t>(nextSector)
+            ];
+
+        AddFace(
+            {
+                currentBase,
+                apex,
+                nextBase
+            }
+        );
+    }
+
+    // -------------------------------------------------
+    // CREATE BASE FACE
+    // -------------------------------------------------
+    //
+    // The base must be wound in reverse order so its
+    // normal points downward.
+    // -------------------------------------------------
+
+    std::vector<std::size_t> baseFace;
+
+    baseFace.reserve(
+        static_cast<std::size_t>(sectors)
+    );
+
+    for (int sector = sectors - 1;
+        sector >= 0;
+        --sector)
+    {
+        baseFace.push_back(
+            baseVertices[
+                static_cast<std::size_t>(sector)
+            ]
+        );
+    }
+
+    AddFace(baseFace);
+
+    // -------------------------------------------------
+    // BUILD UNIQUE EDITABLE EDGES
+    // -------------------------------------------------
+
+    RebuildEdges();
+
+    BOX_LOG_INFO(
+        "Created editable cone. "
+        << "Sectors="
+        << sectors
+        << " Radius="
+        << radius
+        << " Height="
+        << height
+        << " Vertices="
+        << GetVertexCount()
+        << " Edges="
+        << GetEdgeCount()
+        << " Faces="
+        << GetFaceCount()
+    );
+
+    return
+        !m_vertices.empty() &&
+        !m_edges.empty() &&
+        !m_faces.empty();
+}
+
+// ---------------------------------------------- End of Cone Creation ----------------------------------------------
+
+// ----------------------------------------------
+// Create a torus mesh with the specified number of sides, rings, inner radius, and outer radius.
+// ----------------------------------------------
+
+bool MeshEditing::CreateTorus(int sides, int rings, float innerRadius, float outerRadius)
+{
+    Clear();
+    m_shadingMode = ShadingMode::Smooth;
+
+    if (sides < 3)
+    {
+        sides = 3;
+    }
+
+    if (rings < 3)
+    {
+        rings = 3;
+    }
+
+    if (innerRadius <= 0.0f ||
+        outerRadius <= 0.0f ||
+        innerRadius >= outerRadius)
+    {
+        BOX_LOG_ERROR(
+            "MeshEditing::CreateTorus: "
+            "Invalid innerRadius or outerRadius"
+        );
+
+        return false;
+    }
+
+    const float twoPi =
+        2.0f * pi;
+
+    // -------------------------------------------------
+    // Create vertices
+    // -------------------------------------------------
+    //
+    // outerRadius = distance from torus center
+    // to the center of the tube.
+    //
+    // innerRadius = radius of the tube itself.
+    // -------------------------------------------------
+
+    m_vertices.reserve(
+        static_cast<std::size_t>(sides) *
+        static_cast<std::size_t>(rings)
+    );
+
+    for (int ring = 0;
+        ring < rings;
+        ++ring)
+    {
+        const float ringAngle =
+            static_cast<float>(ring) *
+            twoPi /
+            static_cast<float>(rings);
+
+        const float cosRing =
+            std::cos(ringAngle);
+
+        const float sinRing =
+            std::sin(ringAngle);
+
+        // Center of the tube for this ring.
+        const float ringCenterX =
+            outerRadius * cosRing;
+
+        const float ringCenterZ =
+            outerRadius * sinRing;
+
+        for (int side = 0;
+            side < sides;
+            ++side)
+        {
+            const float sideAngle =
+                static_cast<float>(side) *
+                twoPi /
+                static_cast<float>(sides);
+
+            const float cosSide =
+                std::cos(sideAngle);
+
+            const float sinSide =
+                std::sin(sideAngle);
+
+            const float x =
+                (outerRadius + innerRadius * cosSide) * cosRing;
+
+            const float y =
+                innerRadius * sinSide;
+
+            const float z =
+                (outerRadius + innerRadius * cosSide) * sinRing;
+
+            AddVertex(
+                glm::vec3(
+                    x,
+                    y,
+                    z
+                )
+            );
+        }
+    }
+
+    auto VertexIndex =
+        [sides](int ring, int side) -> std::size_t
+    {
+        return static_cast<std::size_t>(ring * sides + side);
+    };
+
+    // -------------------------------------------------
+    // Create quad faces
+    // -------------------------------------------------
+
+    for (int ring = 0;
+        ring < rings;
+        ++ring)
+    {
+        const int nextRing =
+            (ring + 1) % rings;
+
+        for (int side = 0;
+            side < sides;
+            ++side)
+        {
+            const int nextSide =
+                (side + 1) % sides;
+
+            const std::size_t v0 =
+                VertexIndex(ring, side);
+
+            const std::size_t v1 =
+                VertexIndex(nextRing, side);
+
+            const std::size_t v2 =
+                VertexIndex(nextRing, nextSide);
+
+            const std::size_t v3 =
+                VertexIndex(ring, nextSide);
+
+            // Outward winding.
+            AddFace(
+                {
+                    v0,
+                    v1,
+                    v2,
+                    v3
+                }
+            );
+        }
+    }
+
+    // -------------------------------------------------
+    // Build edges
+    // -------------------------------------------------
+
+    RebuildEdges();
+
+    BOX_LOG_INFO(
+        "Created editable torus. "
+        << "Sides=" << sides
+        << " Rings=" << rings
+        << " InnerRadius=" << innerRadius
+        << " OuterRadius=" << outerRadius
+        << " Vertices=" << GetVertexCount()
+        << " Edges=" << GetEdgeCount()
+        << " Faces=" << GetFaceCount()
+    );
+
+    return
+        !m_vertices.empty() &&
+        !m_edges.empty() &&
+        !m_faces.empty();
+
+}
+
 
 
 std::size_t MeshEditing::GetVertexCount() const

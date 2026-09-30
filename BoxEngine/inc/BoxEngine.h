@@ -75,6 +75,11 @@ public:
 
 	bool AddEditablePyramid(const glm::vec3& position = glm::vec3(0.0f));
 
+	bool AddEditableCone(const glm::vec3& position = glm::vec3(0.0f), int sectors = 32, float radius = 0.5f, float height = 1.0f);
+
+	bool AddEditableTorus(const glm::vec3& position = glm::vec3(0.0f), int sides = 16, int rings = 32, float innerRadius = 0.2f, float outerRadius = 0.5f);
+
+
 	const std::vector<std::unique_ptr<Entity>>& GetEntities() const; // used to access the entities in the scene from the editor panels
     
     void SetSelectedEntity(int entityID);
