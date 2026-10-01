@@ -7,6 +7,8 @@
 #include <memory>
 #include <vector>
 
+#include <runtime\Game.h>
+
 class Shader;
 class Grid;
 class Entity;
@@ -137,6 +139,32 @@ public:
         return m_engineMode == EngineMode::Playing;
     }
 
+    Entity* CreatePlayer(const glm::vec3& position = glm::vec3(0.0f));
+
+    Entity* GetPlayer()
+    {
+        return m_player;
+    }
+
+    const Entity* GetPlayer() const
+    {
+        return m_player;
+    }
+
+    Game& GetGame()
+    {
+        return m_game;
+    }
+
+    const Game& GetGame() const
+    {
+        return m_game;
+    }
+
+    Entity* CreateRuntimePlayer(const glm::vec3& position);
+
+    void DestroyRuntimeEntity(Entity* entity);
+
 
 
 private:
@@ -185,6 +213,9 @@ private:
 	// ----------------------------------------
 private:
         EngineMode m_engineMode = EngineMode::Editor;
+
+        Entity* m_player = nullptr;
+        Game m_game;
 };
 
 

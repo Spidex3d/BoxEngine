@@ -1271,38 +1271,7 @@ bool BoxEngine::LoadScene(
             }
             
             
-            //if (material.UsesBaseColorTexture())
-            //{
-                
-                /*const std::string texturePath =
-                    material.GetBaseColorTexturePath();
-
-                if (!texturePath.empty())
-                {
-                    const GLuint textureID =
-                        LoadTexture(texturePath);
-
-                    if (textureID != 0)
-                    {
-                        material.SetBaseColorTexture(
-                            textureID,
-                            texturePath
-                        );
-
-                        BOX_LOG_INFO(
-                            "Restored base color texture: "
-                            << texturePath
-                        );
-                    }
-                    else
-                    {
-                        BOX_LOG_ERROR(
-                            "Failed to restore base color texture: "
-                            << texturePath
-                        );
-                    }
-                }*/
-            //}
+            
 
             // -----------------------------------------
             // Normal map
@@ -1455,20 +1424,42 @@ bool BoxEngine::LoadScene(
     return true;
 }
 
-// ----------------------------------------
-// Game Engine
-// ----------------------------------------
+// ----------------------------------------------------------------------------------------------------
+// ------------------------------------ Game Engine Mode Management -----------------------------------
+// ----------------------------------------------------------------------------------------------------
+
 void BoxEngine::StartPlayMode()
 {
+    if (m_engineMode == EngineMode::Playing)
+    {
+        return;
+    }
+
     m_engineMode = EngineMode::Playing;
 
-    m_camera->Mode = Camera::CameraMode::Play;
+    m_camera->Mode =
+        Camera::CameraMode::Play;
 
     m_camera->SetPerspectiveFromDefaults();
 
-    BOX_LOG_INFO("Play mode started");
+    // -------------------------------------------------
+    // Start the runtime Game
+    // This creates the Player through Player::Initialize()
+    // -------------------------------------------------
 
-    
+    if (!m_game.Initialize(*this))
+    {
+        BOX_LOG_ERROR(
+            "Failed to initialize Game"
+        );
+
+        m_engineMode = EngineMode::Editor;
+        return;
+    }
+
+    BOX_LOG_INFO(
+        "Play mode started"
+    );
 }
 
 void BoxEngine::PausePlayMode()
@@ -1480,11 +1471,134 @@ void BoxEngine::PausePlayMode()
         BOX_LOG_INFO("Play mode paused");
     }
 }
+
 void BoxEngine::StopPlayMode()
 {
-    m_engineMode = EngineMode::Editor;
+    if (m_engineMode == EngineMode::Editor)
+    {
+        return;
+    }
 
-    m_camera->Mode = Camera::CameraMode::EditorOrbit;
+    // -------------------------------------------------
+    // Remove runtime Player
+    // -------------------------------------------------
 
-    BOX_LOG_INFO("Play mode stopped");
+    m_game.Shutdown(*this);
+
+    // -------------------------------------------------
+    // Back to editor
+    // -------------------------------------------------
+
+    m_engineMode =
+        EngineMode::Editor;
+
+    m_camera->Mode =
+        Camera::CameraMode::EditorOrbit;
+
+    BOX_LOG_INFO(
+        "Play mode stopped"
+    );
+}
+
+
+
+Entity* BoxEngine::CreatePlayer(const glm::vec3& position)
+{
+    const int entityID = m_nextEntityID++;
+
+    auto player =
+        std::make_unique<Entity>(
+            entityID,
+            "Player"
+        );
+
+    // Player starts slightly above the ground
+    player->SetPosition(
+        glm::vec3(0.0f, 0.4f, 0.0f)
+    );
+
+    // Proper player capsule
+    if (!player->CreateCapsule(
+        16,     // sectors
+        8,      // hemisphere stacks
+        0.4f,   // radius
+        1.8f    // total height
+    ))
+    {
+        BOX_LOG_ERROR(
+            "Failed to create Player capsule"
+        );
+
+        return nullptr;
+    }
+
+    m_player = player.get();
+
+    m_entities.push_back(
+        std::move(player)
+    );
+
+    BOX_LOG_INFO("Player created");
+
+    return m_player;
+}
+// The New bit
+Entity* BoxEngine::CreateRuntimePlayer(const glm::vec3& position)
+{
+    const int entityID =
+        m_nextEntityID++;
+
+    auto player =
+        std::make_unique<Entity>(
+            entityID,
+            "Player"
+        );
+
+    player->SetPosition(
+        position
+    );
+
+    if (!player->CreateCapsule(
+        16,
+        8,
+        0.4f,
+        1.8f
+    ))
+    {
+        BOX_LOG_ERROR(
+            "Failed to create runtime Player"
+        );
+
+        return nullptr;
+    }
+
+    Entity* result =
+        player.get();
+
+    m_entities.push_back(
+        std::move(player)
+    );
+
+    return result;
+}
+
+void BoxEngine::DestroyRuntimeEntity(Entity* entity)
+{
+    if (!entity)
+    {
+        return;
+    }
+
+    m_entities.erase(
+        std::remove_if(
+            m_entities.begin(),
+            m_entities.end(),
+            [entity](
+                const std::unique_ptr<Entity>& e)
+    {
+        return e.get() == entity;
+    }
+        ),
+        m_entities.end()
+    );
 }

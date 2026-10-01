@@ -274,6 +274,18 @@ int App::Run()
             m_uvPanel->Draw(*m_engine);
         }
 
+        // -----------------------------------------
+     // Runtime game update
+     // -----------------------------------------
+
+        if (m_engine->IsPlaying())
+        {
+            m_engine->GetGame().Update(*m_engine, m_deltaTime);
+        }
+
+
+
+
 		m_imgui->RenderImGui();
 
         glfwSwapBuffers(nativeWindow);
@@ -582,6 +594,7 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
         break;
 
 	case ViewportAction::AddEditableTorus:
+
 		engine.AddEditableTorus(glm::vec3(0.0f, 0.0f, 0.0f));
 		break;
         // ---------------------------------------------------------

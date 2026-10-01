@@ -13,7 +13,7 @@
 #include <mesh\modifiers\FaceCut.h>
 #include <mesh\modifiers\Bevel.h>
 
-
+#include <runtime\Player.h>
 
 ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const EditorIcons& icons)
 {
@@ -321,7 +321,9 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     ImGui::SameLine();
     if (ImGui::ImageButton("##PlayButton", (ImTextureID)(intptr_t)playIcon.id, iconSize))
     {
+       
         action = ViewportAction::Play;
+
     }
     if (ImGui::IsItemHovered())
     {
@@ -408,7 +410,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             }
 
             if (ImGui::MenuItem("Editable Capsule")) {
-                action = ViewportAction::AddEditableCapsule ;
+                action = ViewportAction::AddEditableCapsule;
             }
 
             if (ImGui::MenuItem("Editable Cylinder")) {
@@ -773,8 +775,8 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             // ################################ Game Camera ########################################
 
             // ########################################################################
-// Play Mode Camera Input
-// ########################################################################
+            // Play Mode Camera Input
+            // ########################################################################
 
             if (engine.IsPlaying())
             {
@@ -801,11 +803,15 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                 }
 
                 // ---------------------------------------------------------
-                // Mouse Look
+                // Mouse Look + Player Movement
                 // ---------------------------------------------------------
 
                 if (m_playMouseCaptured)
                 {
+                    // -----------------------------------------------------
+                    // Mouse Look
+                    // -----------------------------------------------------
+
                     ImVec2 mousePos = ImGui::GetMousePos();
 
                     if (m_firstPlayMouse)
@@ -830,60 +836,101 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                     }
 
                     // -----------------------------------------------------
-                    // Horizontal Walking
+                    // Player Horizontal Walking
                     // -----------------------------------------------------
 
-                    const float velocity =
-                        camera.MovementSpeed * deltaTime;
+                    Player& player =
+                        engine.GetGame().GetPlayer();
 
-                    glm::vec3 forward(
-                        camera.Front.x,
-                        0.0f,
-                        camera.Front.z
-                    );
+                    Entity* playerEntity =
+                        player.GetEntity();
 
-                    if (glm::length(forward) > 0.001f)
+                    if (playerEntity)
                     {
-                        forward = glm::normalize(forward);
-                    }
+                        // Forward direction - horizontal only
+                        glm::vec3 forward(
+                            camera.Front.x,
+                            0.0f,
+                            camera.Front.z
+                        );
 
-                    glm::vec3 right(
-                        camera.Right.x,
-                        0.0f,
-                        camera.Right.z
-                    );
+                        if (glm::length(forward) > 0.001f)
+                        {
+                            forward =
+                                glm::normalize(forward);
+                        }
 
-                    if (glm::length(right) > 0.001f)
-                    {
-                        right = glm::normalize(right);
-                    }
+                        // Right direction - horizontal only
+                        glm::vec3 right(
+                            camera.Right.x,
+                            0.0f,
+                            camera.Right.z
+                        );
 
-                    // W
-                    if (ImGui::IsKeyDown(ImGuiKey_W))
-                    {
-                        camera.Position +=
-                            forward * velocity;
-                    }
+                        if (glm::length(right) > 0.001f)
+                        {
+                            right =
+                                glm::normalize(right);
+                        }
 
-                    // S
-                    if (ImGui::IsKeyDown(ImGuiKey_S))
-                    {
-                        camera.Position -=
-                            forward * velocity;
-                    }
+                        // -------------------------------------------------
+                        // WASD
+                        // -------------------------------------------------
 
-                    // A
-                    if (ImGui::IsKeyDown(ImGuiKey_A))
-                    {
-                        camera.Position -=
-                            right * velocity;
-                    }
+                        if (ImGui::IsKeyDown(ImGuiKey_W))
+                        {
+                            player.Move(
+                                forward,
+                                deltaTime
+                            );
+                        }
 
-                    // D
-                    if (ImGui::IsKeyDown(ImGuiKey_D))
-                    {
-                        camera.Position +=
-                            right * velocity;
+                        if (ImGui::IsKeyDown(ImGuiKey_S))
+                        {
+                            player.Move(
+                                -forward,
+                                deltaTime
+                            );
+                        }
+
+                        if (ImGui::IsKeyDown(ImGuiKey_A))
+                        {
+                            player.Move(
+                                -right,
+                                deltaTime
+                            );
+                        }
+
+                        if (ImGui::IsKeyDown(ImGuiKey_D))
+                        {
+                            player.Move(
+                                right,
+                                deltaTime
+                            );
+                        }
+						// -------------------------------------------------
+						// Jump
+						// -------------------------------------------------
+                        if (ImGui::IsKeyPressed(ImGuiKey_Space, false))
+                        {
+                            player.Jump();
+                        }
+
+                        // -------------------------------------------------
+                        // Camera follows Player
+                        // -------------------------------------------------
+
+                        const glm::vec3 playerPosition =
+                            playerEntity->GetPosition();
+
+                        camera.Position =
+                            playerPosition
+                            - forward * 4.0f
+                            + glm::vec3(
+                                0.0f,
+                                2.5f,
+                                0.0f
+                            );
                     }
                 }
             }
@@ -893,99 +940,9 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                 m_playMouseCaptured = false;
                 m_firstPlayMouse = true;
             }
+           
 
-
-           /* if(engine.IsPlaying() && m_playMouseCaptured)
-            {
-                Camera& camera = engine.GetCamera();
-
-                const float deltaTime =
-                    ImGui::GetIO().DeltaTime;
-
-                if (ImGui::IsKeyDown(ImGuiKey_W))
-                    camera.ProcessKeyboard(
-                        FORWARD,
-                        deltaTime
-                    );
-
-                if (ImGui::IsKeyDown(ImGuiKey_S))
-                    camera.ProcessKeyboard(
-                        BACKWARD,
-                        deltaTime
-                    );
-
-                if (ImGui::IsKeyDown(ImGuiKey_A))
-                    camera.ProcessKeyboard(
-                        LEFT,
-                        deltaTime
-                    );
-
-                if (ImGui::IsKeyDown(ImGuiKey_D))
-                    camera.ProcessKeyboard(
-                        RIGHT,
-                        deltaTime
-                    );
-            }*/
-
-            
-			// ########################################################################
-            // ########################################################################
-                // Play Mode Mouse Look
-            // ############################# Game Mouse Look ###########################################
-
-            
-
-            //if (engine.IsPlaying())
-            //{
-            //    // Click the scene viewport to capture mouse control
-            //    if (viewportHovered &&
-            //        ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-            //    {
-            //        m_playMouseCaptured = true;
-            //        m_firstPlayMouse = true;
-            //    }
-
-            //    // ESC releases mouse control
-            //    if (ImGui::IsKeyPressed(ImGuiKey_Escape))
-            //    {
-            //        m_playMouseCaptured = false;
-            //        m_firstPlayMouse = true;
-            //    }
-
-            //    if (m_playMouseCaptured)
-            //    {
-            //        Camera& camera = engine.GetCamera();
-
-            //        ImVec2 mousePos = ImGui::GetMousePos();
-
-            //        if (m_firstPlayMouse)
-            //        {
-            //            m_lastPlayMousePos = mousePos;
-            //            m_firstPlayMouse = false;
-            //        }
-            //        else
-            //        {
-            //            float xOffset =
-            //                mousePos.x - m_lastPlayMousePos.x;
-
-            //            float yOffset =
-            //                m_lastPlayMousePos.y - mousePos.y;
-
-            //            m_lastPlayMousePos = mousePos;
-
-            //            camera.ProcessMouseMovement(
-            //                xOffset,
-            //                yOffset
-            //            );
-            //        }
-            //    }
-            //}
-            //else
-            //{
-            //    // Make sure mouse control is released when Stop is pressed
-            //    m_playMouseCaptured = false;
-            //    m_firstPlayMouse = true;
-            //}
+           
             // ########################################################################
             const bool objectModeActive = m_EditMode == 1;
            // m_transformTools.HandleInput(engine, viewportHovered, objectModeActive);

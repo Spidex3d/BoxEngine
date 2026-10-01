@@ -96,6 +96,12 @@
     <ClInclude Include="inc\mesh\UV\UVMapping.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="inc\runtime\Game.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\runtime\Player.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\BoxEngine.cpp">
@@ -171,6 +177,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\mesh\UV\UVMapping.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\runtime\Game.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\runtime\Player.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
