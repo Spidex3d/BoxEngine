@@ -1,23 +1,23 @@
 #pragma once
 #include <glm/glm.hpp>
+#include <runtime/Collision.h>
 
 class BoxEngine;
 class Entity;
 
-struct GroundHit
-{
-    bool hit = false;
-
-    glm::vec3 point =
-        glm::vec3(0.0f);
-
-    glm::vec3 normal =
-        glm::vec3(0.0f, 1.0f, 0.0f);
-
-    float distance = 0.0f;
-
-    Entity* entity = nullptr;
-};
+//struct GroundHit
+//{
+//    bool hit = false;
+//
+//    glm::vec3 point =
+//        glm::vec3(0.0f);
+//
+//    glm::vec3 normal = glm::vec3(0.0f, 1.0f, 0.0f);
+//
+//    float distance = 0.0f;
+//
+//    Entity* entity = nullptr;
+//};
 
 
 class CharacterController

@@ -1,5 +1,6 @@
 #pragma once
 #include <glm/glm.hpp>
+#include <runtime/CharacterController.h>
 
 class BoxEngine;
 class Entity;
@@ -31,4 +32,8 @@ private:
     float m_jumpSpeed = 5.0f;
 
     bool m_grounded = false;
+
+    //Entity* m_entity = nullptr;
+
+    CharacterController m_controller;
 };
