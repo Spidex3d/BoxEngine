@@ -584,6 +584,22 @@ public:
     {
         m_materialSlots.clear();
     }
+
+    // --------------------------------------------------------
+	// Game engine specific functions
+	// --------------------------------------------------------
+
+    const glm::vec3& GetAABBMin() 
+    {
+        return m_aabbMin;
+    }
+
+    const glm::vec3& GetAABBMax()
+    {
+        return m_aabbMax;
+    }
+
+
 private:
         // ###################################### Material #####################################
         Material m_material; // Each entity has its own material, which can be modified independently.

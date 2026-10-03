@@ -172,6 +172,8 @@
     <ClInclude Include="inc\rendering\Framebuffer.h" />
     <ClInclude Include="inc\rendering\grid.h" />
     <ClInclude Include="inc\material\Material.h" />
+    <ClInclude Include="inc\runtime\CharacterController.h" />
+    <ClInclude Include="inc\runtime\Collision.h" />
     <ClInclude Include="inc\runtime\Game.h" />
     <ClInclude Include="inc\runtime\Player.h" />
     <ClInclude Include="inc\shader\Shader.h" />
@@ -202,6 +204,8 @@
     <ClCompile Include="src\rendering\Framebuffer.cpp" />
     <ClCompile Include="src\material\Material.cpp" />
     <ClCompile Include="src\rendering\Textures.cpp" />
+    <ClCompile Include="src\runtime\CharacterController.cpp" />
+    <ClCompile Include="src\runtime\Collision.cpp" />
     <ClCompile Include="src\runtime\Game.cpp" />
     <ClCompile Include="src\runtime\Player.cpp" />
     <ClCompile Include="src\shader\Shader.cpp" />

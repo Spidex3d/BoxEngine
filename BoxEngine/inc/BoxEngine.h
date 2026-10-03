@@ -126,6 +126,7 @@ public:
 
 
 	// ---------------------- End Serialization ----------------------
+    // --------------------------------------------------------------------------------------------------------------
 
 	// ----------------------------------------
 	// Game Engine
@@ -139,18 +140,7 @@ public:
         return m_engineMode == EngineMode::Playing;
     }
 
-    Entity* CreatePlayer(const glm::vec3& position = glm::vec3(0.0f));
-
-    Entity* GetPlayer()
-    {
-        return m_player;
-    }
-
-    const Entity* GetPlayer() const
-    {
-        return m_player;
-    }
-
+   
     Game& GetGame()
     {
         return m_game;
@@ -160,10 +150,19 @@ public:
     {
         return m_game;
     }
-
+    
+    // ----------------------------------------
+    // Game Engine
+    // ----------------------------------------
     Entity* CreateRuntimePlayer(const glm::vec3& position);
 
+    bool PlayerCollidesAt(const glm::vec3& position);
+
+    bool GetGroundHeightAt(const glm::vec3& position, float& outGroundY);
+
     void DestroyRuntimeEntity(Entity* entity);
+
+   
 
 
 
@@ -208,13 +207,13 @@ private:
 	// ----------------------------------------
 	Lighting m_lighting; // Lighting system for the scene
 
+private:
+
 	// ----------------------------------------
 	// Game Engine
 	// ----------------------------------------
-private:
         EngineMode m_engineMode = EngineMode::Editor;
 
-        Entity* m_player = nullptr;
         Game m_game;
 };
 

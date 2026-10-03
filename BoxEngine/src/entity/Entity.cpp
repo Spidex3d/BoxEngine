@@ -591,7 +591,6 @@ bool Entity::UpdateCapsule()
 }
 
 
-
 // ----------------------------- Ecosystem Mesh Creation -----------------------------
 
 bool Entity::CreateFloor(float width, float depth, int subdivisionsX, int subdivisionsZ)

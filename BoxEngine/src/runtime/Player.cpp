@@ -65,11 +65,51 @@ void Player::Update(BoxEngine& engine, float deltaTime)
     // Temporary ground test
     // -------------------------------------------------
 
-    const float groundY = 0.0f;
+    float groundY = 0.0f;
+
+    const float playerHalfHeight =
+        0.9f;
+
+    bool foundGround =
+        engine.GetGroundHeightAt(
+            position,
+            groundY
+        );
+
+    if (foundGround)
+    {
+        const float minimumY =
+            groundY +
+            playerHalfHeight;
+
+        if (position.y <= minimumY)
+        {
+            position.y =
+                minimumY;
+
+            m_verticalVelocity =
+                0.0f;
+
+            m_grounded =
+                true;
+        }
+        else
+        {
+            m_grounded =
+                false;
+        }
+    }
+    else
+    {
+        m_grounded =
+            false;
+    }
+
+    //const float groundY = 0.0f;
 
     // Our capsule is 1.8 high, so its centre
     // needs to sit 0.9 above the ground.
-    const float playerHalfHeight = 0.4f;
+    //const float playerHalfHeight = 0.4f;
 
     const float minimumY =
         groundY + playerHalfHeight;
@@ -118,7 +158,10 @@ void Player::Shutdown(BoxEngine& engine)
 // Move the Player in the specified direction
 // -----------------------------------------------------------
 
-void Player::Move(const glm::vec3& direction, float deltaTime)
+void Player::Move(
+    BoxEngine& engine,
+    const glm::vec3& direction,
+    float deltaTime)
 {
     if (!m_entity)
     {
@@ -128,15 +171,105 @@ void Player::Move(const glm::vec3& direction, float deltaTime)
     glm::vec3 position =
         m_entity->GetPosition();
 
-    position +=
+    const glm::vec3 movement =
         direction *
         m_moveSpeed *
         deltaTime;
+
+    // -------------------------------------------------
+    // Try X movement
+    // -------------------------------------------------
+
+    glm::vec3 testPosition =
+        position;
+
+    testPosition.x +=
+        movement.x;
+
+    if (!engine.PlayerCollidesAt(testPosition))
+    {
+        position.x =
+            testPosition.x;
+    }
+
+    // -------------------------------------------------
+    // Try Z movement
+    // -------------------------------------------------
+
+    testPosition =
+        position;
+
+    testPosition.z +=
+        movement.z;
+
+    if (!engine.PlayerCollidesAt(testPosition))
+    {
+        position.z =
+            testPosition.z;
+    }
+
+    // -------------------------------------------------
+    // Apply final position
+    // -------------------------------------------------
 
     m_entity->SetPosition(
         position
     );
 }
+
+//void Player::Move(BoxEngine& engine, const glm::vec3& direction, float deltaTime)
+//{
+//    if (!m_entity)
+//    {
+//        return;
+//    }
+//
+//    const glm::vec3 currentPosition =
+//        m_entity->GetPosition();
+//
+//    const glm::vec3 newPosition =
+//        currentPosition +
+//        direction *
+//        m_moveSpeed *
+//        deltaTime;
+//
+//    if (engine.PlayerCollidesAt(newPosition))
+//    {
+//        return;
+//    }
+//    // ####
+//    glm::vec3 position =
+//        m_entity->GetPosition();
+//
+//    const glm::vec3 movement =
+//        direction *
+//        m_moveSpeed *
+//        deltaTime;
+//
+//    // Try X
+//    glm::vec3 testPosition = position;
+//    testPosition.x += movement.x;
+//
+//    if (!engine.PlayerCollidesAt(testPosition))
+//    {
+//        position.x = testPosition.x;
+//    }
+//
+//    // Try Z
+//    testPosition = position;
+//    testPosition.z += movement.z;
+//
+//    if (!engine.PlayerCollidesAt(testPosition))
+//    {
+//        position.z = testPosition.z;
+//    }
+//
+//    m_entity->SetPosition(position);
+//    // ###
+//    m_entity->SetPosition(
+//        newPosition
+//    );
+//}
 
 void Player::Jump()
 {

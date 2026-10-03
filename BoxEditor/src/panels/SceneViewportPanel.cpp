@@ -879,34 +879,26 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 
                         if (ImGui::IsKeyDown(ImGuiKey_W))
                         {
-                            player.Move(
-                                forward,
-                                deltaTime
-                            );
+                            player.Move(engine, forward, deltaTime);
+
                         }
 
                         if (ImGui::IsKeyDown(ImGuiKey_S))
                         {
-                            player.Move(
-                                -forward,
-                                deltaTime
-                            );
+                            player.Move(engine, -forward, deltaTime);
+
                         }
 
                         if (ImGui::IsKeyDown(ImGuiKey_A))
                         {
-                            player.Move(
-                                -right,
-                                deltaTime
-                            );
+                            player.Move(engine, -right, deltaTime);
+                            
                         }
 
                         if (ImGui::IsKeyDown(ImGuiKey_D))
                         {
-                            player.Move(
-                                right,
-                                deltaTime
-                            );
+                            player.Move(engine, right, deltaTime);
+
                         }
 						// -------------------------------------------------
 						// Jump

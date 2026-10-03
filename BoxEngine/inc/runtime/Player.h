@@ -11,10 +11,7 @@ public:
     void Update(BoxEngine& engine, float deltaTime);
     void Shutdown(BoxEngine& engine);
 
-    void Move(
-        const glm::vec3& direction,
-        float deltaTime
-    );
+    void Move(BoxEngine& engine, const glm::vec3& direction, float deltaTime);
 
     void Jump();
 	

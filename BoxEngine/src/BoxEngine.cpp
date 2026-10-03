@@ -22,6 +22,13 @@
 
 #include <fileManager/SceneSerializer.h>
 
+// ----------------------------------------
+// Game Engine
+// ----------------------------------------
+#include <runtime/Collision.h>
+
+// ----------------------------------------
+
 BoxEngine::BoxEngine() = default;
 BoxEngine::~BoxEngine() = default;
 
@@ -1501,47 +1508,6 @@ void BoxEngine::StopPlayMode()
 }
 
 
-
-Entity* BoxEngine::CreatePlayer(const glm::vec3& position)
-{
-    const int entityID = m_nextEntityID++;
-
-    auto player =
-        std::make_unique<Entity>(
-            entityID,
-            "Player"
-        );
-
-    // Player starts slightly above the ground
-    player->SetPosition(
-        glm::vec3(0.0f, 0.4f, 0.0f)
-    );
-
-    // Proper player capsule
-    if (!player->CreateCapsule(
-        16,     // sectors
-        8,      // hemisphere stacks
-        0.4f,   // radius
-        1.8f    // total height
-    ))
-    {
-        BOX_LOG_ERROR(
-            "Failed to create Player capsule"
-        );
-
-        return nullptr;
-    }
-
-    m_player = player.get();
-
-    m_entities.push_back(
-        std::move(player)
-    );
-
-    BOX_LOG_INFO("Player created");
-
-    return m_player;
-}
 // The New bit
 Entity* BoxEngine::CreateRuntimePlayer(const glm::vec3& position)
 {
@@ -1581,6 +1547,156 @@ Entity* BoxEngine::CreateRuntimePlayer(const glm::vec3& position)
 
     return result;
 }
+
+bool BoxEngine::PlayerCollidesAt(
+    const glm::vec3& position)
+{
+    Entity* playerEntity =
+        m_game.GetPlayer().GetEntity();
+
+    if (!playerEntity)
+    {
+        return false;
+    }
+
+    constexpr float playerRadius = 0.4f;
+    constexpr float playerHalfHeight = 0.9f;
+
+    // Small tolerance so standing exactly on a surface
+    // does not count as hitting a wall.
+    constexpr float groundTolerance = 0.05f;
+
+    const float playerFeetY =
+        position.y - playerHalfHeight;
+
+    for (const auto& entity : m_entities)
+    {
+        if (!entity)
+        {
+            continue;
+        }
+
+        // Never collide with ourselves.
+        if (entity.get() == playerEntity)
+        {
+            continue;
+        }
+
+        const glm::vec3 entityPosition =
+            entity->GetPosition();
+
+        const glm::vec3 worldMin =
+            entityPosition +
+            entity->GetAABBMin();
+
+        const glm::vec3 worldMax =
+            entityPosition +
+            entity->GetAABBMax();
+
+        // -------------------------------------------------
+        // Is this object underneath our feet?
+        //
+        // Floor, cube we're standing on, etc.
+        // These are ground surfaces, not walls.
+        // -------------------------------------------------
+
+        if (worldMax.y <=
+            playerFeetY + groundTolerance)
+        {
+            continue;
+        }
+
+        // -------------------------------------------------
+        // Otherwise it may block horizontal movement.
+        // -------------------------------------------------
+
+        if (Collision::CapsuleVsAABB(
+            position,
+            playerRadius,
+            playerHalfHeight,
+            worldMin,
+            worldMax))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+bool BoxEngine::GetGroundHeightAt(const glm::vec3& position, float& outGroundY)
+{
+    bool foundGround = false;
+
+    float highestGround =
+        -std::numeric_limits<float>::max();
+
+    for (const auto& entity : m_entities)
+    {
+        if (!entity)
+        {
+            continue;
+        }
+
+        // Skip runtime Player
+        Entity* playerEntity =
+            m_game.GetPlayer().GetEntity();
+
+        if (entity.get() == playerEntity)
+        {
+            continue;
+        }
+
+        const glm::vec3 entityPosition =
+            entity->GetPosition();
+
+        const glm::vec3 worldMin =
+            entityPosition +
+            entity->GetAABBMin();
+
+        const glm::vec3 worldMax =
+            entityPosition +
+            entity->GetAABBMax();
+
+        // Is Player horizontally over this AABB?
+        const bool insideX =
+            position.x >= worldMin.x &&
+            position.x <= worldMax.x;
+
+        const bool insideZ =
+            position.z >= worldMin.z &&
+            position.z <= worldMax.z;
+
+        if (!insideX || !insideZ)
+        {
+            continue;
+        }
+
+        // Only accept surfaces below or near Player
+        if (worldMax.y <= position.y + 0.5f)
+        {
+            if (worldMax.y > highestGround)
+            {
+                highestGround =
+                    worldMax.y;
+
+                foundGround = true;
+            }
+        }
+    }
+
+    if (foundGround)
+    {
+        outGroundY =
+            highestGround;
+
+        return true;
+    }
+
+    return false;
+}
+
 
 void BoxEngine::DestroyRuntimeEntity(Entity* entity)
 {
