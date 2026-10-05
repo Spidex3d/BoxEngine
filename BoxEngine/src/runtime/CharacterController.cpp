@@ -11,9 +11,7 @@ void CharacterController::SetEntity(Entity* entity)
     m_entity = entity;
 }
 
-void CharacterController::Update(
-    BoxEngine& engine,
-    float deltaTime)
+void CharacterController::Update(BoxEngine& engine, float deltaTime)
 {
     if (!m_entity)
     {
@@ -67,61 +65,78 @@ void CharacterController::Update(
     }
 
 
-    //if (foundGround)
-    //{
-    //    const float targetY =
-    //        ground.point.y +
-    //        m_capsuleHalfHeight;
-
-    //   /* const float currentFeetY =
-    //        position.y -
-    //        m_capsuleHalfHeight;*/
-
-    //    const float heightDifference =
-    //        targetY -
-    //        position.y;
-
-    //    // -------------------------------------------------
-    //    // Grounded / snapping to walkable ground
-    //    // -------------------------------------------------
-
-    //    if (heightDifference <=
-    //        m_groundSnapDistance)
-    //    {
-    //        position.y =
-    //            targetY;
-
-    //        m_verticalVelocity =
-    //            0.0f;
-
-    //        m_grounded =
-    //            true;
-    //    }
-    //    else
-    //    {
-    //        m_grounded =
-    //            false;
-    //    }
-    //}
-    //else
-    //{
-    //    m_grounded =
-    //        false;
-    //}
-
     // -------------------------------------------------
     // Gravity
     // -------------------------------------------------
 
     if (!m_grounded)
     {
+        // -------------------------------------------------
+        // Apply gravity
+        // -------------------------------------------------
+
         m_verticalVelocity +=
             m_gravity *
             deltaTime;
 
-        position.y +=
+        // Proposed vertical position
+        glm::vec3 verticalPosition =
+            position;
+
+        verticalPosition.y +=
             m_verticalVelocity *
             deltaTime;
+
+        // -------------------------------------------------
+        // Moving upward - check for ceiling
+        // -------------------------------------------------
+
+        if (m_verticalVelocity > 0.0f)
+        {
+            CollisionHit ceilingHit;
+
+            if (engine.CheckCharacterCollision(
+                verticalPosition,
+                m_capsuleRadius,
+                m_capsuleHalfHeight,
+                ceilingHit))
+            {
+                const bool ceilingLike =
+                    ceilingHit.normal.y < -0.5f;
+
+                if (ceilingLike)
+                {
+                    // Hit our head.
+                    // Stop upward movement.
+                    m_verticalVelocity =
+                        0.0f;
+
+                    // Do NOT apply verticalPosition.
+                    // Stay at our previous Y.
+                }
+                else
+                {
+                    position.y =
+                        verticalPosition.y;
+                }
+            }
+            else
+            {
+                position.y =
+                    verticalPosition.y;
+            }
+        }
+        else
+        {
+            // -------------------------------------------------
+            // Falling
+            //
+            // FindGround handles landing/snap on the next
+            // controller update, so just move downward here.
+            // -------------------------------------------------
+
+            position.y = verticalPosition.y;
+        }
     }
 
     m_entity->SetPosition(position);
@@ -373,9 +388,7 @@ void CharacterController::Jump()
         return;
     }
 
-    m_verticalVelocity =
-        m_jumpSpeed;
+    m_verticalVelocity = m_jumpSpeed;
 
-    m_grounded =
-        false;
+    m_grounded = false;
 }

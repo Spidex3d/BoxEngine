@@ -1851,11 +1851,7 @@ bool BoxEngine::FindGround(const glm::vec3& position, float maxDistance, GroundH
     return foundGround;
 }
 
-bool BoxEngine::CheckCharacterCollision(
-    const glm::vec3& position,
-    float radius,
-    float halfHeight,
-    CollisionHit& outHit)
+bool BoxEngine::CheckCharacterCollision(const glm::vec3& position, float radius, float halfHeight, CollisionHit& outHit)
 {
     outHit = CollisionHit{};
 
