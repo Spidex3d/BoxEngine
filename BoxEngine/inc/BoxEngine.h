@@ -167,6 +167,11 @@ public:
 
     void DestroyRuntimeEntity(Entity* entity);
 
+	// ----------------------------------------
+	// Collectible items
+	// ----------------------------------------
+
+    Entity* CreateRuntimeCollectible(const glm::vec3& position);
    
 
 

@@ -1,5 +1,8 @@
 #pragma once
 #include <runtime/Player.h>
+#include <runtime/Collectible.h>
+
+#include <vector>
 
 class BoxEngine;
 
@@ -16,7 +19,16 @@ public:
         return m_player;
     }
 
+	// Add a collectible to the game
+    void AddCollectible(Entity* entity, CollectibleType type, int value = 1);
+
+
+
 private:
 
     Player m_player;
+
+ 
+
+    std::vector<Collectible>m_collectibles;
 };

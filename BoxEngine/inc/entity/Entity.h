@@ -589,6 +589,17 @@ public:
 	// Game engine specific functions
 	// --------------------------------------------------------
 
+    void SetCollisionEnabled(bool enabled)
+    {
+        m_collisionEnabled = enabled;
+    }
+
+    bool IsCollisionEnabled() const
+    {
+        return m_collisionEnabled;
+    }
+
+
     const glm::vec3& GetAABBMin() 
     {
         return m_aabbMin;
@@ -605,6 +616,8 @@ private:
         Material m_material; // Each entity has its own material, which can be modified independently.
         std::vector<Material> m_materialSlots;
 
+		// ###################################### Collectible Collision #####################################
+        bool m_collisionEnabled = true;
        
 
 private: // modifiers

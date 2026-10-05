@@ -1589,21 +1589,21 @@ bool BoxEngine::PlayerCollidesAt(const glm::vec3& position, const Entity* ignore
         const glm::vec3 entityPosition =
             entity->GetPosition();
 
-        const glm::vec3 worldMin =
+       /* const glm::vec3 worldMin =
             entityPosition +
             entity->GetAABBMin();
 
         const glm::vec3 worldMax =
             entityPosition +
-            entity->GetAABBMax();
+            entity->GetAABBMax();*/
 
-        if (worldMax.y <=
+       /* if (worldMax.y <=
             playerFeetY + groundTolerance)
         {
             continue;
-        }
+        }*/
 
-        if (Collision::CapsuleVsAABB(
+        /*if (Collision::CapsuleVsAABB(
             position,
             playerRadius,
             playerHalfHeight,
@@ -1611,7 +1611,7 @@ bool BoxEngine::PlayerCollidesAt(const glm::vec3& position, const Entity* ignore
             worldMax))
         {
             return true;
-        }
+        }*/
     }
 
     return false;
@@ -1721,6 +1721,11 @@ bool BoxEngine::FindGround(const glm::vec3& position, float maxDistance, GroundH
 
         // Never test Player against itself.
         if (entity.get() == playerEntity)
+        {
+            continue;
+        }
+
+        if (!entity->IsCollisionEnabled())
         {
             continue;
         }
@@ -1876,6 +1881,11 @@ bool BoxEngine::CheckCharacterCollision(const glm::vec3& position, float radius,
             continue;
         }
 
+        if (!entity->IsCollisionEnabled())
+        {
+            continue;
+        }
+
         const MeshData& mesh =
             entity->GetMeshData();
 
@@ -1973,6 +1983,33 @@ bool BoxEngine::CheckCharacterCollision(const glm::vec3& position, float radius,
     return foundCollision;
 }
 
+// ----------------------------------------------------------------------------------------------------
+// Collectibles and Runtime Entities
+// ----------------------------------------------------------------------------------------------------
+Entity* BoxEngine::CreateRuntimeCollectible(const glm::vec3& position)
+{
+    const int entityID = m_nextEntityID++;
+
+    auto collectible = std::make_unique<Entity>(entityID, "Collectible");
+
+    collectible->SetPosition(position);
+	collectible->SetScale(glm::vec3(0.3f));
+
+    collectible->SetCollisionEnabled(false);
+
+    if (!collectible->CreateIcoSphere(1))
+    {
+        BOX_LOG_ERROR("Failed to create runtime collectible");
+
+        return nullptr;
+    }
+
+    Entity* result = collectible.get();
+
+    m_entities.push_back(std::move(collectible));
+
+    return result;
+}
 
 
 
