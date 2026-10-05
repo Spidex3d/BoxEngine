@@ -8,13 +8,26 @@ struct GroundHit
 {
     bool hit = false;
 
+    glm::vec3 point = glm::vec3(0.0f);
+
+    glm::vec3 normal = glm::vec3(0.0f, 1.0f, 0.0f);
+
+    float distance = 0.0f;
+
+    Entity* entity = nullptr;
+};
+
+struct CollisionHit
+{
+    bool hit = false;
+
     glm::vec3 point =
         glm::vec3(0.0f);
 
     glm::vec3 normal =
-        glm::vec3(0.0f, 1.0f, 0.0f);
+        glm::vec3(0.0f);
 
-    float distance = 0.0f;
+    float penetration = 0.0f;
 
     Entity* entity = nullptr;
 };
@@ -42,6 +55,16 @@ public:
         float& outDistance,
         glm::vec3& outHitPoint,
         glm::vec3& outNormal
+    );
+
+    static bool CapsuleVsTriangle(
+        const glm::vec3& capsulePosition,
+        float capsuleRadius,
+        float capsuleHalfHeight,
+        const glm::vec3& v0,
+        const glm::vec3& v1,
+        const glm::vec3& v2,
+        CollisionHit& outHit
     );
 
     

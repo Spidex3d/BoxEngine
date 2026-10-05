@@ -32,23 +32,15 @@ void CharacterController::Update(
             ground
         );
 
-    if (foundGround)
+    if (foundGround && m_verticalVelocity <= 0.0f)
     {
         const float targetY =
             ground.point.y +
             m_capsuleHalfHeight;
 
-       /* const float currentFeetY =
-            position.y -
-            m_capsuleHalfHeight;*/
-
         const float heightDifference =
             targetY -
             position.y;
-
-        // -------------------------------------------------
-        // Grounded / snapping to walkable ground
-        // -------------------------------------------------
 
         if (heightDifference <=
             m_groundSnapDistance)
@@ -74,6 +66,49 @@ void CharacterController::Update(
             false;
     }
 
+
+    //if (foundGround)
+    //{
+    //    const float targetY =
+    //        ground.point.y +
+    //        m_capsuleHalfHeight;
+
+    //   /* const float currentFeetY =
+    //        position.y -
+    //        m_capsuleHalfHeight;*/
+
+    //    const float heightDifference =
+    //        targetY -
+    //        position.y;
+
+    //    // -------------------------------------------------
+    //    // Grounded / snapping to walkable ground
+    //    // -------------------------------------------------
+
+    //    if (heightDifference <=
+    //        m_groundSnapDistance)
+    //    {
+    //        position.y =
+    //            targetY;
+
+    //        m_verticalVelocity =
+    //            0.0f;
+
+    //        m_grounded =
+    //            true;
+    //    }
+    //    else
+    //    {
+    //        m_grounded =
+    //            false;
+    //    }
+    //}
+    //else
+    //{
+    //    m_grounded =
+    //        false;
+    //}
+
     // -------------------------------------------------
     // Gravity
     // -------------------------------------------------
@@ -92,10 +127,7 @@ void CharacterController::Update(
     m_entity->SetPosition(position);
 }
 
-void CharacterController::Move(
-    BoxEngine& engine,
-    const glm::vec3& direction,
-    float deltaTime)
+void CharacterController::Move(BoxEngine& engine, const glm::vec3& direction, float deltaTime)
 {
     if (!m_entity)
     {
@@ -105,26 +137,20 @@ void CharacterController::Move(
     glm::vec3 position =
         m_entity->GetPosition();
 
-    const glm::vec3 movement =
+    glm::vec3 movement =
         direction *
         m_moveSpeed *
         deltaTime;
 
-    // -------------------------------------------------
-    // Proposed horizontal movement
-    // -------------------------------------------------
+    // Horizontal movement only.
+    movement.y = 0.0f;
 
     glm::vec3 proposedPosition =
-        position;
-
-    proposedPosition.x +=
-        movement.x;
-
-    proposedPosition.z +=
-        movement.z;
+        position +
+        movement;
 
     // -------------------------------------------------
-    // Find actual triangle ground at new X/Z position
+    // Find actual ground underneath proposed position
     // -------------------------------------------------
 
     GroundHit ground;
@@ -134,22 +160,12 @@ void CharacterController::Move(
             proposedPosition,
             m_capsuleHalfHeight +
             m_groundSnapDistance +
-            0.5f,
+            m_maxStepHeight,
             ground
         );
 
-    const Entity* groundEntity =
-        nullptr;
-
     if (foundGround)
     {
-        groundEntity =
-            ground.entity;
-
-        // ---------------------------------------------
-        // Work out slope angle
-        // ---------------------------------------------
-
         const float upDot =
             glm::clamp(
                 glm::dot(
@@ -165,7 +181,9 @@ void CharacterController::Move(
                 std::acos(upDot)
             );
 
-        const bool walkable = slopeAngle <= m_maxSlopeAngle;
+        const bool walkable =
+            slopeAngle <=
+            m_maxSlopeAngle;
 
         if (walkable)
         {
@@ -177,9 +195,9 @@ void CharacterController::Move(
                 targetY -
                 position.y;
 
-            // For now allow modest changes in terrain height.
+            // Allow normal slope following and small steps.
             if (heightChange <=
-                m_groundSnapDistance + 0.5f)
+                m_maxStepHeight)
             {
                 proposedPosition.y =
                     targetY;
@@ -188,18 +206,164 @@ void CharacterController::Move(
     }
 
     // -------------------------------------------------
-    // Check walls/objects, but ignore supporting ground
+    // Check actual mesh collision
     // -------------------------------------------------
 
-    if (!engine.PlayerCollidesAt(
+    CollisionHit hit;
+
+    if (engine.CheckCharacterCollision(
         proposedPosition,
-        groundEntity))
+        m_capsuleRadius,
+        m_capsuleHalfHeight,
+        hit))
     {
-        m_entity->SetPosition(
-            proposedPosition
-        );
+        // -------------------------------------------------
+        // Classify contact
+        // -------------------------------------------------
+
+        const bool groundLike =
+            hit.normal.y > 0.5f;
+
+        const bool ceilingLike =
+            hit.normal.y < -0.5f;
+
+        const bool wallLike =
+            !groundLike &&
+            !ceilingLike;
+
+        // -------------------------------------------------
+        // Wall collision
+        // -------------------------------------------------
+
+        if (wallLike)
+        {
+            // Remove vertical part of wall normal because
+            // movement here is horizontal.
+            glm::vec3 wallNormal =
+                hit.normal;
+
+            wallNormal.y = 0.0f;
+
+            const float normalLength =
+                glm::length(wallNormal);
+
+            if (normalLength > 0.0001f)
+            {
+                wallNormal /=
+                    normalLength;
+
+                // Remove the part of movement going
+                // directly into the wall.
+                const float intoWall =
+                    glm::dot(
+                        movement,
+                        wallNormal
+                    );
+
+                if (intoWall < 0.0f)
+                {
+                    movement -=
+                        wallNormal *
+                        intoWall;
+                }
+
+                // Rebuild proposed position using
+                // the sliding movement.
+                proposedPosition =
+                    position +
+                    movement;
+
+                // Ground-follow again after sliding.
+                GroundHit slideGround;
+
+                if (engine.FindGround(
+                    proposedPosition,
+                    m_capsuleHalfHeight +
+                    m_groundSnapDistance +
+                    m_maxStepHeight,
+                    slideGround))
+                {
+                    const float slideUpDot =
+                        glm::clamp(
+                            glm::dot(
+                                slideGround.normal,
+                                glm::vec3(
+                                    0.0f,
+                                    1.0f,
+                                    0.0f
+                                )
+                            ),
+                            -1.0f,
+                            1.0f
+                        );
+
+                    const float slideSlope =
+                        glm::degrees(
+                            std::acos(
+                                slideUpDot
+                            )
+                        );
+
+                    if (slideSlope <=
+                        m_maxSlopeAngle)
+                    {
+                        const float targetY =
+                            slideGround.point.y +
+                            m_capsuleHalfHeight;
+
+                        const float heightChange =
+                            targetY -
+                            position.y;
+
+                        if (heightChange <=
+                            m_maxStepHeight)
+                        {
+                            proposedPosition.y =
+                                targetY;
+                        }
+                    }
+                }
+
+                // -------------------------------------------------
+                // Check again after sliding
+                // -------------------------------------------------
+
+                CollisionHit slideHit;
+
+                if (engine.CheckCharacterCollision(
+                    proposedPosition,
+                    m_capsuleRadius,
+                    m_capsuleHalfHeight,
+                    slideHit))
+                {
+                    const bool stillWallLike =
+                        std::abs(
+                            slideHit.normal.y
+                        ) <= 0.5f;
+
+                    if (stillWallLike)
+                    {
+                        // Still blocked.
+                        return;
+                    }
+                }
+            }
+            else
+            {
+                return;
+            }
+        }
     }
+
+    // -------------------------------------------------
+    // Apply movement
+    // -------------------------------------------------
+
+    m_entity->SetPosition(
+        proposedPosition
+    );
 }
+
 
 
 void CharacterController::Jump()

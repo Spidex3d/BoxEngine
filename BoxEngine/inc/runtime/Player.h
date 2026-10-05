@@ -33,7 +33,6 @@ private:
 
     bool m_grounded = false;
 
-    //Entity* m_entity = nullptr;
-
+   
     CharacterController m_controller;
 };

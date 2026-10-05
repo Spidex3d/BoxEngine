@@ -1548,9 +1548,7 @@ Entity* BoxEngine::CreateRuntimePlayer(const glm::vec3& position)
     return result;
 }
 
-bool BoxEngine::PlayerCollidesAt(
-    const glm::vec3& position,
-    const Entity* ignoreEntity)
+bool BoxEngine::PlayerCollidesAt(const glm::vec3& position, const Entity* ignoreEntity)
 {
     Entity* playerEntity =
         m_game.GetPlayer().GetEntity();
@@ -1618,83 +1616,6 @@ bool BoxEngine::PlayerCollidesAt(
 
     return false;
 }
-
-//bool BoxEngine::PlayerCollidesAt(
-//    const glm::vec3& position)
-//{
-//    Entity* playerEntity =
-//        m_game.GetPlayer().GetEntity();
-//
-//    if (!playerEntity)
-//    {
-//        return false;
-//    }
-//
-//    constexpr float playerRadius = 0.4f;
-//    constexpr float playerHalfHeight = 0.9f;
-//
-//    // Small tolerance so standing exactly on a surface
-//    // does not count as hitting a wall.
-//    constexpr float groundTolerance = 0.05f;
-//
-//    const float playerFeetY =
-//        position.y - playerHalfHeight;
-//
-//    for (const auto& entity : m_entities)
-//    {
-//        if (!entity)
-//        {
-//            continue;
-//        }
-//
-//        // Never collide with ourselves.
-//        if (entity.get() == playerEntity)
-//        {
-//            continue;
-//        }
-//
-//        const glm::vec3 entityPosition =
-//            entity->GetPosition();
-//
-//        const glm::vec3 worldMin =
-//            entityPosition +
-//            entity->GetAABBMin();
-//
-//        const glm::vec3 worldMax =
-//            entityPosition +
-//            entity->GetAABBMax();
-//
-//        // -------------------------------------------------
-//        // Is this object underneath our feet?
-//        //
-//        // Floor, cube we're standing on, etc.
-//        // These are ground surfaces, not walls.
-//        // -------------------------------------------------
-//
-//        if (worldMax.y <=
-//            playerFeetY + groundTolerance)
-//        {
-//            continue;
-//        }
-//
-//        // -------------------------------------------------
-//        // Otherwise it may block horizontal movement.
-//        // -------------------------------------------------
-//
-//        if (Collision::CapsuleVsAABB(
-//            position,
-//            playerRadius,
-//            playerHalfHeight,
-//            worldMin,
-//            worldMax))
-//        {
-//            return true;
-//        }
-//    }
-//
-//    return false;
-//}
-
 
 bool BoxEngine::GetGroundHeightAt(const glm::vec3& position, float& outGroundY)
 {
@@ -1930,6 +1851,131 @@ bool BoxEngine::FindGround(const glm::vec3& position, float maxDistance, GroundH
     return foundGround;
 }
 
+bool BoxEngine::CheckCharacterCollision(
+    const glm::vec3& position,
+    float radius,
+    float halfHeight,
+    CollisionHit& outHit)
+{
+    outHit = CollisionHit{};
+
+    constexpr float collisionEpsilon = 0.0001f;
+
+    bool foundCollision = false;
+
+    float deepestPenetration = 0.0f;
+
+    Entity* playerEntity =
+        m_game.GetPlayer().GetEntity();
+
+    for (const auto& entity : m_entities)
+    {
+        if (!entity)
+        {
+            continue;
+        }
+
+        if (entity.get() == playerEntity)
+        {
+            continue;
+        }
+
+        const MeshData& mesh =
+            entity->GetMeshData();
+
+        if (mesh.vertices.empty() ||
+            mesh.indices.size() < 3)
+        {
+            continue;
+        }
+
+        const glm::mat4 model =
+            entity->GetModelMatrix();
+
+        for (std::size_t i = 0;
+            i + 2 < mesh.indices.size();
+            i += 3)
+        {
+            const unsigned int index0 =
+                mesh.indices[i];
+
+            const unsigned int index1 =
+                mesh.indices[i + 1];
+
+            const unsigned int index2 =
+                mesh.indices[i + 2];
+
+            const glm::vec3 localV0 =
+                mesh.vertices[index0].position;
+
+            const glm::vec3 localV1 =
+                mesh.vertices[index1].position;
+
+            const glm::vec3 localV2 =
+                mesh.vertices[index2].position;
+
+            const glm::vec3 worldV0 =
+                glm::vec3(
+                    model *
+                    glm::vec4(localV0, 1.0f)
+                );
+
+            const glm::vec3 worldV1 =
+                glm::vec3(
+                    model *
+                    glm::vec4(localV1, 1.0f)
+                );
+
+            const glm::vec3 worldV2 =
+                glm::vec3(
+                    model *
+                    glm::vec4(localV2, 1.0f)
+                );
+
+            CollisionHit hit;
+
+            if (!Collision::CapsuleVsTriangle(
+                position,
+                radius,
+                halfHeight,
+                worldV0,
+                worldV1,
+                worldV2,
+                hit))
+            {
+                continue;
+            }
+            if (hit.penetration <=
+                collisionEpsilon)
+            {
+                continue;
+            }
+
+            if (!hit.hit)
+            {
+                continue;
+            }
+
+            if (hit.penetration >
+                deepestPenetration)
+            {
+                deepestPenetration =
+                    hit.penetration;
+
+                outHit =
+                    hit;
+
+                outHit.entity =
+                    entity.get();
+
+                foundCollision =
+                    true;
+            }
+        }
+    }
+
+    return foundCollision;
+}
 
 
 

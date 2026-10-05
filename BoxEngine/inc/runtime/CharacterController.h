@@ -5,21 +5,6 @@
 class BoxEngine;
 class Entity;
 
-//struct GroundHit
-//{
-//    bool hit = false;
-//
-//    glm::vec3 point =
-//        glm::vec3(0.0f);
-//
-//    glm::vec3 normal = glm::vec3(0.0f, 1.0f, 0.0f);
-//
-//    float distance = 0.0f;
-//
-//    Entity* entity = nullptr;
-//};
-
-
 class CharacterController
 {
 public:
@@ -50,7 +35,9 @@ private:
 
     bool m_grounded = false;
 
-    float m_maxSlopeAngle = 45.0f;
+	float m_maxSlopeAngle = 45.0f; // cant walk up slopes steeper than this angle
+
+	float m_maxStepHeight = 0.4f; // maximum height of a step the character can walk up
 
     float m_groundSnapDistance = 0.3f;
 
