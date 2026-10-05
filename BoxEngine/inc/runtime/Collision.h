@@ -33,5 +33,16 @@ public:
         const glm::vec3& boxMax
     );
 
+    static bool RayVsTriangle(
+        const glm::vec3& rayOrigin,
+        const glm::vec3& rayDirection,
+        const glm::vec3& v0,
+        const glm::vec3& v1,
+        const glm::vec3& v2,
+        float& outDistance,
+        glm::vec3& outHitPoint,
+        glm::vec3& outNormal
+    );
+
     
 };

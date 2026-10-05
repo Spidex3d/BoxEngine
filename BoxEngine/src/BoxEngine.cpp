@@ -1549,7 +1549,8 @@ Entity* BoxEngine::CreateRuntimePlayer(const glm::vec3& position)
 }
 
 bool BoxEngine::PlayerCollidesAt(
-    const glm::vec3& position)
+    const glm::vec3& position,
+    const Entity* ignoreEntity)
 {
     Entity* playerEntity =
         m_game.GetPlayer().GetEntity();
@@ -1561,13 +1562,11 @@ bool BoxEngine::PlayerCollidesAt(
 
     constexpr float playerRadius = 0.4f;
     constexpr float playerHalfHeight = 0.9f;
-
-    // Small tolerance so standing exactly on a surface
-    // does not count as hitting a wall.
     constexpr float groundTolerance = 0.05f;
 
     const float playerFeetY =
-        position.y - playerHalfHeight;
+        position.y -
+        playerHalfHeight;
 
     for (const auto& entity : m_entities)
     {
@@ -1576,8 +1575,15 @@ bool BoxEngine::PlayerCollidesAt(
             continue;
         }
 
-        // Never collide with ourselves.
+        // Don't collide with Player.
         if (entity.get() == playerEntity)
+        {
+            continue;
+        }
+
+        // Don't treat the surface we're walking on
+        // as a wall.
+        if (entity.get() == ignoreEntity)
         {
             continue;
         }
@@ -1593,22 +1599,11 @@ bool BoxEngine::PlayerCollidesAt(
             entityPosition +
             entity->GetAABBMax();
 
-        // -------------------------------------------------
-        // Is this object underneath our feet?
-        //
-        // Floor, cube we're standing on, etc.
-        // These are ground surfaces, not walls.
-        // -------------------------------------------------
-
         if (worldMax.y <=
             playerFeetY + groundTolerance)
         {
             continue;
         }
-
-        // -------------------------------------------------
-        // Otherwise it may block horizontal movement.
-        // -------------------------------------------------
 
         if (Collision::CapsuleVsAABB(
             position,
@@ -1623,6 +1618,82 @@ bool BoxEngine::PlayerCollidesAt(
 
     return false;
 }
+
+//bool BoxEngine::PlayerCollidesAt(
+//    const glm::vec3& position)
+//{
+//    Entity* playerEntity =
+//        m_game.GetPlayer().GetEntity();
+//
+//    if (!playerEntity)
+//    {
+//        return false;
+//    }
+//
+//    constexpr float playerRadius = 0.4f;
+//    constexpr float playerHalfHeight = 0.9f;
+//
+//    // Small tolerance so standing exactly on a surface
+//    // does not count as hitting a wall.
+//    constexpr float groundTolerance = 0.05f;
+//
+//    const float playerFeetY =
+//        position.y - playerHalfHeight;
+//
+//    for (const auto& entity : m_entities)
+//    {
+//        if (!entity)
+//        {
+//            continue;
+//        }
+//
+//        // Never collide with ourselves.
+//        if (entity.get() == playerEntity)
+//        {
+//            continue;
+//        }
+//
+//        const glm::vec3 entityPosition =
+//            entity->GetPosition();
+//
+//        const glm::vec3 worldMin =
+//            entityPosition +
+//            entity->GetAABBMin();
+//
+//        const glm::vec3 worldMax =
+//            entityPosition +
+//            entity->GetAABBMax();
+//
+//        // -------------------------------------------------
+//        // Is this object underneath our feet?
+//        //
+//        // Floor, cube we're standing on, etc.
+//        // These are ground surfaces, not walls.
+//        // -------------------------------------------------
+//
+//        if (worldMax.y <=
+//            playerFeetY + groundTolerance)
+//        {
+//            continue;
+//        }
+//
+//        // -------------------------------------------------
+//        // Otherwise it may block horizontal movement.
+//        // -------------------------------------------------
+//
+//        if (Collision::CapsuleVsAABB(
+//            position,
+//            playerRadius,
+//            playerHalfHeight,
+//            worldMin,
+//            worldMax))
+//        {
+//            return true;
+//        }
+//    }
+//
+//    return false;
+//}
 
 
 bool BoxEngine::GetGroundHeightAt(const glm::vec3& position, float& outGroundY)
@@ -1696,6 +1767,172 @@ bool BoxEngine::GetGroundHeightAt(const glm::vec3& position, float& outGroundY)
 
     return false;
 }
+
+bool BoxEngine::FindGround(const glm::vec3& position, float maxDistance, GroundHit& outHit)
+{
+    outHit = GroundHit{};
+
+    const glm::vec3 rayOrigin =
+        position;
+
+    const glm::vec3 rayDirection =
+        glm::vec3(0.0f, -1.0f, 0.0f);
+
+    float closestDistance =
+        maxDistance;
+
+    bool foundGround =
+        false;
+
+    Entity* playerEntity =
+        m_game.GetPlayer().GetEntity();
+
+    // -------------------------------------------------
+    // Check all scene entities
+    // -------------------------------------------------
+
+    for (const auto& entity : m_entities)
+    {
+        if (!entity)
+        {
+            continue;
+        }
+
+        // Never test Player against itself.
+        if (entity.get() == playerEntity)
+        {
+            continue;
+        }
+
+        const MeshData& mesh =
+            entity->GetMeshData();
+
+        if (mesh.vertices.empty() ||
+            mesh.indices.size() < 3)
+        {
+            continue;
+        }
+
+        const glm::mat4 model =
+            entity->GetModelMatrix();
+
+        // -------------------------------------------------
+        // Test each triangle
+        // -------------------------------------------------
+
+        for (std::size_t i = 0;
+            i + 2 < mesh.indices.size();
+            i += 3)
+        {
+            const unsigned int index0 =
+                mesh.indices[i];
+
+            const unsigned int index1 =
+                mesh.indices[i + 1];
+
+            const unsigned int index2 =
+                mesh.indices[i + 2];
+
+            // -------------------------------------------------
+            // Get local-space triangle vertices
+            // -------------------------------------------------
+
+            const glm::vec3 localV0 =
+                mesh.vertices[index0].position;
+
+            const glm::vec3 localV1 =
+                mesh.vertices[index1].position;
+
+            const glm::vec3 localV2 =
+                mesh.vertices[index2].position;
+
+            // -------------------------------------------------
+            // Transform triangle into world space
+            // -------------------------------------------------
+
+            const glm::vec3 worldV0 =
+                glm::vec3(
+                    model *
+                    glm::vec4(
+                        localV0,
+                        1.0f
+                    )
+                );
+
+            const glm::vec3 worldV1 =
+                glm::vec3(
+                    model *
+                    glm::vec4(
+                        localV1,
+                        1.0f
+                    )
+                );
+
+            const glm::vec3 worldV2 =
+                glm::vec3(
+                    model *
+                    glm::vec4(
+                        localV2,
+                        1.0f
+                    )
+                );
+
+            float hitDistance = 0.0f;
+
+            glm::vec3 hitPoint =
+                glm::vec3(0.0f);
+
+            glm::vec3 hitNormal =
+                glm::vec3(0.0f, 1.0f, 0.0f);
+
+            if (!Collision::RayVsTriangle(
+                rayOrigin,
+                rayDirection,
+                worldV0,
+                worldV1,
+                worldV2,
+                hitDistance,
+                hitPoint,
+                hitNormal))
+            {
+                continue;
+            }
+
+            if (hitDistance >
+                closestDistance)
+            {
+                continue;
+            }
+
+            closestDistance =
+                hitDistance;
+
+            outHit.hit =
+                true;
+
+            outHit.point =
+                hitPoint;
+
+            outHit.normal =
+                hitNormal;
+
+            outHit.distance =
+                hitDistance;
+
+            outHit.entity =
+                entity.get();
+
+            foundGround =
+                true;
+        }
+    }
+
+    return foundGround;
+}
+
+
+
+
 
 
 void BoxEngine::DestroyRuntimeEntity(Entity* entity)

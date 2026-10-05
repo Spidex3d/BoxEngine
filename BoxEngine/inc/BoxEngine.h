@@ -157,7 +157,9 @@ public:
     // ----------------------------------------
     Entity* CreateRuntimePlayer(const glm::vec3& position);
 
-    bool PlayerCollidesAt(const glm::vec3& position);
+    //bool PlayerCollidesAt(const glm::vec3& position);
+    bool PlayerCollidesAt(const glm::vec3& position, const Entity* ignoreEntity = nullptr
+    );
 
     bool FindGround(const glm::vec3& position, float maxDistance, GroundHit& hit);
 
