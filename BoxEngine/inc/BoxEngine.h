@@ -67,6 +67,15 @@ public:
     bool AddEditableSphere(const glm::vec3& position);
 
 	bool AddEditableCylinder(const glm::vec3& position = glm::vec3(0.0f), int sectors = 32, int stacks = 1, float radius = 0.5f, float height = 1.0f);
+    // -----------------------------------------------------------------
+	// ------------------------- JoinEntities -------------------------
+	//  -----------------------------------------------------------------
+
+    Entity* JoinEntities(Entity* first, Entity* second);
+    void AddSelectedEntity(int entityID);
+    void ClearSelectedEntities();
+    const std::vector<int>& GetSelectedEntityIDs() const;
+    Entity* GetEntityByID(int entityID);
 
 	// ------------------------- Ecosystem Meshes -------------------------
 	// my floor function with subdivisions
@@ -199,6 +208,8 @@ private:
     int m_nextEntityID = 0;
 
 	int m_selectedEntityID = -1; // used to track the selected entity in the editor panels
+
+	std::vector<int> m_selectedEntityIDs; // used to track the selected entities in the editor panels for multi-selection
 
     const std::string checkerboardPath = m_defaultTexture.GetSourcePath().string();
 	std::string m_defaultTexturePath; // The default texture path for the checkerboard texture for save and load purposes

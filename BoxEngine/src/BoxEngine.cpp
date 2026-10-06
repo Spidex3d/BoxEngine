@@ -18,7 +18,7 @@
 
 #include <glm/gtc/matrix_inverse.hpp>
 
-
+#include <mesh/MeshCombiner.h>
 
 #include <fileManager/SceneSerializer.h>
 
@@ -596,6 +596,172 @@ bool BoxEngine::AddEditableTorus(const glm::vec3& position, int sides, int rings
 		"Added editable torus. Entity count: " << m_entities.size());
 	return true;
 }
+
+    // -----------------------------------------------------------------
+    // ------------------------- JoinEntities --------------------------
+    // -----------------------------------------------------------------
+
+Entity* BoxEngine::JoinEntities(Entity* first, Entity* second)
+{
+    if (!first || !second)
+    {
+        return nullptr;
+    }
+
+    if (first == second)
+    {
+        return nullptr;
+    }
+
+    //MeshData combinedMesh;
+    MeshEditing combinedMesh;
+
+
+    if (!MeshCombiner::Combine(
+        *first,
+        *second,
+        combinedMesh))
+    {
+        BOX_LOG_ERROR(
+            "Failed to combine entities"
+        );
+
+        return nullptr;
+    }
+
+    const int entityID =
+        m_nextEntityID++;
+
+    auto joinedEntity =
+        std::make_unique<Entity>(
+            entityID,
+            "Joined Object"
+        );
+    // color slot stuff
+    // -------------------------------------------------
+// Copy material slots from both source entities.
+// -------------------------------------------------
+
+    joinedEntity->ClearMaterialSlots();
+
+
+    // Entity A materials
+    for (std::size_t i = 0;
+        i < first->GetMaterialSlotCount();
+        ++i)
+    {
+        joinedEntity->AddMaterialSlot(
+            first->GetMaterialSlot(i)
+        );
+    }
+
+
+    // Entity B materials
+    for (std::size_t i = 0;
+        i < second->GetMaterialSlotCount();
+        ++i)
+    {
+        joinedEntity->AddMaterialSlot(
+            second->GetMaterialSlot(i)
+        );
+    }
+
+    // ############
+
+
+    // Because the vertices have already had the
+    // original transforms baked into them.
+    joinedEntity->SetPosition(
+        glm::vec3(0.0f)
+    );
+
+    joinedEntity->SetRotation(
+        glm::vec3(0.0f)
+    );
+
+    joinedEntity->SetScale(
+        glm::vec3(1.0f)
+    );
+
+    joinedEntity->GetEditableMesh() =
+        combinedMesh;
+
+    joinedEntity->GetBaseEditableMesh() =
+        combinedMesh;
+
+    if (!joinedEntity->RebuildFromEditableMesh())
+    {
+        BOX_LOG_ERROR(
+            "Failed to build joined editable entity"
+        );
+
+        return nullptr;
+    }
+
+
+    Entity* result =
+        joinedEntity.get();
+
+    m_entities.push_back(
+        std::move(joinedEntity)
+    );
+
+    m_selectedEntityID =
+        entityID;
+
+    BOX_LOG_INFO(
+        "Joined two entities into new object"
+    );
+
+    return result;
+}
+
+void BoxEngine::AddSelectedEntity(int entityID)
+{
+    for (int id : m_selectedEntityIDs)
+    {
+        if (id == entityID)
+        {
+            return;
+        }
+    }
+
+    m_selectedEntityIDs.push_back(entityID);
+
+    m_selectedEntityID = entityID;
+}
+
+void BoxEngine::ClearSelectedEntities()
+{
+    m_selectedEntityIDs.clear();
+
+    m_selectedEntityID = -1;
+}
+
+const std::vector<int>&
+BoxEngine::GetSelectedEntityIDs() const
+{
+    return m_selectedEntityIDs;
+}
+
+Entity* BoxEngine::GetEntityByID(
+    int entityID)
+{
+    for (auto& entity : m_entities)
+    {
+        if (entity &&
+            entity->GetID() == entityID)
+        {
+            return entity.get();
+        }
+    }
+
+    return nullptr;
+}
+
+// --------------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------- End JoinEntities -------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------------------
 
 // Return a const reference to the vector of unique_ptr<Entity> for the editor panels to access the entities in the scene
 const std::vector<std::unique_ptr<Entity>>&

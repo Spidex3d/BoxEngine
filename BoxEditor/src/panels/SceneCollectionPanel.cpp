@@ -14,6 +14,8 @@ void SceneCollectionPanel::DrawSceneCollection(
 
     int entityToDelete = -1;
 
+	bool joinSelected = false; // Flag to indicate if the "Join Selected" option was chosen
+
     if (ImGui::TreeNodeEx(
         "Scene",
         ImGuiTreeNodeFlags_DefaultOpen |
@@ -28,7 +30,21 @@ void SceneCollectionPanel::DrawSceneCollection(
 
             const int entityID = entity->GetID();
 
-            const bool isSelected = engine.GetSelectedEntityID() == entityID;
+           
+            bool isSelected = false;
+
+            const auto& selectedIDs =
+                engine.GetSelectedEntityIDs();
+
+            for (const int selectedID : selectedIDs)
+            {
+                if (selectedID == entityID)
+                {
+                    isSelected = true;
+                    break;
+                }
+            }
+            //######################## new bit
 
             ImGuiTreeNodeFlags flags =
                 ImGuiTreeNodeFlags_Leaf |
@@ -69,10 +85,26 @@ void SceneCollectionPanel::DrawSceneCollection(
 
             if (ImGui::IsItemClicked())
             {
-                engine.SetSelectedEntity(
-                    entityID
-                );
+                const bool shiftHeld =
+                    ImGui::GetIO().KeyShift;
+
+                if (!shiftHeld)
+                {
+                    engine.ClearSelectedEntities();
+
+                    engine.AddSelectedEntity(
+                        entityID
+                    );
+                }
+                else
+                {
+                    engine.AddSelectedEntity(
+                        entityID
+                    );
+                }
             }
+
+			// ######################### new bit
 
             if (ImGui::BeginPopupContextItem())
             {
@@ -80,9 +112,26 @@ void SceneCollectionPanel::DrawSceneCollection(
                     "%s",
                     displayName.c_str()
                 );
+				// --------------------- Join Entities ---------------------
+                const auto& selectedIDs = engine.GetSelectedEntityIDs();
+
+                const bool canJoin = selectedIDs.size() == 2;
+
+                if (ImGui::MenuItem(
+                    "Join Selected",
+                    nullptr,
+                    false,
+                    canJoin))
+                {
+                    joinSelected = true;
+                }
+                
+				// ---------------------End Join Entities ---------------------
 
                 ImGui::Separator();
-
+                // -------------------------------------------------
+                // Delete
+                // -------------------------------------------------
                 if (ImGui::MenuItem(
                     ICON_FA_TRASH_ALT " Delete"))
                 {
@@ -109,6 +158,37 @@ void SceneCollectionPanel::DrawSceneCollection(
 
         ImGui::TreePop();
     }
+	// ##########################################################################################
+	// Join Selected Entities
+	// ##########################################################################################
+    if (joinSelected)
+    {
+        const auto& selectedIDs =
+            engine.GetSelectedEntityIDs();
+
+        if (selectedIDs.size() == 2)
+        {
+            Entity* first =
+                engine.GetEntityByID(
+                    selectedIDs[0]
+                );
+
+            Entity* second =
+                engine.GetEntityByID(
+                    selectedIDs[1]
+                );
+
+            if (first && second)
+            {
+                engine.JoinEntities(
+                    first,
+                    second
+                );
+            }
+        }
+    }
+
+	// Delete the entity after the loop to avoid modifying the vector while iterating
 
     if (entityToDelete != -1)
     {
@@ -122,7 +202,8 @@ void SceneCollectionPanel::DrawSceneCollection(
             ImGuiMouseButton_Left) &&
         !ImGui::IsAnyItemHovered())
     {
-        engine.ClearSelectedEntity();
+       // engine.ClearSelectedEntity();
+          engine.ClearSelectedEntities();
     }
 
     ImGui::End();

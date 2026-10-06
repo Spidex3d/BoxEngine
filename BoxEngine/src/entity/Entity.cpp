@@ -616,9 +616,6 @@ bool Entity::CreateFloor(float width, float depth, int subdivisionsX, int subdiv
         return false;
     }
 
-    //m_aabbMin = glm::vec3(-0.5f);
-    //m_aabbMax = glm::vec3(0.5f);
-
     // ------------------------------------------------
     // Bounds
     // ------------------------------------------------
