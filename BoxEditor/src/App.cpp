@@ -14,6 +14,8 @@
 #include <FileDialog.h>
 #include <string>
 
+#include <mesh/modifiers/AngleExtrude.h>
+
 App::App() = default;
 App::~App() = default;
 
@@ -698,6 +700,258 @@ void App::HandleEcoSystemAction(
 
         break;
     }
+
+    case EcoSystemAction::AddTrees:
+    {
+        // =================================================
+        // TREE TRUNK
+        // =================================================
+
+        const float trunkHeight =
+            m_ecosystemPanel->GetTreeTrunkHeight();
+
+        const float trunkRadius =
+            m_ecosystemPanel->GetTreeTrunkRadius();
+
+
+        const bool created =
+            m_engine->AddEditableCylinder(
+                glm::vec3(
+                    0.0f,
+                    trunkHeight * 0.5f,
+                    0.0f
+                ),
+                12,     // sectors
+                8,      // stacks
+                trunkRadius,
+                trunkHeight
+            );
+       
+
+        
+
+
+        if (!created)
+        {
+            BOX_LOG_ERROR(
+                "Tree Generator: Failed to create trunk"
+            );
+
+            break;
+        }
+
+
+        // AddEditableCylinder selects the newly-created
+        // cylinder, so this is our trunk.
+        Entity* tree = m_engine->GetSelectedEntity();
+
+        if (tree)
+        {
+            tree->SetName("Trunk");
+
+            m_generatedTreeTrunkID = tree->GetID();
+        }
+
+        if (!tree)
+        {
+            BOX_LOG_ERROR(
+                "Tree Generator: Could not find trunk entity"
+            );
+
+            break;
+        }
+
+
+        // =================================================
+        // FIRST BRANCH RING
+        //
+        // 12 sectors
+        // 8 stacks
+        //
+        // Second band down from the top:
+        //
+        // stack 6 * 12 = face 72
+        //
+        // Three faces spaced 120 degrees apart:
+        //
+        // 72, 76, 80
+        // =================================================
+
+        const std::size_t branchFaces[3] =
+        {
+            80,
+            76,
+            72
+        };
+
+
+        AngleExtrudeSettings branchSettings;
+
+        branchSettings.distance =
+            m_ecosystemPanel->GetTreeBranchLength();
+
+        branchSettings.angleDegrees =
+            m_ecosystemPanel->GetTreeBranchAngle();
+
+
+        branchSettings.segments = 6;
+
+        branchSettings.rotationAxis =
+            AngleExtrudeRotationAxis:: Bitangent;
+
+        branchSettings.direction =
+            AngleExtrudeDirection::Positive;
+
+
+        AngleExtrude angleExtrude;
+
+
+        // =================================================
+        // CREATE THREE BRANCHES
+        // =================================================
+
+        for (const std::size_t faceIndex :
+        branchFaces)
+        {
+            if (!angleExtrude.Use(
+                tree->GetEditableMesh(),
+                faceIndex,
+                branchSettings))
+            {
+                BOX_LOG_ERROR(
+                    "Tree Generator: Angle Extrude failed on face "
+                    << faceIndex
+                );
+            }
+        }
+
+
+        // =================================================
+        // REBUILD TREE FOR RENDERING
+        // =================================================
+
+        if (!tree->RebuildFromEditableMesh())
+        {
+            BOX_LOG_ERROR(
+                "Tree Generator: Failed to rebuild tree"
+            );
+
+            break;
+        }
+
+
+        BOX_LOG_INFO(
+            "Generated tree trunk with 3 branches"
+        );
+
+        // =================================================
+        // ONE LARGE LEAF MASS
+          // =================================================
+
+        const float leafRadius =
+            m_ecosystemPanel->GetTreeLeafSize() * 1.95f;
+
+        const int leafSubdivisions = 2;
+
+        const float leafRoughness = 0.20f;
+
+        const float leafFlattening = 0.45f;
+
+        const std::uint32_t leafSeed =
+            static_cast<std::uint32_t>(
+                m_ecosystemPanel->GetTreeSeed());
+
+        // Position the leaf mass slightly above the top
+        // of the trunk so it covers the 3 branches.
+        m_engine->AddEditableRock(
+            glm::vec3(
+                0.0f,
+                trunkHeight + leafRadius * 0.35f,
+                0.0f
+            ),
+            leafRadius,
+            leafSubdivisions,
+            leafRoughness,
+            leafSeed,
+            leafFlattening
+        );
+        
+        Entity* leaves =
+            m_engine->GetSelectedEntity();
+
+        if (leaves)
+        {
+            leaves->SetName("Leaves");
+
+            m_generatedTreeLeavesID = leaves->GetID();
+        }
+
+        break;
+    }
+
+    case EcoSystemAction::JoinTree:
+    {
+        if (m_generatedTreeTrunkID == -1 ||
+            m_generatedTreeLeavesID == -1)
+        {
+            BOX_LOG_WARNING(
+                "Join Tree: No generated tree available"
+            );
+
+            break;
+        }
+
+
+        Entity* trunk =
+            m_engine->GetEntityByID(
+                m_generatedTreeTrunkID
+            );
+
+        Entity* leaves =
+            m_engine->GetEntityByID(
+                m_generatedTreeLeavesID
+            );
+
+
+        if (!trunk || !leaves)
+        {
+            BOX_LOG_WARNING(
+                "Join Tree: Trunk or Leaves no longer exists"
+            );
+
+            break;
+        }
+
+
+        Entity* joinedTree =
+            m_engine->JoinEntities(
+                trunk,
+                leaves
+            );
+
+
+        if (!joinedTree)
+        {
+            BOX_LOG_ERROR("Join Tree failed");
+
+            break;
+        }
+
+
+        //joinedTree->SetName("Tree");
+        joinedTree->SetName("Tree " + std::to_string(m_treeIndex));
+
+        ++m_treeIndex;
+
+
+        BOX_LOG_INFO(
+            "Tree joined successfully"
+        );
+
+        break;
+    }
+
+
 
     case EcoSystemAction::None:
     default:

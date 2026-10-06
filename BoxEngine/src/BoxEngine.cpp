@@ -386,9 +386,9 @@ bool BoxEngine::AddEditableRock(const glm::vec3& position, float radius,
         return false;
     }
 
-    m_entities.push_back(
-        std::move(rock)
-    );
+    m_entities.push_back(std::move(rock));
+
+    m_selectedEntityID = entityID;
 
     return true;
 }

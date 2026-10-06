@@ -14,6 +14,7 @@ enum class EcoSystemAction
 	AddPlants,
 	AddGrass,
 	AddTrees,
+	JoinTree
 
 };
 
@@ -86,6 +87,44 @@ public:
 	}
 	// ------------------------------ Rock Generator End ----------------
 
+	// -------------------------------------------------
+// Tree Generator
+// -------------------------------------------------
+
+	int GetTreeSeed() const
+	{
+		return m_treeSeed;
+	}
+
+	float GetTreeTrunkHeight() const
+	{
+		return m_treeTrunkHeight;
+	}
+
+	float GetTreeTrunkRadius() const
+	{
+		return m_treeTrunkRadius;
+	}
+
+	int GetTreeBranchCount() const
+	{
+		return m_treeBranchCount;
+	}
+
+	float GetTreeBranchLength() const
+	{
+		return m_treeBranchLength;
+	}
+
+	float GetTreeBranchAngle() const
+	{
+		return m_treeBranchAngle;
+	}
+
+	float GetTreeLeafSize() const
+	{
+		return m_treeLeafSize;
+	}
 
 	// Rocks, floor, water, terrain, grass, plants & tree generation
 
@@ -98,7 +137,7 @@ private:
 	void WaterTab(BoxEngine& engine);
 	void PlantsTab(BoxEngine& engine);
 	void GrassTab(BoxEngine& engine);
-	void TreesTab(BoxEngine& engine);
+	EcoSystemAction TreesTab(BoxEngine& engine);
 	void SkyTab(BoxEngine& engine);
 	void EnvironmentTab(BoxEngine& engine);
 
@@ -127,5 +166,22 @@ private:
 
 	// -------------- Rock Generator End --------------
 
+	// ---------------- Tree Generator ----------------
+
+	int m_treeSeed = 1234;
+
+	float m_treeTrunkHeight = 3.0f;
+
+	float m_treeTrunkRadius = 0.40f;
+
+	int m_treeBranchCount = 3;
+
+	float m_treeBranchLength = 0.65f;
+
+	float m_treeBranchAngle = 80.0f;
+
+	float m_treeLeafSize = 1.0f;
+
+	// -------------- Tree Generator End --------------
 
 };

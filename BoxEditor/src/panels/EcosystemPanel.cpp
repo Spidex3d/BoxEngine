@@ -271,9 +271,15 @@ EcoSystemAction EcosystemPanel::Draw(BoxEngine& engine)
 
         if (ImGui::BeginTabItem("Trees"))
         {
-            TreesTab(
-                engine
-            );
+            const EcoSystemAction treeAction =
+                TreesTab(engine);
+
+            if (treeAction !=
+                EcoSystemAction::None)
+            {
+                Ecoaction =
+                    treeAction;
+            }
 
             ImGui::EndTabItem();
         }
@@ -474,13 +480,164 @@ void EcosystemPanel::GrassTab(BoxEngine& engine)
     ImGui::TextDisabled("Procedural grass generation coming soon...");
 }
 
-void EcosystemPanel::TreesTab(BoxEngine& engine)
+EcoSystemAction EcosystemPanel::TreesTab(BoxEngine& engine)
 {
-    // TODO: Implement trees generation logic here
-    ImGui::Text("Trees Generator");
-    ImGui::Separator();
+    EcoSystemAction action =
+        EcoSystemAction::None;
 
-    ImGui::TextDisabled("Procedural trees generation coming soon...");
+
+    ImGui::Text("Tree Generator");
+
+    ImGui::Separator();
+    ImGui::Spacing();
+
+
+    // =================================================
+    // TRUNK
+    // =================================================
+
+    ImGui::Text("Trunk");
+
+
+    ImGui::DragFloat(
+        "Trunk Height",
+        &m_treeTrunkHeight,
+        0.05f,
+        0.5f,
+        10.0f,
+        "%.2f",
+        ImGuiSliderFlags_AlwaysClamp
+    );
+
+
+    ImGui::DragFloat(
+        "Trunk Radius",
+        &m_treeTrunkRadius,
+        0.01f,
+        0.05f,
+        2.0f,
+        "%.2f",
+        ImGuiSliderFlags_AlwaysClamp
+    );
+
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+
+    // =================================================
+    // BRANCHES
+    // =================================================
+
+    ImGui::Text("Branches");
+
+
+    ImGui::DragInt(
+        "Branch Count",
+        &m_treeBranchCount,
+        1.0f,
+        0,
+        12
+    );
+
+
+    ImGui::DragFloat(
+        "Branch Length",
+        &m_treeBranchLength,
+        0.05f,
+        0.2f,
+        5.0f,
+        "%.2f",
+        ImGuiSliderFlags_AlwaysClamp
+    );
+
+
+    ImGui::DragFloat(
+        "Branch Angle",
+        &m_treeBranchAngle,
+        1.0f,
+        0.0f,
+        80.0f,
+        "%.1f",
+        ImGuiSliderFlags_AlwaysClamp
+    );
+
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+
+    // =================================================
+    // LEAVES
+    // =================================================
+
+    ImGui::Text("Leaves");
+
+
+    ImGui::DragFloat(
+        "Leaf Size",
+        &m_treeLeafSize,
+        0.05f,
+        0.2f,
+        4.0f,
+        "%.2f",
+        ImGuiSliderFlags_AlwaysClamp
+    );
+
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+
+    // =================================================
+    // RANDOM SEED
+    // =================================================
+
+    ImGui::Text("Variation");
+
+
+    ImGui::InputInt(
+        "Seed",
+        &m_treeSeed
+    );
+
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+
+    // =================================================
+    // GENERATE
+    // =================================================
+
+    if (ImGui::Button(
+        "Generate Tree",
+        ImVec2(140.0f, 32.0f)))
+    {
+        action = EcoSystemAction::AddTrees;
+    }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    ImGui::Text("Finish Tree");
+
+    ImGui::TextDisabled("Shift-select both in Scene Collection. Select the trunk and leaves, then join them."
+    );
+
+    if (ImGui::Button("Join Tree",
+        ImVec2(140.0f, 32.0f)))
+    {
+        action = EcoSystemAction::JoinTree;
+    }
+
+
+    return action;
 }
 
 void EcosystemPanel::SkyTab(BoxEngine& engine)

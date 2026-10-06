@@ -73,6 +73,10 @@ private:
 
 	void HandleEcoSystemAction(EcoSystemAction action);
 
+	int m_generatedTreeTrunkID = -1;	// ID of the generated tree trunk entity so we can join it with the leaves entity
+	int m_generatedTreeLeavesID = -1;	// ID of the generated tree leaves entity so we can join it with the trunk entity
+	int m_treeIndex = 1;				// Index for the generated tree entities so we can give them unique names
+
 private: 
 
 	void RebuildImportedMaterialSlots(BoxEngine& engine, Entity& entity,
