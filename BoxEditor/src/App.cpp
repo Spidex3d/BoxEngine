@@ -902,8 +902,7 @@ void App::HandleEcoSystemAction(
         }
 
 
-        Entity* trunk =
-            m_engine->GetEntityByID(
+        Entity* trunk = m_engine->GetEntityByID(
                 m_generatedTreeTrunkID
             );
 
