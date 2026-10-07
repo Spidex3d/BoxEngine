@@ -339,7 +339,64 @@ void ObjectExplorerPanel::DrawObjectTab(BoxEngine& engine, Entity& entity)
         break;
     }
 
+	case EntityPrimitiveType::Cone:
+	{
+		// Cone properties later.
+        ImGui::SeparatorText("Cone Properties");
 
+        bool coneChanged = false;
+
+        float radius = entity.GetConeRadius();
+
+        int sectors = entity.GetConeSectors();
+
+        int stacks = entity.GetConeStacks();
+
+        float height = entity.GetConeHeight();
+
+		// Radius
+        if (ImGui::InputFloat("Radius", &radius, 0.05f, 0.25f))
+        {
+            radius = std::clamp(radius, 0.05f, 6.0f);
+
+            entity.SetConeRadius(radius);
+
+            coneChanged = true;
+        }
+        // Height
+		if (ImGui::InputFloat("Height", &height, 0.05f, 0.25f))
+		{
+			height = std::clamp(height, 0.05f, 6.0f);
+			entity.SetConeHeight(height);
+			coneChanged = true;
+		}
+
+		// Sectors
+		if (ImGui::InputInt("Sectors", &sectors, 1, 4))
+		{
+			sectors = std::clamp(sectors, 3, 34);
+			entity.SetConeSectors(sectors);
+			coneChanged = true;
+		}
+		// Stacks
+		if (ImGui::InputInt("Stacks", &stacks, 1, 1))
+		{
+			stacks = std::clamp(stacks, 1, 4);
+			entity.SetConeStacks(stacks);
+			coneChanged = true;
+		}
+
+		if (coneChanged)
+		{
+			entity.ClearSelectedVertices();
+			entity.ClearSelectedEdges();
+			entity.ClearSelectedFace();
+
+			entity.UpdateCone();
+		}
+
+		break;
+	}
     
 
 

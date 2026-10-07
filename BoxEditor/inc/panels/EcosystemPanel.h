@@ -171,6 +171,11 @@ public:
 	{
 		return m_grassClumpOffset;
 	}
+	// clump randomness, clump rotation, on / off
+	bool GetGrassRandomDirection() const
+	{
+		return m_grassRndDir;
+	}
 	// clump size, clump count, clump density, clump curve, clump randomness,
 	// clump rotation, clump scale, clump offset, 
 
@@ -224,6 +229,7 @@ private:
 	float m_grassClumpRotation = 0.0f;
 	float m_grassClumpScale = 1.0f;
 	float m_grassClumpOffset = 0.0f;
+	bool m_grassRndDir = false;
 
 	// ---------------- Grass Generator End --------------
 

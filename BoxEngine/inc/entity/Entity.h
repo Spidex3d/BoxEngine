@@ -467,29 +467,29 @@ public:
     // ----------------------------------------------------
 	// Cone specific parameters
 	// ----------------------------------------------------
-	void SetConeSectors(int sectors) {
-		m_cylinderSectors = sectors; // Reusing cylinder parameters for cone
+	void SetConeSectors(int sectors) {      // Varibels start at line 708
+        m_coneCylinderSectors = sectors;    // same as  cylinder parameters for cone
 	}
 	void SetConeRadius(float radius) {
-		m_cylinderRadius = radius; // Reusing cylinder parameters for cone
+        m_coneCylinderRadius = radius;      // same as  cylinder parameters for cone
 	}
 	void SetConeHeight(float height) {
-		m_coneCylinderHeight = height; // Reusing cylinder parameters for cone
+		m_coneCylinderHeight = height;      // same as  cylinder parameters for cone
 	}
 	void SetConeStacks(int stacks) {
-		m_coneCylinderStacks = stacks; // Reusing cylinder parameters for cone
+		m_coneCylinderStacks = stacks;      // same as  cylinder parameters for cone
 	}
 	int GetConeSectors() const {
-		return m_coneCylinderSectors; // Reusing cylinder parameters for cone
+		return m_coneCylinderSectors;       // same as  cylinder parameters for cone
 	}
 	float GetConeRadius() const {
-		return m_coneCylinderRadius; // Reusing cylinder parameters for cone
+		return m_coneCylinderRadius;        // same as  cylinder parameters for cone
 	}
 	float GetConeHeight() const {
-		return m_coneCylinderHeight; // Reusing cylinder parameters for cone
+		return m_coneCylinderHeight;        // same as  cylinder parameters for cone
 	}
 	int GetConeStacks() const {
-		return m_coneCylinderStacks; // Reusing cylinder parameters for cone
+		return m_coneCylinderStacks; // same as  cylinder parameters for cone
 	}
 	bool UpdateCone(); // Function to update cone parameters and rebuild mesh if necessary
 

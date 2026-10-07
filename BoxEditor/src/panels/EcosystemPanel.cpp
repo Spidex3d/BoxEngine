@@ -503,6 +503,8 @@ EcoSystemAction EcosystemPanel::GrassTab(BoxEngine& engine)
 
     ImGui::InputInt("Clump Count", &m_grassClumpCount);
 
+	ImGui::InputFloat("Blade Scale", &m_grassClumpScale, 0.05f, 0.10f, "%.2f");
+
     ImGui::InputFloat("Clump Size", &m_grassClumpSize, 0.05f, 0.10f, "%.2f");
 
 	// Blade Count: 5 to 10
@@ -527,6 +529,9 @@ EcoSystemAction EcosystemPanel::GrassTab(BoxEngine& engine)
 		m_grassClumpCurve = 0.70f;
 	}
 
+    ImGui::Spacing();
+    ImGui::SeparatorText("Set Grass Random Direction on");
+	ImGui::Checkbox("Random Direction", &m_grassRndDir);
 
 
 
