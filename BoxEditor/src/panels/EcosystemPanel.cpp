@@ -199,14 +199,7 @@ EcoSystemAction EcosystemPanel::Draw(BoxEngine& engine)
 
             ImGui::EndTabItem();
         }
-        /*if (ImGui::BeginTabItem("Rocks"))
-        {
-            RocksTab(
-                engine
-            );
-
-            ImGui::EndTabItem();
-        }*/
+        
 
 
         // -------------------------------------------------
@@ -243,9 +236,12 @@ EcoSystemAction EcosystemPanel::Draw(BoxEngine& engine)
 
         if (ImGui::BeginTabItem("Grass"))
         {
-            GrassTab(
-                engine
-            );
+            const EcoSystemAction grassAction = GrassTab(engine);
+
+            if (grassAction != EcoSystemAction::None)
+            {
+                Ecoaction = grassAction;
+            }
 
             ImGui::EndTabItem();
         }
@@ -321,15 +317,19 @@ EcoSystemAction EcosystemPanel::Draw(BoxEngine& engine)
 }
 // ---------------------------------------- End of EcosystemPanel::DrawEco ----------------------------------------
 
-void EcosystemPanel::FloorTab(BoxEngine& engine)
-{
-    ImGui::Text("Floor Generator");
-    ImGui::Separator();
+//void EcosystemPanel::FloorTab(BoxEngine& engine)
+//{
+//    ImGui::Text("Floor Generator");
+//    ImGui::Separator();
+//
+//    ImGui::TextDisabled(
+//        "Editable ecosystem floor coming next..."
+//    );
+//}
 
-    ImGui::TextDisabled(
-        "Editable ecosystem floor coming next..."
-    );
-}
+// -----------------------------------------------------
+// Rocks Generator
+// -----------------------------------------------------
 
 EcoSystemAction EcosystemPanel::RocksTab(
     BoxEngine& engine)
@@ -443,6 +443,10 @@ EcoSystemAction EcosystemPanel::RocksTab(
     return action;
 }
 
+// ---------------------------------------------------------------------------------------------------------------
+// Terrain Generator
+// -----------------------------------------------------
+
 void EcosystemPanel::TerrainTab(BoxEngine& engine)
 {
     // TODO: Implement terrain generation logic here
@@ -451,6 +455,10 @@ void EcosystemPanel::TerrainTab(BoxEngine& engine)
 
     ImGui::TextDisabled("Procedural terrain generation coming soon...");
 }
+
+// -----------------------------------------------------------------------------------------------------------------
+// Water plane Generator
+// -----------------------------------------------------
 
 void EcosystemPanel::WaterTab(BoxEngine& engine)
 {
@@ -461,6 +469,9 @@ void EcosystemPanel::WaterTab(BoxEngine& engine)
     ImGui::TextDisabled("Procedural water generation coming soon...");
 }
 
+// ----------------------------------------------------------------------------------------------------------------------
+// Plants Generator
+// -----------------------------------------------------
 
 void EcosystemPanel::PlantsTab(BoxEngine& engine)
 {
@@ -471,14 +482,74 @@ void EcosystemPanel::PlantsTab(BoxEngine& engine)
     ImGui::TextDisabled("Procedural plants generation coming soon...");
 }
 
-void EcosystemPanel::GrassTab(BoxEngine& engine)
+// ----------------------------------------------------------------------------------------------------------------------
+// Grass Generator
+// -----------------------------------------------------
+
+EcoSystemAction EcosystemPanel::GrassTab(BoxEngine& engine)
 {
+    EcoSystemAction action = EcoSystemAction::None;
     // TODO: Implement grass generation logic here
     ImGui::Text("Grass Generator");
     ImGui::Separator();
 
     ImGui::TextDisabled("Procedural grass generation coming soon...");
+
+    // =================================================
+    // CLUMP SETTINGS
+    // =================================================
+
+    ImGui::Text("Clump");
+
+    ImGui::InputInt("Clump Count", &m_grassClumpCount);
+
+    ImGui::InputFloat("Clump Size", &m_grassClumpSize, 0.05f, 0.10f, "%.2f");
+
+    //ImGui::InputInt("Blade Count", &m_grassClumpDensity);
+    ImGui::InputInt("Blade Count", &m_grassClumpDensity);
+
+    if (m_grassClumpDensity < 5)
+    {
+        m_grassClumpDensity = 5;
+    }
+
+    if (m_grassClumpDensity > 10)
+    {
+        m_grassClumpDensity = 10;
+    }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+
+    // =================================================
+    // VARIATION
+    // =================================================
+
+    ImGui::Text("Variation");
+
+
+    ImGui::InputInt("Seed", &m_grassSeed);
+
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    if (ImGui::Button(
+        "Generate Grass",
+        ImVec2(140.0f, 32.0f)))
+    {
+        action = EcoSystemAction::AddGrass;
+    }
+
+    return action;
 }
+
+// -----------------------------------------------------------------------------------------------------------------
+// Tree Generator
+// -----------------------------------------------------
 
 EcoSystemAction EcosystemPanel::TreesTab(BoxEngine& engine)
 {
@@ -640,6 +711,10 @@ EcoSystemAction EcosystemPanel::TreesTab(BoxEngine& engine)
     return action;
 }
 
+// ----------------------------------------------------------------------------------------------------------------
+// Sky Generator
+// -----------------------------------------------------
+
 void EcosystemPanel::SkyTab(BoxEngine& engine)
 {
     ImGui::Text("Sky Generator");
@@ -647,6 +722,10 @@ void EcosystemPanel::SkyTab(BoxEngine& engine)
 
     ImGui::TextDisabled("Procedural sky generation coming soon...");
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Environment Generator
+// -----------------------------------------------------
 
 void EcosystemPanel::EnvironmentTab(BoxEngine& engine)
 {

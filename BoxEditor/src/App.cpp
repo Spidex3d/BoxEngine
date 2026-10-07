@@ -13,6 +13,9 @@
 #include <panels/UVPanel.h>
 #include <FileDialog.h>
 #include <string>
+#include <random>
+#include <cstdint>
+#include <cmath>
 
 #include <mesh/modifiers/AngleExtrude.h>
 
@@ -701,6 +704,172 @@ void App::HandleEcoSystemAction(
         break;
     }
 
+    case EcoSystemAction::AddGrass:
+    {
+        Entity* selectedEntity =
+            m_engine->GetSelectedEntity();
+
+        if (!selectedEntity)
+        {
+            BOX_LOG_WARNING(
+                "Grass Generator: No entity selected"
+            );
+
+            break;
+        }
+
+        if (!m_sceneViewport->GetFaceEditController().HasSelectedFace())
+        {
+            BOX_LOG_WARNING(
+                "Grass Generator: No face selected"
+            );
+
+            break;
+        }
+
+        const std::size_t faceIndex =
+            m_sceneViewport->GetFaceEditController().GetSelectedFace();
+
+        MeshEditing& mesh =
+            selectedEntity->GetEditableMesh();
+
+        if (faceIndex >= mesh.GetFaceCount())
+        {
+            BOX_LOG_WARNING(
+                "Grass Generator: Invalid selected face"
+            );
+
+            break;
+        }
+		// find the center of the selected face
+        glm::vec3 faceCenter(0.0f);
+
+        for (const std::size_t vertexIndex :
+        mesh.GetFace(faceIndex).vertices)
+        {
+            faceCenter +=
+                mesh.GetVertex(
+                    vertexIndex
+                ).position;
+        }
+
+        if (!mesh.GetFace(faceIndex).vertices.empty())
+        {
+            faceCenter /=
+                static_cast<float>(
+                    mesh.GetFace(faceIndex).vertices.size()
+                    );
+        }
+
+        // end test
+        const int bladeCount =
+            m_ecosystemPanel->GetGrassClumpDensity();
+
+        const float clumpSize =
+            m_ecosystemPanel->GetGrassClumpSize();
+
+        std::mt19937 rng(
+            static_cast<std::uint32_t>(
+                m_ecosystemPanel->GetGrassSeed()));
+
+        std::uniform_real_distribution<float>
+            heightVariation(0.80f, 1.20f);
+
+        std::uniform_real_distribution<float>
+            radiusVariation(0.09f, 0.14f);
+
+        std::uniform_real_distribution<float>
+            positionVariation(-clumpSize, clumpSize);
+		// Random angle and distance for clump placement
+        std::uniform_real_distribution<float>
+            angleVariation(0.0f, 6.283185f);
+
+        std::uniform_real_distribution<float>
+            distanceVariation(0.0f, clumpSize);
+		// Random rotation for each blade
+        std::uniform_real_distribution<float>
+            rotationVariation(0.0f, 360.0f);
+		// Random lean variation for each blade
+        std::uniform_real_distribution<float>
+            leanVariation(-10.0f, 10.0f);
+
+      
+        for (int i = 0; i < bladeCount; ++i)
+        {
+            const float height =
+                heightVariation(rng);
+
+            const float radius =
+                radiusVariation(rng);
+
+            const float angle =
+                angleVariation(rng);
+
+            const float distance =
+                distanceVariation(rng);
+
+            const float x =
+                std::cos(angle) * distance;
+
+            const float z =
+                std::sin(angle) * distance;
+
+
+            const float yOffset =
+                (height - 1.0f) * 0.5f;
+
+            glm::vec3 position =
+                faceCenter +
+                glm::vec3(
+                    x,
+                    yOffset,
+                    z
+                );
+
+           if (m_engine->AddEditableCone(position, 5, radius, height))
+           {
+               Entity* grassBlade = m_engine->GetSelectedEntity();
+
+               if (grassBlade)
+               {
+                   const float rotation =
+                       rotationVariation(rng);
+
+                   grassBlade->SetRotation(
+                       glm::vec3(
+                           0.0f,
+                           rotation,
+                           0.0f
+                       )
+                   );
+               }
+
+               const float rotationY =
+                   rotationVariation(rng);
+
+               const float leanX =
+                   leanVariation(rng);
+
+               const float leanZ =
+                   leanVariation(rng);
+
+               grassBlade->SetRotation(
+                   glm::vec3(leanX, rotationY, leanZ));
+           }
+        }
+
+       
+
+        Entity* grass = m_engine->GetSelectedEntity();
+
+        if (grass)
+        {
+            grass->SetName("Grass");
+        }
+
+        break;
+    }
+
     case EcoSystemAction::AddTrees:
     {
         // =================================================
@@ -1123,6 +1292,8 @@ void App::RebuildImportedMaterialSlots(BoxEngine& engine, Entity& entity, const 
         );
     }
 }
+
+
 
 // shutdown the window and ImGui context and go to bed.
 void App::Shutdown()

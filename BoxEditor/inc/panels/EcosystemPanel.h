@@ -14,7 +14,9 @@ enum class EcoSystemAction
 	AddPlants,
 	AddGrass,
 	AddTrees,
-	JoinTree
+	JoinTree,
+	AddSky,
+	AddEnvironment
 
 };
 
@@ -38,7 +40,9 @@ public:
 	//EcoSystemAction Draw(BoxEngine& engine, Entity& entity);
 	EcoSystemAction Draw(BoxEngine& engine);
 	
-	// -------------------------------- floor generator ----------------
+	// ----------------------------------------------------------------------------------------
+	// floor generator 
+	// ---------------------------------------------------
 	float GetFloorWidth() const
 	{
 		return m_floorWidth;
@@ -60,7 +64,9 @@ public:
 	}
 	// ------------------------------ floor generator End ----------------
 
-	// ------------------------------ Rock Generator ----------------
+	// -----------------------------------------------------------------------------------
+	// Rock Generator 
+	// --------------------------------------------
 	int GetRockSeed() const
 	{
 		return m_rockSeed;
@@ -87,9 +93,9 @@ public:
 	}
 	// ------------------------------ Rock Generator End ----------------
 
+	// ---------------------------------------------------------------------------------------------------------
+	// Tree Generator
 	// -------------------------------------------------
-// Tree Generator
-// -------------------------------------------------
 
 	int GetTreeSeed() const
 	{
@@ -126,24 +132,66 @@ public:
 		return m_treeLeafSize;
 	}
 
-	// Rocks, floor, water, terrain, grass, plants & tree generation
+	// -----------------------------------------------------------------------------------------------------------
+	// Grass Generator
+	// -----------------------------------------------------
+	int GetGrassSeed() const
+	{
+		return m_grassSeed;
+	}
+	float GetGrassClumpSize() const
+	{
+		return m_grassClumpSize;
+	}
+	int GetGrassClumpCount() const
+	{
+		return m_grassClumpCount;
+	}
+	int GetGrassClumpDensity() const
+	{
+		return m_grassClumpDensity;
+	}
+	float GetGrassClumpCurve() const
+	{
+		return m_grassClumpCurve;
+	}
+	int GetGrassClumpRandomness() const
+	{
+		return m_grassClumpRandomness;
+	}
+	float GetGrassClumpRotation() const
+	{
+		return m_grassClumpRotation;
+	}
+	float GetGrassClumpScale() const
+	{
+		return m_grassClumpScale;
+	}
+	float GetGrassClumpOffset() const
+	{
+		return m_grassClumpOffset;
+	}
+	// clump size, clump count, clump density, clump curve, clump randomness,
+	// clump rotation, clump scale, clump offset, 
+
+
+
 
 private:
 	bool m_isOpen = false;
 	// ----------------- Ecosystem Tabs -----------------
-	void FloorTab(BoxEngine& engine);
-	EcoSystemAction RocksTab(BoxEngine& engine);
+	void FloorTab(BoxEngine& engine);			 // Floor	
+	EcoSystemAction RocksTab(BoxEngine& engine); // Rocks
 	void TerrainTab(BoxEngine& engine);
 	void WaterTab(BoxEngine& engine);
 	void PlantsTab(BoxEngine& engine);
-	void GrassTab(BoxEngine& engine);
-	EcoSystemAction TreesTab(BoxEngine& engine);
+	EcoSystemAction GrassTab(BoxEngine& engine); // Grass
+	EcoSystemAction TreesTab(BoxEngine& engine); // Trees
 	void SkyTab(BoxEngine& engine);
 	void EnvironmentTab(BoxEngine& engine);
 
 	// ---------------- floor generator ----------------
 	
-
 	// Floor settings
 	float m_floorWidth = 20.0f;
 	float m_floorDepth = 20.0f;
@@ -165,6 +213,19 @@ private:
 	float m_rockFlattening = 0.20f;
 
 	// -------------- Rock Generator End --------------
+
+	// ---------------- Grass Generator ----------------
+	int m_grassSeed = 1234;
+	int m_grassClumpCount = 10;
+	float m_grassClumpSize = 1.0f;
+	int m_grassClumpDensity = 5;
+	float m_grassClumpCurve = 0.5f;
+	int m_grassClumpRandomness = 2;
+	float m_grassClumpRotation = 0.0f;
+	float m_grassClumpScale = 1.0f;
+	float m_grassClumpOffset = 0.0f;
+
+	// ---------------- Grass Generator End --------------
 
 	// ---------------- Tree Generator ----------------
 
