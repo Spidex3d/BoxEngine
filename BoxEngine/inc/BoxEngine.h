@@ -87,7 +87,7 @@ public:
 
 	bool AddEditablePyramid(const glm::vec3& position = glm::vec3(0.0f));
 
-	bool AddEditableCone(const glm::vec3& position = glm::vec3(0.0f), int sectors = 32, float radius = 0.5f, float height = 1.0f);
+	bool AddEditableCone(const glm::vec3& position = glm::vec3(0.0f), int sectors = 32, float radius = 0.5f, float height = 1.0f, int stacks = 4);
 
 	bool AddEditableTorus(const glm::vec3& position = glm::vec3(0.0f), int sides = 16, int rings = 32, float innerRadius = 0.2f, float outerRadius = 0.5f);
 

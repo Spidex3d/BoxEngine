@@ -1814,18 +1814,30 @@ bool MeshEditing::CreateCylinder(int sectors, int stacks, float radius, float he
 // Create a cone mesh with the specified number of sectors, radius, and height.
 // ----------------------------------------------
 
-bool MeshEditing::CreateCone(int sectors, float radius, float height)
+bool MeshEditing::CreateCone(
+    int sectors,
+    float radius,
+    float height,
+    int stacks)
 {
     Clear();
 
-    // Flat shading is usually preferable for a low-poly cone,
-    // especially because the base and side should have different
-    // normals.
-    m_shadingMode = ShadingMode::Flat;
+    m_shadingMode =
+        ShadingMode::Flat;
+
+
+    // -------------------------------------------------
+    // VALIDATE
+    // -------------------------------------------------
 
     if (sectors < 3)
     {
         sectors = 3;
+    }
+
+    if (stacks < 1)
+    {
+        stacks = 1;
     }
 
     if (radius <= 0.0f ||
@@ -1839,49 +1851,109 @@ bool MeshEditing::CreateCone(int sectors, float radius, float height)
         return false;
     }
 
+
     const float halfHeight =
         height * 0.5f;
 
     const float twoPi =
         2.0f * pi;
 
+
     // -------------------------------------------------
-    // CREATE BASE RING
+    // CREATE RINGS
+    //
+    // stacks = 1:
+    //
+    //     apex
+    //      /\
+    //     /  \
+    //    ------
+    //
+    //
+    // stacks = 4:
+    //
+    //       apex
+    //        /\
+    //       ----
+    //      ------
+    //     --------
+    //    ----------
+    //
+    // The apex itself is added separately.
     // -------------------------------------------------
 
-    std::vector<std::size_t> baseVertices;
+    std::vector<std::vector<std::size_t>>
+        rings;
 
-    baseVertices.reserve(
-        static_cast<std::size_t>(sectors)
+    rings.reserve(
+        static_cast<std::size_t>(stacks)
     );
 
-    for (int sector = 0;
-        sector < sectors;
-        ++sector)
+
+    for (int stack = 0;
+        stack < stacks;
+        ++stack)
     {
-        const float angle =
-            static_cast<float>(sector) *
-            twoPi /
-            static_cast<float>(sectors);
+        const float t =
+            static_cast<float>(stack) /
+            static_cast<float>(stacks);
 
-        const float x =
-            std::cos(angle) *
-            radius;
 
-        const float z =
-            std::sin(angle) *
-            radius;
+        const float y =
+            -halfHeight +
+            t * height;
 
-        baseVertices.push_back(
-            AddVertex(
-                glm::vec3(
-                    x,
-                    -halfHeight,
-                    z
+
+        const float ringRadius =
+            radius * (1.0f - t);
+
+
+        std::vector<std::size_t>
+            ring;
+
+        ring.reserve(
+            static_cast<std::size_t>(
+                sectors
                 )
-            )
+        );
+
+
+        for (int sector = 0;
+            sector < sectors;
+            ++sector)
+        {
+            const float angle =
+                static_cast<float>(sector) *
+                twoPi /
+                static_cast<float>(sectors);
+
+
+            const float x =
+                std::cos(angle) *
+                ringRadius;
+
+            const float z =
+                std::sin(angle) *
+                ringRadius;
+
+
+            ring.push_back(
+                AddVertex(
+                    glm::vec3(
+                        x,
+                        y,
+                        z
+                    )
+                )
+            );
+        }
+
+
+        rings.push_back(
+            std::move(ring)
         );
     }
+
 
     // -------------------------------------------------
     // CREATE APEX
@@ -1896,81 +1968,166 @@ bool MeshEditing::CreateCone(int sectors, float radius, float height)
             )
         );
 
+
     // -------------------------------------------------
-    // CREATE SIDE TRIANGLES
+    // CONNECT RINGS WITH QUADS
     // -------------------------------------------------
-    //
-    // Each triangle is:
-    //
-    // base current -> apex -> base next
-    //
-    // This winding produces outward-facing side
-    // normals.
+
+    for (std::size_t ringIndex = 0;
+        ringIndex + 1 < rings.size();
+        ++ringIndex)
+    {
+        const std::vector<std::size_t>& lowerRing =
+            rings[ringIndex];
+
+        const std::vector<std::size_t>& upperRing =
+            rings[ringIndex + 1];
+
+
+        for (int sector = 0;
+            sector < sectors;
+            ++sector)
+        {
+            const int nextSector =
+                (sector + 1) %
+                sectors;
+
+
+            const std::size_t lowerCurrent =
+                lowerRing[
+                    static_cast<std::size_t>(
+                        sector
+                        )
+                ];
+
+            const std::size_t lowerNext =
+                lowerRing[
+                    static_cast<std::size_t>(
+                        nextSector
+                        )
+                ];
+
+            const std::size_t upperCurrent =
+                upperRing[
+                    static_cast<std::size_t>(
+                        sector
+                        )
+                ];
+
+            const std::size_t upperNext =
+                upperRing[
+                    static_cast<std::size_t>(
+                        nextSector
+                        )
+                ];
+
+
+            AddFace(
+                {
+                    lowerCurrent,
+                    upperCurrent,
+                    upperNext,
+                    lowerNext
+                }
+            );
+        }
+    }
+
+
     // -------------------------------------------------
+    // CONNECT TOP RING TO APEX
+    // -------------------------------------------------
+
+    const std::vector<std::size_t>&
+        topRing =
+        rings.back();
+
 
     for (int sector = 0;
         sector < sectors;
         ++sector)
     {
         const int nextSector =
-            (sector + 1) % sectors;
+            (sector + 1) %
+            sectors;
 
-        const std::size_t currentBase =
-            baseVertices[
-                static_cast<std::size_t>(sector)
+
+        const std::size_t current =
+            topRing[
+                static_cast<std::size_t>(
+                    sector
+                    )
             ];
 
-        const std::size_t nextBase =
-            baseVertices[
-                static_cast<std::size_t>(nextSector)
+        const std::size_t next =
+            topRing[
+                static_cast<std::size_t>(
+                    nextSector
+                    )
             ];
+
 
         AddFace(
             {
-                currentBase,
+                current,
                 apex,
-                nextBase
+                next
             }
         );
     }
 
+
     // -------------------------------------------------
     // CREATE BASE FACE
     // -------------------------------------------------
-    //
-    // The base must be wound in reverse order so its
-    // normal points downward.
-    // -------------------------------------------------
 
-    std::vector<std::size_t> baseFace;
+    std::vector<std::size_t>
+        baseFace;
 
     baseFace.reserve(
-        static_cast<std::size_t>(sectors)
+        static_cast<std::size_t>(
+            sectors
+            )
     );
+
+
+    const std::vector<std::size_t>&
+        baseRing =
+        rings.front();
+
 
     for (int sector = sectors - 1;
         sector >= 0;
         --sector)
     {
         baseFace.push_back(
-            baseVertices[
-                static_cast<std::size_t>(sector)
+            baseRing[
+                static_cast<std::size_t>(
+                    sector
+                    )
             ]
         );
     }
 
-    AddFace(baseFace);
+
+    AddFace(
+        baseFace
+    );
+
 
     // -------------------------------------------------
-    // BUILD UNIQUE EDITABLE EDGES
+    // BUILD EDGES
     // -------------------------------------------------
 
     RebuildEdges();
+
 
     BOX_LOG_INFO(
         "Created editable cone. "
         << "Sectors="
         << sectors
+        << " Stacks="
+        << stacks
         << " Radius="
         << radius
         << " Height="
@@ -1983,11 +2140,187 @@ bool MeshEditing::CreateCone(int sectors, float radius, float height)
         << GetFaceCount()
     );
 
+
     return
         !m_vertices.empty() &&
         !m_edges.empty() &&
         !m_faces.empty();
 }
+
+//bool MeshEditing::CreateCone(int sectors, float radius, float height, int stacks)
+//{
+//    Clear();
+//
+//    // Flat shading is usually preferable for a low-poly cone,
+//    // especially because the base and side should have different
+//    // normals.
+//    m_shadingMode = ShadingMode::Flat;
+//
+//    if (sectors < 3)
+//    {
+//        sectors = 3;
+//    }
+//
+//    if (radius <= 0.0f ||
+//        height <= 0.0f)
+//    {
+//        BOX_LOG_ERROR(
+//            "MeshEditing::CreateCone: "
+//            "Invalid radius or height"
+//        );
+//
+//        return false;
+//    }
+//
+//    const float halfHeight =
+//        height * 0.5f;
+//
+//    const float twoPi =
+//        2.0f * pi;
+//
+//    // -------------------------------------------------
+//    // CREATE BASE RING
+//    // -------------------------------------------------
+//
+//    std::vector<std::size_t> baseVertices;
+//
+//    baseVertices.reserve(
+//        static_cast<std::size_t>(sectors)
+//    );
+//
+//    for (int sector = 0;
+//        sector < sectors;
+//        ++sector)
+//    {
+//        const float angle =
+//            static_cast<float>(sector) *
+//            twoPi /
+//            static_cast<float>(sectors);
+//
+//        const float x =
+//            std::cos(angle) *
+//            radius;
+//
+//        const float z =
+//            std::sin(angle) *
+//            radius;
+//
+//        baseVertices.push_back(
+//            AddVertex(
+//                glm::vec3(
+//                    x,
+//                    -halfHeight,
+//                    z
+//                )
+//            )
+//        );
+//    }
+//
+//    // -------------------------------------------------
+//    // CREATE APEX
+//    // -------------------------------------------------
+//
+//    const std::size_t apex =
+//        AddVertex(
+//            glm::vec3(
+//                0.0f,
+//                halfHeight,
+//                0.0f
+//            )
+//        );
+//
+//    // -------------------------------------------------
+//    // CREATE SIDE TRIANGLES
+//    // -------------------------------------------------
+//    //
+//    // Each triangle is:
+//    //
+//    // base current -> apex -> base next
+//    //
+//    // This winding produces outward-facing side
+//    // normals.
+//    // -------------------------------------------------
+//
+//    for (int sector = 0;
+//        sector < sectors;
+//        ++sector)
+//    {
+//        const int nextSector =
+//            (sector + 1) % sectors;
+//
+//        const std::size_t currentBase =
+//            baseVertices[
+//                static_cast<std::size_t>(sector)
+//            ];
+//
+//        const std::size_t nextBase =
+//            baseVertices[
+//                static_cast<std::size_t>(nextSector)
+//            ];
+//
+//        AddFace(
+//            {
+//                currentBase,
+//                apex,
+//                nextBase
+//            }
+//        );
+//    }
+//
+//    // -------------------------------------------------
+//    // CREATE BASE FACE
+//    // -------------------------------------------------
+//    //
+//    // The base must be wound in reverse order so its
+//    // normal points downward.
+//    // -------------------------------------------------
+//
+//    std::vector<std::size_t> baseFace;
+//
+//    baseFace.reserve(
+//        static_cast<std::size_t>(sectors)
+//    );
+//
+//    for (int sector = sectors - 1;
+//        sector >= 0;
+//        --sector)
+//    {
+//        baseFace.push_back(
+//            baseVertices[
+//                static_cast<std::size_t>(sector)
+//            ]
+//        );
+//    }
+//
+//    AddFace(baseFace);
+//
+//    // -------------------------------------------------
+//    // BUILD UNIQUE EDITABLE EDGES
+//    // -------------------------------------------------
+//
+//    RebuildEdges();
+//
+//    BOX_LOG_INFO(
+//        "Created editable cone. "
+//        << "Sectors="
+//        << sectors
+//        << " Radius="
+//        << radius
+//        << " Height="
+//        << height
+//        << " Vertices="
+//        << GetVertexCount()
+//        << " Edges="
+//        << GetEdgeCount()
+//        << " Faces="
+//        << GetFaceCount()
+//    );
+//
+//    return
+//        !m_vertices.empty() &&
+//        !m_edges.empty() &&
+//        !m_faces.empty();
+//}
 
 // ---------------------------------------------- End of Cone Creation ----------------------------------------------
 

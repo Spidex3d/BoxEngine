@@ -61,7 +61,7 @@ public:
 	bool CreateIcoSphere(int recursionLevel = 2);
 	bool CreateCapsule(int sectors = 32, int stacks = 8, float radius = 0.5f, float height = 2.0f); // use for player capsule
     bool CreateCylinder(int sectors = 32, int stacks = 1, float radius = 0.5f, float height = 1.0f);
-	bool CreateCone(int sectors = 32, float radius = 0.5f, float height = 1.0f);
+	bool CreateCone(int sectors = 32, float radius = 0.5f, float height = 1.0f, int stacks = 4);
 	bool CreateTorus(int sides = 16, int rings = 32, float innerRadius = 0.2f, float outerRadius = 0.5f);
 
     

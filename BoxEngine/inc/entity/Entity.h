@@ -63,7 +63,7 @@ public:
 	// bool CreateTorus(int sides = 16, int rings = 32, float innerRadius = 0.2f, float outerRadius = 0.5f);
      bool CreatePyramid();
 
-	 bool CreateCone(int sectors = 32, float radius = 0.5f, float height = 1.0f);
+	 bool CreateCone(int sectors = 32, float radius = 0.5f, float height = 1.0f, int stacks = 4);
 
 	 bool CreateTorus(int sides = 16, int rings = 32, float innerRadius = 0.2f, float outerRadius = 0.5f);
 
@@ -476,6 +476,9 @@ public:
 	void SetConeHeight(float height) {
 		m_coneCylinderHeight = height; // Reusing cylinder parameters for cone
 	}
+	void SetConeStacks(int stacks) {
+		m_coneCylinderStacks = stacks; // Reusing cylinder parameters for cone
+	}
 	int GetConeSectors() const {
 		return m_coneCylinderSectors; // Reusing cylinder parameters for cone
 	}
@@ -484,6 +487,9 @@ public:
 	}
 	float GetConeHeight() const {
 		return m_coneCylinderHeight; // Reusing cylinder parameters for cone
+	}
+	int GetConeStacks() const {
+		return m_coneCylinderStacks; // Reusing cylinder parameters for cone
 	}
 	bool UpdateCone(); // Function to update cone parameters and rebuild mesh if necessary
 
@@ -702,6 +708,7 @@ private:
 	int m_coneCylinderSectors = 32; // Reusing cylinder parameters for cone
 	float m_coneCylinderRadius = 0.5f; // Reusing cylinder parameters for cone
 	float m_coneCylinderHeight = 1.0f; // Reusing cylinder parameters for cone
+	int m_coneCylinderStacks = 4; // Reusing cylinder parameters for cone
 	// Torus specific parameters
 	int m_torusSides = 16;
 	int m_torusRings = 32;

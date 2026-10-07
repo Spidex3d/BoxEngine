@@ -1028,11 +1028,11 @@ bool Entity::CreatePyramid()
 
 }
 
-bool Entity::CreateCone(int sectors, float radius, float height)
+bool Entity::CreateCone(int sectors, float radius, float height, int stacks)
 {
     Destroy();
 
-    if (!m_editableMesh.CreateCone(sectors, radius, height))
+    if (!m_editableMesh.CreateCone(sectors, radius, height, stacks))
     {
         return false;
     }
@@ -1059,7 +1059,7 @@ bool Entity::CreateCone(int sectors, float radius, float height)
 }
 bool Entity::UpdateCone()
 {
-	if (!m_editableMesh.CreateCone(m_coneCylinderSectors, m_coneCylinderRadius, m_coneCylinderHeight))
+	if (!m_editableMesh.CreateCone(m_coneCylinderSectors, m_coneCylinderRadius, m_coneCylinderHeight, m_coneCylinderStacks))
 	{
 		return false;
 	}

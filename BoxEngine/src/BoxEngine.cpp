@@ -543,7 +543,7 @@ bool BoxEngine::AddEditablePyramid(const glm::vec3& position)
     return true;
 }
 
-bool BoxEngine::AddEditableCone(const glm::vec3& position, int sectors, float radius, float height)
+bool BoxEngine::AddEditableCone(const glm::vec3& position, int sectors, float radius, float height, int stacks)
 {
     const int entityID = m_nextEntityID++;
 
@@ -559,7 +559,7 @@ bool BoxEngine::AddEditableCone(const glm::vec3& position, int sectors, float ra
 
     cone->SetPosition(position);
 
-    if (!cone->CreateCone(sectors, radius, height))
+    if (!cone->CreateCone(sectors, radius, height, stacks))
     {
         BOX_LOG_ERROR("Failed to add editable cone");
         return false;

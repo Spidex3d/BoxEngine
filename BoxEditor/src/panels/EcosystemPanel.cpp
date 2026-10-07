@@ -505,18 +505,30 @@ EcoSystemAction EcosystemPanel::GrassTab(BoxEngine& engine)
 
     ImGui::InputFloat("Clump Size", &m_grassClumpSize, 0.05f, 0.10f, "%.2f");
 
-    //ImGui::InputInt("Blade Count", &m_grassClumpDensity);
+	// Blade Count: 5 to 10
     ImGui::InputInt("Blade Count", &m_grassClumpDensity);
 
     if (m_grassClumpDensity < 5)
     {
         m_grassClumpDensity = 5;
     }
-
     if (m_grassClumpDensity > 10)
     {
         m_grassClumpDensity = 10;
     }
+	// Blade Curve: 0.0f to 0.70f
+	ImGui::InputFloat("Blade Curve", &m_grassClumpCurve, 0.03f, 0.07f, "%.2f");
+	if (m_grassClumpCurve < 0.0f)
+	{
+		m_grassClumpCurve = 0.0f;
+	}
+	if (m_grassClumpCurve > 0.70f)
+	{
+		m_grassClumpCurve = 0.70f;
+	}
+
+
+
 
     ImGui::Spacing();
     ImGui::Separator();

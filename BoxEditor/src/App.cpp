@@ -759,7 +759,6 @@ void App::HandleEcoSystemAction(
                     );
         }
 
-        // end test
         const int bladeCount =
             m_ecosystemPanel->GetGrassClumpDensity();
 
@@ -790,6 +789,9 @@ void App::HandleEcoSystemAction(
 		// Random lean variation for each blade
         std::uniform_real_distribution<float>
             leanVariation(-10.0f, 10.0f);
+		// Generate grass blades
+        std::uniform_real_distribution<float>
+            bendDirectionVariation(0.0f, 6.283185f);
 
       
         for (int i = 0; i < bladeCount; ++i)
@@ -824,7 +826,7 @@ void App::HandleEcoSystemAction(
                     z
                 );
 
-           if (m_engine->AddEditableCone(position, 5, radius, height))
+           if (m_engine->AddEditableCone(position, 5, radius, height, 4))
            {
                Entity* grassBlade = m_engine->GetSelectedEntity();
 
@@ -853,7 +855,76 @@ void App::HandleEcoSystemAction(
 
                grassBlade->SetRotation(
                    glm::vec3(leanX, rotationY, leanZ));
+
+
+			   // Bend the grass blade slightly by scaling it along the Y-axis
+              
+               if (grassBlade)
+               {
+                   MeshEditing& mesh = grassBlade->GetEditableMesh();
+
+                   const float bendAmount = m_ecosystemPanel->GetGrassClumpCurve();
+
+                   //const float bendAmount = m_ecosystemPanel->GetGrassClumpCurve();
+
+                   const float bendAngle = bendDirectionVariation(rng);
+
+                   const float bendX =
+                       std::cos(bendAngle);
+
+                   const float bendZ =
+                       std::sin(bendAngle);
+
+                   for (std::size_t i = 0;
+                       i < mesh.GetVertexCount();
+                       ++i)
+                   {
+                       EditVertex& vertex =
+                           mesh.GetVertex(i);
+
+                       const float normalizedHeight =
+                           (vertex.position.y +
+                               height * 0.5f) /
+                           height;
+
+                       const float bendStrength =
+                           bendAmount *
+                           normalizedHeight *
+                           normalizedHeight;
+
+                       vertex.position.x +=
+                           bendX * bendStrength;
+
+                       vertex.position.z +=
+                           bendZ * bendStrength;
+                   }
+
+                  
+
+                   /*for (std::size_t i = 0;
+                       i < mesh.GetVertexCount();
+                       ++i)
+                   {
+                       EditVertex& vertex =
+                           mesh.GetVertex(i);
+
+                       const float normalizedHeight =
+                           (vertex.position.y +
+                               height * 0.5f) /
+                           height;
+
+                       vertex.position.x +=
+                           bendAmount *
+                           normalizedHeight *
+                           normalizedHeight;
+                   }*/
+
+                   grassBlade->RebuildFromEditableMesh();
+               }
+
+
            }
+           
         }
 
        
