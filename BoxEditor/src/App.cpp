@@ -735,9 +735,7 @@ void App::HandleEcoSystemAction(
 
         if (faceIndex >= mesh.GetFaceCount())
         {
-            BOX_LOG_WARNING(
-                "Grass Generator: Invalid selected face"
-            );
+            BOX_LOG_WARNING("Grass Generator: Invalid selected face");
 
             break;
         }
