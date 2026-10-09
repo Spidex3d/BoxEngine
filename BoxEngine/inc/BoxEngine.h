@@ -15,6 +15,7 @@ class Grid;
 class Entity;
 class Camera;
 class Texture;
+class Sky;
 
 enum class TransformTool
 {
@@ -83,6 +84,10 @@ public:
 	
     bool AddEditableRock(const glm::vec3& position = glm::vec3(0.0f), float radius = 1.0f, int subdivisions = 2,
         float roughness = 0.22f, std::uint32_t seed = 1234, float flattening = 0.5f);
+
+	// Load a skybox from a folder containing the six images for the skybox faces
+    bool LoadSkyBox(const std::string& folderPath);
+
 	// ------------------------- Ecosystem Meshes End -------------------------
 
 	bool AddEditablePyramid(const glm::vec3& position = glm::vec3(0.0f));
@@ -191,6 +196,11 @@ private:
 	Texture m_defaultTexture; // The Default texture for loading and rendering, checkerboard texture. 
 
 	std::vector<std::unique_ptr<Texture>> m_textures; // the main texture storage for the engine.
+
+
+	// skybox
+    std::unique_ptr<Sky> m_sky;
+    std::unique_ptr<Shader> m_skyShader;
 
 private:
     Framebuffer m_sceneFramebuffer;

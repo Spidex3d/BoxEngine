@@ -114,6 +114,9 @@
     <ClInclude Include="inc\mesh\MeshCombiner.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="inc\rendering\Sky.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\BoxEngine.cpp">
@@ -207,6 +210,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\mesh\MeshCombiner.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rendering\Sky.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

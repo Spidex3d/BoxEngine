@@ -22,6 +22,9 @@
 
 #include <fileManager/SceneSerializer.h>
 
+// Skybox
+#include <rendering/Sky.h>
+
 // ----------------------------------------
 // Game Engine
 // ----------------------------------------
@@ -113,6 +116,47 @@ bool BoxEngine::Initialize()
         return false;
     }
 
+	// ################################################# Skybox shader ######################################################
+    const std::string skyVertexPath =
+        helpers.GetAssetPath(
+            "assets/shader/SkyBox.vert"
+        );
+
+    const std::string skyFragmentPath =
+        helpers.GetAssetPath(
+            "assets/shader/SkyBox.frag"
+        );
+
+    m_skyShader =
+        std::make_unique<Shader>(
+            skyVertexPath,
+            skyFragmentPath
+        );
+
+    if (!m_skyShader ||
+        m_skyShader->ID() == 0)
+    {
+        BOX_LOG_ERROR(
+            "Failed to create skybox shader"
+        );
+
+        return false;
+    }
+
+
+    m_sky =
+        std::make_unique<Sky>();
+
+    if (!m_sky->Initialize())
+    {
+        BOX_LOG_ERROR(
+            "Failed to initialize skybox"
+        );
+
+        m_sky.reset();
+
+        return false;
+    }
 	// ################################################# end shader ########################################################
     
 
@@ -391,6 +435,16 @@ bool BoxEngine::AddEditableRock(const glm::vec3& position, float radius,
     m_selectedEntityID = entityID;
 
     return true;
+}
+
+bool BoxEngine::LoadSkyBox(const std::string& folderPath)
+{
+    if (!m_sky)
+    {
+        return false;
+    }
+
+    return m_sky->LoadSkyFolder(folderPath);
 }
 
 // ------------------------------ End Ecosystem Meshes ------------------------------
@@ -987,6 +1041,13 @@ void BoxEngine::RenderScene()
 
         const glm::mat4 projection =
             m_camera->GetProjectionMatrix(aspect);
+
+		// Skybox rendering
+        if (m_sky && m_skyShader)
+        {
+            m_sky->RenderSkyBox(*m_skyShader, view, projection);
+        }
+		// End Skybox rendering
 
         m_sceneShader->Use();
 

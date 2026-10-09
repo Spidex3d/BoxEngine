@@ -16,6 +16,7 @@
 #include <random>
 #include <cstdint>
 #include <cmath>
+#include <Helpers.h>
 
 #include <mesh/modifiers/AngleExtrude.h>
 
@@ -1180,6 +1181,23 @@ void App::HandleEcoSystemAction(
 
         break;
     }
+
+	case EcoSystemAction::AddSky:
+	{
+	    
+
+        Helpers helpers;
+
+        const std::string skyFolder =
+            helpers.GetAssetPath("assets/textures/skybox/NewSky/");
+
+        m_engine->LoadSkyBox(
+            skyFolder
+        );
+
+
+		break;
+	}
 
 
 

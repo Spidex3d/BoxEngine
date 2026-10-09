@@ -286,9 +286,12 @@ EcoSystemAction EcosystemPanel::Draw(BoxEngine& engine)
 
         if (ImGui::BeginTabItem("Sky"))
         {
-            SkyTab(
-                engine
-            );
+            const EcoSystemAction skyAction = SkyTab(engine);
+
+            if (skyAction != EcoSystemAction::None)
+            {
+                Ecoaction = skyAction;
+            }
 
             ImGui::EndTabItem();
         }
@@ -732,12 +735,24 @@ EcoSystemAction EcosystemPanel::TreesTab(BoxEngine& engine)
 // Sky Generator
 // -----------------------------------------------------
 
-void EcosystemPanel::SkyTab(BoxEngine& engine)
+EcoSystemAction EcosystemPanel::SkyTab(BoxEngine& engine)
 {
     ImGui::Text("Sky Generator");
     ImGui::Separator();
-
     ImGui::TextDisabled("Procedural sky generation coming soon...");
+
+    EcoSystemAction action = EcoSystemAction::None;
+    ImGui::TextDisabled("Create a cubemap skybox for the scene.");
+
+
+    if (ImGui::Button(
+        "Generate Sky",
+        ImVec2(140.0f, 32.0f)))
+    {
+        action = EcoSystemAction::AddSky;
+    }
+
+    return action;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

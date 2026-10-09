@@ -192,7 +192,7 @@ private:
 	void PlantsTab(BoxEngine& engine);
 	EcoSystemAction GrassTab(BoxEngine& engine); // Grass
 	EcoSystemAction TreesTab(BoxEngine& engine); // Trees
-	void SkyTab(BoxEngine& engine);
+	EcoSystemAction SkyTab(BoxEngine& engine);
 	void EnvironmentTab(BoxEngine& engine);
 
 	// ---------------- floor generator ----------------

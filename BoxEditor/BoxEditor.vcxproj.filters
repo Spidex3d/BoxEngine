@@ -257,5 +257,7 @@
     <None Include="assets\shader\outline.frag" />
     <None Include="assets\shader\gizmo.frag" />
     <None Include="assets\shader\gizmo.vert" />
+    <None Include="assets\shader\SkyBox.vert" />
+    <None Include="assets\shader\SkyBox.frag" />
   </ItemGroup>
 </Project>
