@@ -504,10 +504,18 @@ EcoSystemAction EcosystemPanel::GrassTab(BoxEngine& engine)
     // =================================================
 
     ImGui::Text("Clump");
+       
+    ImGui::InputFloat("Blade Scale", &m_grassClumpScale, 0.05f, 0.10f, "%.2f");
 
-    ImGui::InputInt("Clump Count", &m_grassClumpCount);
+    if (m_grassClumpScale < 0.10f)
+    {
+        m_grassClumpScale = 0.10f;
+    }
 
-	ImGui::InputFloat("Blade Scale", &m_grassClumpScale, 0.05f, 0.10f, "%.2f");
+    if (m_grassClumpScale > 5.0f)
+    {
+        m_grassClumpScale = 5.0f;
+    }
 
     ImGui::InputFloat("Clump Size", &m_grassClumpSize, 0.05f, 0.10f, "%.2f");
 

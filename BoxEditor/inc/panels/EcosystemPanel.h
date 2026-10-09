@@ -143,10 +143,7 @@ public:
 	{
 		return m_grassClumpSize;
 	}
-	int GetGrassClumpCount() const
-	{
-		return m_grassClumpCount;
-	}
+	
 	int GetGrassClumpDensity() const
 	{
 		return m_grassClumpDensity;
@@ -226,7 +223,7 @@ private:
 
 	// ---------------- Grass Generator ----------------
 	int m_grassSeed = 1234;
-	int m_grassClumpCount = 10;
+	
 	float m_grassClumpSize = 1.0f;
 	int m_grassClumpDensity = 5;
 	float m_grassClumpCurve = 0.5f;

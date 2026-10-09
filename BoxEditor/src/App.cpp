@@ -797,11 +797,13 @@ void App::HandleEcoSystemAction(
         std::uniform_real_distribution<float>
             bendDirectionVariation(0.0f, 6.283185f);
 
+        MeshEditing grassClumpMesh;
       
         for (int i = 0; i < bladeCount; ++i)
         {
             const float height =
-                heightVariation(rng);
+                heightVariation(rng) *
+                bladeScale;
 
             const float radius =
                 radiusVariation(rng);
@@ -819,115 +821,224 @@ void App::HandleEcoSystemAction(
                 std::sin(angle) * distance;
 
 
-            const float yOffset =
-                (height - 1.0f) * 0.5f;
+            // -------------------------------------------------
+            // Create one temporary grass blade
+            // -------------------------------------------------
 
-            glm::vec3 position =
-                faceCenter +
-                glm::vec3(
-                    x,
-                    yOffset,
-                    z
+            MeshEditing bladeMesh;
+
+            if (!bladeMesh.CreateCone(
+                5,
+                radius,
+                height,
+                4))
+            {
+                continue;
+            }
+
+
+            // -------------------------------------------------
+            // Random direction / lean
+            // -------------------------------------------------
+
+            float rotationY = 0.0f;
+
+            float leanX = 0.0f;
+            float leanZ = 0.0f;
+
+
+            if (m_ecosystemPanel
+                ->GetGrassRandomDirection())
+            {
+                rotationY =
+                    rotationVariation(rng);
+
+                leanX =
+                    leanVariation(rng);
+
+                leanZ =
+                    leanVariation(rng);
+            }
+
+
+            const glm::mat4 rotationMatrix =
+                glm::rotate(
+                    glm::mat4(1.0f),
+                    glm::radians(rotationY),
+                    glm::vec3(0.0f, 1.0f, 0.0f)
+                )
+                *
+                glm::rotate(
+                    glm::mat4(1.0f),
+                    glm::radians(leanX),
+                    glm::vec3(1.0f, 0.0f, 0.0f)
+                )
+                *
+                glm::rotate(
+                    glm::mat4(1.0f),
+                    glm::radians(leanZ),
+                    glm::vec3(0.0f, 0.0f, 1.0f)
                 );
 
-            if (m_engine->AddEditableCone(position, 5, radius, height, 4))
+
+            // -------------------------------------------------
+            // Bend direction
+            // -------------------------------------------------
+
+            const float bendAmount =
+                m_ecosystemPanel
+                ->GetGrassClumpCurve();
+
+
+            float bendX = 1.0f;
+            float bendZ = 0.0f;
+
+
+            if (m_ecosystemPanel
+                ->GetGrassRandomDirection())
             {
-                Entity* grassBlade = m_engine->GetSelectedEntity();
+                const float bendAngle =
+                    bendDirectionVariation(rng);
 
-                if (grassBlade)
-                {
-                    // -----------------------------------------
-                    // RANDOM ROTATION / LEAN
-                    // -----------------------------------------
+                bendX =
+                    std::cos(bendAngle);
 
-                    float rotationY = 0.0f;
-                    float leanX = 0.0f;
-                    float leanZ = 0.0f;
+                bendZ =
+                    std::sin(bendAngle);
+            }
 
-                    if (m_ecosystemPanel->GetGrassRandomDirection())
-                    {
-                        leanX =
-                            leanVariation(rng);
 
-                        leanZ =
-                            leanVariation(rng);
-                    }
+            // -------------------------------------------------
+            // Transform / bend temporary blade
+            // -------------------------------------------------
 
-                    grassBlade->SetRotation(
-                        glm::vec3(
-                            leanX,
-                            rotationY,
-                            leanZ
+            for (std::size_t vertexIndex = 0;
+                vertexIndex <
+                bladeMesh.GetVertexCount();
+                ++vertexIndex)
+            {
+                EditVertex& vertex =
+                    bladeMesh.GetVertex(
+                        vertexIndex
+                    );
+
+
+                const float normalizedHeight =
+                    (vertex.position.y +
+                        height * 0.5f) /
+                    height;
+
+
+                const float bendStrength =
+                    bendAmount *
+                    normalizedHeight *
+                    normalizedHeight;
+
+
+                vertex.position.x +=
+                    bendX * bendStrength;
+
+                vertex.position.z +=
+                    bendZ * bendStrength;
+
+
+                // Apply blade rotation / lean.
+                vertex.position =
+                    glm::vec3(
+                        rotationMatrix *
+                        glm::vec4(
+                            vertex.position,
+                            1.0f
                         )
                     );
 
-                    // -----------------------------------------
-                    // BEND
-                    // -----------------------------------------
 
-                    MeshEditing& mesh =
-                        grassBlade->GetEditableMesh();
-
-                    const float bendAmount =
-                        m_ecosystemPanel
-                        ->GetGrassClumpCurve();
-
-
-                    float bendX = 1.0f;
-                    float bendZ = 0.0f;
-
-
-                    if (m_ecosystemPanel
-                        ->GetGrassRandomDirection())
-                    {
-                        const float bendAngle =
-                            bendDirectionVariation(rng);
-
-                        bendX =
-                            std::cos(bendAngle);
-
-                        bendZ =
-                            std::sin(bendAngle);
-                    }
-
-
-                    for (std::size_t i = 0;
-                        i < mesh.GetVertexCount();
-                        ++i)
-                    {
-                        EditVertex& vertex =
-                            mesh.GetVertex(i);
-
-                        const float normalizedHeight =
-                            (vertex.position.y +
-                                height * 0.5f) /
-                            height;
-
-                        const float bendStrength =
-                            bendAmount *
-                            normalizedHeight *
-                            normalizedHeight;
-
-                        vertex.position.x +=
-                            bendX * bendStrength;
-
-                        vertex.position.z +=
-                            bendZ * bendStrength;
-                    }
-
-                    grassBlade->RebuildFromEditableMesh();
-                }
+                // Move blade into the clump.
+                vertex.position.x += x;
+                vertex.position.z += z;
             }
 
-                 
+
+            // -------------------------------------------------
+            // Append this blade into the final grass mesh
+            // -------------------------------------------------
+
+            const std::size_t vertexOffset =
+                grassClumpMesh.GetVertexCount();
+
+
+            for (std::size_t vertexIndex = 0;
+                vertexIndex <
+                bladeMesh.GetVertexCount();
+                ++vertexIndex)
+            {
+                grassClumpMesh.AddVertex(
+                    bladeMesh
+                    .GetVertex(vertexIndex)
+                    .position
+                );
+            }
+
+
+            for (std::size_t faceIndex = 0;
+                faceIndex <
+                bladeMesh.GetFaceCount();
+                ++faceIndex)
+            {
+                const EditFace& sourceFace =
+                    bladeMesh.GetFace(faceIndex);
+
+
+                std::vector<std::size_t>
+                    newVertices;
+
+                newVertices.reserve(
+                    sourceFace.vertices.size()
+                );
+
+
+                for (std::size_t sourceIndex :
+                sourceFace.vertices)
+                {
+                    newVertices.push_back(
+                        sourceIndex +
+                        vertexOffset
+                    );
+                }
+
+
+                const std::size_t newFaceIndex =
+                    grassClumpMesh.AddFace(
+                        newVertices
+                    );
+
+
+                EditFace& newFace =
+                    grassClumpMesh.GetFace(
+                        newFaceIndex
+                    );
+
+
+                newFace.materialIndex =
+                    sourceFace.materialIndex;
+
+                newFace.uvs =
+                    sourceFace.uvs;
+            }
         }
-               
+
+        grassClumpMesh.RebuildEdges();
+
+        m_engine->AddEditableGrassClump(
+            grassClumpMesh,
+            faceCenter
+        );
 
         Entity* grass = m_engine->GetSelectedEntity();
 
         if (grass)
         {
-            grass->SetName("Grass");
+            grass->SetName("Grass " + std::to_string(grass->GetID()));
         }
 
         break;
