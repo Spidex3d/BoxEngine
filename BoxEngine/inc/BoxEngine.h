@@ -84,9 +84,15 @@ public:
 	
     bool AddEditableRock(const glm::vec3& position = glm::vec3(0.0f), float radius = 1.0f, int subdivisions = 2,
         float roughness = 0.22f, std::uint32_t seed = 1234, float flattening = 0.5f);
+    // grass
+    Entity* AddEditableGrassClump(const MeshEditing& grassMesh, const glm::vec3& position);
+
+
 
 	// Load a skybox from a folder containing the six images for the skybox faces
     bool LoadSkyBox(const std::string& folderPath);
+    Sky& GetSky();
+    const Sky& GetSky() const;
 
 	// ------------------------- Ecosystem Meshes End -------------------------
 

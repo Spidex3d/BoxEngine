@@ -14,13 +14,354 @@ bool Sky::Initialize()
 	
     return CreateSkyBoxMesh();
 }
+// progrsss bar for loading sky textures
+bool Sky::BeginLoadSkyFolder(const std::string& folderPath)
+{
+    m_pendingSkyFiles.clear();
+
+    m_nextSkyFile = 0;
+
+    m_loadProgress = 0.0f;
+
+    m_isLoading = false;
+
+
+    if (!std::filesystem::exists(folderPath))
+    {
+        std::cout
+            << "Sky folder does not exist: "
+            << folderPath
+            << "\n";
+
+        return false;
+    }
+
+
+    for (const auto& entry :
+        std::filesystem::directory_iterator(folderPath))
+    {
+        if (!entry.is_regular_file())
+        {
+            continue;
+        }
+
+        const std::string ext =
+            entry.path().extension().string();
+
+        if (ext != ".png" &&
+            ext != ".jpg" &&
+            ext != ".bmp")
+        {
+            continue;
+        }
+
+        m_pendingSkyFiles.push_back(
+            entry.path()
+        );
+    }
+
+
+    if (m_pendingSkyFiles.empty())
+    {
+        std::cout
+            << "No sky images found in: "
+            << folderPath
+            << "\n";
+
+        return false;
+    }
+
+
+    m_isLoading = true;
+
+    std::cout
+        << "Sky loader found "
+        << m_pendingSkyFiles.size()
+        << " images\n";
+
+    return true;
+}
+
+bool Sky::LoadNextSky()
+{
+    if (!m_isLoading)
+    {
+        return false;
+    }
+
+
+    if (m_nextSkyFile >=
+        m_pendingSkyFiles.size())
+    {
+        m_isLoading = false;
+        m_loadProgress = 1.0f;
+
+        return false;
+    }
+
+
+    const std::string imagePath =
+        m_pendingSkyFiles[
+            m_nextSkyFile
+        ].string();
+
+
+    int width = 0;
+    int height = 0;
+    int channels = 0;
+
+
+    unsigned char* data =
+        stbi_load(
+            imagePath.c_str(),
+            &width,
+            &height,
+            &channels,
+            0
+        );
+
+
+    if (!data)
+    {
+        std::cout
+            << "Failed to load sky image: "
+            << imagePath
+            << "\n";
+
+        ++m_nextSkyFile;
+
+        m_loadProgress =
+            static_cast<float>(
+                m_nextSkyFile
+                ) /
+            static_cast<float>(
+                m_pendingSkyFiles.size()
+                );
+
+        return true;
+    }
+
+
+    const int faceSize = 512;
+
+
+    const std::vector<
+        std::pair<int, int>>
+        facePositions =
+    {
+        {0, 1}, // Top
+        {1, 0}, // Left
+        {1, 1}, // Front
+        {1, 2}, // Right
+        {1, 3}, // Back
+        {2, 1}  // Bottom
+    };
+
+
+    const GLenum faceTargets[6] =
+    {
+        GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
+        GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
+        GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
+        GL_TEXTURE_CUBE_MAP_POSITIVE_X,
+        GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,
+        GL_TEXTURE_CUBE_MAP_NEGATIVE_Y
+    };
+
+
+    GLuint cubeMapID = 0;
+
+    glGenTextures(
+        1,
+        &cubeMapID
+    );
+
+    glBindTexture(
+        GL_TEXTURE_CUBE_MAP,
+        cubeMapID
+    );
+
+
+    GLuint previewTexID = 0;
+
+
+    for (int i = 0;
+        i < 6;
+        ++i)
+    {
+        const auto [row, col] =
+            facePositions[i];
+
+
+        unsigned char* face =
+            ExtractFace(
+                data,
+                width,
+                height,
+                channels,
+                row,
+                col,
+                faceSize
+            );
+
+
+        glTexImage2D(
+            faceTargets[i],
+            0,
+            channels == 4
+            ? GL_RGBA
+            : GL_RGB,
+            faceSize,
+            faceSize,
+            0,
+            channels == 4
+            ? GL_RGBA
+            : GL_RGB,
+            GL_UNSIGNED_BYTE,
+            face
+        );
+
+
+        // Front preview image.
+        if (i == 2)
+        {
+            glGenTextures(
+                1,
+                &previewTexID
+            );
+
+            glBindTexture(
+                GL_TEXTURE_2D,
+                previewTexID
+            );
+
+            glTexImage2D(
+                GL_TEXTURE_2D,
+                0,
+                channels == 4
+                ? GL_RGBA
+                : GL_RGB,
+                faceSize,
+                faceSize,
+                0,
+                channels == 4
+                ? GL_RGBA
+                : GL_RGB,
+                GL_UNSIGNED_BYTE,
+                face
+            );
+
+            glTexParameteri(
+                GL_TEXTURE_2D,
+                GL_TEXTURE_MIN_FILTER,
+                GL_LINEAR
+            );
+
+            glTexParameteri(
+                GL_TEXTURE_2D,
+                GL_TEXTURE_MAG_FILTER,
+                GL_LINEAR
+            );
+        }
+
+
+        delete[] face;
+    }
+
+
+    glBindTexture(
+        GL_TEXTURE_CUBE_MAP,
+        cubeMapID
+    );
+
+
+    glTexParameteri(
+        GL_TEXTURE_CUBE_MAP,
+        GL_TEXTURE_MAG_FILTER,
+        GL_LINEAR
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_CUBE_MAP,
+        GL_TEXTURE_MIN_FILTER,
+        GL_LINEAR
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_CUBE_MAP,
+        GL_TEXTURE_WRAP_S,
+        GL_CLAMP_TO_EDGE
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_CUBE_MAP,
+        GL_TEXTURE_WRAP_T,
+        GL_CLAMP_TO_EDGE
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_CUBE_MAP,
+        GL_TEXTURE_WRAP_R,
+        GL_CLAMP_TO_EDGE
+    );
+
+
+    stbi_image_free(
+        data
+    );
+
+
+    m_skyTextures.push_back(
+        {
+            cubeMapID,
+            imagePath,
+            previewTexID
+        }
+    );
+
+
+    // First loaded sky becomes active.
+    if (m_skyTextures.size() == 1)
+    {
+        m_cubemapTexture =
+            cubeMapID;
+
+        m_selectedSkyIndex = 0;
+    }
+
+
+    ++m_nextSkyFile;
+
+
+    m_loadProgress =
+        static_cast<float>(
+            m_nextSkyFile
+            ) /
+        static_cast<float>(
+            m_pendingSkyFiles.size()
+            );
+
+
+    if (m_nextSkyFile >=
+        m_pendingSkyFiles.size())
+    {
+        m_isLoading = false;
+
+        m_loadProgress = 1.0f;
+
+        std::cout
+            << "Finished loading skies\n";
+    }
+
+
+    return true;
+}
+
+// end progress bar for loading sky textures
 
 bool Sky::LoadSkyFolder(const std::string& folderPath)
 {
-    m_skyTextures =
-        loadSkyTextureFromFolder(
-            folderPath
-        );
+    m_skyTextures = loadSkyTextureFromFolder(folderPath);
 
     if (m_skyTextures.empty())
     {
@@ -32,10 +373,11 @@ bool Sky::LoadSkyFolder(const std::string& folderPath)
         return false;
     }
 
+
+    m_selectedSkyIndex = 0;
     // For our first test,
     // automatically use the first sky.
-    m_cubemapTexture =
-        m_skyTextures[0].id;
+    m_cubemapTexture = m_skyTextures[0].id;
 
     std::cout
         << "Loaded "
@@ -52,15 +394,16 @@ bool Sky::LoadSkyFolder(const std::string& folderPath)
 
 void Sky::SetSkyTexture(std::size_t index)
 {
-    if (index >=
-        m_skyTextures.size())
+    if (index >= m_skyTextures.size())
     {
         return;
     }
 
-    m_cubemapTexture =
-        m_skyTextures[index].id;
+    m_selectedSkyIndex = index;
+
+    m_cubemapTexture = m_skyTextures[index].id;
 }
+
 
 void Sky::RenderSkyBox(Shader& shader, const glm::mat4& view, const glm::mat4& projection)
 {
@@ -134,14 +477,6 @@ void Sky::RenderSkyBox(Shader& shader, const glm::mat4& view, const glm::mat4& p
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 }
-
-//void Sky::RenderSkyBox(Shader& shader, const glm::mat4& view, const glm::mat4& projection)
-//{
-//    glBindVertexArray(m_VAO);
-//    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-//    glBindVertexArray(0);
-//    
-//}
 
 void Sky::Destroy()
 {
@@ -226,17 +561,6 @@ bool Sky::CreateSkyBoxMesh()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-    // Creat a cubemap for the skybox
-    //glGenTextures(1, &m_cubemapTexture);
-    //glBindTexture(GL_TEXTURE_CUBE_MAP, m_cubemapTexture);
-    //glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    //glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    //// this stuff is important to prevent seames
-    //glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    //glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    //glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    //glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
     return true;
 }

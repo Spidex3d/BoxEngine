@@ -2,6 +2,7 @@
 #include <BoxEngine.h>
 #include <imgui/imgui.h>
 #include <miniBoxLog.h>
+#include <rendering/Sky.h>
 
 EcosystemPanel::~EcosystemPanel() = default;
 
@@ -737,22 +738,216 @@ EcoSystemAction EcosystemPanel::TreesTab(BoxEngine& engine)
 
 EcoSystemAction EcosystemPanel::SkyTab(BoxEngine& engine)
 {
-    ImGui::Text("Sky Generator");
-    ImGui::Separator();
-    ImGui::TextDisabled("Procedural sky generation coming soon...");
 
     EcoSystemAction action = EcoSystemAction::None;
-    ImGui::TextDisabled("Create a cubemap skybox for the scene.");
+
+    Sky& sky = engine.GetSky();
 
 
-    if (ImGui::Button(
-        "Generate Sky",
+    if (sky.IsLoading())
+    {
+        sky.LoadNextSky();
+    }
+
+
+    // =================================================
+    // SKY
+    // =================================================
+
+    ImGui::Text("Sky Generator");
+
+    ImGui::Separator();
+
+    ImGui::TextDisabled(
+        "Select a cubemap sky for the scene."
+    );
+
+    ImGui::Spacing();
+
+
+    // =================================================
+    // LOAD SKY LIBRARY
+    // =================================================
+        
+    const bool skiesLoaded = sky.HasLoadedSkies();
+
+    const bool disableLoadButton = sky.HasLoadedSkies() || sky.IsLoading();
+
+	// Load Skies button, disabled if skies are already loaded or loading
+    ImGui::BeginDisabled(disableLoadButton);
+
+    if (ImGui::Button("Load Skies",
         ImVec2(140.0f, 32.0f)))
     {
         action = EcoSystemAction::AddSky;
     }
 
+    ImGui::EndDisabled();
+
+	ImGui::SameLine();
+
+	// Remove Sky button, disabled if no sky is active
+    ImGui::BeginDisabled(
+        !sky.HasActiveSky()
+    );
+
+    if (ImGui::Button("Remove Sky",
+        ImVec2(140.0f, 32.0f)))
+    {
+        sky.ClearSky();
+    }
+
+    ImGui::EndDisabled();
+
+
+    if (skiesLoaded)
+    {
+        ImGui::SameLine();
+
+        ImGui::TextDisabled("Sky library loaded");
+    }
+
+    /*if (ImGui::Button(
+        "Load Skies",
+        ImVec2(140.0f, 32.0f)))
+    {
+        action = EcoSystemAction::AddSky;
+    }*/
+
+	// progress bar for loading sky textures
+    if (sky.IsLoading())
+    {
+        ImGui::Spacing();
+
+        ImGui::Text("Loading sky textures...");
+
+        ImGui::ProgressBar(sky.GetLoadProgress(), ImVec2(-1.0f, 20.0f));
+    }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+
+    // =================================================
+    // SKY PICKER
+    // =================================================
+
+    ImGui::Text("Available Skies");
+
+
+    const auto& skyTextures =
+        engine.GetSky().GetSkyTextures();
+
+
+    if (skyTextures.empty())
+    {
+        ImGui::TextDisabled(
+            "No sky textures loaded."
+        );
+
+        return action;
+    }
+
+
+    const std::size_t selectedIndex =
+        engine.GetSky().GetSelectedSkyIndex();
+
+
+    // =================================================
+    // THUMBNAIL GRID
+    // =================================================
+
+    const int columns = 4;
+
+    int count = 0;
+
+
+    ImGui::BeginChild(
+        "SkyTextureGrid",
+        ImVec2(0.0f, 300.0f),
+        true
+    );
+
+
+    for (std::size_t i = 0;
+        i < skyTextures.size();
+        ++i)
+    {
+        const SkyTexture& sky =
+            skyTextures[i];
+
+
+        ImGui::PushID(
+            static_cast<int>(i)
+        );
+
+
+        // -----------------------------------------
+        // Selected sky outline
+        // -----------------------------------------
+
+        const ImVec2 cursorPos =
+            ImGui::GetCursorScreenPos();
+
+
+        if (ImGui::ImageButton(
+            "##SkyPreview",
+            (ImTextureID)(static_cast<intptr_t>(sky.frontFaceTexID)),
+            ImVec2(64.0f, 64.0f)))
+        {
+            engine.GetSky().SetSkyTexture(i);
+        }
+
+
+        // -----------------------------------------
+        // Draw selection outline
+        // -----------------------------------------
+
+        if (i == selectedIndex)
+        {
+            ImDrawList* drawList =
+                ImGui::GetWindowDrawList();
+
+            drawList->AddRect(
+                cursorPos,
+                ImVec2(
+                    cursorPos.x + 64.0f,
+                    cursorPos.y + 64.0f
+                ),
+                IM_COL32(
+                    255,
+                    170,
+                    40,
+                    255
+                ),
+                2.0f,
+                0,
+                3.0f
+            );
+        }
+
+
+		
+
+
+        ImGui::PopID();
+
+
+        ++count;
+
+        if (count % columns != 0)
+        {
+            ImGui::SameLine();
+        }
+    }
+
+
+    ImGui::EndChild();
+
+
     return action;
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

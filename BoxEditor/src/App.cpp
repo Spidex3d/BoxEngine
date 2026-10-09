@@ -1184,17 +1184,11 @@ void App::HandleEcoSystemAction(
 
 	case EcoSystemAction::AddSky:
 	{
-	    
-
         Helpers helpers;
 
-        const std::string skyFolder =
-            helpers.GetAssetPath("assets/textures/skybox/NewSky/");
+        const std::string skyFolder = helpers.GetAssetPath("assets/textures/skybox/NewSky/");
 
-        m_engine->LoadSkyBox(
-            skyFolder
-        );
-
+        m_engine->LoadSkyBox(skyFolder);
 
 		break;
 	}

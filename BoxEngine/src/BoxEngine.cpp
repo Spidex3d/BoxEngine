@@ -437,14 +437,111 @@ bool BoxEngine::AddEditableRock(const glm::vec3& position, float radius,
     return true;
 }
 
-bool BoxEngine::LoadSkyBox(const std::string& folderPath)
+// Grass clump creation
+Entity* BoxEngine::AddEditableGrassClump(const MeshEditing& grassMesh, const glm::vec3& position)
+{
+    if (grassMesh.GetVertexCount() == 0 ||
+        grassMesh.GetFaceCount() == 0)
+    {
+        BOX_LOG_ERROR(
+            "AddEditableGrassClump: empty mesh"
+        );
+
+        return nullptr;
+    }
+
+    const int entityID =
+        m_nextEntityID++;
+
+    const std::string entityName =
+        "Grass Clump " +
+        std::to_string(entityID);
+
+    auto grass =
+        std::make_unique<Entity>(
+            entityID,
+            entityName
+        );
+
+    // Default material for now.
+    grass->GetMaterial().SetBaseColorTexture(
+        m_defaultTexture.GetID(),
+        m_defaultTexturePath
+    );
+
+    Material& material =
+        grass->GetMaterial();
+
+    material.SetUseBaseColorTexture(true);
+
+    grass->SetPosition(position);
+
+    grass->GetEditableMesh() =
+        grassMesh;
+
+    grass->GetBaseEditableMesh() =
+        grassMesh;
+
+    if (!grass->RebuildFromEditableMesh())
+    {
+        BOX_LOG_ERROR(
+            "Failed to build grass clump entity"
+        );
+
+        return nullptr;
+    }
+
+    Entity* result =
+        grass.get();
+
+    m_entities.push_back(
+        std::move(grass)
+    );
+
+    m_selectedEntityID =
+        entityID;
+
+    BOX_LOG_INFO(
+        "Added grass clump. Entity count: "
+        << m_entities.size()
+    );
+
+    return result;
+}
+
+
+// Load a skybox from a folder containing the six images for the skybox faces
+bool BoxEngine::LoadSkyBox(
+    const std::string& folderPath)
 {
     if (!m_sky)
     {
         return false;
     }
 
-    return m_sky->LoadSkyFolder(folderPath);
+    return m_sky->BeginLoadSkyFolder(
+        folderPath
+    );
+}
+
+//bool BoxEngine::LoadSkyBox(const std::string& folderPath)
+//{
+//    if (!m_sky)
+//    {
+//        return false;
+//    }
+//
+//    return m_sky->LoadSkyFolder(folderPath);
+//}
+
+Sky& BoxEngine::GetSky()
+{
+    return *m_sky;
+}
+
+const Sky& BoxEngine::GetSky() const
+{
+    return *m_sky;
 }
 
 // ------------------------------ End Ecosystem Meshes ------------------------------

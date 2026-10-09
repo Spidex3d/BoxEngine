@@ -195,6 +195,11 @@ private:
 	EcoSystemAction SkyTab(BoxEngine& engine);
 	void EnvironmentTab(BoxEngine& engine);
 
+	// Progress bar for long generation tasks
+	
+
+	// ----------------- Ecosystem Tabs End -----------------
+
 	// ---------------- floor generator ----------------
 	
 	// Floor settings
