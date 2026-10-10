@@ -16,6 +16,7 @@ class Entity;
 class Camera;
 class Texture;
 class Sky;
+class Terrain;
 
 enum class TransformTool
 {
@@ -84,6 +85,11 @@ public:
 	
     bool AddEditableRock(const glm::vec3& position = glm::vec3(0.0f), float radius = 1.0f, int subdivisions = 2,
         float roughness = 0.22f, std::uint32_t seed = 1234, float flattening = 0.5f);
+
+	// Add an editable terrain mesh to the scene with specified parameters
+	bool AddEditableTerrain(const glm::vec3& position = glm::vec3(0.0f), int width = 10, int depth = 10, int subdivisionsX = 10, int subdivisionsZ = 10,
+		float heightScale = 1.0f, std::uint32_t seed = 1234);
+
     // grass
     Entity* AddEditableGrassClump(const MeshEditing& grassMesh, const glm::vec3& position);
 
@@ -93,6 +99,9 @@ public:
     bool LoadSkyBox(const std::string& folderPath);
     Sky& GetSky();
     const Sky& GetSky() const;
+
+	// Load Terrain from a heightmap image file
+    bool CreateTerrain();
 
 	// ------------------------- Ecosystem Meshes End -------------------------
 
@@ -207,6 +216,12 @@ private:
 	// skybox
     std::unique_ptr<Sky> m_sky;
     std::unique_ptr<Shader> m_skyShader;
+
+	// Terrain
+    std::unique_ptr<Terrain> m_terrain;
+    std::unique_ptr<Shader> m_terrainShader;
+    
+
 
 private:
     Framebuffer m_sceneFramebuffer;

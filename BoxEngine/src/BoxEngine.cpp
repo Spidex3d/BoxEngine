@@ -24,6 +24,8 @@
 
 // Skybox
 #include <rendering/Sky.h>
+// Terrain
+#include <rendering/Terrain.h>
 
 // ----------------------------------------
 // Game Engine
@@ -157,6 +159,31 @@ bool BoxEngine::Initialize()
 
         return false;
     }
+	// ################################################ Terrain shader ######################################################
+    const std::string terrainVertexPath =
+        helpers.GetAssetPath(
+            "assets/shader/Terrain.vert"
+        );
+
+    const std::string terrainFragmentPath =
+        helpers.GetAssetPath(
+            "assets/shader/Terrain.frag"
+        );
+
+    m_terrainShader =
+        std::make_unique<Shader>(
+            terrainVertexPath,
+            terrainFragmentPath
+        );
+
+    if (!m_terrainShader || m_terrainShader->ID() == 0)
+    {
+        BOX_LOG_ERROR("Failed to create terrain shader");
+
+        return false;
+    }
+
+   
 	// ################################################# end shader ########################################################
     
 
@@ -173,8 +200,10 @@ bool BoxEngine::Initialize()
 
    
     m_camera = std::make_unique<Camera>(glm::vec3(6.0f, 5.0f, 8.0f));
+   
 
     m_camera->SetPositionYawPitch(glm::vec3(6.0f, 5.0f, 8.0f), -135.0f, -25.0f);
+    
 
     m_camera->Target = glm::vec3(0.0f);
 
@@ -203,6 +232,14 @@ void BoxEngine::Shutdown()
     }
 
     m_selectedEntityID = -1;
+
+    if (m_terrain)
+    {
+        m_terrain->Destroy();
+        m_terrain.reset();
+    }
+
+    m_terrainShader.reset();
 
     // Entity destructors delete their OpenGL buffers.
     m_entities.clear();
@@ -437,6 +474,14 @@ bool BoxEngine::AddEditableRock(const glm::vec3& position, float radius,
     return true;
 }
 
+// -------------------------- My Create a terrain primitive with subdivisions, width and depth --------------------------
+bool BoxEngine::AddEditableTerrain(const glm::vec3& position, int width, int depth, int subdivisionsX, int subdivisionsZ,
+    float heightScale, std::uint32_t seed)
+{
+    return false;
+}
+
+
 // Grass clump creation
 Entity* BoxEngine::AddEditableGrassClump(const MeshEditing& grassMesh, const glm::vec3& position)
 {
@@ -524,15 +569,6 @@ bool BoxEngine::LoadSkyBox(
     );
 }
 
-//bool BoxEngine::LoadSkyBox(const std::string& folderPath)
-//{
-//    if (!m_sky)
-//    {
-//        return false;
-//    }
-//
-//    return m_sky->LoadSkyFolder(folderPath);
-//}
 
 Sky& BoxEngine::GetSky()
 {
@@ -543,6 +579,31 @@ const Sky& BoxEngine::GetSky() const
 {
     return *m_sky;
 }
+// ------------------------------------ Terrain ------------------------------------
+bool BoxEngine::CreateTerrain()
+{
+    if (!m_terrain)
+    {
+        m_terrain = std::make_unique<Terrain>();
+    }
+
+    if (!m_terrain->Initialize())
+    {
+        BOX_LOG_ERROR("Failed to initialize terrain" );
+
+        m_terrain.reset();
+
+        return false;
+    }
+
+    BOX_LOG_INFO("Terrain created");
+
+    return true;
+}
+
+
+
+
 
 // ------------------------------ End Ecosystem Meshes ------------------------------
 
@@ -1145,6 +1206,13 @@ void BoxEngine::RenderScene()
             m_sky->RenderSkyBox(*m_skyShader, view, projection);
         }
 		// End Skybox rendering
+
+		// Terrain rendering
+        if (m_terrain && m_terrainShader)
+        {
+            m_terrain->RenderTerrain(*m_terrainShader, view, projection);
+        }
+		// End Terrain rendering
 
         m_sceneShader->Use();
 

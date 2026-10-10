@@ -259,5 +259,7 @@
     <None Include="assets\shader\gizmo.vert" />
     <None Include="assets\shader\SkyBox.vert" />
     <None Include="assets\shader\SkyBox.frag" />
+    <None Include="assets\shader\Terrain.vert" />
+    <None Include="assets\shader\Terrain.frag" />
   </ItemGroup>
 </Project>

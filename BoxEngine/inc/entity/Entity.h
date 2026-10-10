@@ -23,6 +23,7 @@ enum class EntityPrimitiveType
     Cube,
     Plane,
 	Floor,
+	Terrain,
     Rock,
 	IcoSphere,
 	Capsule,
@@ -76,7 +77,7 @@ public:
 
     bool CreateRock(int rockSubdivisions, float rockRadius, float rockRoughness, std::uint32_t rockSeed, float rockFlattening);
 
-
+	
 
      // this just gives us a primitive type
      EntityPrimitiveType GetPrimitiveType() const

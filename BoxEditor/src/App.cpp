@@ -1304,7 +1304,14 @@ void App::HandleEcoSystemAction(
 		break;
 	}
 
+	
 
+    case EcoSystemAction::Addterrain:
+    {
+        m_engine->CreateTerrain();
+
+        break;
+    }
 
     case EcoSystemAction::None:
     default:

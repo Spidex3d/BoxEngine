@@ -16,6 +16,7 @@ enum class EcoSystemAction
 	AddTrees,
 	JoinTree,
 	AddSky,
+	AddTerrain,
 	AddEnvironment
 
 };
@@ -184,12 +185,13 @@ private:
 	// ----------------- Ecosystem Tabs -----------------
 	void FloorTab(BoxEngine& engine);			 // Floor	
 	EcoSystemAction RocksTab(BoxEngine& engine); // Rocks
-	void TerrainTab(BoxEngine& engine);
+	EcoSystemAction TerrainTab(BoxEngine& engine);
 	void WaterTab(BoxEngine& engine);
 	void PlantsTab(BoxEngine& engine);
 	EcoSystemAction GrassTab(BoxEngine& engine); // Grass
 	EcoSystemAction TreesTab(BoxEngine& engine); // Trees
 	EcoSystemAction SkyTab(BoxEngine& engine);
+	EcoSystemAction AddTerrainTab(BoxEngine& engine);
 	void EnvironmentTab(BoxEngine& engine);
 
 	// Progress bar for long generation tasks

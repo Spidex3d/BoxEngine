@@ -22,11 +22,8 @@ public:
 
     bool LoadSkyFolder(const std::string& folderPath);
 
-    void RenderSkyBox(
-        Shader& shader,
-        const glm::mat4& view,
-        const glm::mat4& projection
-    );
+    void RenderSkyBox(Shader& shader, const glm::mat4& view,
+        const glm::mat4& projection);
 
     void Destroy();
 

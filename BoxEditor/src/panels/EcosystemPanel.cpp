@@ -209,9 +209,12 @@ EcoSystemAction EcosystemPanel::Draw(BoxEngine& engine)
 
         if (ImGui::BeginTabItem("Terrain"))
         {
-            TerrainTab(
-                engine
-            );
+			const EcoSystemAction terrainAction = TerrainTab(engine);
+
+			if (terrainAction != EcoSystemAction::None)
+			{
+				Ecoaction = terrainAction;
+			}
 
             ImGui::EndTabItem();
         }
@@ -449,15 +452,24 @@ EcoSystemAction EcosystemPanel::RocksTab(
 
 // ---------------------------------------------------------------------------------------------------------------
 // Terrain Generator
-// -----------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------
 
-void EcosystemPanel::TerrainTab(BoxEngine& engine)
+EcoSystemAction EcosystemPanel::TerrainTab(BoxEngine& engine)
 {
+    EcoSystemAction action = EcoSystemAction::None;
     // TODO: Implement terrain generation logic here
     ImGui::Text("Terrain Generator");
     ImGui::Separator();
 
     ImGui::TextDisabled("Procedural terrain generation coming soon...");
+    if (ImGui::Button(
+        "Generate Terrain",
+        ImVec2(140.0f, 32.0f)))
+    {
+        action = EcoSystemAction::Addterrain;
+    }
+
+    return action;
 }
 
 // -----------------------------------------------------------------------------------------------------------------
