@@ -1229,6 +1229,16 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                                 m_flattenHeight
                             );
                         }
+                        else if (
+                            engine.GetTerrainBrushType() ==
+                            TerrainBrushType::Noise)
+                        {
+                            engine.NoiseTerrain(
+                                terrainHit,
+                                engine.GetTerrainBrushSize(),
+                                engine.GetTerrainBrushStrength()
+                            );
+                        }
                     }
                 }
                 else

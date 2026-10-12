@@ -708,6 +708,16 @@ void BoxEngine::FlattenTerrain(const glm::vec3& worldPosition, float radius, flo
     m_terrain->UpdateMeshFromHeightMap();
 }
 
+void BoxEngine::NoiseTerrain(const glm::vec3& worldPosition, float radius, float strength)
+{
+	if (!m_terrain)
+	{
+		return;
+	}
+	m_terrain->NoiseTerrain(worldPosition, radius, strength);
+	m_terrain->UpdateMeshFromHeightMap();
+}
+
 
 void BoxEngine::HideTerrainBrush()
 {

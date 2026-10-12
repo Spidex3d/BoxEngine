@@ -7,6 +7,7 @@
 #include <shader/Shader.h>
 #include <cmath>
 #include <algorithm>
+#include <cstdlib>
 
 #include <filesystem>
 namespace fs = std::filesystem;
@@ -27,7 +28,30 @@ bool Terrain::Initialize()
             return false;
         }
 
-        return true;
+
+        m_grassTexture =
+            loadSaveTerrainTexture(
+                "assets/textures/terrain/grass.jpg"
+            );
+
+        m_rockTexture =
+            loadSaveTerrainTexture(
+                "assets/textures/terrain/Rock.jpg"
+            );
+
+        m_dirtTexture =
+            loadSaveTerrainTexture(
+                "assets/textures/terrain/Soil.jpg"
+            );
+
+        if (m_grassTexture == 0 ||
+            m_rockTexture == 0 ||
+            m_dirtTexture == 0)
+        {
+            return false;
+        }
+
+        //return true;
    
     
     
@@ -199,15 +223,49 @@ void Terrain::RenderTerrain(Shader& shader, const glm::mat4& view, const glm::ma
 
     shader.setMat4("model", model);
 
-    glActiveTexture(GL_TEXTURE0);
+   /* glActiveTexture(GL_TEXTURE0);
 
     glBindTexture(GL_TEXTURE_2D, m_terrainTexture);
 
     shader.SetUniformInt(
         "terrainTexture",
         0
+    );*/
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(
+        GL_TEXTURE_2D,
+        m_grassTexture
     );
 
+    shader.SetUniformInt(
+        "texture_grass",
+        0
+    );
+
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(
+        GL_TEXTURE_2D,
+        m_rockTexture
+    );
+
+    shader.SetUniformInt(
+        "texture_rock",
+        1
+    );
+
+
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(
+        GL_TEXTURE_2D,
+        m_dirtTexture
+    );
+
+    shader.SetUniformInt(
+        "texture_dirt",
+        2
+    );
 
 
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -260,37 +318,126 @@ std::vector<TerrainImage> Terrain::LoadTerrainTextureFromFolder(const std::strin
     return std::vector<TerrainImage>();
 }
 
-unsigned int Terrain::loadSaveTerrainTexture(const std::string& terrainPath)
+unsigned int Terrain::loadSaveTerrainTexture(
+    const std::string& terrainPath)
 {
-    unsigned int textureID;
-    glGenTextures(1, &textureID);
+    int width = 0;
+    int height = 0;
+    int nrComponents = 0;
 
-    int width, height, nrComponents;
-    unsigned char* data = stbi_load(terrainPath.c_str(), &width, &height, &nrComponents, 0);
-    if (data) {
-        GLenum format = (nrComponents == 1) ? GL_RED :
-            (nrComponents == 3) ? GL_RGB :
-            (nrComponents == 4) ? GL_RGBA : GL_RGB;
+    unsigned char* data =
+        stbi_load(
+            terrainPath.c_str(),
+            &width,
+            &height,
+            &nrComponents,
+            0
+        );
 
-        glBindTexture(GL_TEXTURE_2D, textureID);
-        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
+    if (!data)
+    {
+        std::cout
+            << "Texture failed to load: "
+            << terrainPath
+            << std::endl;
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        glBindTexture(GL_TEXTURE_2D, 0);
-        stbi_image_free(data);
+        return 0;
     }
-    else {
-        std::cout << "Texture failed to load: " << terrainPath << std::endl;
-        stbi_image_free(data);
+
+    GLenum format = GL_RGB;
+
+    if (nrComponents == 1)
+    {
+        format = GL_RED;
     }
+    else if (nrComponents == 3)
+    {
+        format = GL_RGB;
+    }
+    else if (nrComponents == 4)
+    {
+        format = GL_RGBA;
+    }
+    else
+    {
+        std::cout
+            << "Unsupported texture format: "
+            << terrainPath
+            << " channels: "
+            << nrComponents
+            << std::endl;
+
+        stbi_image_free(data);
+        return 0;
+    }
+
+    GLuint textureID = 0;
+
+    glGenTextures(
+        1,
+        &textureID
+    );
+
+    glBindTexture(
+        GL_TEXTURE_2D,
+        textureID
+    );
+
+    glPixelStorei(
+        GL_UNPACK_ALIGNMENT,
+        1
+    );
+
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        format,
+        width,
+        height,
+        0,
+        format,
+        GL_UNSIGNED_BYTE,
+        data
+    );
+
+    glGenerateMipmap(
+        GL_TEXTURE_2D
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_WRAP_S,
+        GL_REPEAT
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_WRAP_T,
+        GL_REPEAT
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_MIN_FILTER,
+        GL_LINEAR_MIPMAP_LINEAR
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_MAG_FILTER,
+        GL_LINEAR
+    );
+
+    glBindTexture(
+        GL_TEXTURE_2D,
+        0
+    );
+
+    stbi_image_free(data);
 
     return textureID;
 }
+
 
 void Terrain::ReloadTerrainMeshFromFile(const std::string& heightmapPath)
 {
@@ -1021,6 +1168,105 @@ void Terrain::FlattenTerrain(const glm::vec3& worldPosition, float radius, float
     }
 }
 
+void Terrain::NoiseTerrain(const glm::vec3& worldPosition, float radius, float strength)
+{
+    if (m_heightMap.empty())
+    {
+        return;
+    }
+
+    const float localX =
+        worldPosition.x - m_position.x;
+
+    const float localZ =
+        worldPosition.z - m_position.z;
+
+    const float mapX =
+        localX +
+        static_cast<float>(heightmapHeight) * 0.5f;
+
+    const float mapZ =
+        localZ +
+        static_cast<float>(heightmapWidth) * 0.5f;
+
+    const int centerX =
+        static_cast<int>(std::round(mapX));
+
+    const int centerZ =
+        static_cast<int>(std::round(mapZ));
+
+    const int brushRadius =
+        static_cast<int>(std::ceil(radius));
+
+    for (int z = -brushRadius;
+        z <= brushRadius;
+        ++z)
+    {
+        for (int x = -brushRadius;
+            x <= brushRadius;
+            ++x)
+        {
+            const int sampleX =
+                centerX + x;
+
+            const int sampleZ =
+                centerZ + z;
+
+            if (sampleX < 0 ||
+                sampleX >= heightmapHeight ||
+                sampleZ < 0 ||
+                sampleZ >= heightmapWidth)
+            {
+                continue;
+            }
+
+            const float distance =
+                std::sqrt(
+                    static_cast<float>(
+                        x * x + z * z
+                        )
+                );
+
+            if (distance > radius)
+            {
+                continue;
+            }
+
+            const float t =
+                1.0f -
+                distance / radius;
+
+            const float falloff =
+                t * t *
+                (3.0f - 2.0f * t);
+
+            const float randomValue =
+                static_cast<float>(
+                    std::rand()
+                    ) /
+                static_cast<float>(
+                    RAND_MAX
+                    );
+
+            // Convert 0..1 into -1..1
+            const float noise =
+                randomValue * 2.0f - 1.0f;
+
+            const std::size_t index =
+                static_cast<std::size_t>(
+                    sampleX *
+                    heightmapWidth +
+                    sampleZ
+                    );
+
+            m_heightMap[index] +=
+                noise *
+                strength *
+                falloff;
+        }
+    }
+}
+
 void Terrain::UpdateMeshFromHeightMap()
 {
     if (m_heightMap.empty() ||
@@ -1158,65 +1404,114 @@ void Terrain::UpdateMeshFromHeightMap()
     );
 }
 
-//void Terrain::UpdateMeshFromHeightMap()
-//{
-//    if (m_heightMap.empty() ||
-//        m_vertices.empty())
-//    {
-//        return;
-//    }
-//
-//    std::size_t vertexIndex = 0;
-//
-//    for (int i = 0;
-//        i < heightmapHeight;
-//        ++i)
-//    {
-//        for (int j = 0;
-//            j < heightmapWidth;
-//            ++j)
-//        {
-//            const std::size_t heightIndex =
-//                static_cast<std::size_t>(
-//                    i * heightmapWidth + j
-//                    );
-//
-//            // Each vertex = 8 floats:
-//            // x y z nx ny nz u v
-//            const std::size_t base =
-//                vertexIndex * 8;
-//
-//            m_vertices[base + 1] =
-//                m_heightMap[heightIndex];
-//
-//            ++vertexIndex;
-//        }
-//    }
-//
-//
-//    glBindBuffer(
-//        GL_ARRAY_BUFFER,
-//        m_VBO
-//    );
-//
-//    glBufferSubData(
-//        GL_ARRAY_BUFFER,
-//        0,
-//        m_vertices.size() *
-//        sizeof(float),
-//        m_vertices.data()
-//    );
-//
-//    glBindBuffer(
-//        GL_ARRAY_BUFFER,
-//        0
-//    );
-//}
 
 void Terrain::Destroy()
 {
-    glDeleteBuffers(1, &m_VBO);
-    glDeleteBuffers(1, &m_EBO);
-    glDeleteVertexArrays(1, &m_VAO);
-    glDeleteTextures(1, &m_terrainTexture);
+    if (m_grassTexture != 0)
+    {
+        glDeleteTextures(
+            1,
+            &m_grassTexture
+        );
+
+        m_grassTexture = 0;
+    }
+
+    if (m_rockTexture != 0)
+    {
+        glDeleteTextures(
+            1,
+            &m_rockTexture
+        );
+
+        m_rockTexture = 0;
+    }
+
+    if (m_dirtTexture != 0)
+    {
+        glDeleteTextures(
+            1,
+            &m_dirtTexture
+        );
+
+        m_dirtTexture = 0;
+    }
+
+    if (m_terrainTexture != 0)
+    {
+        glDeleteTextures(
+            1,
+            &m_terrainTexture
+        );
+
+        m_terrainTexture = 0;
+    }
+
+    if (m_VBO != 0)
+    {
+        glDeleteBuffers(
+            1,
+            &m_VBO
+        );
+
+        m_VBO = 0;
+    }
+
+    if (m_EBO != 0)
+    {
+        glDeleteBuffers(
+            1,
+            &m_EBO
+        );
+
+        m_EBO = 0;
+    }
+
+    if (m_VAO != 0)
+    {
+        glDeleteVertexArrays(
+            1,
+            &m_VAO
+        );
+
+        m_VAO = 0;
+    }
 }
+
+//void Terrain::Destroy()
+//{
+//    glDeleteBuffers(1, &m_VBO);
+//    glDeleteBuffers(1, &m_EBO);
+//    glDeleteVertexArrays(1, &m_VAO);
+//    glDeleteTextures(1, &m_terrainTexture);
+//
+//    if (m_grassTexture != 0)
+//    {
+//        glDeleteTextures(
+//            1,
+//            &m_grassTexture
+//        );
+//
+//        m_grassTexture = 0;
+//    }
+//
+//    if (m_rockTexture != 0)
+//    {
+//        glDeleteTextures(
+//            1,
+//            &m_rockTexture
+//        );
+//
+//        m_rockTexture = 0;
+//    }
+//
+//    if (m_dirtTexture != 0)
+//    {
+//        glDeleteTextures(
+//            1,
+//            &m_dirtTexture
+//        );
+//
+//        m_dirtTexture = 0;
+//    }
+//}

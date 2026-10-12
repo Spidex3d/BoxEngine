@@ -70,6 +70,8 @@ public:
 
 	void FlattenTerrain(const glm::vec3& worldPosition,	float radius, float strength, float targetHeight);
 
+	void NoiseTerrain(const glm::vec3& worldPosition, float radius, float strength);
+
 	void UpdateMeshFromHeightMap();
 
 	void Destroy();
@@ -79,14 +81,16 @@ public:
 	const std::vector<unsigned int>& GetIndices() const { return m_indices; }
 
 private:
-	GLuint m_VAO, m_VBO, m_EBO;
+	//GLuint m_VAO, m_VBO, m_EBO;
+	GLuint m_VAO = 0;
+	GLuint m_VBO = 0;
+	GLuint m_EBO = 0;
 
 	std::vector<float> m_vertices;
 	std::vector<unsigned int> m_indices;
 
 	std::vector<float> m_heightMap;
 
-	unsigned int m_terrainTexture;
 
 	glm::vec3 m_position = glm::vec3(0.0f);
 
@@ -98,6 +102,11 @@ private:
 	int textureMapWidth = 0;
 	int textureMapHeight = 0;
 	int textureMapChannels = 0;
+	// texture IDs for the terrain textures
+	unsigned int m_terrainTexture = 0;
+	unsigned int m_grassTexture = 0;
+	unsigned int m_rockTexture = 0;
+	unsigned int m_dirtTexture = 0;
 
 	int rez = 1;
 	int numStrips = 0;

@@ -124,6 +124,8 @@ public:
 
     void FlattenTerrain(const glm::vec3& worldPosition, float radius, float strength, float targetHeight);
 
+	void NoiseTerrain(const glm::vec3& worldPosition, float radius, float strength);
+
     void HideTerrainBrush();
 
     void SetTerrainBrushType(
