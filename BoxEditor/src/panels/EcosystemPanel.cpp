@@ -484,12 +484,37 @@ EcoSystemAction EcosystemPanel::TerrainTab(BoxEngine& engine)
                 TerrainBrushType::Raise
             );
         }
-        else
+        else if (m_terrainBrushType == 1)
         {
             engine.SetTerrainBrushType(
                 TerrainBrushType::Lower
             );
         }
+
+		else if (m_terrainBrushType == 2)
+		{
+			engine.SetTerrainBrushType(
+				TerrainBrushType::Smooth
+			);
+		}
+		else if (m_terrainBrushType == 3)
+		{
+			engine.SetTerrainBrushType(
+				TerrainBrushType::Flatten
+			);
+		}
+		else if (m_terrainBrushType == 4)
+		{
+			engine.SetTerrainBrushType(
+				TerrainBrushType::Noise
+			);
+		}
+		else if (m_terrainBrushType == 5)
+		{
+			engine.SetTerrainBrushType(
+				TerrainBrushType::TexturePaint
+			);
+		}
     }
 
     if (ImGui::InputFloat("Brush Size", &m_terrainBrushSize, 0.10f, 50.1f, "%.2f"))

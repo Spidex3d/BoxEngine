@@ -1107,6 +1107,10 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                     ImGuiMouseButton_Left);
 
 			// ---------------------------------------------- Terrain Brush Hover ----------------------------------------------
+           
+            // ----------------------------------------------
+            // Terrain Brush
+            // ----------------------------------------------
 
             if (viewportHovered)
             {
@@ -1150,25 +1154,28 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 
                 glm::vec3 terrainHit;
 
-                if (engine.RaycastTerrain(
-                    camera.Position,
-                    rayDirection,
-                    terrainHit))
-                {
-                    //engine.UpdateTerrainBrush(terrainHit, 5.0f);
-                    engine.UpdateTerrainBrush(terrainHit, engine.GetTerrainBrushSize());
-                }
-                else
-                {
-                    engine.HideTerrainBrush();
-                }
+                const bool terrainHitFound =
+                    engine.RaycastTerrain(
+                        camera.Position,
+                        rayDirection,
+                        terrainHit
+                    );
 
-				// ---------------------------------------------- Terrain Brush Hover End ----------------------------------------------
-
-				// ---------------------------------------------- Terrain Brush Raise ----------------------------------------------
-                if (engine.RaycastTerrain(camera.Position, rayDirection, terrainHit))
+                if (terrainHitFound)
                 {
-                    engine.UpdateTerrainBrush(terrainHit, engine.GetTerrainBrushSize());
+                    // --------------------------------------
+                    // Draw brush circle
+                    // --------------------------------------
+
+                    engine.UpdateTerrainBrush(
+                        terrainHit,
+                        engine.GetTerrainBrushSize()
+                    );
+
+
+                    // --------------------------------------
+                    // Sculpt terrain
+                    // --------------------------------------
 
                     if (ImGui::IsMouseDown(
                         ImGuiMouseButton_Left))
@@ -1182,7 +1189,8 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                                 engine.GetTerrainBrushStrength()
                             );
                         }
-                        else if (engine.GetTerrainBrushType() ==
+                        else if (
+                            engine.GetTerrainBrushType() ==
                             TerrainBrushType::Lower)
                         {
                             engine.LowerTerrain(
@@ -1191,17 +1199,37 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                                 engine.GetTerrainBrushStrength()
                             );
                         }
-                    }
+                        else if (
+                            engine.GetTerrainBrushType() ==
+                            TerrainBrushType::Smooth)
+                        {
+                            engine.SmoothTerrain(
+                                terrainHit,
+                                engine.GetTerrainBrushSize(),
+                                engine.GetTerrainBrushStrength()
+                            );
+                        }
+                        else if (
+                            engine.GetTerrainBrushType() ==
+                            TerrainBrushType::Flatten)
+                        {
+                            if (!m_flattenActive)
+                            {
+                                m_flattenHeight =
+                                    terrainHit.y;
 
-                    /*if (ImGui::IsMouseDown(
-                        ImGuiMouseButton_Left))
-                    {
-                        engine.RaiseTerrain(
-                            terrainHit,
-                            5.0f,
-                            0.05f
-                        );
-                    }*/
+                                m_flattenActive =
+                                    true;
+                            }
+
+                            engine.FlattenTerrain(
+                                terrainHit,
+                                engine.GetTerrainBrushSize(),
+                                engine.GetTerrainBrushStrength(),
+                                m_flattenHeight
+                            );
+                        }
+                    }
                 }
                 else
                 {
@@ -1209,11 +1237,24 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                 }
 
 
+                // --------------------------------------
+                // Reset flatten height when mouse released
+                // --------------------------------------
 
+                if (!ImGui::IsMouseDown(
+                    ImGuiMouseButton_Left))
+                {
+                    m_flattenActive = false;
+                }
+            }
+            else
+            {
+                engine.HideTerrainBrush();
+
+                m_flattenActive = false;
             }
 
 			// ------------------------------- end of terrain brush hover -----------------------------
-
 
             if (viewportClicked)
             {

@@ -148,4 +148,8 @@ private:
 
     ImVec2 m_lastPlayMousePos = ImVec2(0.0f, 0.0f);
 
+	// Flatten Tool from terrain
+    bool m_flattenActive = false;
+    float m_flattenHeight = 0.0f;
+
 };

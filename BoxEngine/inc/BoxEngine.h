@@ -120,6 +120,10 @@ public:
 
 	void LowerTerrain(const glm::vec3& worldPosition, float radius, float strength);
 
+    void SmoothTerrain(const glm::vec3& worldPosition, float radius, float strength);
+
+    void FlattenTerrain(const glm::vec3& worldPosition, float radius, float strength, float targetHeight);
+
     void HideTerrainBrush();
 
     void SetTerrainBrushType(

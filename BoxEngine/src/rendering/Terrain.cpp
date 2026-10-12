@@ -6,6 +6,7 @@
 #include <iostream>
 #include <shader/Shader.h>
 #include <cmath>
+#include <algorithm>
 
 #include <filesystem>
 namespace fs = std::filesystem;
@@ -808,6 +809,218 @@ void Terrain::LowerTerrain(const glm::vec3& worldPosition, float radius, float s
   
 }
 
+void Terrain::SmoothTerrain(const glm::vec3& worldPosition, float radius, float strength)
+{
+    if (m_heightMap.empty())
+    {
+        return;
+    }
+
+    const float localX =
+        worldPosition.x - m_position.x;
+
+    const float localZ =
+        worldPosition.z - m_position.z;
+
+    const float mapX =
+        localX +
+        static_cast<float>(heightmapHeight) * 0.5f;
+
+    const float mapZ =
+        localZ +
+        static_cast<float>(heightmapWidth) * 0.5f;
+
+    const int centerX =
+        static_cast<int>(std::round(mapX));
+
+    const int centerZ =
+        static_cast<int>(std::round(mapZ));
+
+    const int brushRadius =
+        static_cast<int>(std::ceil(radius));
+
+    std::vector<float> original =
+        m_heightMap;
+
+    for (int z = -brushRadius;
+        z <= brushRadius;
+        ++z)
+    {
+        for (int x = -brushRadius;
+            x <= brushRadius;
+            ++x)
+        {
+            const int sampleX =
+                centerX + x;
+
+            const int sampleZ =
+                centerZ + z;
+
+            if (sampleX <= 0 ||
+                sampleX >= heightmapHeight - 1 ||
+                sampleZ <= 0 ||
+                sampleZ >= heightmapWidth - 1)
+            {
+                continue;
+            }
+
+            const float distance =
+                std::sqrt(
+                    static_cast<float>(
+                        x * x + z * z
+                        )
+                );
+
+            if (distance > radius)
+            {
+                continue;
+            }
+
+            const float t =
+                1.0f -
+                distance / radius;
+
+            const float falloff =
+                t * t *
+                (3.0f - 2.0f * t);
+
+            float average = 0.0f;
+
+            for (int nz = -1;
+                nz <= 1;
+                ++nz)
+            {
+                for (int nx = -1;
+                    nx <= 1;
+                    ++nx)
+                {
+                    average +=
+                        original[
+                            (sampleX + nx) *
+                                heightmapWidth +
+                                (sampleZ + nz)
+                        ];
+                }
+            }
+
+            average /= 9.0f;
+
+            const std::size_t index =
+                sampleX *
+                heightmapWidth +
+                sampleZ;
+
+            m_heightMap[index] =
+                glm::mix(
+                    original[index],
+                    average,
+                    strength * falloff
+                );
+        }
+    }
+}
+
+void Terrain::FlattenTerrain(const glm::vec3& worldPosition, float radius, float strength, float targetHeight)
+{
+    if (m_heightMap.empty())
+    {
+        return;
+    }
+
+    const float localX =
+        worldPosition.x - m_position.x;
+
+    const float localZ =
+        worldPosition.z - m_position.z;
+
+    const float mapX =
+        localX +
+        static_cast<float>(heightmapHeight) * 0.5f;
+
+    const float mapZ =
+        localZ +
+        static_cast<float>(heightmapWidth) * 0.5f;
+
+    const int centerX =
+        static_cast<int>(std::round(mapX));
+
+    const int centerZ =
+        static_cast<int>(std::round(mapZ));
+
+    const int brushRadius =
+        static_cast<int>(std::ceil(radius));
+
+    // targetHeight is world-space.
+    // Convert back to terrain-local height.
+    const float localTargetHeight =
+        targetHeight - m_position.y;
+
+    for (int z = -brushRadius;
+        z <= brushRadius;
+        ++z)
+    {
+        for (int x = -brushRadius;
+            x <= brushRadius;
+            ++x)
+        {
+            const int sampleX =
+                centerX + x;
+
+            const int sampleZ =
+                centerZ + z;
+
+            if (sampleX < 0 ||
+                sampleX >= heightmapHeight ||
+                sampleZ < 0 ||
+                sampleZ >= heightmapWidth)
+            {
+                continue;
+            }
+
+            const float distance =
+                std::sqrt(
+                    static_cast<float>(
+                        x * x + z * z
+                        )
+                );
+
+            if (distance > radius)
+            {
+                continue;
+            }
+
+            const float t =
+                1.0f -
+                distance / radius;
+
+            const float falloff =
+                t * t *
+                (3.0f - 2.0f * t);
+
+            const std::size_t index =
+                static_cast<std::size_t>(
+                    sampleX *
+                    heightmapWidth +
+                    sampleZ
+                    );
+
+            const float blend =
+                glm::clamp(
+                    strength * falloff,
+                    0.0f,
+                    1.0f
+                );
+
+            m_heightMap[index] =
+                glm::mix(
+                    m_heightMap[index],
+                    localTargetHeight,
+                    blend
+                );
+        }
+    }
+}
+
 void Terrain::UpdateMeshFromHeightMap()
 {
     if (m_heightMap.empty() ||
@@ -815,8 +1028,6 @@ void Terrain::UpdateMeshFromHeightMap()
     {
         return;
     }
-
-    std::size_t vertexIndex = 0;
 
     for (int i = 0;
         i < heightmapHeight;
@@ -831,18 +1042,102 @@ void Terrain::UpdateMeshFromHeightMap()
                     i * heightmapWidth + j
                     );
 
-            // Each vertex = 8 floats:
-            // x y z nx ny nz u v
+            const std::size_t vertexIndex =
+                heightIndex;
+
             const std::size_t base =
                 vertexIndex * 8;
+
+
+            // -------------------------------------------------
+            // Update vertex height
+            // -------------------------------------------------
 
             m_vertices[base + 1] =
                 m_heightMap[heightIndex];
 
-            ++vertexIndex;
+
+            // -------------------------------------------------
+            // Find neighbouring height samples
+            // -------------------------------------------------
+
+            const int left =
+                std::max(j - 1, 0);
+
+            const int right =
+                std::min(
+                    j + 1,
+                    heightmapWidth - 1
+                );
+
+            const int down =
+                std::max(i - 1, 0);
+
+            const int up =
+                std::min(
+                    i + 1,
+                    heightmapHeight - 1
+                );
+
+
+            const float hL =
+                m_heightMap[
+                    i * heightmapWidth +
+                        left
+                ];
+
+            const float hR =
+                m_heightMap[
+                    i * heightmapWidth +
+                        right
+                ];
+
+            const float hD =
+                m_heightMap[
+                    down * heightmapWidth +
+                        j
+                ];
+
+            const float hU =
+                m_heightMap[
+                    up * heightmapWidth +
+                        j
+                ];
+
+
+            // -------------------------------------------------
+            // Recalculate normal
+            // -------------------------------------------------
+
+            const glm::vec3 normal =
+                glm::normalize(
+                    glm::vec3(
+                        hL - hR,
+                        2.0f,
+                        hD - hU
+                    )
+                );
+
+
+            // -------------------------------------------------
+            // Store normal back into vertex
+            // -------------------------------------------------
+
+            m_vertices[base + 3] =
+                normal.x;
+
+            m_vertices[base + 4] =
+                normal.y;
+
+            m_vertices[base + 5] =
+                normal.z;
         }
     }
 
+
+    // -------------------------------------------------
+    // Upload changed vertices to GPU
+    // -------------------------------------------------
 
     glBindBuffer(
         GL_ARRAY_BUFFER,
@@ -862,6 +1157,61 @@ void Terrain::UpdateMeshFromHeightMap()
         0
     );
 }
+
+//void Terrain::UpdateMeshFromHeightMap()
+//{
+//    if (m_heightMap.empty() ||
+//        m_vertices.empty())
+//    {
+//        return;
+//    }
+//
+//    std::size_t vertexIndex = 0;
+//
+//    for (int i = 0;
+//        i < heightmapHeight;
+//        ++i)
+//    {
+//        for (int j = 0;
+//            j < heightmapWidth;
+//            ++j)
+//        {
+//            const std::size_t heightIndex =
+//                static_cast<std::size_t>(
+//                    i * heightmapWidth + j
+//                    );
+//
+//            // Each vertex = 8 floats:
+//            // x y z nx ny nz u v
+//            const std::size_t base =
+//                vertexIndex * 8;
+//
+//            m_vertices[base + 1] =
+//                m_heightMap[heightIndex];
+//
+//            ++vertexIndex;
+//        }
+//    }
+//
+//
+//    glBindBuffer(
+//        GL_ARRAY_BUFFER,
+//        m_VBO
+//    );
+//
+//    glBufferSubData(
+//        GL_ARRAY_BUFFER,
+//        0,
+//        m_vertices.size() *
+//        sizeof(float),
+//        m_vertices.data()
+//    );
+//
+//    glBindBuffer(
+//        GL_ARRAY_BUFFER,
+//        0
+//    );
+//}
 
 void Terrain::Destroy()
 {
