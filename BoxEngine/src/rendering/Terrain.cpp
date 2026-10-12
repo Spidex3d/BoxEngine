@@ -5,7 +5,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <shader/Shader.h>
-
+#include <cmath>
 
 #include <filesystem>
 namespace fs = std::filesystem;
@@ -27,7 +27,11 @@ bool Terrain::GenerateTerrainMesh()
     }
     std::cout << "Loading the Heightmap of size " << heightmapHeight << " X " << heightmapWidth << std::endl;
 
-    std::vector<float> heightMap(heightmapWidth * heightmapHeight);
+    //std::vector<float> heightMap(heightmapWidth * heightmapHeight);
+    m_heightMap.clear();
+
+    m_heightMap.resize(heightmapWidth * heightmapHeight);
+
     float y_Scale = 64.0f / 256.0f;
     float y_Shift = 16.0f;
     unsigned bytePerPixel = heightmapChannels;
@@ -37,7 +41,7 @@ bool Terrain::GenerateTerrainMesh()
             unsigned char* pixelOffset = t_data + (j + heightmapWidth * i) * bytePerPixel;
 
             unsigned char y = pixelOffset[0];
-            heightMap[i * heightmapWidth + j] = static_cast<float>(y) * y_Scale - y_Shift;
+            m_heightMap[i * heightmapWidth + j] = static_cast<float>(y) * y_Scale - y_Shift;
         }
     }
     stbi_image_free(t_data);
@@ -45,14 +49,14 @@ bool Terrain::GenerateTerrainMesh()
     for (int i = 0; i < heightmapHeight; ++i) {
         for (int j = 0; j < heightmapWidth; ++j) {
             float x = -heightmapHeight / 2.0f + heightmapHeight * i / static_cast<float>(heightmapHeight);
-            float y = heightMap[i * heightmapWidth + j];
+            float y = m_heightMap[i * heightmapWidth + j];
             float z = -heightmapWidth / 2.0f + heightmapWidth * j / static_cast<float>(heightmapWidth);
 
             // Calculate normal using surrounding heights
-            float hL = (j > 0) ? heightMap[i * heightmapWidth + (j - 1)] : y;
-            float hR = (j < heightmapWidth - 1) ? heightMap[i * heightmapWidth + (j + 1)] : y;
-            float hD = (i > 0) ? heightMap[(i - 1) * heightmapWidth + j] : y;
-            float hU = (i < heightmapHeight - 1) ? heightMap[(i + 1) * heightmapWidth + j] : y;
+            float hL = (j > 0) ? m_heightMap[i * heightmapWidth + (j - 1)] : y;
+            float hR = (j < heightmapWidth - 1) ? m_heightMap[i * heightmapWidth + (j + 1)] : y;
+            float hD = (i > 0) ? m_heightMap[(i - 1) * heightmapWidth + j] : y;
+            float hU = (i < heightmapHeight - 1) ? m_heightMap[(i + 1) * heightmapWidth + j] : y;
 
             glm::vec3 normal = glm::normalize(glm::vec3(hL - hR, 2.0f, hD - hU)); // y is up
 
@@ -188,6 +192,23 @@ void Terrain::RenderTerrain(Shader& shader, const glm::mat4& view, const glm::ma
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
+// use the heightmap to get the height at a given x, z coordinate for painting and collision detection
+float Terrain::GetHeightAt(
+    int x,
+    int z
+) const
+{
+    if (x < 0 || x >= heightmapWidth ||
+        z < 0 || z >= heightmapHeight)
+    {
+        return 0.0f;
+    }
+
+    return m_heightMap[
+        z * heightmapWidth + x
+    ];
+}
+
 std::vector<TerrainImage> Terrain::LoadTerrainTextureFromFolder(const std::string & folderPath)
 {
     std::vector<TerrainImage> textures;
@@ -254,12 +275,15 @@ void Terrain::ReloadTerrainMeshFromFile(const std::string& heightmapPath)
     // Rebuild vertex data (same logic you used in your constructor)
     float y_Scale = 64.0f / 256.0f;
     float y_Shift = 16.0f;
-    std::vector<float> heightMap(heightmapWidth * heightmapHeight);
+    //std::vector<float> heightMap(heightmapWidth * heightmapHeight);
+    m_heightMap.clear();
+
+    m_heightMap.resize(heightmapWidth * heightmapHeight);
 
     for (int i = 0; i < heightmapHeight; ++i) {
         for (int j = 0; j < heightmapWidth; ++j) {
             unsigned char y = newData[i * heightmapWidth + j];
-            heightMap[i * heightmapWidth + j] = static_cast<float>(y) * y_Scale - y_Shift;
+            m_heightMap[i * heightmapWidth + j] = static_cast<float>(y) * y_Scale - y_Shift;
         }
     }
 
@@ -268,18 +292,17 @@ void Terrain::ReloadTerrainMeshFromFile(const std::string& heightmapPath)
     for (int i = 0; i < heightmapHeight; ++i) {
         for (int j = 0; j < heightmapWidth; ++j) {
             float x = -heightmapHeight / 2.0f + heightmapHeight * i / static_cast<float>(heightmapHeight);
-            float y = heightMap[i * heightmapWidth + j];
+            float y = m_heightMap[i * heightmapWidth + j];
             float z = -heightmapWidth / 2.0f + heightmapWidth * j / static_cast<float>(heightmapWidth);
 
-            float hL = (j > 0) ? heightMap[i * heightmapWidth + (j - 1)] : y;
-            float hR = (j < heightmapWidth - 1) ? heightMap[i * heightmapWidth + (j + 1)] : y;
-            float hD = (i > 0) ? heightMap[(i - 1) * heightmapWidth + j] : y;
-            float hU = (i < heightmapHeight - 1) ? heightMap[(i + 1) * heightmapWidth + j] : y;
+            float hL = (j > 0) ? m_heightMap[i * heightmapWidth + (j - 1)] : y;
+            float hR = (j < heightmapWidth - 1) ? m_heightMap[i * heightmapWidth + (j + 1)] : y;
+            float hD = (i > 0) ? m_heightMap[(i - 1) * heightmapWidth + j] : y;
+            float hU = (i < heightmapHeight - 1) ? m_heightMap[(i + 1) * heightmapWidth + j] : y;
 
             glm::vec3 normal = glm::normalize(glm::vec3(hL - hR, 2.0f, hD - hU));
             // The texture tiling Factor
-           // float u = (j / float(heightmapWidth - 1)) * tilingFactor;
-            //float v = (i / float(heightmapHeight - 1)) * tilingFactor;
+           
 
             const float u = static_cast<float>(j) / static_cast<float>(heightmapWidth - 1);
 
@@ -310,9 +333,7 @@ void Terrain::ReloadTerrainMeshFromFile(const std::string& heightmapPath)
                 i
             );
 
-            /*for (unsigned k = 0; k < 2; ++k) {
-                m_indices.push_back(j + heightmapWidth * (i + k * rez));
-            }*/
+           
         }
     }
 
@@ -325,6 +346,220 @@ void Terrain::ReloadTerrainMeshFromFile(const std::string& heightmapPath)
 	// Generate new terrain mesh
 	
 
+}
+
+bool Terrain::GetHeightAtWorldPosition(float worldX, float worldZ, float& outHeight) const
+{
+    if (m_heightMap.empty() ||
+        heightmapWidth <= 1 ||
+        heightmapHeight <= 1)
+    {
+        return false;
+    }
+
+    // Convert world position into terrain-local position.
+    const float localX =
+        worldX - m_position.x;
+
+    const float localZ =
+        worldZ - m_position.z;
+
+
+    // Convert terrain-local coordinates into
+    // heightmap coordinates.
+    const float mapX =
+        localX +
+        static_cast<float>(heightmapHeight) * 0.5f;
+
+    const float mapZ =
+        localZ +
+        static_cast<float>(heightmapWidth) * 0.5f;
+
+
+    // Outside terrain.
+    if (mapX < 0.0f ||
+        mapZ < 0.0f ||
+        mapX >= static_cast<float>(heightmapHeight - 1) ||
+        mapZ >= static_cast<float>(heightmapWidth - 1))
+    {
+        return false;
+    }
+
+
+    const int x0 =
+        static_cast<int>(std::floor(mapX));
+
+    const int z0 =
+        static_cast<int>(std::floor(mapZ));
+
+    const int x1 = x0 + 1;
+    const int z1 = z0 + 1;
+
+
+    const float tx =
+        mapX - static_cast<float>(x0);
+
+    const float tz =
+        mapZ - static_cast<float>(z0);
+
+
+    const float h00 =
+        m_heightMap[
+            x0 * heightmapWidth + z0
+        ];
+
+    const float h10 =
+        m_heightMap[
+            x1 * heightmapWidth + z0
+        ];
+
+    const float h01 =
+        m_heightMap[
+            x0 * heightmapWidth + z1
+        ];
+
+    const float h11 =
+        m_heightMap[
+            x1 * heightmapWidth + z1
+        ];
+
+
+    // Bilinear interpolation.
+    const float h0 =
+        glm::mix(h00, h10, tx);
+
+    const float h1 =
+        glm::mix(h01, h11, tx);
+
+    const float height =
+        glm::mix(h0, h1, tz);
+
+
+    // Convert local terrain height back into world Y.
+    outHeight =
+        height + m_position.y;
+
+    return true;
+}
+
+bool Terrain::Raycast(const glm::vec3& rayOrigin, const glm::vec3& rayDirection, glm::vec3& outHitPosition) const
+{
+    if (m_heightMap.empty())
+    {
+        return false;
+    }
+
+    constexpr float maxDistance = 1000.0f;
+    constexpr float stepSize = 0.5f;
+
+    glm::vec3 previousPoint =
+        rayOrigin;
+
+    bool previousValid = false;
+   // float previousTerrainHeight = 0.0f;
+
+
+    for (float distance = 0.0f;
+        distance < maxDistance;
+        distance += stepSize)
+    {
+        const glm::vec3 point =
+            rayOrigin +
+            rayDirection * distance;
+
+
+        float terrainHeight = 0.0f;
+
+        if (!GetHeightAtWorldPosition(
+            point.x,
+            point.z,
+            terrainHeight))
+        {
+            previousValid = false;
+            continue;
+        }
+
+
+        // Has the ray crossed the terrain surface?
+        if (point.y <= terrainHeight)
+        {
+            if (!previousValid)
+            {
+                outHitPosition =
+                    glm::vec3(
+                        point.x,
+                        terrainHeight,
+                        point.z
+                    );
+
+                return true;
+            }
+
+
+            // Refine the hit position between
+            // the previous and current ray points.
+            glm::vec3 low =
+                previousPoint;
+
+            glm::vec3 high =
+                point;
+
+            for (int i = 0; i < 8; ++i)
+            {
+                const glm::vec3 mid =
+                    (low + high) * 0.5f;
+
+                float midHeight = 0.0f;
+
+                if (!GetHeightAtWorldPosition(
+                    mid.x,
+                    mid.z,
+                    midHeight))
+                {
+                    break;
+                }
+
+                if (mid.y > midHeight)
+                {
+                    low = mid;
+                }
+                else
+                {
+                    high = mid;
+                }
+            }
+
+
+            float finalHeight = 0.0f;
+
+            GetHeightAtWorldPosition(
+                high.x,
+                high.z,
+                finalHeight
+            );
+
+
+            outHitPosition =
+                glm::vec3(
+                    high.x,
+                    finalHeight,
+                    high.z
+                );
+
+            return true;
+        }
+
+
+        previousPoint =
+            point;
+
+       // previousTerrainHeight = terrainHeight;
+
+        previousValid = true;
+    }
+
+
+    return false;
 }
 
 void Terrain::Destroy()

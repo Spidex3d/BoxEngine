@@ -25,6 +25,8 @@ public:
 	// Render the terrain mesh
 	void RenderTerrain(Shader& shader, const glm::mat4& view, const glm::mat4& projection);
 
+	float GetHeightAt(int x, int z) const;
+
 	// Load terrain textures from a folder and return a vector of TerrainImage
 	std::vector<TerrainImage> LoadTerrainTextureFromFolder(const std::string& folderPath);
 
@@ -45,6 +47,21 @@ public:
 		return m_position;
 	}
 
+	const std::vector<float>& GetHeightMap() const
+	{
+		return m_heightMap;
+	}
+
+	bool GetHeightAtWorldPosition(
+		float worldX,
+		float worldZ,
+		float& outHeight) const;
+
+	bool Raycast(
+		const glm::vec3& rayOrigin,
+		const glm::vec3& rayDirection,
+		glm::vec3& outHitPosition) const;
+
 
 	void Destroy();
 
@@ -57,6 +74,9 @@ private:
 
 	std::vector<float> m_vertices;
 	std::vector<unsigned int> m_indices;
+
+	std::vector<float> m_heightMap;
+
 	unsigned int m_terrainTexture;
 
 	glm::vec3 m_position = glm::vec3(0.0f);

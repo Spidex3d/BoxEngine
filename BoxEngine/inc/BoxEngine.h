@@ -17,6 +17,7 @@ class Camera;
 class Texture;
 class Sky;
 class Terrain;
+class TerrainBrush;
 
 enum class TransformTool
 {
@@ -103,6 +104,10 @@ public:
 	// Load Terrain from a heightmap image file
     bool CreateTerrain();
 
+    void UpdateTerrainBrush(const glm::vec3& position, float radius);
+
+    void HideTerrainBrush();
+
 	// ------------------------- Ecosystem Meshes End -------------------------
 
 	bool AddEditablePyramid(const glm::vec3& position = glm::vec3(0.0f));
@@ -127,6 +132,8 @@ public:
     bool RemoveEntity(int entityID);
     
     void PickEntity(const glm::vec3& rayOrigin, const glm::vec3& rayDirection);
+
+    bool RaycastTerrain(const glm::vec3& rayOrigin, const glm::vec3& rayDirection, glm::vec3& outHitPosition);
 
     TransformTool m_activeTool = TransformTool::Move;
 
@@ -220,6 +227,9 @@ private:
 	// Terrain
     std::unique_ptr<Terrain> m_terrain;
     std::unique_ptr<Shader> m_terrainShader;
+	// Terrain brush for painting on the terrain
+    std::unique_ptr<TerrainBrush> m_terrainBrush;
+    std::unique_ptr<Shader> m_terrainBrushShader;
     
 
 

@@ -26,6 +26,7 @@
 #include <rendering/Sky.h>
 // Terrain
 #include <rendering/Terrain.h>
+#include <rendering/TerrainBrush.h>
 
 // ----------------------------------------
 // Game Engine
@@ -179,6 +180,45 @@ bool BoxEngine::Initialize()
     if (!m_terrainShader || m_terrainShader->ID() == 0)
     {
         BOX_LOG_ERROR("Failed to create terrain shader");
+
+        return false;
+    }
+
+	// Create the terrain Brush for visualizing the area of effect when editing the terrain
+    const std::string terrainBrushVertexPath =
+        helpers.GetAssetPath(
+            "assets/shader/TerrainBrush.vert"
+        );
+
+    const std::string terrainBrushFragmentPath =
+        helpers.GetAssetPath(
+            "assets/shader/TerrainBrush.frag"
+        );
+
+    m_terrainBrushShader =
+        std::make_unique<Shader>(
+            terrainBrushVertexPath,
+            terrainBrushFragmentPath
+        );
+
+    if (!m_terrainBrushShader ||
+        m_terrainBrushShader->ID() == 0)
+    {
+        BOX_LOG_ERROR(
+            "Failed to create terrain brush shader"
+        );
+
+        return false;
+    }
+
+    m_terrainBrush =
+        std::make_unique<TerrainBrush>();
+
+    if (!m_terrainBrush->Initialize())
+    {
+        BOX_LOG_ERROR(
+            "Failed to initialize terrain brush"
+        );
 
         return false;
     }
@@ -602,7 +642,31 @@ bool BoxEngine::CreateTerrain()
     return true;
 }
 
+// Update the terrain brush position and radius for visualizing the area of effect when editing the terrain
+void BoxEngine::UpdateTerrainBrush(
+    const glm::vec3& position,
+    float radius)
+{
+    if (!m_terrain ||
+        !m_terrainBrush)
+    {
+        return;
+    }
 
+    m_terrainBrush->Update(
+        *m_terrain,
+        position,
+        radius
+    );
+}
+
+void BoxEngine::HideTerrainBrush()
+{
+    if (m_terrainBrush)
+    {
+        m_terrainBrush->Hide();
+    }
+}
 
 
 
@@ -1213,6 +1277,12 @@ void BoxEngine::RenderScene()
         {
             m_terrain->RenderTerrain(*m_terrainShader, view, projection);
         }
+		// terrain brush rendering for visualizing the area of effect when editing the terrain
+        if (m_terrainBrush && m_terrainBrushShader)
+        {
+            m_terrainBrush->Render(*m_terrainBrushShader, view, projection);
+        }
+
 		// End Terrain rendering
 
         m_sceneShader->Use();
@@ -1514,6 +1584,18 @@ void BoxEngine::PickEntity(
         ClearSelectedEntity();
     }
 }
+
+bool BoxEngine::RaycastTerrain(const glm::vec3& rayOrigin, const glm::vec3& rayDirection, glm::vec3& outHitPosition)
+{
+	if (!m_terrain)
+	{
+		return false;
+	}
+
+    return m_terrain->Raycast(rayOrigin, rayDirection, outHitPosition);
+}
+
+
 
 void BoxEngine::RenderSelectedEntityOutline(
     const glm::mat4& view,

@@ -1031,6 +1031,69 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             const bool viewportClicked = !wasTransforming && !editModeActive && viewportHovered && ImGui::IsMouseClicked(
                     ImGuiMouseButton_Left);
 
+			// ---------------------------------------------- Terrain Brush Hover ----------------------------------------------
+
+            if (viewportHovered)
+            {
+                const ImVec2 mousePosition =
+                    ImGui::GetMousePos();
+
+                const float mouseX =
+                    mousePosition.x -
+                    m_sceneViewportPos.x;
+
+                const float mouseY =
+                    mousePosition.y -
+                    m_sceneViewportPos.y;
+
+                Camera& camera =
+                    engine.GetCamera();
+
+                const glm::mat4 view =
+                    camera.GetViewMatrix();
+
+                const float aspectRatio =
+                    m_sceneViewportSize.y > 0.0f
+                    ? m_sceneViewportSize.x /
+                    m_sceneViewportSize.y
+                    : 1.0f;
+
+                const glm::mat4 projection =
+                    camera.GetProjectionMatrix(
+                        aspectRatio
+                    );
+
+                const glm::vec3 rayDirection =
+                    CreateMouseRay(
+                        mouseX,
+                        mouseY,
+                        m_sceneViewportSize.x,
+                        m_sceneViewportSize.y,
+                        view,
+                        projection
+                    );
+
+                glm::vec3 terrainHit;
+
+                if (engine.RaycastTerrain(
+                    camera.Position,
+                    rayDirection,
+                    terrainHit))
+                {
+                    engine.UpdateTerrainBrush(
+                        terrainHit,
+                        5.0f
+                    );
+                }
+                else
+                {
+                    engine.HideTerrainBrush();
+                }
+            }
+
+			// ------------------------------- end of terrain brush hover -----------------------------
+
+
             if (viewportClicked)
             {
                 const ImVec2 mousePosition =
@@ -1068,75 +1131,136 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                         projection
                     );
 
-                engine.PickEntity(camera.Position, rayDirection
+                engine.PickEntity(camera.Position, rayDirection);
+
+
+
+        // ============================================================
+        // Terrain Brush Hover
+        // ============================================================
+        
+       
+        
+        
+        // ============================================================
+        // Normal Entity Picking
+        // ============================================================
+        
+        if (viewportClicked)
+        {
+            const ImVec2 mousePosition =
+                ImGui::GetMousePos();
+        
+            const float mouseX =
+                mousePosition.x -
+                m_sceneViewportPos.x;
+        
+            const float mouseY =
+                mousePosition.y -
+                m_sceneViewportPos.y;
+        
+            Camera& camera =
+                engine.GetCamera();
+        
+            const glm::mat4 view =
+                camera.GetViewMatrix();
+        
+            const float aspectRatio =
+                m_sceneViewportSize.y > 0.0f
+                ? m_sceneViewportSize.x /
+                  m_sceneViewportSize.y
+                : 1.0f;
+        
+            const glm::mat4 projection =
+                camera.GetProjectionMatrix(
+                    aspectRatio
                 );
-            }
-		    // ############################################# Mouse Picking end ############################################
-			
+        
+            const glm::vec3 rayDirection =
+                CreateMouseRay(
+                    mouseX,
+                    mouseY,
+                    m_sceneViewportSize.x,
+                    m_sceneViewportSize.y,
+                    view,
+                    projection
+                );
+        
+            engine.PickEntity(
+                camera.Position,
+                rayDirection
+            );
         }
-   
+        
+        
+            }
+        		    // ############################################# Mouse Picking end ############################################
+        			
+        }
+           
     }
-
-    ImGui::End();
-    ImGui::PopStyleVar(1);
-   
-    return action;
+        
+            ImGui::End();
+            ImGui::PopStyleVar(1);
+           
+            return action;
 }
-
-
-glm::vec3 SceneViewportPanel::CreateMouseRay(float mouseX, float mouseY, float viewportWidth, float viewportHeight,
-    const glm::mat4& view, const glm::mat4& projection) const
-{
-    if (viewportWidth <= 0.0f ||
-        viewportHeight <= 0.0f)
-    {
-        return glm::vec3(0.0f);
-    }
-
-    const float normalisedX =
-        (2.0f * mouseX) /
-        viewportWidth -
-        1.0f;
-
-    const float normalisedY =
-        1.0f -
-        (2.0f * mouseY) /
-        viewportHeight;
-
-    const glm::vec4 rayClip(
-        normalisedX,
-        normalisedY,
-        -1.0f,
-        1.0f
-    );
-
-    glm::vec4 rayEye =
-        glm::inverse(projection) *
-        rayClip;
-
-    rayEye =
-        glm::vec4(
-            rayEye.x,
-            rayEye.y,
-            -1.0f,
-            0.0f
-        );
-
-    const glm::vec3 rayWorld =
-        glm::normalize(
-            glm::vec3(
-                glm::inverse(view) *
-                rayEye
-            )
-        );
-
-    return rayWorld;
-}
-
-void SceneViewportPanel::Shutdown() {
-    // Cleanup code here (if needed)
-   /* DestroyEditorTexture(m_vertexIcon);
-    DestroyEditorTexture(m_edgeIcon);
-    DestroyEditorTexture(m_faceIcon);*/
-   // DestroyEditorTexture(m_scaleIcon);
-}
+        
+        
+        glm::vec3 SceneViewportPanel::CreateMouseRay(float mouseX, float mouseY, float viewportWidth, float viewportHeight,
+            const glm::mat4& view, const glm::mat4& projection) const
+        {
+            if (viewportWidth <= 0.0f ||
+                viewportHeight <= 0.0f)
+            {
+                return glm::vec3(0.0f);
+            }
+        
+            const float normalisedX =
+                (2.0f * mouseX) /
+                viewportWidth -
+                1.0f;
+        
+            const float normalisedY =
+                1.0f -
+                (2.0f * mouseY) /
+                viewportHeight;
+        
+            const glm::vec4 rayClip(
+                normalisedX,
+                normalisedY,
+                -1.0f,
+                1.0f
+            );
+        
+            glm::vec4 rayEye =
+                glm::inverse(projection) *
+                rayClip;
+        
+            rayEye =
+                glm::vec4(
+                    rayEye.x,
+                    rayEye.y,
+                    -1.0f,
+                    0.0f
+                );
+        
+            const glm::vec3 rayWorld =
+                glm::normalize(
+                    glm::vec3(
+                        glm::inverse(view) *
+                        rayEye
+                    )
+                );
+        
+            return rayWorld;
+        }
+        
+        void SceneViewportPanel::Shutdown() {
+            // Cleanup code here (if needed)
+           /* DestroyEditorTexture(m_vertexIcon);
+            DestroyEditorTexture(m_edgeIcon);
+            DestroyEditorTexture(m_faceIcon);*/
+           // DestroyEditorTexture(m_scaleIcon);
+        }
+        

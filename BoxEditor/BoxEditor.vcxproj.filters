@@ -261,5 +261,7 @@
     <None Include="assets\shader\SkyBox.frag" />
     <None Include="assets\shader\Terrain.vert" />
     <None Include="assets\shader\Terrain.frag" />
+    <None Include="assets\shader\TerrainBrush.vert" />
+    <None Include="assets\shader\TerrainBrush.frag" />
   </ItemGroup>
 </Project>
