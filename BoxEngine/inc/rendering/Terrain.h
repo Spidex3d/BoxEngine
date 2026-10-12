@@ -34,6 +34,17 @@ public:
 	// update the terrain mesh with new width, depth, and scale values
 	void ReloadTerrainMeshFromFile(const std::string& heightmapPath);
 
+	void SetPosition(
+		const glm::vec3& position)
+	{
+		m_position = position;
+	}
+
+	const glm::vec3& GetPosition() const
+	{
+		return m_position;
+	}
+
 
 	void Destroy();
 
@@ -47,6 +58,8 @@ private:
 	std::vector<float> m_vertices;
 	std::vector<unsigned int> m_indices;
 	unsigned int m_terrainTexture;
+
+	glm::vec3 m_position = glm::vec3(0.0f);
 
 	int heightmapWidth = 0;
 	int heightmapHeight = 0;

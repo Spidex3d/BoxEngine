@@ -2,6 +2,7 @@
 #include <stb\stb_image.h>
 #include "stb\stb_image_write.h"
 #include <glm\glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <shader/Shader.h>
 
@@ -17,7 +18,6 @@ bool Terrain::Initialize()
 bool Terrain::GenerateTerrainMesh()
 {
 
-    //unsigned char* t_data = stbi_load("Textures/Terrain/Data/test_all_black_s.png",
     unsigned char* t_data = stbi_load("assets/textures/terrain/Data/test_all_black_T.png",
         &heightmapWidth, &heightmapHeight, &heightmapChannels, 0);
     if (!t_data) {
@@ -56,9 +56,7 @@ bool Terrain::GenerateTerrainMesh()
 
             glm::vec3 normal = glm::normalize(glm::vec3(hL - hR, 2.0f, hD - hU)); // y is up
 
-            //float u = (j / float(heightmapWidth - 1)) * tilingFactor;
-            //float v = (i / float(heightmapHeight - 1)) * tilingFactor;
-            const float u =
+                const float u =
                 static_cast<float>(j) /
                 static_cast<float>(
                     heightmapWidth - 1
@@ -102,9 +100,7 @@ bool Terrain::GenerateTerrainMesh()
                 i
             );
 
-            /*for (unsigned k = 0; k < 2; k++) {
-                m_indices.push_back(j + heightmapWidth * (i + k * rez));
-            }*/
+           
         }
     }
 
@@ -173,7 +169,9 @@ void Terrain::RenderTerrain(Shader& shader, const glm::mat4& view, const glm::ma
     shader.Use();
     shader.setMat4("view", view);
     shader.setMat4("projection", projection);
-    shader.setMat4("model", glm::mat4(1.0f));
+    glm::mat4 model =  glm::translate(glm::mat4(1.0f), m_position);
+
+    shader.setMat4("model", model);
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
