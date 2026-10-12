@@ -62,6 +62,11 @@ public:
 		const glm::vec3& rayDirection,
 		glm::vec3& outHitPosition) const;
 
+	void RaiseTerrain(const glm::vec3& worldPosition, float radius,	float strength);
+
+	void LowerTerrain(const glm::vec3& worldPosition, float radius, float strength);
+
+	void UpdateMeshFromHeightMap();
 
 	void Destroy();
 

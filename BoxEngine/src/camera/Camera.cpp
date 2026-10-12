@@ -35,24 +35,66 @@ glm::mat4 Camera::GetProjectionMatrix(float aspectRatio) const {
 
     // return glm::perspective(glm::radians(Zoom), aspectRatio, 0.1f, 100.0f);
 }
+void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime)
+{
+    const float velocity = MovementSpeed * deltaTime;
 
-void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime) {
-    float velocity = MovementSpeed * deltaTime;
+    glm::vec3 movement(0.0f);
+
     if (direction == FORWARD)
-        Position += Front * velocity;
+    {
+        movement += Front * velocity;
+    }
+
     if (direction == BACKWARD)
-        Position -= Front * velocity;
+    {
+        movement -= Front * velocity;
+    }
+
     if (direction == LEFT)
-        Position -= Right * velocity;
+    {
+        movement -= Right * velocity;
+    }
+
     if (direction == RIGHT)
-        Position += Right * velocity;
+    {
+        movement += Right * velocity;
+    }
+
     if (direction == UP)
-        Position += Up * velocity;
+    {
+        movement += WorldUp * velocity;
+    }
+
     if (direction == DOWN)
-        Position -= Up * velocity;
-    
-    
+    {
+        movement -= WorldUp * velocity;
+    }
+
+    Position += movement;
+
+    // Keep orbit target moving with the camera.
+    Target += movement;
 }
+
+
+//void Camera::ProcessKeyboard(Camera_Movement direction, float deltaTime) {
+//    float velocity = MovementSpeed * deltaTime;
+//    if (direction == FORWARD)
+//        Position += Front * velocity;
+//    if (direction == BACKWARD)
+//        Position -= Front * velocity;
+//    if (direction == LEFT)
+//        Position -= Right * velocity;
+//    if (direction == RIGHT)
+//        Position += Right * velocity;
+//    if (direction == UP)
+//        Position += Up * velocity;
+//    if (direction == DOWN)
+//        Position -= Up * velocity;
+//    
+//    
+//}
 
 void Camera::ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch) {
     xoffset *= MouseSensitivity;

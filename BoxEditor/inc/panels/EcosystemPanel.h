@@ -223,6 +223,12 @@ private:
 
 	// -------------- Rock Generator End --------------
 
+	// -------------- Terrain generator ----------------
+	int m_terrainBrushType = 0;
+	float m_terrainBrushSize = 5.0f;
+	float m_terrainBrushStrength = 0.05f;
+	// ------------- End Terrain generator ----------------
+
 	// ---------------- Grass Generator ----------------
 	int m_grassSeed = 1234;
 	

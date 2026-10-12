@@ -459,6 +459,55 @@ EcoSystemAction EcosystemPanel::TerrainTab(BoxEngine& engine)
     EcoSystemAction action = EcoSystemAction::None;
     // TODO: Implement terrain generation logic here
     ImGui::Text("Terrain Generator");
+
+    const char* terrainBrushItems[] =
+    {
+        "Raise",
+        "Lower",
+        "Smooth",
+        "Flatten",
+        "Noise",
+        "TexturePaint"
+    };
+
+	ImGui::SeparatorText("Brush Type");
+	
+    if (ImGui::Combo(
+        "Brush",
+        &m_terrainBrushType,
+        terrainBrushItems,
+        IM_ARRAYSIZE(terrainBrushItems)))
+    {
+        if (m_terrainBrushType == 0)
+        {
+            engine.SetTerrainBrushType(
+                TerrainBrushType::Raise
+            );
+        }
+        else
+        {
+            engine.SetTerrainBrushType(
+                TerrainBrushType::Lower
+            );
+        }
+    }
+
+    if (ImGui::InputFloat("Brush Size", &m_terrainBrushSize, 0.10f, 50.1f, "%.2f"))
+    {
+        if (m_terrainBrushSize < 1.0f)
+        {
+            m_terrainBrushSize = 1.0f;
+        }
+
+        if (m_terrainBrushSize > 50.0f)
+        {
+            m_terrainBrushSize = 50.0f;
+        }
+        engine.SetTerrainBrushSize(
+            m_terrainBrushSize
+        );
+    }
+
     ImGui::Separator();
 
     ImGui::TextDisabled("Procedural terrain generation coming soon...");

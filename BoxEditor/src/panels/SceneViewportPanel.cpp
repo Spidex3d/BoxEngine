@@ -772,6 +772,81 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             // ############################################################################################
             const bool viewportHovered = ImGui::IsItemHovered();
 
+			// ################################ terrain camera###########################################################
+
+            if (viewportHovered &&
+                !ImGui::GetIO().WantTextInput)
+            {
+                Camera& camera =
+                    engine.GetCamera();
+
+                // Temporary movement step.
+                const float deltaTime =
+                    ImGui::GetIO().DeltaTime;
+
+                const float originalSpeed =
+                    camera.MovementSpeed;
+
+                // Faster movement while Shift is held.
+                if (ImGui::IsKeyDown(
+                    ImGuiKey_LeftShift))
+                {
+                    camera.MovementSpeed =
+                        originalSpeed * 4.0f;
+                }
+
+                if (ImGui::IsKeyDown(ImGuiKey_W))
+                {
+                    camera.ProcessKeyboard(
+                        FORWARD,
+                        deltaTime
+                    );
+                }
+
+                if (ImGui::IsKeyDown(ImGuiKey_S))
+                {
+                    camera.ProcessKeyboard(
+                        BACKWARD,
+                        deltaTime
+                    );
+                }
+
+                if (ImGui::IsKeyDown(ImGuiKey_A))
+                {
+                    camera.ProcessKeyboard(
+                        LEFT,
+                        deltaTime
+                    );
+                }
+
+                if (ImGui::IsKeyDown(ImGuiKey_D))
+                {
+                    camera.ProcessKeyboard(
+                        RIGHT,
+                        deltaTime
+                    );
+                }
+
+                if (ImGui::IsKeyDown(ImGuiKey_Q))
+                {
+                    camera.ProcessKeyboard(
+                        DOWN,
+                        deltaTime
+                    );
+                }
+
+                if (ImGui::IsKeyDown(ImGuiKey_E))
+                {
+                    camera.ProcessKeyboard(
+                        UP,
+                        deltaTime
+                    );
+                }
+
+                camera.MovementSpeed =
+                    originalSpeed;
+            }
+
             // ################################ Game Camera ########################################
 
             // ########################################################################
@@ -1080,15 +1155,61 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                     rayDirection,
                     terrainHit))
                 {
-                    engine.UpdateTerrainBrush(
-                        terrainHit,
-                        5.0f
-                    );
+                    //engine.UpdateTerrainBrush(terrainHit, 5.0f);
+                    engine.UpdateTerrainBrush(terrainHit, engine.GetTerrainBrushSize());
                 }
                 else
                 {
                     engine.HideTerrainBrush();
                 }
+
+				// ---------------------------------------------- Terrain Brush Hover End ----------------------------------------------
+
+				// ---------------------------------------------- Terrain Brush Raise ----------------------------------------------
+                if (engine.RaycastTerrain(camera.Position, rayDirection, terrainHit))
+                {
+                    engine.UpdateTerrainBrush(terrainHit, engine.GetTerrainBrushSize());
+
+                    if (ImGui::IsMouseDown(
+                        ImGuiMouseButton_Left))
+                    {
+                        if (engine.GetTerrainBrushType() ==
+                            TerrainBrushType::Raise)
+                        {
+                            engine.RaiseTerrain(
+                                terrainHit,
+                                engine.GetTerrainBrushSize(),
+                                engine.GetTerrainBrushStrength()
+                            );
+                        }
+                        else if (engine.GetTerrainBrushType() ==
+                            TerrainBrushType::Lower)
+                        {
+                            engine.LowerTerrain(
+                                terrainHit,
+                                engine.GetTerrainBrushSize(),
+                                engine.GetTerrainBrushStrength()
+                            );
+                        }
+                    }
+
+                    /*if (ImGui::IsMouseDown(
+                        ImGuiMouseButton_Left))
+                    {
+                        engine.RaiseTerrain(
+                            terrainHit,
+                            5.0f,
+                            0.05f
+                        );
+                    }*/
+                }
+                else
+                {
+                    engine.HideTerrainBrush();
+                }
+
+
+
             }
 
 			// ------------------------------- end of terrain brush hover -----------------------------

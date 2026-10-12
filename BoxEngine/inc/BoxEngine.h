@@ -33,6 +33,16 @@ enum class EngineMode
     Playing,
     Paused
 };
+// Terrain brush type for raising or lowering terrain ect;
+enum class TerrainBrushType
+{
+    Raise,
+    Lower,
+    Smooth,
+    Flatten,
+    Noise,
+    TexturePaint
+};
 
 class BoxEngine
 {
@@ -106,7 +116,43 @@ public:
 
     void UpdateTerrainBrush(const glm::vec3& position, float radius);
 
+    void RaiseTerrain(const glm::vec3& worldPosition, float radius, float strength);
+
+	void LowerTerrain(const glm::vec3& worldPosition, float radius, float strength);
+
     void HideTerrainBrush();
+
+    void SetTerrainBrushType(
+        TerrainBrushType type)
+    {
+        m_terrainBrushType = type;
+    }
+
+    TerrainBrushType GetTerrainBrushType() const
+    {
+        return m_terrainBrushType;
+    }
+
+    void SetTerrainBrushSize(float size)
+    {
+        m_terrainBrushSize = size;
+    }
+
+    float GetTerrainBrushSize() const
+    {
+        return m_terrainBrushSize;
+    }
+
+    void SetTerrainBrushStrength(float strength)
+    {
+        m_terrainBrushStrength = strength;
+    }
+
+    float GetTerrainBrushStrength() const
+    {
+        return m_terrainBrushStrength;
+    }
+
 
 	// ------------------------- Ecosystem Meshes End -------------------------
 
@@ -230,6 +276,9 @@ private:
 	// Terrain brush for painting on the terrain
     std::unique_ptr<TerrainBrush> m_terrainBrush;
     std::unique_ptr<Shader> m_terrainBrushShader;
+    TerrainBrushType m_terrainBrushType = TerrainBrushType::Raise;
+    float m_terrainBrushSize = 5.0f;
+    float m_terrainBrushStrength = 0.05f;
     
 
 

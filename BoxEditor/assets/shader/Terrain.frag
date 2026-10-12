@@ -1,4 +1,4 @@
-#version 460
+#version 460 core
 
 in vec3 FragPos;
 in vec3 Normal;
@@ -6,50 +6,78 @@ in vec2 TexCoords;
 
 out vec4 FragColor;
 
+uniform sampler2D terrainTexture;
+
 void main()
 {
-    vec3 norm =
-        normalize(Normal);
+    vec2 tiledUV =
+        TexCoords * 64.0;
 
-    // Temporary built-in light direction.
-    vec3 lightDir =
-        normalize(
-            vec3(
-                0.4,
-                1.0,
-                0.3
-            )
-        );
-
-    float diffuse =
-        max(
-            dot(norm, lightDir),
-            0.0
-        );
-
-    // Temporary terrain green.
-    vec3 terrainColor =
-        vec3(
-            0.22,
-            0.48,
-            0.18
-        );
-
-    // Ambient + directional lighting.
-    vec3 result =
-        terrainColor *
-        (
-            0.30 +
-            diffuse * 0.70
-        );
+    vec3 colour =
+        texture(
+            terrainTexture,
+            tiledUV
+        ).rgb;
 
     FragColor =
         vec4(
-            result,
+            colour,
             1.0
         );
 }
 
+//#version 460
+//
+//in vec3 FragPos;
+//in vec3 Normal;
+//in vec2 TexCoords;
+//
+//out vec4 FragColor;
+//
+//void main()
+//{
+//    vec3 norm =
+//        normalize(Normal);
+//
+//    // Temporary built-in light direction.
+//    vec3 lightDir =
+//        normalize(
+//            vec3(
+//                0.4,
+//                1.0,
+//                0.3
+//            )
+//        );
+//
+//    float diffuse =
+//        max(
+//            dot(norm, lightDir),
+//            0.0
+//        );
+//
+//    // Temporary terrain green.
+//    vec3 terrainColor =
+//        vec3(
+//            0.22,
+//            0.48,
+//            0.18
+//        );
+//
+//    // Ambient + directional lighting.
+//    vec3 result =
+//        terrainColor *
+//        (
+//            0.30 +
+//            diffuse * 0.70
+//        );
+//
+//    FragColor =
+//        vec4(
+//            result,
+//            1.0
+//        );
+//}
+//
 
 
 //#version 460

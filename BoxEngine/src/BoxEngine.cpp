@@ -659,6 +659,34 @@ void BoxEngine::UpdateTerrainBrush(
         radius
     );
 }
+// Raise the terrain at the specified world position with the given radius and strength
+void BoxEngine::RaiseTerrain(const glm::vec3& worldPosition, float radius, float strength)
+{
+    if (!m_terrain)
+    {
+        return;
+    }
+
+    m_terrain->RaiseTerrain(
+        worldPosition,
+        radius,
+        strength
+    );
+
+    m_terrain->UpdateMeshFromHeightMap();
+}
+// Lower the terrain at the specified world position with the given radius and strength
+void BoxEngine::LowerTerrain(const glm::vec3& worldPosition, float radius, float strength)
+{
+	if (!m_terrain)
+	{
+		return;
+	}
+	m_terrain->LowerTerrain(worldPosition, radius, strength);
+	m_terrain->UpdateMeshFromHeightMap();
+}
+
+
 
 void BoxEngine::HideTerrainBrush()
 {
