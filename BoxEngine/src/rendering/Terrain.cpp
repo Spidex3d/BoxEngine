@@ -223,14 +223,6 @@ void Terrain::RenderTerrain(Shader& shader, const glm::mat4& view, const glm::ma
 
     shader.setMat4("model", model);
 
-   /* glActiveTexture(GL_TEXTURE0);
-
-    glBindTexture(GL_TEXTURE_2D, m_terrainTexture);
-
-    shader.SetUniformInt(
-        "terrainTexture",
-        0
-    );*/
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(
@@ -267,7 +259,37 @@ void Terrain::RenderTerrain(Shader& shader, const glm::mat4& view, const glm::ma
         2
     );
 
+    // ###########################################
+    shader.SetUniformFloat(
+        "rockSlopeStart",
+        m_rockSlopeStart
+    );
 
+    shader.SetUniformFloat(
+        "rockSlopeEnd",
+        m_rockSlopeEnd
+    );
+
+    shader.SetUniformFloat(
+        "dirtHeightStart",
+        m_dirtHeightStart
+    );
+
+    shader.SetUniformFloat(
+        "dirtHeightEnd",
+        m_dirtHeightEnd
+    );
+
+    shader.SetUniformFloat(
+        "dirtAmount",
+        m_dirtAmount
+    );
+
+    shader.SetUniformFloat(
+        "textureTiling",
+        m_textureTiling
+    );
+    // ###########################################
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     glBindVertexArray(m_VAO);

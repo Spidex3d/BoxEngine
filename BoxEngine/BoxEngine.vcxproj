@@ -176,6 +176,7 @@
     <ClInclude Include="inc\rendering\Sky.h" />
     <ClInclude Include="inc\rendering\Terrain.h" />
     <ClInclude Include="inc\rendering\TerrainBrush.h" />
+    <ClInclude Include="inc\rendering\Water.h" />
     <ClInclude Include="inc\runtime\CharacterController.h" />
     <ClInclude Include="inc\runtime\Collectible.h" />
     <ClInclude Include="inc\runtime\Collision.h" />
@@ -213,6 +214,7 @@
     <ClCompile Include="src\rendering\Terrain.cpp" />
     <ClCompile Include="src\rendering\TerrainBrush.cpp" />
     <ClCompile Include="src\rendering\Textures.cpp" />
+    <ClCompile Include="src\rendering\Water.cpp" />
     <ClCompile Include="src\runtime\CharacterController.cpp" />
     <ClCompile Include="src\runtime\Collectible.cpp" />
     <ClCompile Include="src\runtime\Collision.cpp" />

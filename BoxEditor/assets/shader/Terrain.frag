@@ -10,10 +10,17 @@ uniform sampler2D texture_grass;
 uniform sampler2D texture_rock;
 uniform sampler2D texture_dirt;
 
+uniform float textureTiling;
+uniform float rockSlopeStart;
+uniform float rockSlopeEnd;
+uniform float dirtHeightStart;
+uniform float dirtHeightEnd;
+uniform float dirtAmount;
+
 void main()
 {
-    vec2 tiledUV =
-        TexCoords * 32.0;
+
+    vec2 tiledUV = TexCoords * textureTiling;
 
     vec3 grass =
         texture(
@@ -57,34 +64,27 @@ void main()
     // Rock on steep slopes
     // -------------------------------------------------
 
-    float rockBlend =
-        smoothstep(
-            0.30,
-            0.65,
-            slope
-        );
+        float rockBlend =
+            smoothstep(
+            rockSlopeStart,
+            rockSlopeEnd,
+            slope);
 
 
     // -------------------------------------------------
     // Dirt based partly on height
     // -------------------------------------------------
-
-    float height =
-        FragPos.y;
+    float height = FragPos.y;
 
     float dirtBlend =
-        smoothstep(
-            -2.0,
-            4.0,
-            height
-        );
+    1.0 - smoothstep(
+        dirtHeightStart,
+        dirtHeightEnd,
+        height);
 
-    dirtBlend *=
-        1.0 - rockBlend;
+    dirtBlend *= 1.0 - rockBlend;
 
-    dirtBlend *= 0.35;
-    //dirtBlend *= 1.0;
-
+    dirtBlend *= dirtAmount;
 
     // -------------------------------------------------
     // Grass fills remaining area
@@ -118,35 +118,3 @@ void main()
             1.0
         );
 }
-
-
-//#version 460 core
-//
-//in vec3 FragPos;
-//in vec3 Normal;
-//in vec2 TexCoords;
-//
-//out vec4 FragColor;
-//
-//uniform sampler2D texture_grass;
-//uniform sampler2D texture_rock;
-//uniform sampler2D texture_dirt;
-//
-//void main()
-//{
-//    vec2 tiledUV =
-//        TexCoords * 32.0;
-//
-//    vec3 grass =
-//        texture(
-//            texture_grass,
-//            tiledUV
-//        ).rgb;
-//
-//    FragColor =
-//        vec4(
-//            grass,
-//            1.0
-//        );
-//}
-//

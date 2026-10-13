@@ -3,6 +3,7 @@
 #include <imgui/imgui.h>
 #include <miniBoxLog.h>
 #include <rendering/Sky.h>
+#include <rendering/Terrain.h>
 
 EcosystemPanel::~EcosystemPanel() = default;
 
@@ -470,7 +471,9 @@ EcoSystemAction EcosystemPanel::TerrainTab(BoxEngine& engine)
         "TexturePaint"
     };
 
+    
 	ImGui::SeparatorText("Brush Type");
+	ImGui::SeparatorText("Texture Blending");
 	
     if (ImGui::Combo(
         "Brush",
@@ -533,7 +536,139 @@ EcoSystemAction EcosystemPanel::TerrainTab(BoxEngine& engine)
         );
     }
 
+    Terrain& terrain = engine.GetTerrain();
+
+    static float rockSlopeStart = 0.30f;
+    static float rockSlopeEnd = 0.65f;
+
+    static float dirtHeightStart = 0.0f;
+    static float dirtHeightEnd = 8.0f;
+
+    static float dirtAmount = 0.8f;
+
+    static float textureTiling = 32.0f;
+
+    ImGui::SeparatorText("Grid Enabled");
+
+	bool gridEnabled = engine.IsGridVisible();
+    if (ImGui::Checkbox(
+        "Enable Grid",
+        &gridEnabled))
+    {
+        engine.SetGridVisible(
+            gridEnabled
+        );
+    }
+  
+
+    ImGui::SeparatorText("Texture Blending");
+
+    
+    if (ImGui::DragFloat(
+        "Rock Slope Start",
+        &rockSlopeStart,
+        0.01f,
+        0.0f,
+        1.0f))
+    {
+        terrain.SetRockSlopeStart(
+            rockSlopeStart
+        );
+    }
+
+    if (ImGui::DragFloat(
+        "Rock Slope End",
+        &rockSlopeEnd,
+        0.01f,
+        0.0f,
+        1.0f))
+    {
+        terrain.SetRockSlopeEnd(
+            rockSlopeEnd
+        );
+    }
+
+    if (ImGui::DragFloat(
+        "Dirt Height Start",
+        &dirtHeightStart,
+        0.1f,
+        -50.0f,
+        100.0f))
+    {
+        terrain.SetDirtHeightStart(
+            dirtHeightStart
+        );
+    }
+
+    if (ImGui::DragFloat(
+        "Dirt Height End",
+        &dirtHeightEnd,
+        0.1f,
+        -50.0f,
+        100.0f))
+    {
+        terrain.SetDirtHeightEnd(
+            dirtHeightEnd
+        );
+    }
+
+    if (ImGui::DragFloat(
+        "Dirt Amount",
+        &dirtAmount,
+        0.01f,
+        0.0f,
+        1.0f))
+    {
+        terrain.SetDirtAmount(
+            dirtAmount
+        );
+    }
+
+    ImGui::SeparatorText("Texture Tiling");
+
+    if (ImGui::InputFloat("Texture Tiling", &textureTiling, 0.10f, 128.1f, "%.2f"))
+    {
+        if (textureTiling < 32.0f)
+        {
+            textureTiling = 32.0f;
+        }
+
+        if (textureTiling > 128.0f)
+        {
+            textureTiling = 128.0f;
+        }
+        terrain.SetTextureTiling(textureTiling);
+    }
+
+    ImGui::SeparatorText("Water");
+
+    bool waterEnabled = engine.IsWaterEnabled();
+
+    if (ImGui::Checkbox("Enable Water", &waterEnabled))
+    {
+        engine.SetWaterEnabled(waterEnabled);
+    }
+
+    ImGui::BeginDisabled(!engine.IsWaterEnabled());
+
+    float waterHeight = engine.GetWaterHeight();
+
+    if (ImGui::DragFloat(
+        "Water Height",
+        &waterHeight,
+        0.1f,
+        -20.0f,
+        50.0f))
+    {
+        engine.SetWaterHeight(waterHeight);
+    }
+
+    ImGui::EndDisabled();
+
+
     ImGui::Separator();
+
+    ImGui::SeparatorText("Terrain Generation");
 
     ImGui::TextDisabled("Procedural terrain generation coming soon...");
     if (ImGui::Button(

@@ -27,6 +27,8 @@
 // Terrain
 #include <rendering/Terrain.h>
 #include <rendering/TerrainBrush.h>
+// water
+#include <rendering/Water.h>
 
 // ----------------------------------------
 // Game Engine
@@ -223,6 +225,46 @@ bool BoxEngine::Initialize()
         return false;
     }
 
+	// ---------------------------------------- Water shader ----------------------------------------
+    const std::string waterVertexPath =
+        helpers.GetAssetPath(
+            "assets/shader/Water.vert"
+        );
+
+    const std::string waterFragmentPath =
+        helpers.GetAssetPath(
+            "assets/shader/Water.frag"
+        );
+
+    m_waterShader =
+        std::make_unique<Shader>(
+            waterVertexPath,
+            waterFragmentPath
+        );
+
+    if (!m_waterShader ||
+        m_waterShader->ID() == 0)
+    {
+        BOX_LOG_ERROR(
+            "Failed to create water shader"
+        );
+
+        return false;
+    }
+
+    m_water = std::make_unique<Water>();
+
+    if (!m_water->Initialize(300.0f))
+    {
+        BOX_LOG_ERROR("Failed to initialize water");
+
+        m_water.reset();
+
+        return false;
+    }
+
+    m_water->SetHeight(0.0f);
+
    
 	// ################################################# end shader ########################################################
     
@@ -281,6 +323,14 @@ void BoxEngine::Shutdown()
 
     m_terrainShader.reset();
 
+    if (m_water)
+    {
+        m_water->Destroy();
+        m_water.reset();
+    }
+
+    m_waterShader.reset();
+
     // Entity destructors delete their OpenGL buffers.
     m_entities.clear();
 
@@ -307,7 +357,7 @@ const Camera& BoxEngine::GetCamera() const
 {
     return *m_camera;
 }
-
+// ------------------------------------------------- Grid functions -------------------------------------------------
 bool BoxEngine::AddGrid(const glm::vec3& position, int halfSize, float spacing)
 {
     m_grid = std::make_unique<Grid>();
@@ -331,6 +381,19 @@ bool BoxEngine::AddGrid(const glm::vec3& position, int halfSize, float spacing)
     return true;
 }
 
+void BoxEngine::SetGridVisible(bool visible)
+{
+	if (m_grid)
+	{
+		m_grid->SetVisible(visible);
+	}
+}
+bool BoxEngine::IsGridVisible() const
+{
+	return m_grid && m_grid->IsVisible();
+}
+
+// ------------------------------------------------- End grid functions -------------------------------------------------
 
 bool BoxEngine::AddEditableCube(
     const glm::vec3& position)
@@ -718,6 +781,33 @@ void BoxEngine::NoiseTerrain(const glm::vec3& worldPosition, float radius, float
 	m_terrain->UpdateMeshFromHeightMap();
 }
 
+Terrain& BoxEngine::GetTerrain()
+{
+    return *m_terrain;
+}
+
+const Terrain& BoxEngine::GetTerrain() const
+{
+    return *m_terrain;
+}
+
+// Water height adjustment
+void BoxEngine::SetWaterHeight(float height)
+{
+    m_waterHeight = height;
+
+    if (m_water)
+    {
+        m_water->SetHeight(height);
+    }
+}
+
+void BoxEngine::SetWaterEnabled(bool enabled)
+{
+    m_waterEnabled = enabled;
+}
+
+// End Water
 
 void BoxEngine::HideTerrainBrush()
 {
@@ -1336,13 +1426,26 @@ void BoxEngine::RenderScene()
         {
             m_terrain->RenderTerrain(*m_terrainShader, view, projection);
         }
-		// terrain brush rendering for visualizing the area of effect when editing the terrain
+		
+        // End Terrain rendering
+
+        // -------------------------------------------------
+        // Water
+        // -------------------------------------------------
+      
+        if (m_waterEnabled && m_water && m_waterShader)
+        {
+            m_water->Render(*m_waterShader, view, projection);
+        }
+
+		// End Water
+
+        // terrain brush rendering for visualizing the area of effect when editing the terrain
         if (m_terrainBrush && m_terrainBrushShader)
         {
             m_terrainBrush->Render(*m_terrainBrushShader, view, projection);
         }
-
-		// End Terrain rendering
+		// end terrain brush rendering
 
         m_sceneShader->Use();
 

@@ -18,6 +18,7 @@ class Texture;
 class Sky;
 class Terrain;
 class TerrainBrush;
+class Water;
 
 enum class TransformTool
 {
@@ -56,10 +57,7 @@ public:
     bool Initialize();
     void Shutdown();
 
-    void ResizeSceneViewport(
-        int width,
-        int height
-    );
+    void ResizeSceneViewport(int width, int height);
 
     void RenderScene();
 
@@ -68,7 +66,10 @@ public:
 
     GLuint GetSceneTexture() const;
 
-    bool AddGrid(const glm::vec3& position, int halfSize, float spacing);    
+    bool AddGrid(const glm::vec3& position, int halfSize, float spacing); 
+
+    void SetGridVisible(bool visible);
+    bool IsGridVisible() const;
 
     bool AddEditableCube(const glm::vec3& position = glm::vec3(0.0f));
 
@@ -159,6 +160,23 @@ public:
         return m_terrainBrushStrength;
     }
 
+    Terrain& GetTerrain();
+    const Terrain& GetTerrain() const;
+
+
+	// Water
+    void SetWaterHeight(float height);
+    void SetWaterEnabled(bool enabled);
+    
+    bool IsWaterEnabled() const
+    {
+        return m_waterEnabled;
+    }
+
+    float GetWaterHeight() const
+    {
+        return m_waterHeight;
+    }
 
 	// ------------------------- Ecosystem Meshes End -------------------------
 
@@ -285,6 +303,11 @@ private:
     TerrainBrushType m_terrainBrushType = TerrainBrushType::Raise;
     float m_terrainBrushSize = 5.0f;
     float m_terrainBrushStrength = 0.05f;
+	// Water
+    std::unique_ptr<Water> m_water;
+    std::unique_ptr<Shader> m_waterShader;
+    bool m_waterEnabled = false;
+    float m_waterHeight = 0.0f;
     
 
 
@@ -292,11 +315,16 @@ private:
     Framebuffer m_sceneFramebuffer;
 
 	std::unique_ptr<Shader> m_sceneShader;      // for rendering the scene entities
-	std::unique_ptr<Shader> m_gridShader;       // for rendering the editor grid
 	std::unique_ptr<Shader> m_outlineShader;    // for rendering the outline of the selected entity
 
-
+	// Grid rendering for the editor
+	std::unique_ptr<Shader> m_gridShader;       // for rendering the editor grid
 	std::unique_ptr<Grid> m_grid; // for the editor grid not an entity
+	bool m_gridVisible = true; // for the editor grid visibility
+
+public:
+	
+
 	std::vector<std::unique_ptr<Entity>> m_entities; // for the editable cubes and other entities
     
     std::unique_ptr<Camera> m_camera;

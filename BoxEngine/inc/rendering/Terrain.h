@@ -72,7 +72,40 @@ public:
 
 	void NoiseTerrain(const glm::vec3& worldPosition, float radius, float strength);
 
+
 	void UpdateMeshFromHeightMap();
+
+
+	void SetRockSlopeStart(float value)
+	{
+		m_rockSlopeStart = value;
+	}
+
+	void SetRockSlopeEnd(float value)
+	{
+		m_rockSlopeEnd = value;
+	}
+
+	void SetDirtHeightStart(float value)
+	{
+		m_dirtHeightStart = value;
+	}
+
+	void SetDirtHeightEnd(float value)
+	{
+		m_dirtHeightEnd = value;
+	}
+
+	void SetDirtAmount(float value)
+	{
+		m_dirtAmount = value;
+	}
+
+	void SetTextureTiling(float value)
+	{
+		m_textureTiling = value;
+	}
+
 
 	void Destroy();
 
@@ -111,6 +144,13 @@ private:
 	int rez = 1;
 	int numStrips = 0;
 	int vertsPerStrip = 0;
+
+	float m_rockSlopeStart = 0.30f;
+	float m_rockSlopeEnd = 0.65f;
+	float m_dirtHeightStart = 0.0f;
+	float m_dirtHeightEnd = 8.0f;
+	float m_dirtAmount = 0.8f;
+	float m_textureTiling = 32.0f;
 
 
 
