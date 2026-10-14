@@ -4,6 +4,7 @@
 
 class Shader;
 
+
 class Water
 {
 public:
@@ -16,6 +17,25 @@ public:
 
     void Render(Shader& shader, const glm::mat4& view, const glm::mat4& projection);
 
+    void Update(float deltaTime);
+
+    float GetTime() const
+    {
+        return m_time;
+    }
+
+    void SetWaveSpeed(float speed)
+    {
+        m_waveSpeed = speed;
+    }
+
+    void SetWaveStrength(float strength)
+    {
+        m_waveStrength = strength;
+    }
+
+
+
     void Destroy();
 
 private:
@@ -25,4 +45,11 @@ private:
 
     float m_height = 0.0f;
     float m_size = 300.0f;
+
+    float m_time = 0.0f;
+    float m_waveSpeed = 0.30f;
+    float m_waveStrength = 0.15f;
+
+
 };
+

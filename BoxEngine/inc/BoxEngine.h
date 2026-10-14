@@ -160,11 +160,19 @@ public:
         return m_terrainBrushStrength;
     }
 
+    bool HasTerrain() const
+    {
+        return m_terrain != nullptr;
+    }
+
     Terrain& GetTerrain();
     const Terrain& GetTerrain() const;
 
 
-	// Water
+    // --------------------------------------------------------------------------------------------------------------------------
+    // ---------------------------------------------- Water ---------------===---------------------------------------------------
+    // --------------------------------------------------------------------------------------------------------------------------
+
     void SetWaterHeight(float height);
     void SetWaterEnabled(bool enabled);
     
@@ -178,7 +186,25 @@ public:
         return m_waterHeight;
     }
 
-	// ------------------------- Ecosystem Meshes End -------------------------
+	float GetWaveSpeed() const
+	{
+		return m_waveSpeed;
+	}
+	float GetWaveStrength() const
+	{
+		return m_waveStrength;
+	}
+
+    void SetWaveSpeed(float speed);
+
+    void SetWaveStrength(float strength);
+
+    void UpdateWater(float deltaTime);
+
+
+    // --------------------------------------------------------------------------------------------------------------------------
+	// ---------------------------------------------- Ecosystem Meshes End ------------------------------------------------------
+	// --------------------------------------------------------------------------------------------------------------------------
 
 	bool AddEditablePyramid(const glm::vec3& position = glm::vec3(0.0f));
 
@@ -308,6 +334,8 @@ private:
     std::unique_ptr<Shader> m_waterShader;
     bool m_waterEnabled = false;
     float m_waterHeight = 0.0f;
+	float m_waveSpeed = 0.30f;
+	float m_waveStrength = 0.15f;
     
 
 

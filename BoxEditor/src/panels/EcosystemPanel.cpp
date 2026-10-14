@@ -5,6 +5,7 @@
 #include <rendering/Sky.h>
 #include <rendering/Terrain.h>
 
+
 EcosystemPanel::~EcosystemPanel() = default;
 
 bool EcosystemPanel::Initialize()
@@ -563,7 +564,10 @@ EcoSystemAction EcosystemPanel::TerrainTab(BoxEngine& engine)
 
     ImGui::SeparatorText("Texture Blending");
 
-    
+    const bool hasTerrain = engine.HasTerrain();
+
+    ImGui::BeginDisabled(!hasTerrain);
+
     if (ImGui::DragFloat(
         "Rock Slope Start",
         &rockSlopeStart,
@@ -640,6 +644,8 @@ EcoSystemAction EcosystemPanel::TerrainTab(BoxEngine& engine)
         terrain.SetTextureTiling(textureTiling);
     }
 
+    ImGui::EndDisabled();
+
     ImGui::SeparatorText("Water");
 
     bool waterEnabled = engine.IsWaterEnabled();
@@ -653,15 +659,38 @@ EcoSystemAction EcosystemPanel::TerrainTab(BoxEngine& engine)
 
     float waterHeight = engine.GetWaterHeight();
 
-    if (ImGui::DragFloat(
-        "Water Height",
-        &waterHeight,
-        0.1f,
-        -20.0f,
-        50.0f))
+    if (ImGui::InputFloat("Water Height", &waterHeight, 0.10f, 128.1f, "%.2f"))
     {
+       if (waterHeight < -20.0f) { waterHeight = -20.0f; }
+        if (waterHeight > 50.0f) { waterHeight = 50.0f; }
         engine.SetWaterHeight(waterHeight);
     }
+
+    float waveSpeed = engine.GetWaveSpeed();
+
+    if (ImGui::InputFloat("Wave Speed", &waveSpeed, 0.10f, 128.1f, "%.2f"))
+    {
+        if (waveSpeed < 0.1f) { waveSpeed = 0.1f; }
+        if (waveSpeed > 2.0f) { waveSpeed = 2.0f; }
+        engine.SetWaveSpeed(waveSpeed);
+    }
+
+    float waveStrength = engine.GetWaveStrength();
+
+    if (ImGui::InputFloat("Wave Strength", &waveStrength, 0.10f, 128.1f, "%.2f"))
+    {
+        if (waveStrength < 0.1f) { waveStrength = 0.1f; }
+        if (waveStrength > 1.0f) { waveStrength = 1.0f; }
+        engine.SetWaveStrength(waveStrength );
+    }
+
+   
+
+        //Water Height       0.00
+       // Wave Speed         0.30
+       // Wave Strength      0.20
+
+
 
     ImGui::EndDisabled();
 

@@ -807,6 +807,26 @@ void BoxEngine::SetWaterEnabled(bool enabled)
     m_waterEnabled = enabled;
 }
 
+void BoxEngine::SetWaveSpeed(float speed)
+{
+	m_waveSpeed = speed;
+}
+
+void BoxEngine::SetWaveStrength(float strength)
+{
+	m_waveStrength = strength;
+}
+
+void BoxEngine::UpdateWater(float deltaTime)
+{
+    if (!m_waterEnabled ||
+        !m_water)
+    {
+        return;
+    }
+
+    m_water->Update(deltaTime);
+}
 // End Water
 
 void BoxEngine::HideTerrainBrush()
@@ -1427,18 +1447,38 @@ void BoxEngine::RenderScene()
             m_terrain->RenderTerrain(*m_terrainShader, view, projection);
         }
 		
-        // End Terrain rendering
-
+        // ---------------------------------- End Terrain rendering -------------------------------------------
+        
         // -------------------------------------------------
         // Water
         // -------------------------------------------------
-      
-        if (m_waterEnabled && m_water && m_waterShader)
+       
+        if (m_waterEnabled &&
+            m_water &&
+            m_waterShader)
         {
+            m_waterShader->Use();
+
+            m_waterShader->SetUniformFloat(
+                "uTime",
+                m_water->GetTime()
+            );
+
+            m_waterShader->SetUniformFloat(
+                "uWaveSpeed",
+                m_waveSpeed
+            );
+
+            m_waterShader->SetUniformFloat(
+                "uWaveStrength",
+                m_waveStrength
+            );
+
             m_water->Render(*m_waterShader, view, projection);
         }
+        
+		// ----------------------------------- End Water ---------------------------------------------
 
-		// End Water
 
         // terrain brush rendering for visualizing the area of effect when editing the terrain
         if (m_terrainBrush && m_terrainBrushShader)

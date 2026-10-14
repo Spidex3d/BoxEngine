@@ -31,6 +31,8 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
     ImVec2 pos = ImGui::GetCursorScreenPos();
     ImGuiIO& io = ImGui::GetIO();
 
+    
+
     int desired_w = static_cast<int>(window_width * io.DisplayFramebufferScale.x);
     int desired_h = static_cast<int>(window_height * io.DisplayFramebufferScale.y);
 
@@ -781,11 +783,12 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                     engine.GetCamera();
 
                 // Temporary movement step.
-                const float deltaTime =
-                    ImGui::GetIO().DeltaTime;
+                const float deltaTime = ImGui::GetIO().DeltaTime;
 
-                const float originalSpeed =
-                    camera.MovementSpeed;
+                const float originalSpeed = camera.MovementSpeed;
+
+                // ############# Temporary Water movement Animation . ##############
+                engine.UpdateWater(deltaTime);
 
                 // Faster movement while Shift is held.
                 if (ImGui::IsKeyDown(

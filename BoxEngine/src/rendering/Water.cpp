@@ -200,6 +200,11 @@ void Water::Render(
     glDisable(GL_BLEND);
 }
 
+void Water::Update(float deltaTime)
+{
+    m_time += deltaTime;
+}
+
 
 void Water::Destroy()
 {
