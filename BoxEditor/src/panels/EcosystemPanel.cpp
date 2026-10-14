@@ -459,7 +459,7 @@ EcoSystemAction EcosystemPanel::RocksTab(
 EcoSystemAction EcosystemPanel::TerrainTab(BoxEngine& engine)
 {
     EcoSystemAction action = EcoSystemAction::None;
-    // TODO: Implement terrain generation logic here
+
     ImGui::Text("Terrain Generator");
 
     const char* terrainBrushItems[] =
@@ -472,10 +472,13 @@ EcoSystemAction EcosystemPanel::TerrainTab(BoxEngine& engine)
         "TexturePaint"
     };
 
-    
-	ImGui::SeparatorText("Brush Type");
-	ImGui::SeparatorText("Texture Blending");
-	
+
+    // =================================================
+    // BRUSH
+    // =================================================
+
+    ImGui::SeparatorText("Brush Type");
+
     if (ImGui::Combo(
         "Brush",
         &m_terrainBrushType,
@@ -494,34 +497,39 @@ EcoSystemAction EcosystemPanel::TerrainTab(BoxEngine& engine)
                 TerrainBrushType::Lower
             );
         }
-
-		else if (m_terrainBrushType == 2)
-		{
-			engine.SetTerrainBrushType(
-				TerrainBrushType::Smooth
-			);
-		}
-		else if (m_terrainBrushType == 3)
-		{
-			engine.SetTerrainBrushType(
-				TerrainBrushType::Flatten
-			);
-		}
-		else if (m_terrainBrushType == 4)
-		{
-			engine.SetTerrainBrushType(
-				TerrainBrushType::Noise
-			);
-		}
-		else if (m_terrainBrushType == 5)
-		{
-			engine.SetTerrainBrushType(
-				TerrainBrushType::TexturePaint
-			);
-		}
+        else if (m_terrainBrushType == 2)
+        {
+            engine.SetTerrainBrushType(
+                TerrainBrushType::Smooth
+            );
+        }
+        else if (m_terrainBrushType == 3)
+        {
+            engine.SetTerrainBrushType(
+                TerrainBrushType::Flatten
+            );
+        }
+        else if (m_terrainBrushType == 4)
+        {
+            engine.SetTerrainBrushType(
+                TerrainBrushType::Noise
+            );
+        }
+        else if (m_terrainBrushType == 5)
+        {
+            engine.SetTerrainBrushType(
+                TerrainBrushType::TexturePaint
+            );
+        }
     }
 
-    if (ImGui::InputFloat("Brush Size", &m_terrainBrushSize, 0.10f, 50.1f, "%.2f"))
+
+    if (ImGui::InputFloat(
+        "Brush Size",
+        &m_terrainBrushSize,
+        0.10f,
+        50.1f,
+        "%.2f"))
     {
         if (m_terrainBrushSize < 1.0f)
         {
@@ -532,12 +540,37 @@ EcoSystemAction EcosystemPanel::TerrainTab(BoxEngine& engine)
         {
             m_terrainBrushSize = 50.0f;
         }
+
         engine.SetTerrainBrushSize(
             m_terrainBrushSize
         );
     }
 
-    Terrain& terrain = engine.GetTerrain();
+
+    // =================================================
+    // GRID
+    // =================================================
+
+    ImGui::SeparatorText("Grid Enabled");
+
+    bool gridEnabled =
+        engine.IsGridVisible();
+
+    if (ImGui::Checkbox(
+        "Enable Grid",
+        &gridEnabled))
+    {
+        engine.SetGridVisible(
+            gridEnabled
+        );
+    }
+
+
+    // =================================================
+    // TERRAIN TEXTURE SETTINGS
+    // =================================================
+
+    ImGui::SeparatorText("Texture Blending");
 
     static float rockSlopeStart = 0.30f;
     static float rockSlopeEnd = 0.65f;
@@ -549,157 +582,320 @@ EcoSystemAction EcosystemPanel::TerrainTab(BoxEngine& engine)
 
     static float textureTiling = 32.0f;
 
-    ImGui::SeparatorText("Grid Enabled");
-
-	bool gridEnabled = engine.IsGridVisible();
-    if (ImGui::Checkbox(
-        "Enable Grid",
-        &gridEnabled))
-    {
-        engine.SetGridVisible(
-            gridEnabled
-        );
-    }
-  
-
-    ImGui::SeparatorText("Texture Blending");
 
     const bool hasTerrain = engine.HasTerrain();
 
+
     ImGui::BeginDisabled(!hasTerrain);
 
-    if (ImGui::DragFloat(
-        "Rock Slope Start",
-        &rockSlopeStart,
-        0.01f,
-        0.0f,
-        1.0f))
-    {
-        terrain.SetRockSlopeStart(
-            rockSlopeStart
-        );
-    }
 
-    if (ImGui::DragFloat(
-        "Rock Slope End",
-        &rockSlopeEnd,
-        0.01f,
-        0.0f,
-        1.0f))
+    // IMPORTANT:
+    // Only get the terrain if one actually exists.
+    if (hasTerrain)
     {
-        terrain.SetRockSlopeEnd(
-            rockSlopeEnd
-        );
-    }
+        Terrain& terrain = engine.GetTerrain();
 
-    if (ImGui::DragFloat(
-        "Dirt Height Start",
-        &dirtHeightStart,
-        0.1f,
-        -50.0f,
-        100.0f))
-    {
-        terrain.SetDirtHeightStart(
-            dirtHeightStart
-        );
-    }
 
-    if (ImGui::DragFloat(
-        "Dirt Height End",
-        &dirtHeightEnd,
-        0.1f,
-        -50.0f,
-        100.0f))
-    {
-        terrain.SetDirtHeightEnd(
-            dirtHeightEnd
-        );
-    }
+        // -------------------------------------------------
+        // Rock slope
+        // -------------------------------------------------
 
-    if (ImGui::DragFloat(
-        "Dirt Amount",
-        &dirtAmount,
-        0.01f,
-        0.0f,
-        1.0f))
-    {
-        terrain.SetDirtAmount(
-            dirtAmount
-        );
-    }
-
-    ImGui::SeparatorText("Texture Tiling");
-
-    if (ImGui::InputFloat("Texture Tiling", &textureTiling, 0.10f, 128.1f, "%.2f"))
-    {
-        if (textureTiling < 32.0f)
+        if (ImGui::DragFloat(
+            "Rock Slope Start",
+            &rockSlopeStart,
+            0.01f,
+            0.0f,
+            1.0f))
         {
-            textureTiling = 32.0f;
+            terrain.SetRockSlopeStart(
+                rockSlopeStart
+            );
         }
 
-        if (textureTiling > 128.0f)
+
+        if (ImGui::DragFloat(
+            "Rock Slope End",
+            &rockSlopeEnd,
+            0.01f,
+            0.0f,
+            1.0f))
         {
-            textureTiling = 128.0f;
+            terrain.SetRockSlopeEnd(
+                rockSlopeEnd
+            );
         }
-        terrain.SetTextureTiling(textureTiling);
+
+
+        //// -------------------------------------------------
+        //// Rock normal strength
+        //// -------------------------------------------------
+
+        //float rockNormalStrength =
+        //    terrain.GetRockNormalStrength();
+
+
+        //if (ImGui::DragFloat(
+        //    "Rock Normal Strength",
+        //    &rockNormalStrength,
+        //    0.01f,
+        //    0.0f,
+        //    1.0f,
+        //    "%.2f",
+        //    ImGuiSliderFlags_AlwaysClamp))
+        //{
+        //    terrain.SetRockNormalStrength(
+        //        rockNormalStrength
+        //    );
+        //}
+
+
+        // -------------------------------------------------
+        // Dirt
+        // -------------------------------------------------
+
+        if (ImGui::DragFloat(
+            "Dirt Height Start",
+            &dirtHeightStart,
+            0.1f,
+            -50.0f,
+            100.0f))
+        {
+            terrain.SetDirtHeightStart(
+                dirtHeightStart
+            );
+        }
+
+
+        if (ImGui::DragFloat(
+            "Dirt Height End",
+            &dirtHeightEnd,
+            0.1f,
+            -50.0f,
+            100.0f))
+        {
+            terrain.SetDirtHeightEnd(
+                dirtHeightEnd
+            );
+        }
+
+
+        if (ImGui::DragFloat(
+            "Dirt Amount",
+            &dirtAmount,
+            0.01f,
+            0.0f,
+            1.0f))
+        {
+            terrain.SetDirtAmount(
+                dirtAmount
+            );
+        }
+
+
+        // -------------------------------------------------
+        // Texture tiling
+        // -------------------------------------------------
+
+        ImGui::SeparatorText(
+            "Texture Tiling"
+        );
+
+
+        if (ImGui::InputFloat("Texture Tiling", &textureTiling, 0.10f, 128.1f, "%.2f"))
+        {
+            if (textureTiling < 32.0f)  { textureTiling = 32.0f;  }
+
+            if (textureTiling > 128.0f) { textureTiling = 128.0f; }
+
+            terrain.SetTextureTiling(textureTiling);
+        }
+
+        // -------------------------------------------------
+        // Rock normal strength
+        // -------------------------------------------------
+
+        float rockNormalStrength = terrain.GetRockNormalStrength();
+
+        if (ImGui::InputFloat("Rock Normal Strength", &rockNormalStrength, 0.10f, 1.0f, "%.2f"))
+        {
+            if (rockNormalStrength < 0.01f) { rockNormalStrength = 0.01f; }
+
+            if (rockNormalStrength > 5.0f) { rockNormalStrength = 5.0f; }
+
+            terrain.SetRockNormalStrength(rockNormalStrength);
+        }
+
+
+       /* if (ImGui::DragFloat("Rock Normal Strength", &rockNormalStrength,
+            0.01f,
+            0.0f,
+            1.0f,
+            "%.2f",
+            ImGuiSliderFlags_AlwaysClamp))
+        {
+            terrain.SetRockNormalStrength(rockNormalStrength);
+        }*/
+
+
     }
+
 
     ImGui::EndDisabled();
+
+
+    // =================================================
+    // WATER
+    // =================================================
 
     ImGui::SeparatorText("Water");
 
-    bool waterEnabled = engine.IsWaterEnabled();
 
-    if (ImGui::Checkbox("Enable Water", &waterEnabled))
+    bool waterEnabled =
+        engine.IsWaterEnabled();
+
+
+    if (ImGui::Checkbox(
+        "Enable Water",
+        &waterEnabled))
     {
-        engine.SetWaterEnabled(waterEnabled);
+        engine.SetWaterEnabled(
+            waterEnabled
+        );
     }
 
-    ImGui::BeginDisabled(!engine.IsWaterEnabled());
 
-    float waterHeight = engine.GetWaterHeight();
+    ImGui::BeginDisabled(
+        !engine.IsWaterEnabled()
+    );
 
-    if (ImGui::InputFloat("Water Height", &waterHeight, 0.10f, 128.1f, "%.2f"))
+
+    float waterHeight =
+        engine.GetWaterHeight();
+
+
+    if (ImGui::InputFloat(
+        "Water Height",
+        &waterHeight,
+        0.10f,
+        128.1f,
+        "%.2f"))
     {
-       if (waterHeight < -20.0f) { waterHeight = -20.0f; }
-        if (waterHeight > 50.0f) { waterHeight = 50.0f; }
-        engine.SetWaterHeight(waterHeight);
+        if (waterHeight < -20.0f)
+        {
+            waterHeight = -20.0f;
+        }
+
+        if (waterHeight > 50.0f)
+        {
+            waterHeight = 50.0f;
+        }
+
+        engine.SetWaterHeight(
+            waterHeight
+        );
     }
 
-    float waveSpeed = engine.GetWaveSpeed();
 
-    if (ImGui::InputFloat("Wave Speed", &waveSpeed, 0.10f, 128.1f, "%.2f"))
+    float waveSpeed =
+        engine.GetWaveSpeed();
+
+
+    if (ImGui::InputFloat(
+        "Wave Speed",
+        &waveSpeed,
+        0.10f,
+        128.1f,
+        "%.2f"))
     {
-        if (waveSpeed < 0.1f) { waveSpeed = 0.1f; }
-        if (waveSpeed > 2.0f) { waveSpeed = 2.0f; }
-        engine.SetWaveSpeed(waveSpeed);
+        if (waveSpeed < 0.1f)
+        {
+            waveSpeed = 0.1f;
+        }
+
+        if (waveSpeed > 2.0f)
+        {
+            waveSpeed = 2.0f;
+        }
+
+        engine.SetWaveSpeed(
+            waveSpeed
+        );
     }
 
-    float waveStrength = engine.GetWaveStrength();
 
-    if (ImGui::InputFloat("Wave Strength", &waveStrength, 0.10f, 128.1f, "%.2f"))
+    float waveStrength =
+        engine.GetWaveStrength();
+
+
+    if (ImGui::InputFloat(
+        "Wave Strength",
+        &waveStrength,
+        0.10f,
+        128.1f,
+        "%.2f"))
     {
-        if (waveStrength < 0.1f) { waveStrength = 0.1f; }
-        if (waveStrength > 1.0f) { waveStrength = 1.0f; }
-        engine.SetWaveStrength(waveStrength );
+        if (waveStrength < 0.1f)
+        {
+            waveStrength = 0.1f;
+        }
+
+        if (waveStrength > 1.0f)
+        {
+            waveStrength = 1.0f;
+        }
+
+        engine.SetWaveStrength(
+            waveStrength
+        );
     }
 
-   
 
-        //Water Height       0.00
-       // Wave Speed         0.30
-       // Wave Strength      0.20
+    float specularPower =
+        engine.GetWaterSpecularPower();
 
+
+    if (ImGui::InputFloat(
+        "Specular Power",
+        &specularPower,
+        1.0f,
+        10.0f,
+        "%.1f"))
+    {
+        if (specularPower < 1.0f)
+        {
+            specularPower = 1.0f;
+        }
+
+        if (specularPower > 20.0f)
+        {
+            specularPower = 20.0f;
+        }
+
+        engine.SetWaterSpecularPower(
+            specularPower
+        );
+    }
 
 
     ImGui::EndDisabled();
 
 
+    // =================================================
+    // TERRAIN GENERATION
+    // =================================================
+
     ImGui::Separator();
 
-    ImGui::SeparatorText("Terrain Generation");
+    ImGui::SeparatorText(
+        "Terrain Generation"
+    );
 
-    ImGui::TextDisabled("Procedural terrain generation coming soon...");
+
+    ImGui::TextDisabled(
+        "Procedural terrain generation coming soon..."
+    );
+
+
     if (ImGui::Button(
         "Generate Terrain",
         ImVec2(140.0f, 32.0f)))
@@ -707,8 +903,281 @@ EcoSystemAction EcosystemPanel::TerrainTab(BoxEngine& engine)
         action = EcoSystemAction::Addterrain;
     }
 
+
     return action;
 }
+
+//EcoSystemAction EcosystemPanel::TerrainTab(BoxEngine& engine)
+//{
+//    EcoSystemAction action = EcoSystemAction::None;
+//    // TODO: Implement terrain generation logic here
+//    ImGui::Text("Terrain Generator");
+//
+//    const char* terrainBrushItems[] =
+//    {
+//        "Raise",
+//        "Lower",
+//        "Smooth",
+//        "Flatten",
+//        "Noise",
+//        "TexturePaint"
+//    };
+//
+//    
+//	ImGui::SeparatorText("Brush Type");
+//	ImGui::SeparatorText("Texture Blending");
+//	
+//    if (ImGui::Combo(
+//        "Brush",
+//        &m_terrainBrushType,
+//        terrainBrushItems,
+//        IM_ARRAYSIZE(terrainBrushItems)))
+//    {
+//        if (m_terrainBrushType == 0)
+//        {
+//            engine.SetTerrainBrushType(
+//                TerrainBrushType::Raise
+//            );
+//        }
+//        else if (m_terrainBrushType == 1)
+//        {
+//            engine.SetTerrainBrushType(
+//                TerrainBrushType::Lower
+//            );
+//        }
+//
+//		else if (m_terrainBrushType == 2)
+//		{
+//			engine.SetTerrainBrushType(
+//				TerrainBrushType::Smooth
+//			);
+//		}
+//		else if (m_terrainBrushType == 3)
+//		{
+//			engine.SetTerrainBrushType(
+//				TerrainBrushType::Flatten
+//			);
+//		}
+//		else if (m_terrainBrushType == 4)
+//		{
+//			engine.SetTerrainBrushType(
+//				TerrainBrushType::Noise
+//			);
+//		}
+//		else if (m_terrainBrushType == 5)
+//		{
+//			engine.SetTerrainBrushType(
+//				TerrainBrushType::TexturePaint
+//			);
+//		}
+//    }
+//
+//    if (ImGui::InputFloat("Brush Size", &m_terrainBrushSize, 0.10f, 50.1f, "%.2f"))
+//    {
+//        if (m_terrainBrushSize < 1.0f)
+//        {
+//            m_terrainBrushSize = 1.0f;
+//        }
+//
+//        if (m_terrainBrushSize > 50.0f)
+//        {
+//            m_terrainBrushSize = 50.0f;
+//        }
+//        engine.SetTerrainBrushSize(
+//            m_terrainBrushSize
+//        );
+//    }
+//
+//    Terrain& terrain = engine.GetTerrain();
+//
+//    static float rockSlopeStart = 0.30f;
+//    static float rockSlopeEnd = 0.65f;
+//
+//    static float dirtHeightStart = 0.0f;
+//    static float dirtHeightEnd = 8.0f;
+//
+//    static float dirtAmount = 0.8f;
+//
+//    static float textureTiling = 32.0f;
+//
+//    ImGui::SeparatorText("Grid Enabled");
+//
+//	bool gridEnabled = engine.IsGridVisible();
+//    if (ImGui::Checkbox(
+//        "Enable Grid",
+//        &gridEnabled))
+//    {
+//        engine.SetGridVisible(
+//            gridEnabled
+//        );
+//    }
+//  
+//
+//    ImGui::SeparatorText("Texture Blending");
+//
+//    const bool hasTerrain = engine.HasTerrain();
+//
+//    ImGui::BeginDisabled(!hasTerrain);
+//
+//    if (ImGui::DragFloat(
+//        "Rock Slope Start",
+//        &rockSlopeStart,
+//        0.01f,
+//        0.0f,
+//        1.0f))
+//    {
+//        terrain.SetRockSlopeStart(
+//            rockSlopeStart
+//        );
+//    }
+//
+//    if (ImGui::DragFloat(
+//        "Rock Slope End",
+//        &rockSlopeEnd,
+//        0.01f,
+//        0.0f,
+//        1.0f))
+//    {
+//        terrain.SetRockSlopeEnd(
+//            rockSlopeEnd
+//        );
+//    }
+//
+//    if (ImGui::DragFloat(
+//        "Dirt Height Start",
+//        &dirtHeightStart,
+//        0.1f,
+//        -50.0f,
+//        100.0f))
+//    {
+//        terrain.SetDirtHeightStart(
+//            dirtHeightStart
+//        );
+//    }
+//
+//    if (ImGui::DragFloat(
+//        "Dirt Height End",
+//        &dirtHeightEnd,
+//        0.1f,
+//        -50.0f,
+//        100.0f))
+//    {
+//        terrain.SetDirtHeightEnd(
+//            dirtHeightEnd
+//        );
+//    }
+//
+//    if (ImGui::DragFloat(
+//        "Dirt Amount",
+//        &dirtAmount,
+//        0.01f,
+//        0.0f,
+//        1.0f))
+//    {
+//        terrain.SetDirtAmount(
+//            dirtAmount
+//        );
+//    }
+//
+//    ImGui::SeparatorText("Texture Tiling");
+//
+//    if (ImGui::InputFloat("Texture Tiling", &textureTiling, 0.10f, 128.1f, "%.2f"))
+//    {
+//        if (textureTiling < 32.0f)
+//        {
+//            textureTiling = 32.0f;
+//        }
+//
+//        if (textureTiling > 128.0f)
+//        {
+//            textureTiling = 128.0f;
+//        }
+//        terrain.SetTextureTiling(textureTiling);
+//    }
+//
+//    ImGui::EndDisabled();
+//
+//    ImGui::SeparatorText("Water");
+//
+//    bool waterEnabled = engine.IsWaterEnabled();
+//
+//    if (ImGui::Checkbox("Enable Water", &waterEnabled))
+//    {
+//        engine.SetWaterEnabled(waterEnabled);
+//    }
+//
+//    ImGui::BeginDisabled(!engine.IsWaterEnabled());
+//
+//    float waterHeight = engine.GetWaterHeight();
+//
+//    if (ImGui::InputFloat("Water Height", &waterHeight, 0.10f, 128.1f, "%.2f"))
+//    {
+//       if (waterHeight < -20.0f) { waterHeight = -20.0f; }
+//        if (waterHeight > 50.0f) { waterHeight = 50.0f; }
+//        engine.SetWaterHeight(waterHeight);
+//    }
+//
+//    float waveSpeed = engine.GetWaveSpeed();
+//
+//    if (ImGui::InputFloat("Wave Speed", &waveSpeed, 0.10f, 128.1f, "%.2f"))
+//    {
+//        if (waveSpeed < 0.1f) { waveSpeed = 0.1f; }
+//        if (waveSpeed > 2.0f) { waveSpeed = 2.0f; }
+//        engine.SetWaveSpeed(waveSpeed);
+//    }
+//
+//    float waveStrength = engine.GetWaveStrength();
+//
+//    if (ImGui::InputFloat("Wave Strength", &waveStrength, 0.10f, 128.1f, "%.2f"))
+//    {
+//        if (waveStrength < 0.1f) { waveStrength = 0.1f; }
+//        if (waveStrength > 1.0f) { waveStrength = 1.0f; }
+//        engine.SetWaveStrength(waveStrength );
+//    }
+//
+//    float specularPower = engine.GetWaterSpecularPower();
+//
+//    if (ImGui::InputFloat("Specular Power", &specularPower, 1.0f, 10.0f, "%.1f"))
+//    {
+//        if (specularPower < 1.0f) { specularPower = 1.0f; }
+//
+//        if (specularPower > 20.0f) { specularPower = 20.0f; }
+//
+//        engine.SetWaterSpecularPower(specularPower);
+//    }
+//
+//    float rockNormalStrength =  terrain.GetRockNormalStrength();
+//
+//    if (ImGui::DragFloat(
+//        "Rock Normal Strength",
+//        &rockNormalStrength,
+//        0.01f,
+//        0.0f,
+//        1.0f,
+//        "%.2f",
+//        ImGuiSliderFlags_AlwaysClamp))
+//    {
+//        terrain.SetRockNormalStrength(rockNormalStrength);
+//    }
+//
+//
+//    ImGui::EndDisabled();
+//
+//
+//    ImGui::Separator();
+//
+//    ImGui::SeparatorText("Terrain Generation");
+//
+//    ImGui::TextDisabled("Procedural terrain generation coming soon...");
+//    if (ImGui::Button(
+//        "Generate Terrain",
+//        ImVec2(140.0f, 32.0f)))
+//    {
+//        action = EcoSystemAction::Addterrain;
+//    }
+//
+//    return action;
+//}
 
 // -----------------------------------------------------------------------------------------------------------------
 // Water plane Generator

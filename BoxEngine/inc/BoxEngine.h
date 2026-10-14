@@ -160,6 +160,10 @@ public:
         return m_terrainBrushStrength;
     }
 
+    
+
+
+
     bool HasTerrain() const
     {
         return m_terrain != nullptr;
@@ -198,6 +202,15 @@ public:
     void SetWaveSpeed(float speed);
 
     void SetWaveStrength(float strength);
+
+    float GetWaterSpecularPower() const
+    {
+        return m_waterSpecularPower;
+    }
+
+    void SetWaterSpecularPower(float power);
+
+
 
     void UpdateWater(float deltaTime);
 
@@ -329,6 +342,7 @@ private:
     TerrainBrushType m_terrainBrushType = TerrainBrushType::Raise;
     float m_terrainBrushSize = 5.0f;
     float m_terrainBrushStrength = 0.05f;
+
 	// Water
     std::unique_ptr<Water> m_water;
     std::unique_ptr<Shader> m_waterShader;
@@ -336,6 +350,7 @@ private:
     float m_waterHeight = 0.0f;
 	float m_waveSpeed = 0.30f;
 	float m_waveStrength = 0.15f;
+	float m_waterSpecularPower = 8.0f;
     
 
 

@@ -2,6 +2,8 @@
 #include <shader/Shader.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>	
+#include <stb/stb_image.h>
+#include <miniboxlog.h>
 
 
 
@@ -19,12 +21,12 @@ bool Water::Initialize(float size)
 
     const float vertices[] =
     {
-        -halfSize, 0.0f, -halfSize,
-         halfSize, 0.0f, -halfSize,
-         halfSize, 0.0f,  halfSize,
-        -halfSize, 0.0f,  halfSize
+        // Position                     // UV
+        -halfSize, 0.0f, -halfSize,     0.0f, 0.0f,
+         halfSize, 0.0f, -halfSize,     1.0f, 0.0f,
+         halfSize, 0.0f,  halfSize,     1.0f, 1.0f,
+        -halfSize, 0.0f,  halfSize,     0.0f, 1.0f
     };
-
 
     const unsigned int indices[] =
     {
@@ -100,11 +102,25 @@ bool Water::Initialize(float size)
         3,
         GL_FLOAT,
         GL_FALSE,
-        3 * sizeof(float),
+        5 * sizeof(float),
         reinterpret_cast<void*>(0)
     );
 
     glEnableVertexAttribArray(0);
+
+    
+    glVertexAttribPointer(
+        1,
+        2,
+        GL_FLOAT,
+        GL_FALSE,
+        5 * sizeof(float),
+        reinterpret_cast<void*>(
+            3 * sizeof(float)
+            )
+    );
+
+    glEnableVertexAttribArray(1);
 
 
     glBindVertexArray(0);
@@ -113,6 +129,12 @@ bool Water::Initialize(float size)
         GL_ARRAY_BUFFER,
         0
     );
+
+    if (!LoadNormalMap(
+        "assets/textures/terrain/water/Normal Map.png"))
+    {
+        return false;
+    }
 
 
     return true;
@@ -162,7 +184,15 @@ void Water::Render(
         "projection",
         projection
     );
+	// Normal map texture unit
+    shader.SetUniformInt(
+        "uNormalMap",
+        0
+    );
 
+    glActiveTexture(GL_TEXTURE0);
+
+    glBindTexture(GL_TEXTURE_2D, m_normalMap);
 
     // -------------------------------------------------
     // Transparency
@@ -198,6 +228,12 @@ void Water::Render(
     glDepthMask(GL_TRUE);
 
     glDisable(GL_BLEND);
+
+	// normal map texture unit
+    glActiveTexture(GL_TEXTURE0);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
 }
 
 void Water::Update(float deltaTime)
@@ -205,6 +241,131 @@ void Water::Update(float deltaTime)
     m_time += deltaTime;
 }
 
+
+
+
+bool Water::LoadNormalMap(
+    const char* path)
+{
+    int width = 0;
+    int height = 0;
+    int channels = 0;
+
+    unsigned char* data =
+        stbi_load(
+            path,
+            &width,
+            &height,
+            &channels,
+            0
+        );
+
+    if (!data)
+    {
+		BOX_LOG_ERROR("Failed to load water normal map: " << path);
+
+       
+
+        return false;
+    }
+
+
+    GLenum format = GL_RGB;
+
+    if (channels == 4)
+    {
+        format = GL_RGBA;
+    }
+    else if (channels == 3)
+    {
+        format = GL_RGB;
+    }
+    else
+    {
+		BOX_LOG_ERROR("Unsupported water normal map format : " << path);
+
+       
+        stbi_image_free(data);
+
+        return false;
+    }
+
+
+    glGenTextures(
+        1,
+        &m_normalMap
+    );
+
+    glBindTexture(
+        GL_TEXTURE_2D,
+        m_normalMap
+    );
+
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_WRAP_S,
+        GL_REPEAT
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_WRAP_T,
+        GL_REPEAT
+    );
+
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_MIN_FILTER,
+        GL_LINEAR_MIPMAP_LINEAR
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_MAG_FILTER,
+        GL_LINEAR
+    );
+
+
+    glPixelStorei(
+        GL_UNPACK_ALIGNMENT,
+        1
+    );
+
+
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        format,
+        width,
+        height,
+        0,
+        format,
+        GL_UNSIGNED_BYTE,
+        data
+    );
+
+
+    glGenerateMipmap(
+        GL_TEXTURE_2D
+    );
+
+
+    stbi_image_free(data);
+
+    glBindTexture(
+        GL_TEXTURE_2D,
+        0
+    );
+
+	BOX_LOG_INFO("Loaded water normal map: " + std::string(path));
+
+    
+
+
+    return true;
+}
 
 void Water::Destroy()
 {
@@ -236,5 +397,15 @@ void Water::Destroy()
         );
 
         m_VAO = 0;
+    }
+	// Delete the normal map texture if it exists
+    if (m_normalMap != 0)
+    {
+        glDeleteTextures(
+            1,
+            &m_normalMap
+        );
+
+        m_normalMap = 0;
     }
 }

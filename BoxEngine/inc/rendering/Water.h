@@ -43,6 +43,9 @@ private:
     GLuint m_VBO = 0;
     GLuint m_EBO = 0;
 
+    GLuint m_normalMap = 0;
+
+
     float m_height = 0.0f;
     float m_size = 300.0f;
 
@@ -50,6 +53,7 @@ private:
     float m_waveSpeed = 0.30f;
     float m_waveStrength = 0.15f;
 
+    bool LoadNormalMap(const char* path);
 
 };
 

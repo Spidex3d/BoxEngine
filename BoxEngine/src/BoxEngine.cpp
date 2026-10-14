@@ -817,6 +817,11 @@ void BoxEngine::SetWaveStrength(float strength)
 	m_waveStrength = strength;
 }
 
+void BoxEngine::SetWaterSpecularPower(float power)
+{
+    m_waterSpecularPower = power;
+}
+
 void BoxEngine::UpdateWater(float deltaTime)
 {
     if (!m_waterEnabled ||
@@ -1452,7 +1457,7 @@ void BoxEngine::RenderScene()
         // -------------------------------------------------
         // Water
         // -------------------------------------------------
-       
+
         if (m_waterEnabled &&
             m_water &&
             m_waterShader)
@@ -1474,9 +1479,74 @@ void BoxEngine::RenderScene()
                 m_waveStrength
             );
 
-            m_water->Render(*m_waterShader, view, projection);
+
+            const glm::vec3 waterLightDirection =
+                glm::normalize(
+                    glm::vec3(
+                        -1.0f,
+                        -1.0f,
+                        -0.5f
+                    )
+                );
+
+
+            m_waterShader->setVec3(
+                "uLightDirection",
+                waterLightDirection
+            );
+
+            m_waterShader->setVec3(
+                "uCameraPos",
+                m_camera->Position
+            );
+
+            m_waterShader->SetUniformFloat(
+                "uSpecularPower",
+                m_waterSpecularPower
+            );
+
+
+            m_water->Render(
+                *m_waterShader,
+                view,
+                projection
+            );
         }
-        
+
+        // -------------------------------------------------
+        // End Water
+        // -------------------------------------------------
+
+
+
+        //// -------------------------------------------------
+        //// Water
+        //// -------------------------------------------------
+       
+        //if (m_waterEnabled &&
+        //    m_water &&
+        //    m_waterShader)
+        //{
+        //    m_waterShader->Use();
+
+        //    m_waterShader->SetUniformFloat(
+        //        "uTime",
+        //        m_water->GetTime()
+        //    );
+
+        //    m_waterShader->SetUniformFloat(
+        //        "uWaveSpeed",
+        //        m_waveSpeed
+        //    );
+
+        //    m_waterShader->SetUniformFloat(
+        //        "uWaveStrength",
+        //        m_waveStrength
+        //    );
+
+        //    m_water->Render(*m_waterShader, view, projection);
+        //}
+        //
 		// ----------------------------------- End Water ---------------------------------------------
 
 

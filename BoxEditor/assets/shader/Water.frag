@@ -1,6 +1,7 @@
 #version 460 core
 
 in vec3 WorldPos;
+in vec2 TexCoords;
 
 out vec4 FragColor;
 
@@ -8,106 +9,220 @@ uniform float uTime;
 uniform float uWaveSpeed;
 uniform float uWaveStrength;
 
+uniform vec3 uCameraPos;
+uniform vec3 uLightDirection;
+
+uniform float uSpecularPower;
+
+uniform sampler2D uNormalMap;
+
+
 void main()
 {
     // -------------------------------------------------
-    // Moving wave pattern
+    // Time
     // -------------------------------------------------
 
     float t =
         uTime * uWaveSpeed;
 
-    float waveX =
-        sin(WorldPos.x * 0.45 + t);
 
-    float waveZ =
-        sin(WorldPos.z * 0.55 - t * 0.8);
+    // -------------------------------------------------
+    // Tile the normal map
+    // -------------------------------------------------
 
-    float waveDiag =
-        sin(
-            (WorldPos.x + WorldPos.z) * 0.30 +
-            t * 0.6
+    vec2 tiledUV =
+        TexCoords * 24.0;
+
+
+    // -------------------------------------------------
+    // First moving normal layer
+    // -------------------------------------------------
+
+    vec2 uv1 =
+        tiledUV +
+        vec2(
+            t * 0.025,
+            t * 0.015
         );
 
 
     // -------------------------------------------------
-    // Fake surface normal
+    // Second moving normal layer
+    // -------------------------------------------------
+
+    vec2 uv2 =
+        tiledUV +
+        vec2(
+            -t * 0.018,
+             t * 0.022
+        );
+
+
+    // -------------------------------------------------
+    // Sample normal map twice
+    // -------------------------------------------------
+
+    vec3 normal1 =
+        texture(
+            uNormalMap,
+            uv1
+        ).rgb;
+
+    vec3 normal2 =
+        texture(
+            uNormalMap,
+            uv2
+        ).rgb;
+
+
+    // -------------------------------------------------
+    // Convert 0..1 texture values to -1..1
+    // -------------------------------------------------
+
+    normal1 =
+        normal1 * 2.0 - 1.0;
+
+    normal2 =
+        normal2 * 2.0 - 1.0;
+
+
+    // -------------------------------------------------
+    // Combine normal maps
+    // -------------------------------------------------
+
+    vec3 mapNormal =
+        normalize(
+            normal1 +
+            normal2
+        );
+
+
+    // -------------------------------------------------
+    // Convert normal map to our Y-up water surface
     // -------------------------------------------------
 
     vec3 normal =
         normalize(
             vec3(
-                waveX * uWaveStrength,
+                mapNormal.x *
+                uWaveStrength,
+
                 1.0,
-                waveZ * uWaveStrength
+
+                mapNormal.y *
+                uWaveStrength
             )
         );
 
 
-    // Add a little diagonal disturbance.
-    normal.x +=
-        waveDiag *
-        uWaveStrength *
-        0.35;
-
-    normal.z -=
-        waveDiag *
-        uWaveStrength *
-        0.35;
-
-    normal =
-        normalize(normal);
-
-
     // -------------------------------------------------
-    // Simple overhead light
+    // Light direction
     // -------------------------------------------------
 
-    vec3 lightDirection =
+    vec3 lightDir =
         normalize(
-            vec3(
-                -0.3,
-                1.0,
-                0.2
-            )
+            -uLightDirection
         );
 
-    float lightAmount =
+
+    // -------------------------------------------------
+    // Camera direction
+    // -------------------------------------------------
+
+    vec3 viewDir =
+        normalize(
+            uCameraPos -
+            WorldPos
+        );
+
+
+    // -------------------------------------------------
+    // Diffuse lighting
+    // -------------------------------------------------
+
+    float diffuse =
         max(
             dot(
                 normal,
-                lightDirection
+                lightDir
             ),
             0.0
         );
 
 
     // -------------------------------------------------
-    // Water colour
+    // Specular lighting
+    // -------------------------------------------------
+
+    vec3 halfwayDir =
+        normalize(
+            lightDir +
+            viewDir
+        );
+
+
+    float specular =
+        pow(
+            max(
+                dot(
+                    normal,
+                    halfwayDir
+                ),
+                0.0
+            ),
+            uSpecularPower
+        );
+
+
+    // -------------------------------------------------
+    // Water colours
     // -------------------------------------------------
 
     vec3 deepWater =
         vec3(
             0.02,
-            0.20,
-            0.36
+            0.18,
+            0.32
         );
 
-    vec3 lightWater =
+    vec3 surfaceWater =
         vec3(
-            0.05,
-            0.40,
-            0.58
+            0.04,
+            0.34,
+            0.52
         );
 
 
     vec3 waterColor =
         mix(
             deepWater,
-            lightWater,
-            lightAmount
+            surfaceWater,
+            diffuse
         );
 
+
+    // -------------------------------------------------
+    // Specular highlight colour
+    // -------------------------------------------------
+
+    vec3 specularColor =
+        vec3(
+            0.85,
+            0.95,
+            1.0
+        );
+
+
+    waterColor +=
+        specularColor *
+        specular *
+        0.75;
+
+
+    // -------------------------------------------------
+    // Final colour
+    // -------------------------------------------------
 
     FragColor =
         vec4(
@@ -116,90 +231,220 @@ void main()
         );
 }
 
-
 //#version 460 core
 //
 //in vec3 WorldPos;
 //
+//in vec2 TexCoords;
 //out vec4 FragColor;
 //
 //uniform float uTime;
 //uniform float uWaveSpeed;
 //uniform float uWaveStrength;
 //
+//uniform vec3 uCameraPos;
+//uniform vec3 uLightDirection;
+//uniform float uSpecularPower;
+//
+//uniform sampler2D uNormalMap;
+//
 //void main()
 //{
 //    // -------------------------------------------------
-//    // Two waves travelling in different directions
+//    // Animated waves
 //    // -------------------------------------------------
 //
-//    float wave1 =
-//    sin(
-//        WorldPos.x * 0.55 +
-//        uTime * uWaveSpeed
+//    // -------------------------------------------------
+//    // Moving normal maps
+//    // -------------------------------------------------
+//
+//float t =
+//    uTime * uWaveSpeed;
+//
+//
+//// Repeat the normal map many times across
+//// the large water surface.
+//vec2 tiledUV =
+//    TexCoords * 24.0;
+//
+//
+//// First layer moves one direction.
+//vec2 uv1 =
+//    tiledUV +
+//    vec2(
+//        t * 0.025,
+//        t * 0.015
 //    );
 //
-//float wave2 =
-//    sin(
-//        WorldPos.z * 0.70 -
-//        uTime * uWaveSpeed * 0.75
-//    );
 //
-//float wave3 =
-//    sin(
-//        (WorldPos.x + WorldPos.z) * 0.40 +
-//        uTime * uWaveSpeed * 0.45
+//// Second layer moves another direction.
+//vec2 uv2 =
+//    tiledUV +
+//    vec2(
+//        -t * 0.018,
+//         t * 0.022
 //    );
 //
 //
+//// Sample normal map twice.
+//vec3 normal1 =
+//    texture(
+//        uNormalMap,
+//        uv1
+//    ).rgb;
+//
+//vec3 normal2 =
+//    texture(
+//        uNormalMap,
+//        uv2
+//    ).rgb;
 //
 //
-//    float waves =
-//        (wave1 + wave2 + wave3) /
-//        3.0;
+//// Convert normal map:
+////
+//// 0..1
+////
+//// into
+////
+//// -1..1
+////
+//normal1 =
+//    normal1 * 2.0 - 1.0;
+//
+//normal2 =
+//    normal2 * 2.0 - 1.0;
+//
+//
+//// Combine both layers.
+//vec3 mapNormal =
+//    normalize(
+//        normal1 +
+//        normal2
+//    );
+//
+//    // -------------------------------------------------
+//    // Fake moving water normal
+//    // -------------------------------------------------
+//
+//    float irregularX =
+//    waveX +
+//    waveDiag * 0.35 +
+//    wave4 * 0.25 +
+//    wave5 * 0.15;
+//
+//float irregularZ =
+//    waveZ -
+//    waveDiag * 0.35 +
+//    wave4 * 0.20 -
+//    wave5 * 0.20;
+//
+//
+//vec3 normal =
+//    normalize(
+//        vec3(
+//            irregularX * uWaveStrength,
+//            1.0,
+//            irregularZ * uWaveStrength
+//        )
+//    );
+//
+//
+//
+//    // -------------------------------------------------
+//    // Light direction
+//    //
+//    // uLightDirection represents the direction
+//    // the light is travelling, so reverse it here.
+//    // -------------------------------------------------
+//
+//    vec3 lightDir =
+//        normalize(
+//            -uLightDirection
+//        );
+//
+//
+//    // -------------------------------------------------
+//    // View direction
+//    // -------------------------------------------------
+//
+//    vec3 viewDir =
+//        normalize(
+//            uCameraPos -
+//            WorldPos
+//        );
+//
+//
+//    // -------------------------------------------------
+//    // Basic water lighting
+//    // -------------------------------------------------
+//
+//    float diffuse =
+//        max(
+//            dot(
+//                normal,
+//                lightDir
+//            ),
+//            0.0
+//        );
+//
+//
+//    // -------------------------------------------------
+//    // Specular highlight
+//    //
+//    // Blinn-Phong style highlight
+//    // -------------------------------------------------
+//
+//    vec3 halfwayDir =
+//        normalize(
+//            lightDir +
+//            viewDir
+//        );
+//
+//    float specular = pow(max(dot(normal, halfwayDir), 0.0), uSpecularPower);
 //
 //
 //    // -------------------------------------------------
 //    // Water colours
 //    // -------------------------------------------------
 //
-//    vec3 darkWater =
-//    vec3(
-//        0.03,
-//        0.28,
-//        0.48
-//    );
+//    vec3 deepWater =
+//        vec3(
+//            0.02,
+//            0.18,
+//            0.32
+//        );
 //
-//vec3 lightWater =
-//    vec3(
-//        0.08,
-//        0.40,
-//        0.58
-//    );
-//
-//
-//
-//    // Convert -1..1 into 0..1.
-//    float waveAmount =
-//        waves * 0.5 + 0.5;
-//
-//
-//    // Wave strength controls how noticeable
-//    // the colour variation is.
-//    waveAmount =
-//        mix(
-//            0.5,
-//            waveAmount,
-//            uWaveStrength
+//    vec3 surfaceWater =
+//        vec3(
+//            0.04,
+//            0.34,
+//            0.52
 //        );
 //
 //
 //    vec3 waterColor =
 //        mix(
-//            darkWater,
-//            lightWater,
-//            waveAmount
+//            deepWater,
+//            surfaceWater,
+//            diffuse
 //        );
+//
+//
+//    // -------------------------------------------------
+//    // Bright reflection from the light
+//    // -------------------------------------------------
+//
+//    vec3 specularColor =
+//        vec3(
+//            0.85,
+//            0.95,
+//            1.0
+//        );
+//
+//    waterColor +=
+//        specularColor *
+//        specular *
+//        0.75;
 //
 //
 //    FragColor =

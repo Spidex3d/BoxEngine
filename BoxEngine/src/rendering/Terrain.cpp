@@ -8,6 +8,7 @@
 #include <cmath>
 #include <algorithm>
 #include <cstdlib>
+#include <miniBoxLog.h>
 
 #include <filesystem>
 namespace fs = std::filesystem;
@@ -36,7 +37,7 @@ bool Terrain::Initialize()
 
         m_rockTexture =
             loadSaveTerrainTexture(
-                "assets/textures/terrain/Rock.jpg"
+                "assets/textures/terrain/concrete.jpg"
             );
 
         m_dirtTexture =
@@ -50,8 +51,19 @@ bool Terrain::Initialize()
         {
             return false;
         }
+		// Load the rock normal map texture
+        m_rockNormalTexture =
+            loadSaveTerrainTexture(
+                "assets/textures/terrain/concrete-norm.jpg"
+            );
 
-        //return true;
+        if (m_rockNormalTexture == 0)
+        {
+            BOX_LOG_ERROR("Failed to load rock normal map");
+                    
+
+            return false;
+        }
    
     
     
@@ -235,17 +247,18 @@ void Terrain::RenderTerrain(Shader& shader, const glm::mat4& view, const glm::ma
         0
     );
 
-
+	// Rock texture
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(
-        GL_TEXTURE_2D,
-        m_rockTexture
-    );
+    glBindTexture(GL_TEXTURE_2D, m_rockTexture);
 
-    shader.SetUniformInt(
-        "texture_rock",
-        1
-    );
+    shader.SetUniformInt("texture_rock", 1);
+
+    // Normal map for rock texture
+    glActiveTexture(GL_TEXTURE4);
+
+    glBindTexture(GL_TEXTURE_2D, m_rockNormalTexture);
+
+    shader.SetUniformInt("normal_rock", 4);
 
 
     glActiveTexture(GL_TEXTURE2);
@@ -289,6 +302,17 @@ void Terrain::RenderTerrain(Shader& shader, const glm::mat4& view, const glm::ma
         "textureTiling",
         m_textureTiling
     );
+
+    shader.SetUniformFloat(
+        "rockNormalStrength",
+        m_rockNormalStrength
+    );
+
+	
+
+
+
+
     // ###########################################
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -1498,6 +1522,17 @@ void Terrain::Destroy()
 
         m_VAO = 0;
     }
+
+    if (m_rockNormalTexture != 0)
+    {
+        glDeleteTextures(
+            1,
+            &m_rockNormalTexture
+        );
+
+        m_rockNormalTexture = 0;
+    }
+
 }
 
 //void Terrain::Destroy()
