@@ -59,12 +59,33 @@ bool Terrain::Initialize()
 
         if (m_rockNormalTexture == 0)
         {
-            BOX_LOG_ERROR("Failed to load rock normal map");
-                    
-
+            BOX_LOG_ERROR("Failed to load rock normal map");     
             return false;
         }
-   
+
+		// Load the dirt normal map texture
+        m_dirtNormalTexture =
+            loadSaveTerrainTexture(
+                "assets/textures/terrain/dirt-norm.jpg"
+            );
+
+        if (m_dirtNormalTexture == 0)
+        {
+            BOX_LOG_ERROR("Failed to load dirt normal map");     
+            return false;
+        }
+		// Load the grass normal map texture
+        m_grassNormalTexture =
+            loadSaveTerrainTexture(
+                "assets/textures/terrain/grass-norm.jpg"
+            );
+
+        if (m_grassNormalTexture == 0)
+        {
+            BOX_LOG_ERROR("Failed to load grass normal map");     
+            return false;
+        }
+		
     
     
     return GenerateTerrainMesh();

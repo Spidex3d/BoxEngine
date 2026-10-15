@@ -116,6 +116,25 @@ public:
 		return m_rockNormalStrength;
 	}
 
+	void SetDirtNormalStrength(float value)
+	{
+		m_dirtNormalStrength = value;
+	}
+
+	float GetDirtNormalStrength() const
+	{
+		return m_dirtNormalStrength;
+	}
+
+	void SetGrassNormalStrength(float value)
+	{
+		m_grassNormalStrength = value;
+	}
+
+	float GetGrassNormalStrength() const
+	{
+		return m_grassNormalStrength;
+	}
 
 	void Destroy();
 
@@ -153,6 +172,8 @@ private:
 
 	// normal map texture ID for the terrain
 	unsigned int m_rockNormalTexture = 0;
+	unsigned int m_dirtNormalTexture = 0;
+	unsigned int m_grassNormalTexture = 0;
 
 
 	int rez = 1;
@@ -166,6 +187,8 @@ private:
 	float m_dirtAmount = 0.8f;
 	float m_textureTiling = 32.0f;
 	float m_rockNormalStrength = 0.35f;
+	float m_dirtNormalStrength = 0.35f;
+	float m_grassNormalStrength = 0.35f;
 
 
 

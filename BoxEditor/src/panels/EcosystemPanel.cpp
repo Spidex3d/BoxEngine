@@ -718,7 +718,7 @@ EcoSystemAction EcosystemPanel::TerrainTab(BoxEngine& engine)
 
         if (ImGui::InputFloat("Rock Normal Strength", &rockNormalStrength, 0.10f, 1.0f, "%.2f"))
         {
-            if (rockNormalStrength < 0.01f) { rockNormalStrength = 0.01f; }
+            if (rockNormalStrength < 0.0f) { rockNormalStrength = 0.0f; }
 
             if (rockNormalStrength > 5.0f) { rockNormalStrength = 5.0f; }
 
@@ -726,17 +726,9 @@ EcoSystemAction EcosystemPanel::TerrainTab(BoxEngine& engine)
         }
 
 
-       /* if (ImGui::DragFloat("Rock Normal Strength", &rockNormalStrength,
-            0.01f,
-            0.0f,
-            1.0f,
-            "%.2f",
-            ImGuiSliderFlags_AlwaysClamp))
-        {
-            terrain.SetRockNormalStrength(rockNormalStrength);
-        }*/
+       
 
-
+		// dont add controls outside of this if statement, otherwise it will crash if no terrain exists
     }
 
 
