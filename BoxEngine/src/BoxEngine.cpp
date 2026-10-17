@@ -1536,6 +1536,16 @@ void BoxEngine::RenderScene()
                 m_waterSpecularPower
             );
 
+            m_waterShader->SetUniformFloat(
+                "uNearPlane",
+                m_camera->NearPlane
+            );
+
+            m_waterShader->SetUniformFloat(
+                "uFarPlane",
+                m_camera->FarPlane
+            );
+
 			// water depth texture is bound to texture unit 1
             // -------------------------------------------------
             // Scene depth texture
@@ -1561,6 +1571,8 @@ void BoxEngine::RenderScene()
                 view,
                 projection
             );
+
+            glActiveTexture(GL_TEXTURE0);
         }
 
         // -------------------------------------------------

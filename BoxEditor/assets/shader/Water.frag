@@ -18,6 +18,16 @@ uniform sampler2D uNormalMap;
 
 uniform sampler2D uSceneDepth;
 
+uniform float uNearPlane;
+uniform float uFarPlane;
+
+float LinearizeDepth(float depth)
+{
+    float z = depth * 2.0 - 1.0;
+
+    return (2.0 * uNearPlane * uFarPlane) / (
+            uFarPlane + uNearPlane - z * (uFarPlane - uNearPlane));
+}
 
 void main()
 {
@@ -190,6 +200,8 @@ void main()
         );
 
 
+        
+
     // -------------------------------------------------
     // Diffuse lighting
     // -------------------------------------------------
@@ -229,16 +241,15 @@ void main()
 
 
     // =================================================
-    // DEPTH BASED WATER COLOUR
-    // =================================================
+// DEPTH BASED WATER COLOUR
+// =================================================
 
-    vec3 shallowWater =
+vec3 shallowWater =
     vec3(
         0.05,
         0.38,
         0.42
     );
-
 
 vec3 deepWater =
     vec3(
@@ -247,13 +258,172 @@ vec3 deepWater =
         0.16
     );
 
+vec3 waterColor =
+    mix(
+        shallowWater,
+        deepWater,
+        depthBlend
+    );
 
-    vec3 waterColor =
-        mix(
-            shallowWater,
-            deepWater,
-            depthBlend
-        );
+//// =================================================
+//// SHORELINE FOAM
+//// =================================================
+//
+//float foam =
+//    1.0 -
+//    smoothstep(
+//        0.0,
+//        0.18,
+//        depthBlend
+//    );
+//    // 18
+//
+//// -------------------------------------------------
+//// Irregular moving foam pattern
+//// -------------------------------------------------
+//
+//vec2 foamUV =
+//    WorldPos.xz * 0.08 +
+//    vec2(
+//        uTime * 0.015,
+//        uTime * 0.010
+//    );
+//
+//float foamNoise =
+//    texture(
+//        uNormalMap,
+//        foamUV
+//    ).r;
+//
+//foam *=
+//    smoothstep(
+//        0.25,
+//        0.60,
+//        foamNoise
+//    );
+//
+//foam *= 1.5;
+//
+//
+//// -------------------------------------------------
+//// Foam colour
+//// -------------------------------------------------
+//
+//vec3 foamColor =
+//    vec3(
+//        1.0,
+//        1.0,
+//        1.0
+//    );
+//
+//waterColor =
+//    mix(
+//        waterColor,
+//        foamColor,
+//        foam
+//    );
+//
+
+// =================================================
+// SHORELINE FOAM
+// =================================================
+
+// Convert terrain depth and water depth
+// into proper distance values.
+
+float sceneLinearDepth =
+    LinearizeDepth(
+        sceneDepthRaw
+    );
+
+float waterLinearDepth =
+    LinearizeDepth(
+        gl_FragCoord.z
+    );
+
+
+// Distance between water surface
+// and terrain behind it.
+
+float foamDepth =
+    max(
+        sceneLinearDepth -
+        waterLinearDepth,
+        0.0
+    );
+
+
+// -------------------------------------------------
+// Foam only very close to shoreline.
+// -------------------------------------------------
+
+float foam =
+    1.0 -
+    smoothstep(
+        0.0,
+        1.2,
+        foamDepth
+    );
+
+
+// -------------------------------------------------
+// Break the foam up using water normal texture.
+// -------------------------------------------------
+
+vec2 foamUV =
+    WorldPos.xz * 0.08 +
+    vec2(
+        uTime * 0.015,
+        uTime * 0.010
+    );
+
+float foamNoise =
+    texture(
+        uNormalMap,
+        foamUV
+    ).r;
+
+
+foam *=
+    smoothstep(
+        0.25,
+        0.60,
+        foamNoise
+    );
+
+
+// -------------------------------------------------
+// Foam strength
+// -------------------------------------------------
+
+foam *= 1.25;
+
+foam =
+    clamp(
+        foam,
+        0.0,
+        1.0
+    );
+
+
+// -------------------------------------------------
+// Foam colour
+// -------------------------------------------------
+
+vec3 foamColor =
+    vec3(
+        1.0,
+        1.0,
+        1.0
+    );
+
+
+waterColor =
+    mix(
+        waterColor,
+        foamColor,
+        foam
+    );
 
 
     // -------------------------------------------------
@@ -348,286 +518,7 @@ vec3 deepWater =
         waterColor,
         alpha
     );
-
-    // -------------------------------------------------
-    // Final colour
-    // -------------------------------------------------
-
-    FragColor = vec4(waterColor, alpha);
 }
 
 
 
-//#version 460 core
-//
-//in vec3 WorldPos;
-//in vec2 TexCoords;
-//
-//out vec4 FragColor;
-//
-//uniform float uTime;
-//uniform float uWaveSpeed;
-//uniform float uWaveStrength;
-//
-//uniform vec3 uCameraPos;
-//uniform vec3 uLightDirection;
-//
-//uniform float uSpecularPower;
-//
-//uniform sampler2D uNormalMap;
-//
-//
-//void main()
-//{
-//    // -------------------------------------------------
-//    // Time
-//    // -------------------------------------------------
-//
-//    float t =
-//        uTime * uWaveSpeed;
-//
-//
-//    // -------------------------------------------------
-//    // Tile the normal map
-//    // -------------------------------------------------
-//
-//    vec2 tiledUV =
-//        TexCoords * 24.0;
-//
-//
-//    // -------------------------------------------------
-//    // First moving normal layer
-//    // -------------------------------------------------
-//
-//    vec2 uv1 =
-//        tiledUV +
-//        vec2(
-//            t * 0.025,
-//            t * 0.015
-//        );
-//
-//
-//    // -------------------------------------------------
-//    // Second moving normal layer
-//    // -------------------------------------------------
-//
-//    vec2 uv2 =
-//        tiledUV +
-//        vec2(
-//            -t * 0.018,
-//             t * 0.022
-//        );
-//
-//
-//    // -------------------------------------------------
-//    // Sample normal map twice
-//    // -------------------------------------------------
-//
-//    vec3 normal1 =
-//        texture(
-//            uNormalMap,
-//            uv1
-//        ).rgb;
-//
-//    vec3 normal2 =
-//        texture(
-//            uNormalMap,
-//            uv2
-//        ).rgb;
-//
-//
-//    // -------------------------------------------------
-//    // Convert 0..1 texture values to -1..1
-//    // -------------------------------------------------
-//
-//    normal1 =
-//        normal1 * 2.0 - 1.0;
-//
-//    normal2 =
-//        normal2 * 2.0 - 1.0;
-//
-//
-//    // -------------------------------------------------
-//    // Combine normal maps
-//    // -------------------------------------------------
-//
-//    vec3 mapNormal =
-//        normalize(
-//            normal1 +
-//            normal2
-//        );
-//
-//
-//    // -------------------------------------------------
-//    // Convert normal map to Y-up water surface
-//    // -------------------------------------------------
-//
-//    vec3 normal =
-//        normalize(
-//            vec3(
-//                mapNormal.x *
-//                uWaveStrength,
-//
-//                1.0,
-//
-//                mapNormal.y *
-//                uWaveStrength
-//            )
-//        );
-//
-//
-//    // -------------------------------------------------
-//    // Light direction
-//    // -------------------------------------------------
-//
-//    vec3 lightDir =
-//        normalize(
-//            -uLightDirection
-//        );
-//
-//
-//    // -------------------------------------------------
-//    // Camera direction
-//    // -------------------------------------------------
-//
-//    vec3 viewDir =
-//        normalize(
-//            uCameraPos -
-//            WorldPos
-//        );
-//
-//
-//    // -------------------------------------------------
-//    // Diffuse lighting
-//    // -------------------------------------------------
-//
-//    float diffuse =
-//        max(
-//            dot(
-//                normal,
-//                lightDir
-//            ),
-//            0.0
-//        );
-//
-//
-//    // -------------------------------------------------
-//    // Specular lighting
-//    // -------------------------------------------------
-//
-//    vec3 halfwayDir =
-//        normalize(
-//            lightDir +
-//            viewDir
-//        );
-//
-//
-//    float specular =
-//        pow(
-//            max(
-//                dot(
-//                    normal,
-//                    halfwayDir
-//                ),
-//                0.0
-//            ),
-//            uSpecularPower
-//        );
-//
-//
-//    // -------------------------------------------------
-//    // Water colours
-//    // -------------------------------------------------
-//
-//    vec3 deepWater =
-//        vec3(
-//            0.02,
-//            0.18,
-//            0.32
-//        );
-//
-//
-//    vec3 surfaceWater =
-//        vec3(
-//            0.04,
-//            0.34,
-//            0.52
-//        );
-//
-//
-//    vec3 waterColor =
-//        mix(
-//            deepWater,
-//            surfaceWater,
-//            diffuse
-//        );
-//
-//
-//    // -------------------------------------------------
-//    // Specular highlight
-//    // -------------------------------------------------
-//
-//    vec3 specularColor =
-//        vec3(
-//            0.85,
-//            0.95,
-//            1.0
-//        );
-//
-//
-//    waterColor +=
-//        specularColor *
-//        specular *
-//        0.75;
-//
-//
-//    // =================================================
-//    // FRESNEL TRANSPARENCY
-//    // =================================================
-//
-//    float fresnel =
-//        1.0 -
-//        max(
-//            dot(
-//                normal,
-//                viewDir
-//            ),
-//            0.0
-//        );
-//
-//
-//    // Shape the effect.
-//    // Higher value = more transparent when looking down.
-//    fresnel =
-//        pow(
-//            fresnel,
-//            3.0
-//        );
-//
-//
-//    // -------------------------------------------------
-//    // Alpha range
-//    //
-//    // Looking down       -> more transparent
-//    // Looking across     -> more opaque
-//    // -------------------------------------------------
-//
-//    float alpha =
-//        mix(
-//            0.35,
-//            0.80,
-//            fresnel
-//        );
-//
-//
-//    // -------------------------------------------------
-//    // Final colour
-//    // -------------------------------------------------
-//
-//    FragColor =
-//        vec4(
-//            waterColor,
-//            alpha
-//        );
-//}
-//

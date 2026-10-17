@@ -37,6 +37,7 @@ enum class EngineMode
 // Terrain brush type for raising or lowering terrain ect;
 enum class TerrainBrushType
 {
+	None,
     Raise,
     Lower,
     Smooth,
