@@ -38,7 +38,63 @@ bool Framebuffer::Create(int width, int height)
         0
     );
 
-    glGenRenderbuffers(1, &m_depthStencil);
+    // -------------------------------------------------
+    // Depth copy texture
+    // Used by shaders such as the water shader.
+    // -------------------------------------------------
+
+    glGenTextures(
+        1,
+        &m_depthCopyTexture
+    );
+
+    glBindTexture(
+        GL_TEXTURE_2D,
+        m_depthCopyTexture
+    );
+
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        GL_DEPTH_COMPONENT24,
+        m_width,
+        m_height,
+        0,
+        GL_DEPTH_COMPONENT,
+        GL_FLOAT,
+        nullptr
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_MIN_FILTER,
+        GL_NEAREST
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_MAG_FILTER,
+        GL_NEAREST
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_WRAP_S,
+        GL_CLAMP_TO_EDGE
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_WRAP_T,
+        GL_CLAMP_TO_EDGE
+    );
+
+    glBindTexture(
+        GL_TEXTURE_2D,
+        0
+    );
+
+    /*glGenRenderbuffers(1, &m_depthStencil);
     glBindRenderbuffer(GL_RENDERBUFFER, m_depthStencil);
 
     glRenderbufferStorage(
@@ -53,7 +109,70 @@ bool Framebuffer::Create(int width, int height)
         GL_DEPTH_STENCIL_ATTACHMENT,
         GL_RENDERBUFFER,
         m_depthStencil
+    );*/
+    // -------------------------------------------------
+// Depth texture
+// -------------------------------------------------
+
+    glGenTextures(
+        1,
+        &m_depthTexture
     );
+
+    glBindTexture(
+        GL_TEXTURE_2D,
+        m_depthTexture
+    );
+
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        GL_DEPTH_COMPONENT24,
+        m_width,
+        m_height,
+        0,
+        GL_DEPTH_COMPONENT,
+        GL_FLOAT,
+        nullptr
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_MIN_FILTER,
+        GL_NEAREST
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_MAG_FILTER,
+        GL_NEAREST
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_WRAP_S,
+        GL_CLAMP_TO_EDGE
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_WRAP_T,
+        GL_CLAMP_TO_EDGE
+    );
+
+    glFramebufferTexture2D(
+        GL_FRAMEBUFFER,
+        GL_DEPTH_ATTACHMENT,
+        GL_TEXTURE_2D,
+        m_depthTexture,
+        0
+    );
+
+    glBindTexture(
+        GL_TEXTURE_2D,
+        0
+    );
+
 
     const GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
@@ -101,15 +220,62 @@ void Framebuffer::Unbind()
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+void Framebuffer::CopyDepthTexture()
+{
+    if (m_depthTexture == 0 ||
+        m_depthCopyTexture == 0)
+    {
+        return;
+    }
+
+    glCopyImageSubData(
+        m_depthTexture,
+        GL_TEXTURE_2D,
+        0,
+        0,
+        0,
+        0,
+
+        m_depthCopyTexture,
+        GL_TEXTURE_2D,
+        0,
+        0,
+        0,
+        0,
+
+        m_width,
+        m_height,
+        1
+    );
+}
 
 
 void Framebuffer::Destroy()
 {
-    if (m_depthStencil != 0)
+    if (m_depthTexture != 0)
+    {
+        glDeleteTextures(
+            1,
+            &m_depthTexture
+        );
+
+        m_depthTexture = 0;
+    }
+
+    if (m_depthCopyTexture != 0)
+    {
+        glDeleteTextures(
+            1,
+            &m_depthCopyTexture
+        );
+
+        m_depthCopyTexture = 0;
+    }
+    /*if (m_depthStencil != 0)
     {
         glDeleteRenderbuffers(1, &m_depthStencil);
         m_depthStencil = 0;
-    }
+    }*/
 
     if (m_colorTexture != 0)
     {
@@ -126,3 +292,4 @@ void Framebuffer::Destroy()
     m_width = 0;
     m_height = 0;
 }
+

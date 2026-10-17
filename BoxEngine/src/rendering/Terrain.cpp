@@ -276,10 +276,18 @@ void Terrain::RenderTerrain(Shader& shader, const glm::mat4& view, const glm::ma
 
     // Normal map for rock texture
     glActiveTexture(GL_TEXTURE4);
-
     glBindTexture(GL_TEXTURE_2D, m_rockNormalTexture);
-
     shader.SetUniformInt("normal_rock", 4);
+
+	// Normal map for dirt texture
+	glActiveTexture(GL_TEXTURE5);
+	glBindTexture(GL_TEXTURE_2D, m_dirtNormalTexture);
+	shader.SetUniformInt("normal_dirt", 5);
+
+	// Normal map for grass texture
+	glActiveTexture(GL_TEXTURE6);
+	glBindTexture(GL_TEXTURE_2D, m_grassNormalTexture);
+	shader.SetUniformInt("normal_grass", 6);
 
 
     glActiveTexture(GL_TEXTURE2);
@@ -329,8 +337,15 @@ void Terrain::RenderTerrain(Shader& shader, const glm::mat4& view, const glm::ma
         m_rockNormalStrength
     );
 
-	
+    shader.SetUniformFloat(
+        "dirtNormalStrength",
+        m_dirtNormalStrength
+    );
 
+    shader.SetUniformFloat(
+        "grassNormalStrength",
+        m_grassNormalStrength
+    );
 
 
 
@@ -351,10 +366,7 @@ void Terrain::RenderTerrain(Shader& shader, const glm::mat4& view, const glm::ma
 }
 
 // use the heightmap to get the height at a given x, z coordinate for painting and collision detection
-float Terrain::GetHeightAt(
-    int x,
-    int z
-) const
+float Terrain::GetHeightAt(int x, int z) const
 {
     if (x < 0 || x >= heightmapWidth ||
         z < 0 || z >= heightmapHeight)

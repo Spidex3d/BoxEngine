@@ -724,6 +724,26 @@ EcoSystemAction EcosystemPanel::TerrainTab(BoxEngine& engine)
 
             terrain.SetRockNormalStrength(rockNormalStrength);
         }
+		// -------------------------------------------------
+		// Dirt normal strength
+		// -------------------------------------------------
+		float dirtNormalStrength = terrain.GetDirtNormalStrength();
+		if (ImGui::InputFloat("Dirt Normal Strength", &dirtNormalStrength, 0.10f, 1.0f, "%.2f"))
+		{
+			if (dirtNormalStrength < 0.0f) { dirtNormalStrength = 0.0f; }
+			if (dirtNormalStrength > 5.0f) { dirtNormalStrength = 5.0f; }
+			terrain.SetDirtNormalStrength(dirtNormalStrength);
+		}
+		// -------------------------------------------------
+		// Grass normal strength
+		// -------------------------------------------------
+		float grassNormalStrength = terrain.GetGrassNormalStrength();
+		if (ImGui::InputFloat("Grass Normal Strength", &grassNormalStrength, 0.10f, 1.0f, "%.2f"))
+		{
+			if (grassNormalStrength < 0.0f) { grassNormalStrength = 0.0f; }
+			if (grassNormalStrength > 5.0f) { grassNormalStrength = 5.0f; }
+			terrain.SetGrassNormalStrength(grassNormalStrength);
+		}
 
 
        

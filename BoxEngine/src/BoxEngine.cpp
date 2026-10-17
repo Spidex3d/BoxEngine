@@ -1439,6 +1439,8 @@ void BoxEngine::RenderScene()
         const glm::mat4 projection =
             m_camera->GetProjectionMatrix(aspect);
 
+       
+
 		// Skybox rendering
         if (m_sky && m_skyShader)
         {
@@ -1451,6 +1453,35 @@ void BoxEngine::RenderScene()
         {
             m_terrain->RenderTerrain(*m_terrainShader, view, projection);
         }
+
+        const int viewportWidth =
+            m_sceneFramebuffer.GetWidth();
+
+        const int viewportHeight =
+            m_sceneFramebuffer.GetHeight();
+
+        float aspectRatio = 1.0f;
+
+        if (viewportHeight > 0)
+        {
+            aspectRatio =
+                static_cast<float>(viewportWidth) /
+                static_cast<float>(viewportHeight);
+        }
+
+        for (const auto& entity : m_entities)
+        {
+            if (entity)
+            {
+                entity->RenderScene(*m_sceneShader, *m_camera, aspectRatio);
+            }
+        }
+
+
+        // -------------------------------------------------
+        // Save scene depth before drawing transparent water.
+        // -------------------------------------------------
+        m_sceneFramebuffer.CopyDepthTexture();
 		
         // ---------------------------------- End Terrain rendering -------------------------------------------
         
@@ -1505,6 +1536,25 @@ void BoxEngine::RenderScene()
                 m_waterSpecularPower
             );
 
+			// water depth texture is bound to texture unit 1
+            // -------------------------------------------------
+            // Scene depth texture
+            // -------------------------------------------------
+
+            glActiveTexture(
+                GL_TEXTURE1
+            );
+
+            glBindTexture(
+                GL_TEXTURE_2D,
+                m_sceneFramebuffer.GetDepthCopyTexture()
+            );
+
+            m_waterShader->SetUniformInt(
+                "uSceneDepth",
+                1
+            );
+			// ------------------------------------------------
 
             m_water->Render(
                 *m_waterShader,
@@ -1516,39 +1566,6 @@ void BoxEngine::RenderScene()
         // -------------------------------------------------
         // End Water
         // -------------------------------------------------
-
-
-
-        //// -------------------------------------------------
-        //// Water
-        //// -------------------------------------------------
-       
-        //if (m_waterEnabled &&
-        //    m_water &&
-        //    m_waterShader)
-        //{
-        //    m_waterShader->Use();
-
-        //    m_waterShader->SetUniformFloat(
-        //        "uTime",
-        //        m_water->GetTime()
-        //    );
-
-        //    m_waterShader->SetUniformFloat(
-        //        "uWaveSpeed",
-        //        m_waveSpeed
-        //    );
-
-        //    m_waterShader->SetUniformFloat(
-        //        "uWaveStrength",
-        //        m_waveStrength
-        //    );
-
-        //    m_water->Render(*m_waterShader, view, projection);
-        //}
-        //
-		// ----------------------------------- End Water ---------------------------------------------
-
 
         // terrain brush rendering for visualizing the area of effect when editing the terrain
         if (m_terrainBrush && m_terrainBrushShader)
@@ -1586,30 +1603,6 @@ void BoxEngine::RenderScene()
         
         RenderSelectedEntityOutline(view, projection);
 		// ############################### new RenderScene ########################################
-        const int viewportWidth =
-            m_sceneFramebuffer.GetWidth();
-
-        const int viewportHeight =
-            m_sceneFramebuffer.GetHeight();
-
-        float aspectRatio = 1.0f;
-
-        if (viewportHeight > 0)
-        {
-            aspectRatio =
-                static_cast<float>(viewportWidth) /
-                static_cast<float>(viewportHeight);
-        }
-
-        for (const auto& entity : m_entities)
-        {
-            if (entity)
-            {
-                entity->RenderScene(*m_sceneShader, *m_camera, aspectRatio);
-            }
-        }
-
-      
        
     }
 

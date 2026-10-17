@@ -17,6 +17,8 @@ uniform sampler2D texture_dirt;
 
 // Rock normal map
 uniform sampler2D normal_rock;
+uniform sampler2D normal_grass;
+uniform sampler2D normal_dirt;
 
 
 // =====================================================
@@ -34,6 +36,8 @@ uniform float dirtHeightEnd;
 uniform float dirtAmount;
 
 uniform float rockNormalStrength;
+uniform float grassNormalStrength;
+uniform float dirtNormalStrength;
 
 
 // =====================================================
@@ -164,37 +168,32 @@ void main()
     // =================================================
     // ROCK NORMAL MAP
     // =================================================
-
-    vec3 rockNormal =
-        texture(
-            normal_rock,
-            tiledUV
-        ).rgb;
-
-
+    vec3 rockNormal = texture(normal_rock,  tiledUV).rgb;
     // Convert normal texture from 0..1 to -1..1.
-    rockNormal =
-        rockNormal *
-        2.0 -
-        1.0;
+    rockNormal = rockNormal * 2.0 - 1.0;
+    rockNormal.x *= rockNormalStrength;
+    rockNormal.y *= rockNormalStrength;
+    rockNormal = normalize(rockNormal);
 
+    // =================================================
+    // GRASS NORMAL MAP
+    // =================================================
+    vec3 grassNormal = texture(normal_grass,  tiledUV).rgb;
+    // Convert normal texture from 0..1 to -1..1.
+    grassNormal = grassNormal * 2.0 - 1.0;
+    grassNormal.x *= grassNormalStrength;
+    grassNormal.y *= grassNormalStrength;
+    grassNormal = normalize(grassNormal);
 
-    // Amount of small rock detail.
-    //float rockNormalStrength = 0.35;
-
-
-    rockNormal.x *=
-        rockNormalStrength;
-
-    rockNormal.y *=
-        rockNormalStrength;
-
-
-    rockNormal =
-        normalize(
-            rockNormal
-        );
-
+    // =================================================
+    // DIRT NORMAL MAP
+    // =================================================
+    vec3 dirtNormal = texture(normal_dirt,  tiledUV).rgb;
+    // Convert normal texture from 0..1 to -1..1.
+    dirtNormal = dirtNormal * 2.0 - 1.0;
+    dirtNormal.x *= dirtNormalStrength;
+    dirtNormal.y *= dirtNormalStrength;
+    dirtNormal = normalize(dirtNormal);
 
     // =================================================
     // BUILD A BASIS AROUND THE TERRAIN NORMAL
@@ -224,19 +223,11 @@ void main()
         );
 
 
-    mat3 TBN =
-        mat3(
-            tangent,
-            bitangent,
-            terrainNormal
-        );
+    mat3 TBN = mat3(tangent, bitangent, terrainNormal);
 
-
-    vec3 detailedRockNormal =
-        normalize(
-            TBN *
-            rockNormal
-        );
+    vec3 detailedRockNormal = normalize(TBN * rockNormal);
+    vec3 detailedGrassNormal = normalize(TBN * grassNormal);
+    vec3 detailedDirtNormal = normalize(TBN * dirtNormal);
 
 
     // =================================================
@@ -256,56 +247,43 @@ void main()
         );
 
 
-    float rockLight =
-        max(
-            dot(
-                detailedRockNormal,
-                detailLightDirection
-            ),
-            0.0
-        );
+    float rockLight = max(dot(detailedRockNormal, detailLightDirection), 0.0);
+    float grassLight = max(dot(detailedGrassNormal, detailLightDirection), 0.0);
+    float dirtLight = max(dot(detailedDirtNormal, detailLightDirection), 0.0);
 
 
     // Keep this close to 1.0 so it does not make
     // the terrain dark.
-    float rockDetailBrightness =
-        mix(
-            0.85,
-            1.15,
-            rockLight
-        );
+    float rockDetailBrightness = mix(0.85, 1.15, rockLight);
+    float grassDetailBrightness = mix(0.85, 1.15, grassLight);
+    float dirtDetailBrightness = mix(0.85, 1.15, dirtLight);
 
 
     // =================================================
     // ORIGINAL TERRAIN COLOUR BLENDING
     // =================================================
 
-    vec3 terrainColor =
-        grass * grassBlend +
-        dirt  * dirtBlend +
-        rock  * rockBlend;
+    vec3 terrainColor = grass * grassBlend + dirt  * dirtBlend + rock  * rockBlend;
 
 
     // -------------------------------------------------
     // Apply normal-map detail ONLY to rock
     // -------------------------------------------------
 
-    terrainColor *=
-        mix(
-            1.0,
-            rockDetailBrightness,
-            rockBlend
-        );
+    //terrainColor *= mix(1.0, rockDetailBrightness, rockBlend);
+
+    float finalDetailBrightness =
+    grassDetailBrightness * grassBlend +
+    dirtDetailBrightness  * dirtBlend +
+    rockDetailBrightness  * rockBlend;
+
+    terrainColor *= finalDetailBrightness;
 
 
     // =================================================
     // FINAL OUTPUT
     // =================================================
 
-    FragColor =
-        vec4(
-            terrainColor,
-            1.0
-        );
+    FragColor = vec4(terrainColor, 1.0);
 }
 

@@ -28,6 +28,18 @@ public:
     {
         return m_colorTexture;
     }
+    // water
+    GLuint GetDepthTexture() const
+    {
+        return m_depthTexture;
+    }
+    GLuint GetDepthCopyTexture() const
+    {
+        return m_depthCopyTexture;
+    }
+
+    void CopyDepthTexture();
+	// end water
 
     int GetWidth() const
     {
@@ -48,7 +60,10 @@ public:
 private:
     GLuint m_fbo = 0;
     GLuint m_colorTexture = 0;
-    GLuint m_depthStencil = 0;
+    //GLuint m_depthStencil = 0;
+    GLuint m_depthTexture = 0;
+    GLuint m_depthCopyTexture = 0;
+
 
     int m_width = 0;
     int m_height = 0;
