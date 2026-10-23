@@ -183,14 +183,7 @@ void main()
     // a useful 0..1 blend value.
     // -------------------------------------------------
 
-//    float depthBlend =
-//        clamp(
-//            rawDepthDifference *
-//            1000.0,
-//            0.0,
-//            1.0
-//        );
-
+    // 1000.0
         float depthBlend =
         clamp(
             rawDepthDifference *
@@ -198,9 +191,6 @@ void main()
             0.0,
             1.0
         );
-
-
-        
 
     // -------------------------------------------------
     // Diffuse lighting
@@ -264,65 +254,6 @@ vec3 waterColor =
         deepWater,
         depthBlend
     );
-
-//// =================================================
-//// SHORELINE FOAM
-//// =================================================
-//
-//float foam =
-//    1.0 -
-//    smoothstep(
-//        0.0,
-//        0.18,
-//        depthBlend
-//    );
-//    // 18
-//
-//// -------------------------------------------------
-//// Irregular moving foam pattern
-//// -------------------------------------------------
-//
-//vec2 foamUV =
-//    WorldPos.xz * 0.08 +
-//    vec2(
-//        uTime * 0.015,
-//        uTime * 0.010
-//    );
-//
-//float foamNoise =
-//    texture(
-//        uNormalMap,
-//        foamUV
-//    ).r;
-//
-//foam *=
-//    smoothstep(
-//        0.25,
-//        0.60,
-//        foamNoise
-//    );
-//
-//foam *= 1.5;
-//
-//
-//// -------------------------------------------------
-//// Foam colour
-//// -------------------------------------------------
-//
-//vec3 foamColor =
-//    vec3(
-//        1.0,
-//        1.0,
-//        1.0
-//    );
-//
-//waterColor =
-//    mix(
-//        waterColor,
-//        foamColor,
-//        foam
-//    );
-//
 
 // =================================================
 // SHORELINE FOAM
