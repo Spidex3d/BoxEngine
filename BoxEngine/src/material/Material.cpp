@@ -185,6 +185,41 @@ void Material::SetRoughnessTexture(
     m_roughnessTexturePath = path;
 }
 
+// ------------------------------------
+// Ambient Occlusion map management
+// ------------------------------------
+GLuint Material::GetAOTexture() const
+{
+    return m_aoTexture;
+}
+
+const std::string& Material::GetAOTexturePath() const
+{
+    return m_aoTexturePath;
+}
+
+bool Material::UsesAOTexture() const
+{
+    return m_useAOTexture && m_aoTexture != 0;
+}
+
+void Material::SetAOTexture(GLuint textureID, const std::string& path)
+{
+    m_aoTexture = textureID;
+    m_aoTexturePath = path;
+    m_useAOTexture = textureID != 0;
+}
+
+void Material::SetAOTexturePath(const std::string& path)
+{
+    m_aoTexturePath = path;
+}
+
+void Material::SetUseAOTexture(bool use)
+{
+    m_useAOTexture = use;
+}
+
 
 
 // -----------------------------------------------------
@@ -234,3 +269,246 @@ void Material::SetIOR(
             2.5f
         );
 }
+
+
+
+
+
+
+
+//#include "material/Material.h"
+//
+//#include <algorithm>
+//
+//const glm::vec4& Material::GetBaseColor() const
+//{
+//    return m_baseColor;
+//}
+//
+//void Material::SetBaseColor(
+//    const glm::vec4& color)
+//{
+//    m_baseColor = color;
+//}
+//
+//float Material::GetMetallic() const
+//{
+//    return m_metallic;
+//}
+//
+//void Material::SetMetallic(float metallic)
+//{
+//    m_metallic =
+//        std::clamp(metallic, 0.0f, 1.0f);
+//}
+//
+//float Material::GetRoughness() const
+//{
+//    return m_roughness;
+//}
+//
+//void Material::SetRoughness(float roughness)
+//{
+//    m_roughness =
+//        std::clamp(roughness, 0.0f, 1.0f);
+//}
+//
+//float Material::GetAlpha() const
+//{
+//    return m_alpha;
+//}
+//
+//void Material::SetAlpha(float alpha)
+//{
+//    m_alpha =
+//        std::clamp(alpha, 0.0f, 1.0f);
+//}
+//
+//const glm::vec3&
+//Material::GetEmissionColor() const
+//{
+//    return m_emissionColor;
+//}
+//
+//void Material::SetEmissionColor(
+//    const glm::vec3& color)
+//{
+//    m_emissionColor = color;
+//}
+//
+//float Material::GetEmissionStrength() const
+//{
+//    return m_emissionStrength;
+//}
+//
+//void Material::SetEmissionStrength(
+//    float strength)
+//{
+//    m_emissionStrength =
+//        std::max(strength, 0.0f);
+//}
+//// Texture management
+//GLuint Material::GetBaseColorTexture() const
+//{
+//    return m_baseColorTexture;
+//}
+//
+//bool Material::UsesBaseColorTexture() const
+//{
+//    return
+//        m_useBaseColorTexture &&
+//        m_baseColorTexture != 0;
+//}
+//
+//void Material::SetUseBaseColorTexture(bool useTexture)
+//{
+//    m_useBaseColorTexture = useTexture;
+//}
+//
+//void Material::SetBaseColorTexture(GLuint textureID, const std::string& sourcePath)
+//{
+//    m_baseColorTexture = textureID;
+//
+//    m_baseColorTexturePath = sourcePath;
+//
+//    m_useBaseColorTexture = textureID != 0;
+//}
+//
+//void Material::SetBaseColorTexturePath(const std::string& sourcePath)
+//{
+//    m_baseColorTexturePath = sourcePath;
+//}
+//
+//const std::string& Material::GetBaseColorTexturePath() const
+//{
+//    return m_baseColorTexturePath;
+//}
+//
+//
+//
+//// Normal map management
+//GLuint Material::GetNormalTexture() const
+//{
+//    return m_normalTexture;
+//}
+//
+//
+//bool Material::UsesNormalTexture() const
+//{
+//    return
+//        m_useNormalTexture &&
+//        m_normalTexture != 0;
+//}
+//
+//
+//void Material::SetUseNormalTexture(
+//    bool useTexture)
+//{
+//    m_useNormalTexture =
+//        useTexture;
+//}
+//
+//void Material::SetNormalTexturePath(const std::string& sourcePath)
+//{
+//    m_normalTexturePath = sourcePath;
+//}
+//
+//void Material::SetNormalTexture(
+//    GLuint textureID,
+//    const std::string& sourcePath)
+//{
+//    m_normalTexture =
+//        textureID;
+//
+//    m_normalTexturePath =
+//        sourcePath;
+//
+//    m_useNormalTexture =
+//        textureID != 0;
+//}
+//
+//
+//const std::string&
+//Material::GetNormalTexturePath() const
+//{
+//    return m_normalTexturePath;
+//}
+//
+//
+//float Material::GetNormalStrength() const
+//{
+//    return m_normalStrength;
+//}
+//
+//
+//void Material::SetNormalStrength(
+//    float strength)
+//{
+//    m_normalStrength =
+//        std::clamp(
+//            strength,
+//            0.0f,
+//            2.0f
+//        );
+//}
+//// ------------------------------------
+//// Roughness map management
+//// ------------------------------------
+//
+//void Material::SetRoughnessTexture(
+//    GLuint textureID,
+//    const std::string& path)
+//{
+//    m_roughnessTexture = textureID;
+//    m_roughnessTexturePath = path;
+//}
+//
+//
+//
+//// -----------------------------------------------------
+//// Material type management
+//// -----------------------------------------------------
+//MaterialType Material::GetType() const
+//{
+//    return m_type;
+//}
+//
+//void Material::SetType(
+//    MaterialType type)
+//{
+//    m_type = type;
+//}
+//
+//
+//float Material::GetTransmission() const
+//{
+//    return m_transmission;
+//}
+//
+//void Material::SetTransmission(
+//    float transmission)
+//{
+//    m_transmission =
+//        std::clamp(
+//            transmission,
+//            0.0f,
+//            1.0f
+//        );
+//}
+//
+//
+//float Material::GetIOR() const
+//{
+//    return m_ior;
+//}
+//
+//void Material::SetIOR(
+//    float ior)
+//{
+//    m_ior =
+//        std::clamp(
+//            ior,
+//            1.0f,
+//            2.5f
+//        );
+//}

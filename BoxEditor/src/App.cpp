@@ -150,6 +150,31 @@ bool App::Init()
 	// ------------------------------ End Ecosystem Panel ----------------------------------
 
 
+    // test texture units
+    GLint maxTextureUnits = 0;
+
+    glGetIntegerv(
+        GL_MAX_TEXTURE_IMAGE_UNITS,
+        &maxTextureUnits
+    );
+
+    std::cout
+        << "Maximum Fragment Texture Units: "
+        << maxTextureUnits
+        << std::endl;
+    GLint maxCombinedUnits = 0;
+
+    glGetIntegerv(
+        GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS,
+        &maxCombinedUnits
+    );
+
+    std::cout
+        << "Maximum Combined Texture Units: "
+        << maxCombinedUnits
+        << std::endl;
+
+    // end test
    
     m_mbxManager = std::make_unique<mbxManager>();
     m_objManager = std::make_unique<objManager>();

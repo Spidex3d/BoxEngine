@@ -663,7 +663,7 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
 
     ImGui::SeparatorText("Load Material Textures");
 
-    if (ImGui::Button("Load BoxTextures PBR Material"))
+    if (ImGui::Button("Load BoxTextures Material"))
     {
         const std::filesystem::path matPath = ChooseBoxTexturesFile();
         if (!matPath.empty())
@@ -722,9 +722,18 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
                         material.SetUseRoughnessTexture(false);
                     }
 
+                    // Ambient Occlusion map: store now, shader binding comes next.
+                    if (!imported.ao.empty())
+                    {
+                        const auto aoPath = (matPath.parent_path() / imported.ao).lexically_normal();
+                        const GLuint aoID = loadMap(imported.ao);
+                        material.SetAOTexture(aoID, aoID ? aoPath.string() : "");
+                    }
+                    else material.SetAOTexture(0, "");
+
                     BOX_LOG_INFO("Imported BoxTextures material: " << imported.name);
-                    if (!imported.ao.empty() || !imported.displacement.empty())
-                        BOX_LOG_INFO("AO/displacement entries parsed; renderer support is not yet implemented");
+                    if (!imported.displacement.empty())
+                        BOX_LOG_INFO("Displacement entry parsed; renderer support is not yet implemented");
                 }
             }
         }
@@ -787,7 +796,6 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
     // ------------------------------------------------
     // add a button to load a roughness map, this will be used to control the roughness of the material, we will implement this next.
     // ------------------------------------------------
-    ImGui::SameLine();
     if (ImGui::Button("Load Roughness Map"))
     {
         const std::string path =
@@ -817,28 +825,6 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
         }
     }
 
-   
-    if (ImGui::Button("AO map"))
-    {
-
-        // open a new panel to add a node editor for the material,
-        // this will allow the user to create complex materials using a node-based system.
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("Specular map"))
-    {
-
-        // open a new panel to add a node editor for the material,
-        // this will allow the user to create complex materials using a node-based system.
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("Emissions map"))
-    {
-
-        // open a new panel to add a node editor for the material,
-        // this will allow the user to create complex materials using a node-based system.
-    }
-
     ImGui::SameLine();
 
     if (ImGui::Button("Map UVs"))
@@ -847,7 +833,13 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
 
     }
 
-    
+    ImGui::SameLine();
+    if (ImGui::Button("Node Editor"))
+    {
+
+        // open a new panel to add a node editor for the material,
+        // this will allow the user to create complex materials using a node-based system.
+    }
 
     // ================================
     // Normal Selection
@@ -937,4 +929,3 @@ void MaterialEditor::Shutdown()
     m_preview.reset();
 
 }
-

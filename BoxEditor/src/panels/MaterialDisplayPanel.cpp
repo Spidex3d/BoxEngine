@@ -35,7 +35,7 @@ namespace
             std::ifstream input(path);
             if (!input) return false;
 
-            std::string name, albedo, normal, roughness, line;
+            std::string name, albedo, normal, roughness, ao, line;
             int version = 0;
             while (std::getline(input, line))
             {
@@ -49,12 +49,13 @@ namespace
                 else if (key == "albedo") albedo = value;
                 else if (key == "normal") normal = value;
                 else if (key == "roughness") roughness = value;
+                else if (key == "ao") ao = value;
                 else if (key == "version")
                 {
                     try { version = std::stoi(value); }
                     catch (...) { return false; }
                 }
-                // ao and displacement are reserved for later engine support.
+                // Displacement is reserved for later engine support.
             }
             if (version != 1 || name.empty() || albedo.empty()) return false;
 
@@ -84,6 +85,12 @@ namespace
                     material.SetRoughnessTexture(roughnessID, roughnessPath);
                     material.SetUseRoughnessTexture(true);
                 }
+            }
+            if (!ao.empty())
+            {
+                const auto aoPath = absoluteMap(ao);
+                const GLuint aoID = panel.GetOrLoadTexture(engine, aoPath);
+                if (aoID) material.SetAOTexture(aoID, aoPath);
             }
             return true;
         }
@@ -634,6 +641,7 @@ void MaterialDisplayPanel::Draw(
 
     ImGui::End();
 }
+
 
 
 GLuint MaterialDisplayPanel::GetOrLoadTexture(BoxEngine& engine, const std::string& path)
