@@ -98,7 +98,7 @@ bool Terrain::GenerateTerrainMesh()
 {
 
     unsigned char* t_data = stbi_load("assets/textures/terrain/Data/test_all_black_T.png",
-        &heightmapWidth, &heightmapHeight, &heightmapChannels, 0);
+        &heightmapWidth, &heightmapHeight, &heightmapChannels, 0); // test_all_black_T
     if (!t_data) {
         std::cout << "Failed Loading the Heightmap " << std::endl;
         return false;
