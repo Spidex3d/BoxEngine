@@ -2,6 +2,10 @@
 #include <imgui\imgui.h>
 #include <glm\glm.hpp>
 #include <filesystem>
+#include <fstream>
+#include <utility>
+#include <Windows.h>
+#include <commdlg.h>
 #include <entity\Entity.h>
 #include <BoxEngine.h>
 #include <FileDialog.h>
@@ -14,12 +18,87 @@
 
 #include <miniBoxLog.h>
 
+namespace
+{
+    struct BoxTexturesFile
+    {
+        std::string name;
+        std::string albedo;
+        std::string normal;
+        std::string roughness;
+        std::string ao;
+        std::string displacement;
+        int version = 0;
+    };
+
+    std::string TrimMaterialValue(const std::string& value)
+    {
+        const auto first = value.find_first_not_of(" \t\r\n");
+        if (first == std::string::npos) return {};
+        const auto last = value.find_last_not_of(" \t\r\n");
+        return value.substr(first, last - first + 1);
+    }
+
+    bool ReadBoxTexturesFile(const std::filesystem::path& filePath,
+        BoxTexturesFile& result)
+    {
+        std::ifstream input(filePath);
+        if (!input) return false;
+
+        BoxTexturesFile parsed;
+        std::string line;
+        while (std::getline(input, line))
+        {
+            line = TrimMaterialValue(line);
+            if (line.empty() || line[0] == '#' || line[0] == ';') continue;
+
+            const auto equals = line.find('=');
+            if (equals == std::string::npos) continue;
+
+            const std::string key = TrimMaterialValue(line.substr(0, equals));
+            const std::string value = TrimMaterialValue(line.substr(equals + 1));
+
+            if (key == "name")         parsed.name = value;
+            else if (key == "albedo")       parsed.albedo = value;
+            else if (key == "normal")       parsed.normal = value;
+            else if (key == "roughness")    parsed.roughness = value;
+            else if (key == "ao")           parsed.ao = value;
+            else if (key == "displacement") parsed.displacement = value;
+            else if (key == "version")
+            {
+                try { parsed.version = std::stoi(value); }
+                catch (...) { return false; }
+            }
+        }
+
+        if (parsed.version != 1 || parsed.name.empty() || parsed.albedo.empty())
+            return false;
+
+        result = std::move(parsed);
+        return true;
+    }
+
+    std::filesystem::path ChooseBoxTexturesFile()
+    {
+        char fileName[MAX_PATH] = {};
+        OPENFILENAMEA dialog = {};
+        dialog.lStructSize = sizeof(dialog);
+        dialog.lpstrFile = fileName;
+        dialog.nMaxFile = MAX_PATH;
+        dialog.lpstrFilter = "BoxTextures Material (*.mat)\0*.mat\0All Files (*.*)\0*.*\0";
+        dialog.nFilterIndex = 1;
+        dialog.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR;
+        return GetOpenFileNameA(&dialog) ? std::filesystem::path(fileName)
+            : std::filesystem::path{};
+    }
+}
+
 
 MaterialEditor::MaterialEditor() = default;
 
 MaterialEditor::~MaterialEditor()
 {
-    
+
     Shutdown();
 }
 
@@ -40,9 +119,9 @@ bool MaterialEditor::Initialize()
         return false;
     }
 
-    
 
-	return true;
+
+    return true;
 }
 
 void MaterialEditor::Draw(
@@ -332,12 +411,12 @@ void MaterialEditor::DrawEmissionControls(Material& material)
 
 void MaterialEditor::DrawTextureProperties(BoxEngine& engine, Entity& entity, Material& material)
 {
-	// do this later, for now we will just draw the material properties and emission controls.
+    // do this later, for now we will just draw the material properties and emission controls.
 }
 
 void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entity, FaceEditController& faceEditController)
 {
-    
+
     // -------------------------------------------------
     // No face selected.
     // -------------------------------------------------
@@ -368,20 +447,20 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
 
         return;
     }
-    
+
     EditFace& face = mesh.GetFace(faceIndex);
 
-	ImGui::Text("Editing: %s", entity.GetName().c_str());   // Name of the entity being edited
+    ImGui::Text("Editing: %s", entity.GetName().c_str());   // Name of the entity being edited
 
-	ImGui::Text("Active  Face: %zu", faceIndex);           // Index of the selected face
+    ImGui::Text("Active  Face: %zu", faceIndex);           // Index of the selected face
 
-	ImGui::Text("Material Slot: %zu", face.materialIndex    // Index of the material slot assigned to the selected face
+    ImGui::Text("Material Slot: %zu", face.materialIndex    // Index of the material slot assigned to the selected face
     );
 
 
     ImGui::Spacing();
 
-    
+
     // =================================================
     // NEW MATERIAL SLOT
     // =================================================
@@ -436,7 +515,7 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
             BOX_LOG_WARNING("Maximum material slots reached");
         }
     }
-    
+
     // =================================================
     // CURRENT MATERIAL 
     // =================================================
@@ -476,7 +555,7 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
         );
     }
 
-   
+
     ImGui::Spacing();
     ImGui::SeparatorText("Material Open - Save Section");
 
@@ -526,7 +605,7 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
     // =================================================
     // Material Library Category
     // =================================================
-	//ImGui::SameLine();
+    //ImGui::SameLine();
     const char* categoryNames[] =
     {
         "Glass",
@@ -581,8 +660,75 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
         slotItems.push_back(name.c_str());
     }
 
-	
+
     ImGui::SeparatorText("Load Material Textures");
+
+    if (ImGui::Button("Load BoxTextures PBR Material"))
+    {
+        const std::filesystem::path matPath = ChooseBoxTexturesFile();
+        if (!matPath.empty())
+        {
+            BoxTexturesFile imported;
+            if (!ReadBoxTexturesFile(matPath, imported))
+            {
+                BOX_LOG_ERROR("Invalid BoxTextures .mat file: " << matPath.string());
+            }
+            else
+            {
+                // Filenames in .mat are relative to that file, not the working directory.
+                const auto loadMap = [&](const std::string& filename) -> GLuint
+                {
+                    if (filename.empty()) return 0;
+                    const auto path = (matPath.parent_path() / filename).lexically_normal();
+                    if (!std::filesystem::is_regular_file(path))
+                    {
+                        BOX_LOG_WARNING("Missing BoxTextures map: " << path.string());
+                        return 0;
+                    }
+                    return engine.LoadTexture(path.string());
+                };
+
+                // Load before changing the current material, so a failed albedo
+                // leaves the existing material untouched.
+                const GLuint albedoID = loadMap(imported.albedo);
+                if (albedoID == 0)
+                {
+                    BOX_LOG_ERROR("Could not load BoxTextures albedo: " << imported.albedo);
+                }
+                else
+                {
+                    material.SetName(imported.name);
+                    const auto albedoPath = (matPath.parent_path() / imported.albedo).lexically_normal();
+                    material.SetBaseColorTexture(albedoID, albedoPath.string());
+
+                    if (!imported.normal.empty())
+                    {
+                        const auto normalPath = (matPath.parent_path() / imported.normal).lexically_normal();
+                        const GLuint normalID = loadMap(imported.normal);
+                        material.SetNormalTexture(normalID, normalID ? normalPath.string() : "");
+                    }
+                    else material.SetNormalTexture(0, "");
+
+                    if (!imported.roughness.empty())
+                    {
+                        const auto roughnessPath = (matPath.parent_path() / imported.roughness).lexically_normal();
+                        const GLuint roughnessID = loadMap(imported.roughness);
+                        material.SetRoughnessTexture(roughnessID, roughnessID ? roughnessPath.string() : "");
+                        material.SetUseRoughnessTexture(roughnessID != 0);
+                    }
+                    else
+                    {
+                        material.SetRoughnessTexture(0, "");
+                        material.SetUseRoughnessTexture(false);
+                    }
+
+                    BOX_LOG_INFO("Imported BoxTextures material: " << imported.name);
+                    if (!imported.ao.empty() || !imported.displacement.empty())
+                        BOX_LOG_INFO("AO/displacement entries parsed; renderer support is not yet implemented");
+                }
+            }
+        }
+    }
 
     // =================================================
     // Base Color Buttons for Material Slot Management
@@ -632,15 +778,16 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
                     path
                 );
 
-               // material.SetUseNormalTexture(true);
+                // material.SetUseNormalTexture(true);
 
                 BOX_LOG_INFO("Loaded normal map: " << path);
             }
         }
     }
-	// ------------------------------------------------
-	// add a button to load a roughness map, this will be used to control the roughness of the material, we will implement this next.
-	// ------------------------------------------------
+    // ------------------------------------------------
+    // add a button to load a roughness map, this will be used to control the roughness of the material, we will implement this next.
+    // ------------------------------------------------
+    ImGui::SameLine();
     if (ImGui::Button("Load Roughness Map"))
     {
         const std::string path =
@@ -670,25 +817,41 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
         }
     }
 
+   
+    if (ImGui::Button("AO map"))
+    {
+
+        // open a new panel to add a node editor for the material,
+        // this will allow the user to create complex materials using a node-based system.
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Specular map"))
+    {
+
+        // open a new panel to add a node editor for the material,
+        // this will allow the user to create complex materials using a node-based system.
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Emissions map"))
+    {
+
+        // open a new panel to add a node editor for the material,
+        // this will allow the user to create complex materials using a node-based system.
+    }
+
     ImGui::SameLine();
 
     if (ImGui::Button("Map UVs"))
     {
         m_action = MaterialEditorAction::OpenUVPanel;
-        
+
     }
 
-    ImGui::SameLine();
-    if (ImGui::Button("Node Editor"))
-    {
-
-		// open a new panel to add a node editor for the material,
-        // this will allow the user to create complex materials using a node-based system.
-    }
+    
 
     // ================================
-	// Normal Selection
-	// ================================
+    // Normal Selection
+    // ================================
 
     bool useNormalMap =
         material.UsesNormalTexture();
@@ -722,7 +885,7 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
         );
     }
 
-	// roughness map selection
+    // roughness map selection
 
     bool useRoughnessMap =
         material.UsesRoughnessTexture();
@@ -737,7 +900,7 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
     }
 
 
-	// ############################################# New Material List Selection #######################
+    // ############################################# New Material List Selection #######################
 
     if (ImGui::ListBox(
         "Material List",
@@ -770,7 +933,8 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
 void MaterialEditor::Shutdown()
 {
     // shutdown panel if needed
-    
+
     m_preview.reset();
-    
+
 }
+
