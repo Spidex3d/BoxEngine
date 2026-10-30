@@ -135,10 +135,13 @@ public:
     GLuint GetAOTexture() const;
     const std::string& GetAOTexturePath() const;
     bool UsesAOTexture() const;
+    bool IsAOTextureEnabled() const;
 
     void SetAOTexture(GLuint textureID, const std::string& path);
     void SetAOTexturePath(const std::string& path);
     void SetUseAOTexture(bool use);
+    float GetAOStrength() const;
+    void SetAOStrength(float strength);
 
 
 
@@ -210,12 +213,10 @@ private:
     GLuint m_aoTexture = 0;
     std::string m_aoTexturePath;
     bool m_useAOTexture = false;
+    float m_aoStrength = 1.0f;
 
 
 };
-
-
-
 
 
 
@@ -318,63 +319,74 @@ private:
 //	// Ruffness map (to be implemented)
 //	// ---------------------------------------
 //
-//    // Roughness Map
-//    GLuint GetRoughnessTexture() const
-//    {
-//        return m_roughnessTexture;
-//    }
+//// Roughness Map
+//GLuint GetRoughnessTexture() const
+//{
+//    return m_roughnessTexture;
+//}
 //
-//    const std::string& GetRoughnessTexturePath() const
-//    {
-//        return m_roughnessTexturePath;
-//    }
+//const std::string& GetRoughnessTexturePath() const
+//{
+//    return m_roughnessTexturePath;
+//}
 //
-//    bool UsesRoughnessTexture() const
-//    {
-//        return m_useRoughnessTexture;
-//    }
+//bool UsesRoughnessTexture() const
+//{
+//    return m_useRoughnessTexture;
+//}
 //
-//    void SetRoughnessTexture(
-//        GLuint textureID,
-//        const std::string& path
-//    );
+//void SetRoughnessTexture(
+//    GLuint textureID,
+//    const std::string& path
+//);
 //
-//    void SetRoughnessTexturePath(
-//        const std::string& path)
-//    {
-//        m_roughnessTexturePath = path;
-//    }
+//void SetRoughnessTexturePath(
+//    const std::string& path)
+//{
+//    m_roughnessTexturePath = path;
+//}
 //
-//    void SetUseRoughnessTexture(bool use)
-//    {
-//        m_useRoughnessTexture = use;
-//    }
+//void SetUseRoughnessTexture(bool use)
+//{
+//    m_useRoughnessTexture = use;
+//}
 //
-//	// ------------------------- End of Roughness Map -------------------------
+//// ------------------------- End of Roughness Map -------------------------
+//
+//// Ambient Occlusion (AO) map
+//GLuint GetAOTexture() const;
+//const std::string& GetAOTexturePath() const;
+//bool UsesAOTexture() const;
+//
+//void SetAOTexture(GLuint textureID, const std::string& path);
+//void SetAOTexturePath(const std::string& path);
+//void SetUseAOTexture(bool use);
+//float GetAOStrength() const;
+//void SetAOStrength(float strength);
 //
 //
 //
 //
-//	// Material type
-//    MaterialType GetType() const;
-//    void SetType(MaterialType type);
+//// Material type
+//MaterialType GetType() const;
+//void SetType(MaterialType type);
 //
-//    float GetTransmission() const;
-//    void SetTransmission(float transmission);
+//float GetTransmission() const;
+//void SetTransmission(float transmission);
 //
-//    float GetIOR() const;
-//    void SetIOR(float ior);
+//float GetIOR() const;
+//void SetIOR(float ior);
 //
-//    void SetBaseColorTexturePath(const std::string& sourcePath);
+//void SetBaseColorTexturePath(const std::string& sourcePath);
 //
-//    void SetNormalTexturePath(const std::string& sourcePath);
+//void SetNormalTexturePath(const std::string& sourcePath);
 //
 //
 //private:
 //
 //    std::string m_name = "Material";
 //
-//	// Material type
+//    // Material type
 //    MaterialType m_type = MaterialType::Standard;
 //
 //    float m_transmission = 0.0f;
@@ -399,7 +411,7 @@ private:
 //
 //    bool m_useBaseColorTexture = false;
 //
-//	// Store the source path of the base color texture for saving and loading purposes
+//    // Store the source path of the base color texture for saving and loading purposes
 //    std::string m_baseColorTexturePath;
 //
 //    // Normal Map
@@ -418,5 +430,12 @@ private:
 //
 //    bool m_useRoughnessTexture = false;
 //
-//	
+//    // Ambient Occlusion map
+//    GLuint m_aoTexture = 0;
+//    std::string m_aoTexturePath;
+//    bool m_useAOTexture = false;
+//    float m_aoStrength = 1.0f;
+//
+//
 //};
+

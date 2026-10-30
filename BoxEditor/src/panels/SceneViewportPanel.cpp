@@ -774,13 +774,25 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             // ############################################################################################
             const bool viewportHovered = ImGui::IsItemHovered();
 
+          
+
+
 			// ################################ terrain camera###########################################################
+            // Keep water animation running independently of camera movement
+            engine.UpdateWater(ImGui::GetIO().DeltaTime);
 
             if (viewportHovered &&
+                m_EditMode == 1 &&
+                !engine.IsPlaying() &&
                 !ImGui::GetIO().WantTextInput)
+
+            /*if (viewportHovered &&
+                !ImGui::GetIO().WantTextInput)*/
             {
-                Camera& camera =
-                    engine.GetCamera();
+                Camera& camera = engine.GetCamera();
+
+               
+
 
                 // Temporary movement step.
                 const float deltaTime = ImGui::GetIO().DeltaTime;
@@ -788,7 +800,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                 const float originalSpeed = camera.MovementSpeed;
 
                 // ############# Temporary Water movement Animation . ##############
-                engine.UpdateWater(deltaTime);
+                //engine.UpdateWater(deltaTime);
 
                 // Faster movement while Shift is held.
                 if (ImGui::IsKeyDown(

@@ -203,6 +203,11 @@ bool Material::UsesAOTexture() const
     return m_useAOTexture && m_aoTexture != 0;
 }
 
+bool Material::IsAOTextureEnabled() const
+{
+    return m_useAOTexture;
+}
+
 void Material::SetAOTexture(GLuint textureID, const std::string& path)
 {
     m_aoTexture = textureID;
@@ -218,6 +223,16 @@ void Material::SetAOTexturePath(const std::string& path)
 void Material::SetUseAOTexture(bool use)
 {
     m_useAOTexture = use;
+}
+
+float Material::GetAOStrength() const
+{
+    return m_aoStrength;
+}
+
+void Material::SetAOStrength(float strength)
+{
+    m_aoStrength = std::clamp(strength, 0.0f, 1.0f);
 }
 
 
@@ -269,9 +284,6 @@ void Material::SetIOR(
             2.5f
         );
 }
-
-
-
 
 
 
@@ -463,6 +475,51 @@ void Material::SetIOR(
 //    m_roughnessTexturePath = path;
 //}
 //
+//// ------------------------------------
+//// Ambient Occlusion map management
+//// ------------------------------------
+//GLuint Material::GetAOTexture() const
+//{
+//    return m_aoTexture;
+//}
+//
+//const std::string& Material::GetAOTexturePath() const
+//{
+//    return m_aoTexturePath;
+//}
+//
+//bool Material::UsesAOTexture() const
+//{
+//    return m_useAOTexture && m_aoTexture != 0;
+//}
+//
+//void Material::SetAOTexture(GLuint textureID, const std::string& path)
+//{
+//    m_aoTexture = textureID;
+//    m_aoTexturePath = path;
+//    m_useAOTexture = textureID != 0;
+//}
+//
+//void Material::SetAOTexturePath(const std::string& path)
+//{
+//    m_aoTexturePath = path;
+//}
+//
+//void Material::SetUseAOTexture(bool use)
+//{
+//    m_useAOTexture = use;
+//}
+//
+//float Material::GetAOStrength() const
+//{
+//    return m_aoStrength;
+//}
+//
+//void Material::SetAOStrength(float strength)
+//{
+//    m_aoStrength = std::clamp(strength, 0.0f, 1.0f);
+//}
+//
 //
 //
 //// -----------------------------------------------------
@@ -512,3 +569,7 @@ void Material::SetIOR(
 //            2.5f
 //        );
 //}
+//
+//
+//
+//

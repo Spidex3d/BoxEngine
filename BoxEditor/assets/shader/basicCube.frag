@@ -29,9 +29,11 @@ uniform float uMaterialNormalStrength[8];
 // Roughness
 uniform sampler2D uMaterialRoughnessTextures[8];
 uniform int uMaterialUsesRoughnessTexture[8];
-// Ambient Occlusion
+
+// Ambient Occlusion maps
 uniform sampler2D uMaterialAOTextures[8];
 uniform int uMaterialUsesAOTexture[8];
+uniform float uMaterialAOStrength[8];
 
 // for transparency
 uniform int uMaterialType[8];
@@ -179,32 +181,17 @@ roughness = clamp(roughness, 0.0, 1.0);
 
     vec3 specular = specularColor * specularAmount * specularStrength;
 
-    //float ambientStrength = 0.12;
+    float ambientStrength = 0.12;
+
+    float ao = 1.0;
+    if (uMaterialUsesAOTexture[materialIndex] != 0)
+    {
+        ao = texture(uMaterialAOTextures[materialIndex], vTexCoord).r;
+        ao = mix(1.0, ao, uMaterialAOStrength[materialIndex]);
+    }
 
     //vec3 ambient = uBaseColor.rgb * ambientStrength;
-    //vec3 ambient = materialColor.rgb * ambientStrength;
-
-    // ========================================
-    // Ambient Occlusion
-    // ========================================
-
-float ao = 1.0;
-
-if (uMaterialUsesAOTexture[materialIndex] != 0)
-{
-    ao = texture(
-        uMaterialAOTextures[materialIndex],
-        vTexCoord
-    ).r;
-}
-
-float ambientStrength = 0.12;
-
-vec3 ambient =
-    materialColor.rgb *
-    ambientStrength *
-    ao;
-
+    vec3 ambient = materialColor.rgb * ambientStrength * ao;
 
     vec3 finalColor = ambient + diffuse + specular;
 
@@ -279,3 +266,8 @@ finalColor += emission;
 FragColor = vec4(finalColor, materialColor.a);
  
 }
+
+
+
+
+

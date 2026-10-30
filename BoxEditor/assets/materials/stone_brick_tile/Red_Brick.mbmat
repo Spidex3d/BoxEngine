@@ -1,0 +1,18 @@
+MBMAT 1
+Name Red_Brick
+Type 0
+BaseColor 1 1 1
+Metallic 0
+Roughness 0.5
+Alpha 1
+Transmission 0
+IOR 1.5
+EmissionColor 0 0 0
+EmissionStrength 0
+BaseColorTexture C:\Users\marty\Desktop\BoxEditor\BoxEngine\BoxEditor\assets\PBR\Bricks\Red_Brick_albedo.png
+NormalTexture C:\Users\marty\Desktop\BoxEditor\BoxEngine\BoxEditor\assets\PBR\Bricks\Red_Brick_normal.png
+RoughnessTexture C:\Users\marty\Desktop\BoxEditor\BoxEngine\BoxEditor\assets\PBR\Bricks\Red_Brick_roughness.png
+NormalStrength 1
+AOTexture C:\Users\marty\Desktop\BoxEditor\BoxEngine\BoxEditor\assets\PBR\Bricks\Red_Brick_ao.png
+UseAOTexture 1
+AOStrength 1

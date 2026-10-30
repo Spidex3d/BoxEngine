@@ -891,6 +891,19 @@ void MaterialEditor::DrawFaceMaterialProperties(BoxEngine& engine, Entity& entit
         );
     }
 
+    // Ambient Occlusion controls for the selected material slot.
+    bool useAOMap = material.UsesAOTexture();
+    if (ImGui::Checkbox("Use AO Map", &useAOMap))
+    {
+        material.SetUseAOTexture(useAOMap);
+    }
+
+    float aoStrength = material.GetAOStrength();
+    if (ImGui::SliderFloat("AO Strength", &aoStrength, 0.0f, 1.0f, "%.2f"))
+    {
+        material.SetAOStrength(aoStrength);
+    }
+
 
     // ############################################# New Material List Selection #######################
 
@@ -929,3 +942,4 @@ void MaterialEditor::Shutdown()
     m_preview.reset();
 
 }
+

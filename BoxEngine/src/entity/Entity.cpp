@@ -56,7 +56,7 @@ Entity::Entity(Entity&& other) noexcept
     other.m_vertexCount = 0;
     other.m_indexCount = 0;
     other.m_useIndices = false;
-    
+
 }
 
 Entity& Entity::operator=(Entity&& other) noexcept
@@ -105,7 +105,7 @@ Entity& Entity::operator=(Entity&& other) noexcept
 
     return *this;
 
-    
+
 }
 
 
@@ -174,7 +174,7 @@ bool Entity::CreateFromMeshData(const MeshData& meshData)
         }
     }
 
-    
+
     // ------------------------------------------------
     // Create VAO
     // ------------------------------------------------
@@ -326,10 +326,10 @@ bool Entity::CreateFromMeshData(const MeshData& meshData)
     );
 
     // ------------------------------------------------
-	// Tangent
+    // Tangent
     // ------------------------------------------------
 
-	glEnableVertexAttribArray(4);
+    glEnableVertexAttribArray(4);
 
     glVertexAttribPointer(
         4,
@@ -343,7 +343,7 @@ bool Entity::CreateFromMeshData(const MeshData& meshData)
                 tangent
             )
             )
-	);
+    );
 
     // ------------------------------------------------
     // Counts
@@ -396,7 +396,7 @@ bool Entity::CreateFromMeshData(const MeshData& meshData)
         << m_indexCount
     );
 
-   
+
     return true;
 
 }
@@ -411,7 +411,7 @@ bool Entity::CreateCube()
         return false;
     }
 
-	m_primitiveType = EntityPrimitiveType::Cube;
+    m_primitiveType = EntityPrimitiveType::Cube;
 
     m_baseEditableMesh = m_editableMesh;
 
@@ -429,7 +429,7 @@ bool Entity::CreateCube()
 
     m_aabbMax = glm::vec3(0.5f);
 
-    
+
 
     return true;
 
@@ -468,15 +468,15 @@ bool Entity::CreatePlane()
 
 bool Entity::CreateIcoSphere(int recursionLevel)
 {
-	// Create an icosphere using the editable mesh system, then build the render mesh and create OpenGL buffers.
+    // Create an icosphere using the editable mesh system, then build the render mesh and create OpenGL buffers.
     Destroy();
 
-	if (!m_editableMesh.CreateIcoSphere(recursionLevel))
-	{
-		return false;
-	}
-	m_primitiveType = EntityPrimitiveType::IcoSphere;
-    
+    if (!m_editableMesh.CreateIcoSphere(recursionLevel))
+    {
+        return false;
+    }
+    m_primitiveType = EntityPrimitiveType::IcoSphere;
+
     m_baseEditableMesh = m_editableMesh;
 
     if (!m_editableMesh.BuildRenderMesh(m_meshData))
@@ -528,66 +528,66 @@ bool Entity::UpdateIcoSphere()
 
 bool Entity::CreateCapsule(int sectors, int stacks, float radius, float height)
 {
-	Destroy();
-	if (!m_editableMesh.CreateCapsule(sectors, stacks, radius, height))
-	{
-		return false;
-	}
-	m_capsuleSectors = sectors;
-	m_capsuleStacks = stacks;
-	m_capsuleRadius = radius;
-	m_capsuleHeight = height;
-	m_primitiveType = EntityPrimitiveType::Capsule;
-	m_baseEditableMesh = m_editableMesh;
-	if (!m_editableMesh.BuildRenderMesh(m_meshData))
-	{
-		return false;
-	}
-	if (!CreateBuffersFromMeshData())
-	{
-		return false;
-	}
-	m_aabbMin = glm::vec3(-radius, -height * 0.5f, -radius);
-	m_aabbMax = glm::vec3(radius, height * 0.5f, radius);
-	return true;
+    Destroy();
+    if (!m_editableMesh.CreateCapsule(sectors, stacks, radius, height))
+    {
+        return false;
+    }
+    m_capsuleSectors = sectors;
+    m_capsuleStacks = stacks;
+    m_capsuleRadius = radius;
+    m_capsuleHeight = height;
+    m_primitiveType = EntityPrimitiveType::Capsule;
+    m_baseEditableMesh = m_editableMesh;
+    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+    {
+        return false;
+    }
+    if (!CreateBuffersFromMeshData())
+    {
+        return false;
+    }
+    m_aabbMin = glm::vec3(-radius, -height * 0.5f, -radius);
+    m_aabbMax = glm::vec3(radius, height * 0.5f, radius);
+    return true;
 }
 
 bool Entity::UpdateCapsule()
 {
-	// Recreate editable capsule using the currently stored primitive properties.
-	if (!m_editableMesh.CreateCapsule(m_capsuleSectors, m_capsuleStacks, m_capsuleRadius, m_capsuleHeight))
-	{
-		return false;
-	}
-	// This is now the new base primitive.
-	m_baseEditableMesh = m_editableMesh;
-	if (!m_editableMesh.BuildRenderMesh(m_meshData))
-	{
-		return false;
-	}
-	// Destroy only existing GPU buffers before recreating them.
-	if (m_ebo != 0)
-	{
-		glDeleteBuffers(1, &m_ebo);
-		m_ebo = 0;
-	}
-	if (m_vbo != 0)
-	{
-		glDeleteBuffers(1, &m_vbo);
-		m_vbo = 0;
-	}
-	if (m_vao != 0)
-	{
-		glDeleteVertexArrays(1, &m_vao);
-		m_vao = 0;
-	}
-	if (!CreateBuffersFromMeshData())
-	{
-		return false;
-	}
-	m_aabbMin = glm::vec3(-m_capsuleRadius, -m_capsuleHeight * 0.5f, -m_capsuleRadius);
-	m_aabbMax = glm::vec3(m_capsuleRadius, m_capsuleHeight * 0.5f, m_capsuleRadius);
-	return true;
+    // Recreate editable capsule using the currently stored primitive properties.
+    if (!m_editableMesh.CreateCapsule(m_capsuleSectors, m_capsuleStacks, m_capsuleRadius, m_capsuleHeight))
+    {
+        return false;
+    }
+    // This is now the new base primitive.
+    m_baseEditableMesh = m_editableMesh;
+    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+    {
+        return false;
+    }
+    // Destroy only existing GPU buffers before recreating them.
+    if (m_ebo != 0)
+    {
+        glDeleteBuffers(1, &m_ebo);
+        m_ebo = 0;
+    }
+    if (m_vbo != 0)
+    {
+        glDeleteBuffers(1, &m_vbo);
+        m_vbo = 0;
+    }
+    if (m_vao != 0)
+    {
+        glDeleteVertexArrays(1, &m_vao);
+        m_vao = 0;
+    }
+    if (!CreateBuffersFromMeshData())
+    {
+        return false;
+    }
+    m_aabbMin = glm::vec3(-m_capsuleRadius, -m_capsuleHeight * 0.5f, -m_capsuleRadius);
+    m_aabbMax = glm::vec3(m_capsuleRadius, m_capsuleHeight * 0.5f, m_capsuleRadius);
+    return true;
 }
 
 
@@ -595,7 +595,7 @@ bool Entity::UpdateCapsule()
 
 bool Entity::CreateFloor(float width, float depth, int subdivisionsX, int subdivisionsZ)
 {
-	Destroy();
+    Destroy();
 
     if (!m_editableMesh.CreateFloor(width, depth, subdivisionsX, subdivisionsZ))
     {
@@ -741,7 +741,7 @@ bool Entity::CreateCylinder(int sectors, int stacks, float radius, float height)
     }
     m_aabbMin = glm::vec3(-radius, -height * 0.5f, -radius);
     m_aabbMax = glm::vec3(radius, height * 0.5f, radius);
-	return true;
+    return true;
 }
 
 bool Entity::UpdateCylinder()
@@ -941,14 +941,14 @@ bool Entity::UpdateSphere()
     if (!m_editableMesh.CreateSphere(
         m_sphereSectors,
         m_sphereStacks
-        ))
+    ))
     {
         return false;
     }
 
 
     // This is now the new base primitive.
-    m_baseEditableMesh =  m_editableMesh;
+    m_baseEditableMesh = m_editableMesh;
 
 
     if (!m_editableMesh.BuildRenderMesh(m_meshData))
@@ -1060,11 +1060,11 @@ bool Entity::CreateCone(int sectors, float radius, float height, int stacks)
 }
 bool Entity::UpdateCone()
 {
-	if (!m_editableMesh.CreateCone(m_coneCylinderSectors, m_coneCylinderRadius, m_coneCylinderHeight, m_coneCylinderStacks))
-	{
-		return false;
-	}
-    
+    if (!m_editableMesh.CreateCone(m_coneCylinderSectors, m_coneCylinderRadius, m_coneCylinderHeight, m_coneCylinderStacks))
+    {
+        return false;
+    }
+
     m_primitiveType = EntityPrimitiveType::Cone;
 
     m_baseEditableMesh = m_editableMesh;
@@ -1119,30 +1119,30 @@ bool Entity::CreateTorus(int sides, int rings, float innerRadius, float outerRad
 
 bool Entity::UpdateTorus()
 {
-	if (!m_editableMesh.CreateTorus(m_torusSides, m_torusRings, m_torusInnerRadius, m_torusOuterRadius))
-	{
-		return false;
-	}
+    if (!m_editableMesh.CreateTorus(m_torusSides, m_torusRings, m_torusInnerRadius, m_torusOuterRadius))
+    {
+        return false;
+    }
 
-	m_primitiveType = EntityPrimitiveType::Torus;
+    m_primitiveType = EntityPrimitiveType::Torus;
 
-	m_baseEditableMesh = m_editableMesh;
+    m_baseEditableMesh = m_editableMesh;
 
-	if (!m_editableMesh.BuildRenderMesh(m_meshData))
-	{
-		return false;
-	}
+    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+    {
+        return false;
+    }
 
-	if (!CreateBuffersFromMeshData())
-	{
-		return false;
-	}
+    if (!CreateBuffersFromMeshData())
+    {
+        return false;
+    }
 
-	m_aabbMin = glm::vec3(-0.5f);
+    m_aabbMin = glm::vec3(-0.5f);
 
-	m_aabbMax = glm::vec3(0.5f);
+    m_aabbMax = glm::vec3(0.5f);
 
-	return true;
+    return true;
 }
 
 // shader for the selection outline effect
@@ -1166,7 +1166,7 @@ void Entity::DrawMesh() const
 
     glBindVertexArray(0);
 
-  
+
 }
 
 // ############################################################################################
@@ -1301,7 +1301,7 @@ bool Entity::IsVertexSelected(std::size_t index) const
     return std::find(m_selectedVertices.begin(),
         m_selectedVertices.end(), index) != m_selectedVertices.end();
 }
-const std::vector<std::size_t>&Entity::GetSelectedVertices() const
+const std::vector<std::size_t>& Entity::GetSelectedVertices() const
 {
     return m_selectedVertices;
 }
@@ -1309,8 +1309,8 @@ const std::vector<std::size_t>&Entity::GetSelectedVertices() const
 
 bool Entity::SetEdgePosition(std::size_t index, const glm::vec3& positionA, const glm::vec3& positionB)
 {
-    
-	return false; // Edge functionality is not implemented in this version
+
+    return false; // Edge functionality is not implemented in this version
 }
 
 void Entity::ClearSelectedEdges()
@@ -1320,7 +1320,7 @@ void Entity::ClearSelectedEdges()
 // single edge selection
 void Entity::SelectEdge(std::size_t index)
 {
-    
+
     m_selectedEdges.clear();
 
     m_selectedEdges.push_back(index);
@@ -1392,7 +1392,7 @@ void Entity::AddSelectedFace(std::size_t index)
         m_selectedFaces.push_back(
             index
         );
-	}
+    }
 
 }
 // shiftHeld
@@ -1634,13 +1634,13 @@ bool Entity::CreateBuffersFromMeshData()
     glEnableVertexAttribArray(3);
 
     glVertexAttribIPointer(3, 1, GL_UNSIGNED_INT, sizeof(MeshVertex), reinterpret_cast<void*>(offsetof(
-                MeshVertex, materialIndex)));
+        MeshVertex, materialIndex)));
 
-	// Tangent
+    // Tangent
     glEnableVertexAttribArray(4);
 
     glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(MeshVertex), reinterpret_cast<void*>(offsetof(MeshVertex, tangent)));
-    
+
 
 
     // ------------------------------------------------
@@ -1782,7 +1782,7 @@ bool Entity::RebuildFromEditableMesh()
             if ((maxBounds[axis] - minBounds[axis]) <
                 minimumThickness)
             {
-                
+
                 const float centre =
                     (minBounds[axis] + maxBounds[axis]) *
                     0.5f;
@@ -1829,7 +1829,7 @@ void Entity::SetLastExtrude(std::size_t faceIndex,
 
     m_hasLastExtrude = true;
 
-	m_lastOperationType = LastOperationType::Extrude; // so we know the last operation was an extrusion
+    m_lastOperationType = LastOperationType::Extrude; // so we know the last operation was an extrusion
 }
 
 bool Entity::UpdateLastExtrude(
@@ -1924,7 +1924,7 @@ void Entity::SetLastInset(std::size_t faceIndex, float amount, const MeshEditing
 
     m_hasLastInset = true;
 
-	m_lastOperationType = LastOperationType::Inset; // so we know the last operation was an inset
+    m_lastOperationType = LastOperationType::Inset; // so we know the last operation was an inset
 }
 
 bool Entity::UpdateLastInset(float amount)
@@ -1980,20 +1980,20 @@ void Entity::SetLastRoundInset(std::size_t faceIndex, float amount, int segments
     const MeshEditing& meshBeforeRoundInset)
 {
     m_lastRoundInset.faceIndex = faceIndex;
-	m_lastRoundInset.insetAmount = amount;
-	m_lastRoundInset.segments = segments;
-	m_lastRoundInset.roundness = roundness;
-	m_lastRoundInsetBaseMesh = meshBeforeRoundInset;
-	m_hasLastRoundInset = true;
-	m_lastOperationType = LastOperationType::RoundInset; // so we know the last operation was a round inset
+    m_lastRoundInset.insetAmount = amount;
+    m_lastRoundInset.segments = segments;
+    m_lastRoundInset.roundness = roundness;
+    m_lastRoundInsetBaseMesh = meshBeforeRoundInset;
+    m_hasLastRoundInset = true;
+    m_lastOperationType = LastOperationType::RoundInset; // so we know the last operation was a round inset
 }
 
 bool Entity::UpdateLastRoundInset(float amount, int segments, float roundness)
 {
-	if (!m_hasLastRoundInset)
-	{
-		return false;
-	}
+    if (!m_hasLastRoundInset)
+    {
+        return false;
+    }
 
     amount = glm::clamp(amount, 0.0f, 0.95f);
 
@@ -2001,33 +2001,33 @@ bool Entity::UpdateLastRoundInset(float amount, int segments, float roundness)
 
     roundness = glm::clamp(roundness, 0.0f, 1.0f);
 
-	// Restore mesh immediately before
-	// the last round inset operation.
-	m_editableMesh = m_lastRoundInsetBaseMesh;
+    // Restore mesh immediately before
+    // the last round inset operation.
+    m_editableMesh = m_lastRoundInsetBaseMesh;
     RoundInset roundInset;
-	if (!roundInset.Use(
-		m_editableMesh,
-		m_lastRoundInset.faceIndex,
-		amount, segments, roundness))
-	{
-		BOX_LOG_ERROR(
-			"Failed to update last round inset"
-		);
-		return false;
-	}
-	MeshData renderMesh;
-	if (!m_editableMesh.BuildRenderMesh(renderMesh))
-	{
-		return false;
-	}
-	if (!CreateFromMeshData(renderMesh))
-	{
-		return false;
-	}
-	m_lastRoundInset.insetAmount = amount;
-	m_lastRoundInset.segments = segments;
-	m_lastRoundInset.roundness = roundness;
-	return true;
+    if (!roundInset.Use(
+        m_editableMesh,
+        m_lastRoundInset.faceIndex,
+        amount, segments, roundness))
+    {
+        BOX_LOG_ERROR(
+            "Failed to update last round inset"
+        );
+        return false;
+    }
+    MeshData renderMesh;
+    if (!m_editableMesh.BuildRenderMesh(renderMesh))
+    {
+        return false;
+    }
+    if (!CreateFromMeshData(renderMesh))
+    {
+        return false;
+    }
+    m_lastRoundInset.insetAmount = amount;
+    m_lastRoundInset.segments = segments;
+    m_lastRoundInset.roundness = roundness;
+    return true;
 }
 
 
@@ -2042,7 +2042,7 @@ void Entity::SetLastLoopCut(std::size_t edgeIndex, float amount,
     m_lastLoopCut.cutAmount = amount;
     m_lastLoopCutBaseMesh = meshBeforeLoopCut;
     m_hasLastLoopCut = true;
-	m_lastOperationType = LastOperationType::LoopCut; // so we know the last operation was a loop cut
+    m_lastOperationType = LastOperationType::LoopCut; // so we know the last operation was a loop cut
 }
 
 bool Entity::UpdateLastLoopCut(float amount)
@@ -2113,7 +2113,7 @@ void Entity::SetLastBevel(std::size_t edgeIndex, float Width, int Segments, floa
     m_lastBevel.profile = Profile;
     m_lastBevelBaseMesh = meshBeforeBevel;
     m_hasLastBevel = true;
-	m_lastOperationType = LastOperationType::Bevel; // so we know the last operation was a bevel
+    m_lastOperationType = LastOperationType::Bevel; // so we know the last operation was a bevel
 }
 
 //bool Entity::UpdateLastBevel(int segments, float width, float profile)
@@ -2165,7 +2165,7 @@ bool Entity::UpdateLastBevel(float width, int segments, float profile)
     m_lastBevel.profile =
         profile;
 
-	return true;
+    return true;
 }
 
 
@@ -2297,8 +2297,8 @@ bool Entity::RebuildModifiers()
 
     FaceExtrude extrude;
 
-	// I would like to test which modifiers is enabled.
-    
+    // I would like to test which modifiers is enabled.
+
 
     for (const ModifierData& modifier : m_modifiers)
     {
@@ -2455,7 +2455,7 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
         renderColor
     );
 
-    
+
     // --------------------------------
     // Material Slot Color
     // --------------------------------
@@ -2471,30 +2471,35 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
 
         GLuint textureID = 0;
 
-		GLuint normalTextureID = 0; // tangent space normal map texture ID
+        GLuint normalTextureID = 0; // tangent space normal map texture ID
 
-		GLuint roughnessTextureID = 0; // roughness texture ID
+        GLuint roughnessTextureID = 0; // roughness texture ID
+
+        GLuint aoTextureID = 0; // ambient occlusion texture ID
 
         float metallic = 0.0f;
         float roughness = 0.5f;
 
-		int materialType = 0;       // glass or standard material type
-		float transmission = 0.0f;  // glass transmission factor
-		float ior = 1.5f;           // glass index of refraction
-		// --------------------------------
+        int materialType = 0;       // glass or standard material type
+        float transmission = 0.0f;  // glass transmission factor
+        float ior = 1.5f;           // glass index of refraction
+        // --------------------------------
         // Emission
-		// --------------------------------
+        // --------------------------------
 
         glm::vec3 emissionColor(0.0f);
         float emissionStrength = 0.0f;
 
         bool useTexture = false;
 
-		bool useNormalTexture = false; // tangent space normal map usage flag
+        bool useNormalTexture = false; // tangent space normal map usage flag
 
-		bool useRoughnessTexture = false; // roughness texture usage flag
+        bool useRoughnessTexture = false; // roughness texture usage flag
 
-		float normalStrength = 1.0f; // tangent space normal map strength
+        bool useAOTexture = false;
+        float aoStrength = 1.0f;
+
+        float normalStrength = 1.0f; // tangent space normal map strength
 
 
         // --------------------------------
@@ -2521,15 +2526,19 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
 
             roughness = material.GetRoughness();
 
-			roughnessTextureID = material.GetRoughnessTexture(); // roughness texture ID
+            roughnessTextureID = material.GetRoughnessTexture(); // roughness texture ID
 
-			useRoughnessTexture = material.UsesRoughnessTexture(); // roughness texture usage flag
+            useRoughnessTexture = material.UsesRoughnessTexture(); // roughness texture usage flag
 
-			materialType = static_cast<int>(material.GetType()); // 0 = standard, 1 = glass
+            aoTextureID = material.GetAOTexture();
+            useAOTexture = material.UsesAOTexture();
+            aoStrength = material.GetAOStrength();
 
-			transmission = material.GetTransmission();           // only used for glass materials
+            materialType = static_cast<int>(material.GetType()); // 0 = standard, 1 = glass
 
-			ior = material.GetIOR();                             // only used for glass materials
+            transmission = material.GetTransmission();           // only used for glass materials
+
+            ior = material.GetIOR();                             // only used for glass materials
 
             emissionColor =
                 material.GetEmissionColor();
@@ -2537,7 +2546,7 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
             emissionStrength =
                 material.GetEmissionStrength();
 
-			// Normal map tangent space texture information
+            // Normal map tangent space texture information
             normalTextureID =
                 material.GetNormalTexture();
 
@@ -2547,9 +2556,9 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
             normalStrength =
                 material.GetNormalStrength();
         }
-		// --------------------------------
-		// Metallic
-		// --------------------------------
+        // --------------------------------
+        // Metallic
+        // --------------------------------
 
         const std::string metallicUniform =
             "uMaterialMetallic[" +
@@ -2560,24 +2569,24 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
             metallicUniform.c_str(),
             metallic
         );
-		// --------------------------------
-		// Roughness
-		// --------------------------------
+        // --------------------------------
+        // Roughness
+        // --------------------------------
         const std::string roughnessUniform =
             "uMaterialRoughness[" +
             std::to_string(index) +
             "]";
 
-     
+
 
         shader.SetUniformFloat(
             roughnessUniform.c_str(),
             roughness
         );
 
-         // --------------------------------
-         // Roughness Map
-         // --------------------------------
+        // --------------------------------
+        // Roughness Map
+        // --------------------------------
 
         const std::string roughnessTextureUniform =
             "uMaterialRoughnessTextures[" +
@@ -2601,9 +2610,29 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
             useRoughnessTexture ? 1 : 0
         );
 
+        // --------------------------------
+        // Ambient Occlusion map (units 24-31)
+        // --------------------------------
+        const std::string aoTextureUniform =
+            "uMaterialAOTextures[" + std::to_string(index) + "]";
+        const std::string useAOTextureUniform =
+            "uMaterialUsesAOTexture[" + std::to_string(index) + "]";
+
+        shader.SetUniformInt(
+            aoTextureUniform.c_str(),
+            static_cast<int>(index + (MaxMaterialSlots * 3))
+        );
+        shader.SetUniformInt(
+            useAOTextureUniform.c_str(),
+            useAOTexture ? 1 : 0
+        );
+        const std::string aoStrengthUniform =
+            "uMaterialAOStrength[" + std::to_string(index) + "]";
+        shader.SetUniformFloat(aoStrengthUniform.c_str(), aoStrength);
+
 
         // --------------------------------
-		// Material Type set standard or glass material type
+        // Material Type set standard or glass material type
         // --------------------------------
 
         const std::string materialTypeUniform =
@@ -2651,8 +2680,8 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
 
 
         // ===================================
-		// tangent space normal map strength
-		// ===================================
+        // tangent space normal map strength
+        // ===================================
 
         const std::string normalTextureUniform =
             "uMaterialNormalTextures[" +
@@ -2684,9 +2713,9 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
             normalStrengthUniform.c_str(),
             normalStrength
         );
-		// --------------------------------
-		// Emission strength
-		// --------------------------------
+        // --------------------------------
+        // Emission strength
+        // --------------------------------
 
         const std::string
             emissionColorUniform =
@@ -2790,16 +2819,16 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
             : 0
         );
 
-            // --------------------------------
-            // Roughness Map
-            // --------------------------------
+        // --------------------------------
+        // Roughness Map
+        // --------------------------------
 
-            glActiveTexture(
-                GL_TEXTURE0 +
-                static_cast<GLenum>(
-                    index + (MaxMaterialSlots * 2)
-                    )
-            );
+        glActiveTexture(
+            GL_TEXTURE0 +
+            static_cast<GLenum>(
+                index + (MaxMaterialSlots * 2)
+                )
+        );
 
         glBindTexture(
             GL_TEXTURE_2D,
@@ -2807,6 +2836,12 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
             ? roughnessTextureID
             : 0
         );
+
+        // AO map
+        glActiveTexture(
+            GL_TEXTURE0 + static_cast<GLenum>(index + (MaxMaterialSlots * 3))
+        );
+        glBindTexture(GL_TEXTURE_2D, useAOTexture ? aoTextureID : 0);
 
 
     }
@@ -2835,12 +2870,12 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
 
     DrawMesh();
 
-	// cleanup: unbind textures to avoid affecting other objects
+    // cleanup: unbind textures to avoid affecting other objects
     for (std::size_t index = 0;
         index < MaxMaterialSlots;
         ++index)
     {
-		// Unbind the base color texture
+        // Unbind the base color texture
         glActiveTexture(
             GL_TEXTURE0 +
             static_cast<GLenum>(index)
@@ -2848,7 +2883,7 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
 
         glBindTexture(GL_TEXTURE_2D, 0);
 
-		// Normal Map
+        // Normal Map
         glActiveTexture(
             GL_TEXTURE0 +
             static_cast<GLenum>(index + 8)
@@ -2856,7 +2891,7 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
 
         glBindTexture(GL_TEXTURE_2D, 0);
 
-		// Roughness Map
+        // Roughness Map
         glActiveTexture(
             GL_TEXTURE0 +
             static_cast<GLenum>(
@@ -2866,22 +2901,28 @@ void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const g
 
         glBindTexture(GL_TEXTURE_2D, 0);
 
+        // AO map
+        glActiveTexture(
+            GL_TEXTURE0 + static_cast<GLenum>(index + (MaxMaterialSlots * 3))
+        );
+        glBindTexture(GL_TEXTURE_2D, 0);
+
     }
-    
+
     // Restore default texture unit.
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, 0);
 
 }
 
-   
+
 
 // New RenderPreview function that takes Shader and Camera objects as parameters
 void Entity::RenderScene(const Shader& shader, const Camera& camera, float aspectRatio)
 {
-	
+
     RenderInternal(shader, camera.GetViewMatrix(), camera.GetProjectionMatrix(aspectRatio),
-        camera.Position);   
+        camera.Position);
 
 }
 // revised RenderPreview function that takes view and projection matrices as parameters
@@ -3036,3 +3077,3086 @@ void Entity::Destroy()
     m_meshData.indices.clear();
 }
 
+
+
+
+
+
+
+//#include "entity/Entity.h"
+//#include <shader/Shader.h>
+//#include <camera/Camera.h>
+//#include <miniBoxLog.h>
+//#include <stb/stb_image.h>
+//#include <glm/gtc/matrix_transform.hpp>
+//#include <glm/gtc/constants.hpp>
+//#include <utility>
+//#include <vector>
+//#include <cmath>
+//#include <algorithm>
+//
+//#include <mesh\modifiers\FaceExtrude.h>
+//#include <mesh\modifiers\FaceInset.h>
+//#include <mesh/modifiers/RoundInset.h>
+//#include <mesh/modifiers/LoopCut.h>
+//#include <mesh/modifiers/Bevel.h>
+//
+//Entity::Entity(
+//    int id,
+//    const std::string& name)
+//    : m_id(id),
+//    m_name(name)
+//{
+//    // Slot 0 is always the default material.
+//    m_materialSlots.emplace_back();
+//
+//    m_materialSlots[0].SetName("Default");
+//}
+//
+//Entity::~Entity()
+//{
+//    Destroy();
+//}
+//
+//Entity::Entity(Entity&& other) noexcept
+//    :m_meshData(std::move(other.m_meshData)),
+//    m_material(std::move(other.m_material)),
+//    m_id(other.m_id),
+//    m_name(std::move(other.m_name)),
+//    m_position(other.m_position),
+//    m_rotation(other.m_rotation),
+//    m_scale(other.m_scale),
+//    m_visible(other.m_visible),
+//    m_vao(other.m_vao),
+//    m_vbo(other.m_vbo),
+//    m_ebo(other.m_ebo),
+//    m_vertexCount(other.m_vertexCount),
+//    m_indexCount(other.m_indexCount),
+//    m_useIndices(other.m_useIndices)
+//{
+//    other.m_vao = 0;
+//    other.m_vbo = 0;
+//    other.m_ebo = 0;
+//
+//    other.m_vertexCount = 0;
+//    other.m_indexCount = 0;
+//    other.m_useIndices = false;
+//
+//}
+//
+//Entity& Entity::operator=(Entity&& other) noexcept
+//{
+//    if (this == &other)
+//    {
+//        return *this;
+//    }
+//
+//    Destroy();
+//
+//    m_meshData =
+//        std::move(other.m_meshData);
+//
+//    m_material =
+//        std::move(other.m_material);
+//
+//    m_id = other.m_id;
+//    m_name = std::move(other.m_name);
+//
+//    m_position = other.m_position;
+//    m_rotation = other.m_rotation;
+//    m_scale = other.m_scale;
+//    m_visible = other.m_visible;
+//
+//    m_vao = other.m_vao;
+//    m_vbo = other.m_vbo;
+//    m_ebo = other.m_ebo;
+//
+//    m_vertexCount =
+//        other.m_vertexCount;
+//
+//    m_indexCount =
+//        other.m_indexCount;
+//
+//    m_useIndices =
+//        other.m_useIndices;
+//
+//    other.m_vao = 0;
+//    other.m_vbo = 0;
+//    other.m_ebo = 0;
+//
+//    other.m_vertexCount = 0;
+//    other.m_indexCount = 0;
+//    other.m_useIndices = false;
+//
+//    return *this;
+//
+//
+//}
+//
+//
+//
+//bool Entity::CreateFromMeshData(const MeshData& meshData)
+//{
+//    Destroy();
+//
+//    if (!meshData.IsValid())
+//    {
+//        BOX_LOG_ERROR(
+//            "Entity::CreateFromMeshData received invalid mesh data"
+//        );
+//
+//        return false;
+//    }
+//
+//    m_meshData = meshData;
+//    // -------------------------------------------------
+//    // Calculate local-space AABB from mesh vertices
+//    // -------------------------------------------------
+//
+//    m_aabbMin = m_meshData.vertices[0].position;
+//
+//    m_aabbMax = m_meshData.vertices[0].position;
+//
+//    for (const MeshVertex& vertex :
+//        m_meshData.vertices)
+//    {
+//        m_aabbMin =
+//            glm::min(
+//                m_aabbMin,
+//                vertex.position
+//            );
+//
+//        m_aabbMax =
+//            glm::max(
+//                m_aabbMax,
+//                vertex.position
+//            );
+//    }
+//
+//    // Flat meshes need a small amount of thickness
+//    // so ray/AABB picking remains reliable.
+//    constexpr float minimumAABBThickness = 0.02f;
+//
+//    for (int axis = 0; axis < 3; ++axis)
+//    {
+//        const float size =
+//            m_aabbMax[axis] -
+//            m_aabbMin[axis];
+//
+//        if (size < minimumAABBThickness)
+//        {
+//            const float centre =
+//                (m_aabbMin[axis] +
+//                    m_aabbMax[axis]) * 0.5f;
+//
+//            m_aabbMin[axis] =
+//                centre -
+//                minimumAABBThickness * 0.5f;
+//
+//            m_aabbMax[axis] =
+//                centre +
+//                minimumAABBThickness * 0.5f;
+//        }
+//    }
+//
+//
+//    // ------------------------------------------------
+//    // Create VAO
+//    // ------------------------------------------------
+//
+//    glGenVertexArrays(1, &m_vao);
+//
+//    glBindVertexArray(m_vao);
+//
+//    // ------------------------------------------------
+//    // Create VBO
+//    // ------------------------------------------------
+//
+//    glGenBuffers(1, &m_vbo);
+//
+//    glBindBuffer(
+//        GL_ARRAY_BUFFER,
+//        m_vbo
+//    );
+//
+//    glBufferData(
+//        GL_ARRAY_BUFFER,
+//        m_meshData.vertices.size() *
+//        sizeof(MeshVertex),
+//        m_meshData.vertices.data(),
+//        GL_STATIC_DRAW
+//    );
+//
+//    // ------------------------------------------------
+//    // Create EBO
+//    // ------------------------------------------------
+//
+//    if (m_meshData.HasIndices())
+//    {
+//        glGenBuffers(
+//            1,
+//            &m_ebo
+//        );
+//
+//        glBindBuffer(
+//            GL_ELEMENT_ARRAY_BUFFER,
+//            m_ebo
+//        );
+//
+//        glBufferData(
+//            GL_ELEMENT_ARRAY_BUFFER,
+//            m_meshData.indices.size() *
+//            sizeof(std::uint32_t),
+//            m_meshData.indices.data(),
+//            GL_STATIC_DRAW
+//        );
+//
+//        m_useIndices =
+//            true;
+//
+//        m_indexCount =
+//            static_cast<GLsizei>(
+//                m_meshData.indices.size()
+//                );
+//    }
+//    else
+//    {
+//        m_useIndices =
+//            false;
+//
+//        m_indexCount =
+//            0;
+//    }
+//
+//
+//    // ------------------------------------------------
+//    // Vertex layout
+//    // ------------------------------------------------
+//
+//    // ------------------------------------------------
+//    // Position
+//    // ------------------------------------------------
+//
+//    glEnableVertexAttribArray(0);
+//
+//    glVertexAttribPointer(
+//        0,
+//        3,
+//        GL_FLOAT,
+//        GL_FALSE,
+//        sizeof(MeshVertex),
+//        reinterpret_cast<void*>(
+//            offsetof(
+//                MeshVertex,
+//                position
+//            )
+//            )
+//    );
+//
+//    // ------------------------------------------------
+//    // Normal
+//    // ------------------------------------------------
+//
+//    glEnableVertexAttribArray(1);
+//
+//    glVertexAttribPointer(
+//        1,
+//        3,
+//        GL_FLOAT,
+//        GL_FALSE,
+//        sizeof(MeshVertex),
+//        reinterpret_cast<void*>(
+//            offsetof(
+//                MeshVertex,
+//                normal
+//            )
+//            )
+//    );
+//
+//
+//    // UV
+//    glEnableVertexAttribArray(2);
+//
+//    glVertexAttribPointer(
+//        2,
+//        2,
+//        GL_FLOAT,
+//        GL_FALSE,
+//        sizeof(MeshVertex),
+//        reinterpret_cast<void*>(
+//            offsetof(
+//                MeshVertex,
+//                uv
+//            )
+//            )
+//    );
+//
+//    // ------------------------------------------------
+//    // Material index
+//    // ------------------------------------------------
+//
+//    glEnableVertexAttribArray(3);
+//
+//    glVertexAttribIPointer(
+//        3,
+//        1,
+//        GL_UNSIGNED_INT,
+//        sizeof(MeshVertex),
+//        reinterpret_cast<void*>(
+//            offsetof(
+//                MeshVertex,
+//                materialIndex
+//            )
+//            )
+//    );
+//
+//    // ------------------------------------------------
+//    // Tangent
+//    // ------------------------------------------------
+//
+//    glEnableVertexAttribArray(4);
+//
+//    glVertexAttribPointer(
+//        4,
+//        3,
+//        GL_FLOAT,
+//        GL_FALSE,
+//        sizeof(MeshVertex),
+//        reinterpret_cast<void*>(
+//            offsetof(
+//                MeshVertex,
+//                tangent
+//            )
+//            )
+//    );
+//
+//    // ------------------------------------------------
+//    // Counts
+//    // ------------------------------------------------
+//
+//    m_vertexCount =
+//        static_cast<GLsizei>(
+//            m_meshData.vertices.size()
+//            );
+//
+//
+//    glBindVertexArray(
+//        0
+//    );
+//
+//    glBindBuffer(
+//        GL_ARRAY_BUFFER,
+//        0
+//    );
+//
+//
+//    const bool valid =
+//        m_vao != 0 &&
+//        m_vbo != 0 &&
+//        m_vertexCount > 0 &&
+//        (
+//            !m_useIndices ||
+//            (
+//                m_ebo != 0 &&
+//                m_indexCount > 0
+//                )
+//            );
+//
+//
+//    if (!valid)
+//    {
+//        BOX_LOG_ERROR("Entity::CreateFromMeshData failed");
+//
+//        Destroy();
+//
+//        return false;
+//    }
+//
+//    BOX_LOG_INFO(
+//        "Created entity from mesh data: "
+//        << m_name
+//        << " Vertices="
+//        << m_vertexCount
+//        << " Indices="
+//        << m_indexCount
+//    );
+//
+//
+//    return true;
+//
+//}
+//
+//
+//bool Entity::CreateCube()
+//{
+//    Destroy();
+//
+//    if (!m_editableMesh.CreateCube())
+//    {
+//        return false;
+//    }
+//
+//    m_primitiveType = EntityPrimitiveType::Cube;
+//
+//    m_baseEditableMesh = m_editableMesh;
+//
+//    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+//    {
+//        return false;
+//    }
+//
+//    if (!CreateBuffersFromMeshData())
+//    {
+//        return false;
+//    }
+//
+//    m_aabbMin = glm::vec3(-0.5f);
+//
+//    m_aabbMax = glm::vec3(0.5f);
+//
+//
+//
+//    return true;
+//
+//}
+//
+//bool Entity::CreatePlane()
+//{
+//    Destroy();
+//
+//    if (!m_editableMesh.CreatePlane())
+//    {
+//        return false;
+//    }
+//
+//    m_primitiveType = EntityPrimitiveType::Plane;
+//
+//    m_baseEditableMesh = m_editableMesh;
+//
+//    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+//    {
+//        return false;
+//    }
+//
+//    if (!CreateBuffersFromMeshData())
+//    {
+//        return false;
+//    }
+//
+//    m_aabbMin = glm::vec3(-0.5f);
+//
+//    m_aabbMax = glm::vec3(0.5f);
+//
+//    return true;
+//
+//}
+//
+//bool Entity::CreateIcoSphere(int recursionLevel)
+//{
+//    // Create an icosphere using the editable mesh system, then build the render mesh and create OpenGL buffers.
+//    Destroy();
+//
+//    if (!m_editableMesh.CreateIcoSphere(recursionLevel))
+//    {
+//        return false;
+//    }
+//    m_primitiveType = EntityPrimitiveType::IcoSphere;
+//
+//    m_baseEditableMesh = m_editableMesh;
+//
+//    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+//    {
+//        return false;
+//    }
+//
+//    if (!CreateBuffersFromMeshData())
+//    {
+//        return false;
+//    }
+//
+//    m_aabbMin = glm::vec3(-0.5f);
+//
+//    m_aabbMax = glm::vec3(0.5f);
+//
+//    return true;
+//}
+//
+//bool Entity::UpdateIcoSphere()
+//{
+//    Destroy();
+//
+//    if (!m_editableMesh.CreateIcoSphere(m_icoSphereRecursionLevel))
+//    {
+//        return false;
+//    }
+//
+//    m_primitiveType = EntityPrimitiveType::IcoSphere;
+//
+//    m_baseEditableMesh = m_editableMesh;
+//
+//    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+//    {
+//        return false;
+//    }
+//
+//    if (!CreateBuffersFromMeshData())
+//    {
+//        return false;
+//    }
+//
+//    m_aabbMin = glm::vec3(-0.5f);
+//
+//    m_aabbMax = glm::vec3(0.5f);
+//
+//    return true;
+//}
+//
+//bool Entity::CreateCapsule(int sectors, int stacks, float radius, float height)
+//{
+//    Destroy();
+//    if (!m_editableMesh.CreateCapsule(sectors, stacks, radius, height))
+//    {
+//        return false;
+//    }
+//    m_capsuleSectors = sectors;
+//    m_capsuleStacks = stacks;
+//    m_capsuleRadius = radius;
+//    m_capsuleHeight = height;
+//    m_primitiveType = EntityPrimitiveType::Capsule;
+//    m_baseEditableMesh = m_editableMesh;
+//    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+//    {
+//        return false;
+//    }
+//    if (!CreateBuffersFromMeshData())
+//    {
+//        return false;
+//    }
+//    m_aabbMin = glm::vec3(-radius, -height * 0.5f, -radius);
+//    m_aabbMax = glm::vec3(radius, height * 0.5f, radius);
+//    return true;
+//}
+//
+//bool Entity::UpdateCapsule()
+//{
+//    // Recreate editable capsule using the currently stored primitive properties.
+//    if (!m_editableMesh.CreateCapsule(m_capsuleSectors, m_capsuleStacks, m_capsuleRadius, m_capsuleHeight))
+//    {
+//        return false;
+//    }
+//    // This is now the new base primitive.
+//    m_baseEditableMesh = m_editableMesh;
+//    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+//    {
+//        return false;
+//    }
+//    // Destroy only existing GPU buffers before recreating them.
+//    if (m_ebo != 0)
+//    {
+//        glDeleteBuffers(1, &m_ebo);
+//        m_ebo = 0;
+//    }
+//    if (m_vbo != 0)
+//    {
+//        glDeleteBuffers(1, &m_vbo);
+//        m_vbo = 0;
+//    }
+//    if (m_vao != 0)
+//    {
+//        glDeleteVertexArrays(1, &m_vao);
+//        m_vao = 0;
+//    }
+//    if (!CreateBuffersFromMeshData())
+//    {
+//        return false;
+//    }
+//    m_aabbMin = glm::vec3(-m_capsuleRadius, -m_capsuleHeight * 0.5f, -m_capsuleRadius);
+//    m_aabbMax = glm::vec3(m_capsuleRadius, m_capsuleHeight * 0.5f, m_capsuleRadius);
+//    return true;
+//}
+//
+//
+//// ----------------------------- Ecosystem Mesh Creation -----------------------------
+//
+//bool Entity::CreateFloor(float width, float depth, int subdivisionsX, int subdivisionsZ)
+//{
+//    Destroy();
+//
+//    if (!m_editableMesh.CreateFloor(width, depth, subdivisionsX, subdivisionsZ))
+//    {
+//        return false;
+//    }
+//
+//    m_primitiveType = EntityPrimitiveType::Floor;
+//
+//    m_baseEditableMesh = m_editableMesh;
+//
+//    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+//    {
+//        return false;
+//    }
+//
+//    if (!CreateBuffersFromMeshData())
+//    {
+//        return false;
+//    }
+//
+//    // ------------------------------------------------
+//    // Bounds
+//    // ------------------------------------------------
+//
+//    constexpr float pickingThickness = 0.02f;
+//
+//    m_aabbMin = glm::vec3(
+//        -width * 0.5f,
+//        -pickingThickness * 0.5f,
+//        -depth * 0.5f
+//    );
+//
+//    m_aabbMax = glm::vec3(
+//        width * 0.5f,
+//        pickingThickness * 0.5f,
+//        depth * 0.5f
+//    );
+//
+//    return true;
+//}
+//
+//bool Entity::CreateRock(
+//    int rockSubdivisions,
+//    float rockRadius,
+//    float rockRoughness,
+//    std::uint32_t rockSeed,
+//    float rockFlattening)
+//{
+//    Destroy();
+//
+//    // ---------------------------------------------
+//    // Create the native editable rock topology.
+//    // ---------------------------------------------
+//    if (!m_editableMesh.CreateRock(rockSubdivisions,
+//        rockRadius,
+//        rockRoughness,
+//        rockSeed,
+//        rockFlattening))
+//    {
+//        BOX_LOG_ERROR(
+//            "Entity::CreateRock: "
+//            "Failed to create editable rock"
+//        );
+//
+//        return false;
+//    }
+//
+//    // ---------------------------------------------
+//    // Keep a copy of the original editable mesh.
+//    // This is important for your modifier system.
+//    // ---------------------------------------------
+//    m_baseEditableMesh = m_editableMesh;
+//
+//    // ---------------------------------------------
+//    // Build the render representation from the
+//    // editable topology.
+//    // ---------------------------------------------
+//    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+//    {
+//        BOX_LOG_ERROR(
+//            "Entity::CreateRock: "
+//            "Failed to build render mesh"
+//        );
+//
+//        return false;
+//    }
+//
+//    // ---------------------------------------------
+//    // Create OpenGL VAO/VBO/EBO.
+//    // ---------------------------------------------
+//    if (!CreateBuffersFromMeshData())
+//    {
+//        BOX_LOG_ERROR(
+//            "Entity::CreateRock: "
+//            "Failed to create GPU buffers"
+//        );
+//
+//        return false;
+//    }
+//
+//    // ---------------------------------------------
+//    // Temporary rock bounds.
+//    //
+//    // Once we start applying procedural distortion
+//    // we can calculate this from the actual vertices.
+//    // ---------------------------------------------
+//    m_aabbMin =
+//        glm::vec3(-rockRadius);
+//
+//    m_aabbMax =
+//        glm::vec3(rockRadius);
+//
+//    return true;
+//}
+//
+//// ----------------------------- End Rock Creation -----------------------------
+//
+//
+//
+//bool Entity::CreateCylinder(int sectors, int stacks, float radius, float height)
+//{
+//    Destroy();
+//    if (!m_editableMesh.CreateCylinder(sectors, stacks, radius, height))
+//    {
+//        return false;
+//    }
+//
+//    m_cylinderSectors = sectors;
+//    m_cylinderStacks = stacks;
+//    m_cylinderRadius = radius;
+//    m_cylinderHeight = height;
+//
+//    m_primitiveType = EntityPrimitiveType::Cylinder;
+//
+//    m_baseEditableMesh = m_editableMesh;
+//    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+//    {
+//        return false;
+//    }
+//    if (!CreateBuffersFromMeshData())
+//    {
+//        return false;
+//    }
+//    m_aabbMin = glm::vec3(-radius, -height * 0.5f, -radius);
+//    m_aabbMax = glm::vec3(radius, height * 0.5f, radius);
+//    return true;
+//}
+//
+//bool Entity::UpdateCylinder()
+//{
+//    // -----------------------------------------
+//    // Recreate editable cylinder using the
+//    // currently stored primitive properties.
+//    // -----------------------------------------
+//
+//    if (!m_editableMesh.CreateCylinder(
+//        m_cylinderSectors,
+//        m_cylinderStacks,
+//        m_cylinderRadius,
+//        m_cylinderHeight))
+//    {
+//        return false;
+//    }
+//
+//
+//    // This is now the new base primitive.
+//    m_baseEditableMesh =
+//        m_editableMesh;
+//
+//
+//    if (!m_editableMesh.BuildRenderMesh(
+//        m_meshData))
+//    {
+//        return false;
+//    }
+//
+//
+//    // Destroy only existing GPU buffers before
+//    // recreating them.
+//    if (m_ebo != 0)
+//    {
+//        glDeleteBuffers(1, &m_ebo);
+//        m_ebo = 0;
+//    }
+//
+//    if (m_vbo != 0)
+//    {
+//        glDeleteBuffers(1, &m_vbo);
+//        m_vbo = 0;
+//    }
+//
+//    if (m_vao != 0)
+//    {
+//        glDeleteVertexArrays(1, &m_vao);
+//        m_vao = 0;
+//    }
+//
+//
+//    if (!CreateBuffersFromMeshData())
+//    {
+//        return false;
+//    }
+//
+//
+//    m_aabbMin =
+//        glm::vec3(
+//            -m_cylinderRadius,
+//            -m_cylinderHeight * 0.5f,
+//            -m_cylinderRadius
+//        );
+//
+//    m_aabbMax =
+//        glm::vec3(
+//            m_cylinderRadius,
+//            m_cylinderHeight * 0.5f,
+//            m_cylinderRadius
+//        );
+//
+//
+//    return true;
+//}
+//
+//// Create a Sphere primitive
+//
+//bool Entity::CreateSphere(
+//    int sectors,
+//    int stacks)
+//{
+//    Destroy();
+//
+//
+//    if (sectors < 3)
+//    {
+//        sectors = 3;
+//    }
+//
+//    if (stacks < 2)
+//    {
+//        stacks = 2;
+//    }
+//
+//
+//    // ------------------------------------------------
+//    // Create editable sphere topology
+//    // ------------------------------------------------
+//
+//    if (!m_editableMesh.CreateSphere(
+//        sectors,
+//        stacks))
+//    {
+//        BOX_LOG_ERROR(
+//            "Entity::CreateSphere: "
+//            "Failed to create editable sphere"
+//        );
+//
+//        return false;
+//    }
+//
+//
+//    m_primitiveType =
+//        EntityPrimitiveType::Sphere;
+//
+//
+//    // Keep untouched primitive topology
+//    // for the modifier system.
+//    m_baseEditableMesh =
+//        m_editableMesh;
+//
+//
+//    // ------------------------------------------------
+//    // Build render mesh
+//    //
+//    // This also generates:
+//    //
+//    // Position
+//    // Normal
+//    // UV
+//    // Material index
+//    // Tangent
+//    // ------------------------------------------------
+//
+//    if (!m_editableMesh.BuildRenderMesh(
+//        m_meshData))
+//    {
+//        BOX_LOG_ERROR(
+//            "Entity::CreateSphere: "
+//            "Failed to build render mesh"
+//        );
+//
+//        return false;
+//    }
+//
+//
+//    // ------------------------------------------------
+//    // Upload to GPU
+//    // ------------------------------------------------
+//
+//    if (!CreateBuffersFromMeshData())
+//    {
+//        BOX_LOG_ERROR(
+//            "Entity::CreateSphere: "
+//            "Failed to create GPU buffers"
+//        );
+//
+//        return false;
+//    }
+//
+//
+//    // ------------------------------------------------
+//    // Bounds
+//    // ------------------------------------------------
+//
+//    constexpr float radius =
+//        0.5f;
+//
+//
+//    m_aabbMin =
+//        glm::vec3(-radius);
+//
+//    m_aabbMax =
+//        glm::vec3(radius);
+//
+//
+//    BOX_LOG_INFO(
+//        "Created editable sphere entity: "
+//        << m_name
+//        << " ID="
+//        << m_id
+//        << " Vertices="
+//        << m_editableMesh.GetVertexCount()
+//        << " Edges="
+//        << m_editableMesh.GetEdgeCount()
+//        << " Faces="
+//        << m_editableMesh.GetFaceCount()
+//    );
+//
+//
+//    return true;
+//}
+//
+//bool Entity::UpdateSphere()
+//{
+//    if (!m_editableMesh.CreateSphere(
+//        m_sphereSectors,
+//        m_sphereStacks
+//    ))
+//    {
+//        return false;
+//    }
+//
+//
+//    // This is now the new base primitive.
+//    m_baseEditableMesh = m_editableMesh;
+//
+//
+//    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+//    {
+//        return false;
+//    }
+//
+//
+//    // Destroy only existing GPU buffers before
+//    // recreating them.
+//    if (m_ebo != 0)
+//    {
+//        glDeleteBuffers(1, &m_ebo);
+//        m_ebo = 0;
+//    }
+//
+//    if (m_vbo != 0)
+//    {
+//        glDeleteBuffers(1, &m_vbo);
+//        m_vbo = 0;
+//    }
+//
+//    if (m_vao != 0)
+//    {
+//        glDeleteVertexArrays(1, &m_vao);
+//        m_vao = 0;
+//    }
+//
+//
+//    if (!CreateBuffersFromMeshData())
+//    {
+//        return false;
+//    }
+//
+//
+//    constexpr float radius = 0.5f;
+//
+//
+//    m_aabbMin =
+//        glm::vec3(-radius);
+//
+//    m_aabbMax =
+//        glm::vec3(radius);
+//
+//    return true;
+//
+//}
+//
+//// Create a Pyramid primitive
+//bool Entity::CreatePyramid()
+//{
+//    Destroy();
+//
+//    if (!m_editableMesh.CreatePyramid())
+//    {
+//        return false;
+//    }
+//
+//    m_primitiveType = EntityPrimitiveType::Pyramid;
+//
+//    m_baseEditableMesh = m_editableMesh;
+//
+//    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+//    {
+//        return false;
+//    }
+//
+//    if (!CreateBuffersFromMeshData())
+//    {
+//        return false;
+//    }
+//
+//    m_aabbMin = glm::vec3(-0.5f);
+//
+//    m_aabbMax = glm::vec3(0.5f);
+//
+//    return true;
+//
+//}
+//
+//bool Entity::CreateCone(int sectors, float radius, float height, int stacks)
+//{
+//    Destroy();
+//
+//    if (!m_editableMesh.CreateCone(sectors, radius, height, stacks))
+//    {
+//        return false;
+//    }
+//
+//    m_primitiveType = EntityPrimitiveType::Cone;
+//
+//    m_baseEditableMesh = m_editableMesh;
+//
+//    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+//    {
+//        return false;
+//    }
+//
+//    if (!CreateBuffersFromMeshData())
+//    {
+//        return false;
+//    }
+//
+//    m_aabbMin = glm::vec3(-0.5f);
+//
+//    m_aabbMax = glm::vec3(0.5f);
+//
+//    return true;
+//}
+//bool Entity::UpdateCone()
+//{
+//    if (!m_editableMesh.CreateCone(m_coneCylinderSectors, m_coneCylinderRadius, m_coneCylinderHeight, m_coneCylinderStacks))
+//    {
+//        return false;
+//    }
+//
+//    m_primitiveType = EntityPrimitiveType::Cone;
+//
+//    m_baseEditableMesh = m_editableMesh;
+//
+//    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+//    {
+//        return false;
+//    }
+//
+//    if (!CreateBuffersFromMeshData())
+//    {
+//        return false;
+//    }
+//
+//    m_aabbMin = glm::vec3(-0.5f);
+//
+//    m_aabbMax = glm::vec3(0.5f);
+//
+//    return true;
+//}
+//
+//
+//bool Entity::CreateTorus(int sides, int rings, float innerRadius, float outerRadius)
+//{
+//    Destroy();
+//
+//    if (!m_editableMesh.CreateTorus(sides, rings, innerRadius, outerRadius))
+//    {
+//        return false;
+//    }
+//
+//    m_primitiveType = EntityPrimitiveType::Torus;
+//
+//    m_baseEditableMesh = m_editableMesh;
+//
+//    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+//    {
+//        return false;
+//    }
+//
+//    if (!CreateBuffersFromMeshData())
+//    {
+//        return false;
+//    }
+//
+//    m_aabbMin = glm::vec3(-0.5f);
+//
+//    m_aabbMax = glm::vec3(0.5f);
+//
+//    return true;
+//}
+//
+//bool Entity::UpdateTorus()
+//{
+//    if (!m_editableMesh.CreateTorus(m_torusSides, m_torusRings, m_torusInnerRadius, m_torusOuterRadius))
+//    {
+//        return false;
+//    }
+//
+//    m_primitiveType = EntityPrimitiveType::Torus;
+//
+//    m_baseEditableMesh = m_editableMesh;
+//
+//    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+//    {
+//        return false;
+//    }
+//
+//    if (!CreateBuffersFromMeshData())
+//    {
+//        return false;
+//    }
+//
+//    m_aabbMin = glm::vec3(-0.5f);
+//
+//    m_aabbMax = glm::vec3(0.5f);
+//
+//    return true;
+//}
+//
+//// shader for the selection outline effect
+//void Entity::DrawMesh() const
+//{
+//    if (m_vao == 0)
+//    {
+//        return;
+//    }
+//
+//    glBindVertexArray(m_vao);
+//
+//    if (m_useIndices)
+//    {
+//        glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, nullptr);
+//    }
+//    else
+//    {
+//        glDrawArrays(GL_TRIANGLES, 0, m_vertexCount);
+//    }
+//
+//    glBindVertexArray(0);
+//
+//
+//}
+//
+//// ############################################################################################
+//// ####################################### mesh editing functions #############################
+//// ################################################ vertex ####################################
+//
+//std::size_t Entity::GetVertexCount() const
+//{
+//    return m_meshData.vertices.size();
+//}
+//const MeshVertex* Entity::GetVertex(
+//    std::size_t index) const
+//{
+//    if (index >=
+//        m_meshData.vertices.size())
+//    {
+//        return nullptr;
+//    }
+//
+//    return &m_meshData.vertices[index];
+//}
+//
+//bool Entity::SetVertexPosition(
+//    std::size_t index,
+//    const glm::vec3& position)
+//{
+//    if (index >=
+//        m_meshData.vertices.size())
+//    {
+//        return false;
+//    }
+//
+//    m_meshData.vertices[index].position =
+//        position;
+//
+//    return true;
+//}
+//
+//bool Entity::UploadMeshData()
+//{
+//
+//    if (m_vbo == 0 ||
+//        m_meshData.vertices.empty())
+//    {
+//        return false;
+//    }
+//
+//    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+//
+//    glBufferSubData(GL_ARRAY_BUFFER, 0, m_meshData.vertices.size() * sizeof(MeshVertex), m_meshData.vertices.data());
+//
+//    glBindBuffer(GL_ARRAY_BUFFER, 0);
+//
+//    return true;
+//
+//
+//    /*if (m_vbo == 0 || m_meshData.vertices.empty())
+//    {
+//        return false;
+//    }
+//
+//    std::vector<float> vertices;
+//
+//    vertices.reserve(m_meshData.vertices.size() * 8);
+//
+//    for (const MeshVertex& vertex : m_meshData.vertices)
+//    {
+//        vertices.push_back(vertex.position.x);
+//
+//        vertices.push_back(vertex.position.y);
+//
+//        vertices.push_back(vertex.position.z);
+//
+//        vertices.push_back(vertex.normal.x);
+//
+//        vertices.push_back(vertex.normal.y);
+//
+//        vertices.push_back(vertex.normal.z);
+//
+//        vertices.push_back(vertex.uv.x);
+//
+//        vertices.push_back(vertex.uv.y);
+//    }
+//
+//    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+//
+//    glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(float), vertices.data());
+//
+//    glBindBuffer(GL_ARRAY_BUFFER, 0);
+//
+//    return true;*/
+//}
+//
+//void Entity::AddSelectedVertex(std::size_t index)
+//{
+//    if (index >= m_meshData.vertices.size())
+//    {
+//        return;
+//    }
+//
+//    if (std::find(
+//        m_selectedVertices.begin(),
+//        m_selectedVertices.end(),
+//        index) ==
+//        m_selectedVertices.end())
+//    {
+//        m_selectedVertices.push_back(
+//            index
+//        );
+//    }
+//}
+//
+//void Entity::ClearSelectedVertices()
+//{
+//    m_selectedVertices.clear();
+//}
+//void Entity::SelectVertex(std::size_t index)
+//{
+//    if (index >= m_meshData.vertices.size())
+//    {
+//        return;
+//    }
+//
+//    m_selectedVertices.clear();
+//
+//    m_selectedVertices.push_back(
+//        index
+//    );
+//}
+//bool Entity::IsVertexSelected(std::size_t index) const
+//{
+//    return std::find(m_selectedVertices.begin(),
+//        m_selectedVertices.end(), index) != m_selectedVertices.end();
+//}
+//const std::vector<std::size_t>& Entity::GetSelectedVertices() const
+//{
+//    return m_selectedVertices;
+//}
+//// ############################################ Edge ##########################################
+//
+//bool Entity::SetEdgePosition(std::size_t index, const glm::vec3& positionA, const glm::vec3& positionB)
+//{
+//
+//    return false; // Edge functionality is not implemented in this version
+//}
+//
+//void Entity::ClearSelectedEdges()
+//{
+//    m_selectedEdges.clear();
+//}
+//// single edge selection
+//void Entity::SelectEdge(std::size_t index)
+//{
+//
+//    m_selectedEdges.clear();
+//
+//    m_selectedEdges.push_back(index);
+//}
+//// multi edge selection
+//void Entity::AddSelectedEdge(
+//    std::size_t index)
+//{
+//    if (index >=
+//        m_editableMesh.GetEdgeCount())
+//    {
+//        return;
+//    }
+//
+//
+//    // Don't add the same edge twice.
+//    if (std::find(
+//        m_selectedEdges.begin(),
+//        m_selectedEdges.end(),
+//        index) ==
+//        m_selectedEdges.end())
+//    {
+//        m_selectedEdges.push_back(
+//            index
+//        );
+//    }
+//}
+//
+//bool Entity::IsEdgeSelected(std::size_t index) const
+//{
+//    return std::find(m_selectedEdges.begin(),
+//        m_selectedEdges.end(), index) != m_selectedEdges.end();
+//}
+//
+//
+//
+//// ############################################ Face ##########################################
+//void Entity::ClearSelectedFace()
+//{
+//    m_selectedFaces.clear();
+//}
+//void Entity::SelectFace(std::size_t index)
+//{
+//
+//    m_selectedFaces.clear();
+//
+//    m_selectedFaces.push_back(index);
+//}
+//
+//bool Entity::IsFaceSelected(std::size_t index) const
+//{
+//    return std::find(m_selectedFaces.begin(),
+//        m_selectedFaces.end(), index) != m_selectedFaces.end();
+//}
+//
+//void Entity::AddSelectedFace(std::size_t index)
+//{
+//    if (index >= m_editableMesh.GetFaceCount())
+//    {
+//        return;
+//    }
+//    // Don't add the same face twice.
+//    if (std::find(
+//        m_selectedFaces.begin(),
+//        m_selectedFaces.end(),
+//        index) ==
+//        m_selectedFaces.end())
+//    {
+//        m_selectedFaces.push_back(
+//            index
+//        );
+//    }
+//
+//}
+//// shiftHeld
+//void Entity::ToggleSelectedFace(std::size_t index)
+//{
+//    if (index >= m_editableMesh.GetFaceCount())
+//    {
+//        return;
+//    }
+//    auto it = std::find(
+//        m_selectedFaces.begin(),
+//        m_selectedFaces.end(),
+//        index
+//    );
+//    if (it != m_selectedFaces.end())
+//    {
+//        // Face is already selected, remove it
+//        m_selectedFaces.erase(it);
+//    }
+//    else
+//    {
+//        // Face is not selected, add it
+//        m_selectedFaces.push_back(index);
+//    }
+//}
+//// Ctrl + A select all faces
+//void Entity::SelectAllFaces()
+//{
+//    m_selectedFaces.clear();
+//
+//    const std::size_t faceCount =
+//        m_editableMesh.GetFaceCount();
+//
+//    m_selectedFaces.reserve(
+//        faceCount
+//    );
+//
+//    for (std::size_t index = 0;
+//        index < faceCount;
+//        ++index)
+//    {
+//        m_selectedFaces.push_back(
+//            index
+//        );
+//    }
+//}
+//
+//bool Entity::SetSelectedFacesMaterial(
+//    std::size_t materialIndex)
+//{
+//    if (materialIndex >=
+//        m_materialSlots.size())
+//    {
+//        return false;
+//    }
+//
+//    if (m_selectedFaces.empty())
+//    {
+//        return false;
+//    }
+//
+//    for (std::size_t faceIndex :
+//    m_selectedFaces)
+//    {
+//        if (faceIndex >=
+//            m_editableMesh.GetFaceCount())
+//        {
+//            continue;
+//        }
+//
+//        m_editableMesh
+//            .GetFace(faceIndex)
+//            .materialIndex =
+//            materialIndex;
+//    }
+//
+//    return true;
+//}
+//
+//
+//
+//
+//
+//
+//
+//
+//// ############################################# Mesh Data ##########################################
+//bool Entity::CreateBuffersFromMeshData()
+//{
+//
+//    if (m_meshData.vertices.empty())
+//    {
+//        BOX_LOG_ERROR(
+//            "CreateBuffersFromMeshData: No vertices"
+//        );
+//
+//        return false;
+//    }
+//
+//    // ------------------------------------------------
+//    // Create VAO
+//    // ------------------------------------------------
+//
+//    glGenVertexArrays(
+//        1,
+//        &m_vao
+//    );
+//
+//    glBindVertexArray(
+//        m_vao
+//    );
+//
+//    // ------------------------------------------------
+//    // Create VBO
+//    // Upload MeshVertex structs directly.
+//    // ------------------------------------------------
+//
+//    glGenBuffers(
+//        1,
+//        &m_vbo
+//    );
+//
+//    glBindBuffer(
+//        GL_ARRAY_BUFFER,
+//        m_vbo
+//    );
+//
+//    glBufferData(
+//        GL_ARRAY_BUFFER,
+//        m_meshData.vertices.size() *
+//        sizeof(MeshVertex),
+//        m_meshData.vertices.data(),
+//        GL_STATIC_DRAW
+//    );
+//
+//
+//    // ------------------------------------------------
+//    // Create EBO
+//    // ------------------------------------------------
+//
+//    if (m_meshData.HasIndices())
+//    {
+//        glGenBuffers(
+//            1,
+//            &m_ebo
+//        );
+//
+//        glBindBuffer(
+//            GL_ELEMENT_ARRAY_BUFFER,
+//            m_ebo
+//        );
+//
+//        glBufferData(
+//            GL_ELEMENT_ARRAY_BUFFER,
+//            m_meshData.indices.size() *
+//            sizeof(std::uint32_t),
+//            m_meshData.indices.data(),
+//            GL_STATIC_DRAW
+//        );
+//
+//        m_useIndices =
+//            true;
+//
+//        m_indexCount =
+//            static_cast<GLsizei>(
+//                m_meshData.indices.size()
+//                );
+//    }
+//    else
+//    {
+//        m_useIndices =
+//            false;
+//
+//        m_indexCount =
+//            0;
+//    }
+//
+//
+//    // ------------------------------------------------
+//    // Vertex layout
+//    // ------------------------------------------------
+//
+//
+//    // Position
+//    glEnableVertexAttribArray(0);
+//
+//    glVertexAttribPointer(
+//        0,
+//        3,
+//        GL_FLOAT,
+//        GL_FALSE,
+//        sizeof(MeshVertex),
+//        reinterpret_cast<void*>(
+//            offsetof(
+//                MeshVertex,
+//                position
+//            )
+//            )
+//    );
+//
+//
+//    // Normal
+//    glEnableVertexAttribArray(1);
+//
+//    glVertexAttribPointer(
+//        1,
+//        3,
+//        GL_FLOAT,
+//        GL_FALSE,
+//        sizeof(MeshVertex),
+//        reinterpret_cast<void*>(
+//            offsetof(
+//                MeshVertex,
+//                normal
+//            )
+//            )
+//    );
+//
+//
+//    // UV
+//    glEnableVertexAttribArray(2);
+//
+//    glVertexAttribPointer(
+//        2,
+//        2,
+//        GL_FLOAT,
+//        GL_FALSE,
+//        sizeof(MeshVertex),
+//        reinterpret_cast<void*>(
+//            offsetof(
+//                MeshVertex,
+//                uv
+//            )
+//            )
+//    );
+//
+//
+//    // Material index
+//    glEnableVertexAttribArray(3);
+//
+//    glVertexAttribIPointer(3, 1, GL_UNSIGNED_INT, sizeof(MeshVertex), reinterpret_cast<void*>(offsetof(
+//        MeshVertex, materialIndex)));
+//
+//    // Tangent
+//    glEnableVertexAttribArray(4);
+//
+//    glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(MeshVertex), reinterpret_cast<void*>(offsetof(MeshVertex, tangent)));
+//
+//
+//
+//    // ------------------------------------------------
+//    // Counts
+//    // ------------------------------------------------
+//
+//    m_vertexCount =
+//        static_cast<GLsizei>(
+//            m_meshData.vertices.size()
+//            );
+//
+//
+//    glBindVertexArray(
+//        0
+//    );
+//
+//    glBindBuffer(
+//        GL_ARRAY_BUFFER,
+//        0
+//    );
+//
+//
+//    const bool valid =
+//        m_vao != 0 &&
+//        m_vbo != 0 &&
+//        m_vertexCount > 0 &&
+//        (
+//            !m_useIndices ||
+//            (
+//                m_ebo != 0 &&
+//                m_indexCount > 0
+//                )
+//            );
+//
+//
+//    if (!valid)
+//    {
+//        BOX_LOG_ERROR(
+//            "Entity::CreateBuffersFromMeshData failed"
+//        );
+//
+//        Destroy();
+//
+//        return false;
+//    }
+//
+//
+//    BOX_LOG_INFO(
+//        "GPU mesh created: "
+//        << m_vertexCount
+//        << " vertices, "
+//        << m_indexCount
+//        << " indices"
+//    );
+//
+//
+//    return true;
+//
+//}
+//
+//// -----------------------------------------------
+//// Rebuild the render mesh from the editable mesh for DeserializeScene
+//// -----------------------------------------------
+//bool Entity::RebuildFromEditableMesh()
+//{
+//    // ------------------------------------------------
+//    // Destroy the old GPU buffers and render MeshData.
+//    //
+//    // IMPORTANT:
+//    // Destroy() does NOT destroy m_editableMesh.
+//    // ------------------------------------------------
+//    Destroy();
+//
+//    // ------------------------------------------------
+//    // Build fresh render data from the logical
+//    // editable topology.
+//    // ------------------------------------------------
+//    if (!m_editableMesh.BuildRenderMesh(m_meshData))
+//    {
+//        BOX_LOG_ERROR(
+//            "RebuildFromEditableMesh: "
+//            "Failed to build render mesh"
+//        );
+//
+//        return false;
+//    }
+//
+//    // ------------------------------------------------
+//    // Create the OpenGL buffers from the new
+//    // render mesh.
+//    // ------------------------------------------------
+//    if (!CreateBuffersFromMeshData())
+//    {
+//        BOX_LOG_ERROR(
+//            "RebuildFromEditableMesh: "
+//            "Failed to create GPU buffers"
+//        );
+//
+//        return false;
+//    }
+//
+//    // ------------------------------------------------
+//    // The loaded editable mesh becomes the new
+//    // base mesh for this Entity.
+//    // ------------------------------------------------
+//    m_baseEditableMesh = m_editableMesh;
+//
+//    // ------------------------------------------------
+//    // Calculate AABB from the logical vertices.
+//    // ------------------------------------------------
+//    if (m_editableMesh.GetVertexCount() > 0)
+//    {
+//        glm::vec3 minBounds =
+//            m_editableMesh.GetVertex(0).position;
+//
+//        glm::vec3 maxBounds =
+//            minBounds;
+//
+//        for (std::size_t i = 1;
+//            i < m_editableMesh.GetVertexCount();
+//            ++i)
+//        {
+//            const glm::vec3& position =
+//                m_editableMesh.GetVertex(i).position;
+//
+//            minBounds =
+//                glm::min(minBounds, position);
+//
+//            maxBounds =
+//                glm::max(maxBounds, position);
+//        }
+//
+//        // Give flat geometry such as planes/floors
+//        // a small amount of picking thickness.
+//        constexpr float minimumThickness = 0.02f;
+//
+//        for (int axis = 0; axis < 3; ++axis)
+//        {
+//            if ((maxBounds[axis] - minBounds[axis]) <
+//                minimumThickness)
+//            {
+//
+//                const float centre =
+//                    (minBounds[axis] + maxBounds[axis]) *
+//                    0.5f;
+//
+//                minBounds[axis] =
+//                    centre - minimumThickness * 0.5f;
+//
+//                maxBounds[axis] =
+//                    centre + minimumThickness * 0.5f;
+//            }
+//        }
+//
+//        m_aabbMin = minBounds;
+//        m_aabbMax = maxBounds;
+//    }
+//
+//    BOX_LOG_INFO(
+//        "Entity rebuilt from editable mesh: "
+//        << m_name
+//    );
+//
+//    return true;
+//}
+//
+//// #####################################################################################################################
+//// ################################################### Last Extrude ####################################################
+//// #####################################################################################################################
+//void Entity::SetLastExtrude(std::size_t faceIndex,
+//    ModifierAxis axis,
+//    float amount,
+//    const MeshEditing& meshBeforeExtrude)
+//{
+//    m_lastExtrude.faceIndex =
+//        faceIndex;
+//
+//    m_lastExtrude.axis =
+//        axis;
+//
+//    m_lastExtrude.extrudeAmount =
+//        amount;
+//
+//    m_lastExtrudeBaseMesh =
+//        meshBeforeExtrude;
+//
+//    m_hasLastExtrude = true;
+//
+//    m_lastOperationType = LastOperationType::Extrude; // so we know the last operation was an extrusion
+//}
+//
+//bool Entity::UpdateLastExtrude(
+//    ModifierAxis axis,
+//    float amount)
+//{
+//    if (!m_hasLastExtrude)
+//    {
+//        return false;
+//    }
+//
+//    // Restore the mesh from immediately
+//    // before the last extrusion.
+//    m_editableMesh =
+//        m_lastExtrudeBaseMesh;
+//
+//    glm::vec3 direction(0.0f);
+//
+//    switch (axis)
+//    {
+//    case ModifierAxis::X:
+//        direction =
+//            glm::vec3(
+//                1.0f,
+//                0.0f,
+//                0.0f
+//            );
+//        break;
+//
+//    case ModifierAxis::Y:
+//        direction =
+//            glm::vec3(
+//                0.0f,
+//                1.0f,
+//                0.0f
+//            );
+//        break;
+//
+//    case ModifierAxis::Z:
+//        direction =
+//            glm::vec3(
+//                0.0f,
+//                0.0f,
+//                1.0f
+//            );
+//        break;
+//    }
+//
+//    FaceExtrude extrude;
+//
+//    if (!extrude.Use(
+//        m_editableMesh,
+//        m_lastExtrude.faceIndex,
+//        direction,
+//        amount))
+//    {
+//        return false;
+//    }
+//
+//    MeshData renderMesh;
+//
+//    if (!m_editableMesh.BuildRenderMesh(
+//        renderMesh))
+//    {
+//        return false;
+//    }
+//
+//    if (!CreateFromMeshData(
+//        renderMesh))
+//    {
+//        return false;
+//    }
+//
+//    m_lastExtrude.axis =
+//        axis;
+//
+//    m_lastExtrude.extrudeAmount =
+//        amount;
+//
+//    return true;
+//}
+//// ###############################################################################################################
+//// ############################################ Inset ##########################################################
+//// ###############################################################################################################
+//void Entity::SetLastInset(std::size_t faceIndex, float amount, const MeshEditing& meshBeforeInset)
+//{
+//    m_lastInset.faceIndex = faceIndex;
+//
+//    m_lastInset.insetAmount = amount;
+//
+//    m_lastInsetBaseMesh = meshBeforeInset;
+//
+//    m_hasLastInset = true;
+//
+//    m_lastOperationType = LastOperationType::Inset; // so we know the last operation was an inset
+//}
+//
+//bool Entity::UpdateLastInset(float amount)
+//{
+//    if (!m_hasLastInset)
+//    {
+//        return false;
+//    }
+//
+//    // Restore mesh immediately before
+//    // the last inset operation.
+//    m_editableMesh =
+//        m_lastInsetBaseMesh;
+//
+//    FaceInset inset;
+//
+//    if (!inset.Use(
+//        m_editableMesh,
+//        m_lastInset.faceIndex,
+//        amount))
+//    {
+//        BOX_LOG_ERROR(
+//            "Failed to update last inset"
+//        );
+//
+//        return false;
+//    }
+//
+//    MeshData renderMesh;
+//
+//    if (!m_editableMesh.BuildRenderMesh(
+//        renderMesh))
+//    {
+//        return false;
+//    }
+//
+//    if (!CreateFromMeshData(
+//        renderMesh))
+//    {
+//        return false;
+//    }
+//
+//    m_lastInset.insetAmount =
+//        amount;
+//
+//    return true;
+//}
+//
+//// -------------------------------------------------------------
+//// Round Inset
+//// -------------------------------------------------------------
+//void Entity::SetLastRoundInset(std::size_t faceIndex, float amount, int segments, float roundness,
+//    const MeshEditing& meshBeforeRoundInset)
+//{
+//    m_lastRoundInset.faceIndex = faceIndex;
+//    m_lastRoundInset.insetAmount = amount;
+//    m_lastRoundInset.segments = segments;
+//    m_lastRoundInset.roundness = roundness;
+//    m_lastRoundInsetBaseMesh = meshBeforeRoundInset;
+//    m_hasLastRoundInset = true;
+//    m_lastOperationType = LastOperationType::RoundInset; // so we know the last operation was a round inset
+//}
+//
+//bool Entity::UpdateLastRoundInset(float amount, int segments, float roundness)
+//{
+//    if (!m_hasLastRoundInset)
+//    {
+//        return false;
+//    }
+//
+//    amount = glm::clamp(amount, 0.0f, 0.95f);
+//
+//    segments = std::max(segments, 1);
+//
+//    roundness = glm::clamp(roundness, 0.0f, 1.0f);
+//
+//    // Restore mesh immediately before
+//    // the last round inset operation.
+//    m_editableMesh = m_lastRoundInsetBaseMesh;
+//    RoundInset roundInset;
+//    if (!roundInset.Use(
+//        m_editableMesh,
+//        m_lastRoundInset.faceIndex,
+//        amount, segments, roundness))
+//    {
+//        BOX_LOG_ERROR(
+//            "Failed to update last round inset"
+//        );
+//        return false;
+//    }
+//    MeshData renderMesh;
+//    if (!m_editableMesh.BuildRenderMesh(renderMesh))
+//    {
+//        return false;
+//    }
+//    if (!CreateFromMeshData(renderMesh))
+//    {
+//        return false;
+//    }
+//    m_lastRoundInset.insetAmount = amount;
+//    m_lastRoundInset.segments = segments;
+//    m_lastRoundInset.roundness = roundness;
+//    return true;
+//}
+//
+//
+//
+//// ###############################################################################################################
+//// ############################################ Loop Cut #########################################################
+//// ###############################################################################################################
+//void Entity::SetLastLoopCut(std::size_t edgeIndex, float amount,
+//    const MeshEditing& meshBeforeLoopCut)
+//{
+//    m_lastLoopCut.edgeIndex = edgeIndex;
+//    m_lastLoopCut.cutAmount = amount;
+//    m_lastLoopCutBaseMesh = meshBeforeLoopCut;
+//    m_hasLastLoopCut = true;
+//    m_lastOperationType = LastOperationType::LoopCut; // so we know the last operation was a loop cut
+//}
+//
+//bool Entity::UpdateLastLoopCut(float amount)
+//{
+//    if (!m_hasLastLoopCut)
+//    {
+//        return false;
+//    }
+//
+//    // Restore the topology to exactly
+//    // how it was before this Loop Cut.
+//    m_editableMesh =
+//        m_lastLoopCutBaseMesh;
+//
+//    LoopCut loopCut;
+//
+//    if (!loopCut.Use(
+//        m_editableMesh,
+//        m_lastLoopCut.edgeIndex,
+//        amount))
+//    {
+//        BOX_LOG_ERROR(
+//            "UpdateLastLoopCut: "
+//            "Loop Cut failed"
+//        );
+//
+//        return false;
+//    }
+//
+//    MeshData renderMesh;
+//
+//    if (!m_editableMesh.BuildRenderMesh(renderMesh))
+//    {
+//        BOX_LOG_ERROR(
+//            "UpdateLastLoopCut: "
+//            "Failed to build render mesh"
+//        );
+//
+//        return false;
+//    }
+//
+//    if (!CreateFromMeshData(
+//        renderMesh))
+//    {
+//        BOX_LOG_ERROR(
+//            "UpdateLastLoopCut: "
+//            "Failed to update entity mesh"
+//        );
+//
+//        return false;
+//    }
+//
+//    m_lastLoopCut.cutAmount =
+//        amount;
+//
+//    return true;
+//}
+//// ###############################################################################################################
+//// ############################################ Bevel ############################################################
+//// ###############################################################################################################
+//
+//void Entity::SetLastBevel(std::size_t edgeIndex, float Width, int Segments, float Profile,
+//    const MeshEditing& meshBeforeBevel)
+//{
+//    m_lastBevel.edgeIndex = edgeIndex;
+//    m_lastBevel.segments = Segments;
+//    m_lastBevel.width = Width;
+//    m_lastBevel.profile = Profile;
+//    m_lastBevelBaseMesh = meshBeforeBevel;
+//    m_hasLastBevel = true;
+//    m_lastOperationType = LastOperationType::Bevel; // so we know the last operation was a bevel
+//}
+//
+////bool Entity::UpdateLastBevel(int segments, float width, float profile)
+//bool Entity::UpdateLastBevel(float width, int segments, float profile)
+//{
+//    if (!m_hasLastBevel)
+//    {
+//        return false;
+//    }
+//    // Restore the mesh to exactly how it was
+//    // before the last bevel operation.
+//    m_editableMesh = m_lastBevelBaseMesh;
+//    Bevel bevel;
+//    if (!bevel.Use(
+//        m_editableMesh,
+//        m_lastBevel.edgeIndex,
+//        width, segments, profile))
+//        //segments,
+//        //profile))
+//    {
+//        BOX_LOG_ERROR(
+//            "UpdateLastBevel: "
+//            "Bevel failed"
+//        );
+//        return false;
+//    }
+//    MeshData renderMesh;
+//    if (!m_editableMesh.BuildRenderMesh(renderMesh))
+//    {
+//        BOX_LOG_ERROR(
+//            "UpdateLastBevel: "
+//            "Failed to build render mesh"
+//        );
+//        return false;
+//    }
+//    if (!CreateFromMeshData(
+//        renderMesh))
+//    {
+//        BOX_LOG_ERROR(
+//            "UpdateLastBevel: "
+//            "Failed to update entity mesh"
+//        );
+//        return false;
+//    }
+//    m_lastBevel.width =
+//        width;
+//    m_lastBevel.segments =
+//        segments;
+//    m_lastBevel.profile =
+//        profile;
+//
+//    return true;
+//}
+//
+//
+//// ###############################################################################################################
+//// ############################################ Normals ##########################################################
+//// ###############################################################################################################
+//
+//void Entity::RecalculateNormals()
+//{
+//    if (m_meshData.vertices.empty())
+//    {
+//        return;
+//    }
+//
+//    if (!m_meshData.HasIndices())
+//    {
+//        for (std::size_t index = 0;
+//            index + 2 < m_meshData.vertices.size();
+//            index += 3)
+//        {
+//            MeshVertex& a =
+//                m_meshData.vertices[index];
+//
+//            MeshVertex& b =
+//                m_meshData.vertices[index + 1];
+//
+//            MeshVertex& c =
+//                m_meshData.vertices[index + 2];
+//
+//            const glm::vec3 edge1 =
+//                b.position - a.position;
+//
+//            const glm::vec3 edge2 =
+//                c.position - a.position;
+//
+//            const glm::vec3 crossProduct =
+//                glm::cross(
+//                    edge1,
+//                    edge2
+//                );
+//
+//            const float length =
+//                glm::length(crossProduct);
+//
+//            if (length <= 0.000001f)
+//            {
+//                continue;
+//            }
+//
+//            const glm::vec3 normal =
+//                crossProduct / length;
+//
+//            a.normal = normal;
+//            b.normal = normal;
+//            c.normal = normal;
+//        }
+//
+//        return;
+//    }
+//
+//    /*
+//     * Indexed mesh version.
+//     */
+//    for (std::size_t index = 0;
+//        index + 2 < m_meshData.indices.size();
+//        index += 3)
+//    {
+//        const std::uint32_t ia =
+//            m_meshData.indices[index];
+//
+//        const std::uint32_t ib =
+//            m_meshData.indices[index + 1];
+//
+//        const std::uint32_t ic =
+//            m_meshData.indices[index + 2];
+//
+//        if (ia >= m_meshData.vertices.size() ||
+//            ib >= m_meshData.vertices.size() ||
+//            ic >= m_meshData.vertices.size())
+//        {
+//            continue;
+//        }
+//
+//        MeshVertex& a =
+//            m_meshData.vertices[ia];
+//
+//        MeshVertex& b =
+//            m_meshData.vertices[ib];
+//
+//        MeshVertex& c =
+//            m_meshData.vertices[ic];
+//
+//        const glm::vec3 edge1 =
+//            b.position - a.position;
+//
+//        const glm::vec3 edge2 =
+//            c.position - a.position;
+//
+//        const glm::vec3 crossProduct =
+//            glm::cross(
+//                edge1,
+//                edge2
+//            );
+//
+//        const float length =
+//            glm::length(crossProduct);
+//
+//        if (length <= 0.000001f)
+//        {
+//            continue;
+//        }
+//
+//        const glm::vec3 normal =
+//            crossProduct / length;
+//
+//        a.normal = normal;
+//        b.normal = normal;
+//        c.normal = normal;
+//    }
+//}
+//
+//// ###############################################################################################################
+//// ########################################## Rebuild Modifiers ##################################################
+//// ###############################################################################################################
+//bool Entity::RebuildModifiers()
+//{
+//    // Always restart from untouched topology.
+//    m_editableMesh = m_baseEditableMesh;
+//
+//    FaceExtrude extrude;
+//
+//    // I would like to test which modifiers is enabled.
+//
+//
+//    for (const ModifierData& modifier : m_modifiers)
+//    {
+//        if (!modifier.modEnabled)
+//        {
+//            continue;
+//        }
+//
+//        switch (modifier.type)
+//        {
+//        case ModifierType::Extrude:
+//        {
+//            glm::vec3 direction(0.0f);
+//
+//            switch (
+//                modifier.extrude.axis)
+//            {
+//            case ModifierAxis::X:
+//                direction =
+//                    glm::vec3(1, 0, 0);
+//                break;
+//
+//            case ModifierAxis::Y:
+//                direction =
+//                    glm::vec3(0, 1, 0);
+//                break;
+//
+//            case ModifierAxis::Z:
+//                direction =
+//                    glm::vec3(0, 0, 1);
+//                break;
+//            }
+//
+//            if (!extrude.Use(
+//                m_editableMesh,
+//                modifier.extrude.faceIndex,
+//                direction,
+//                modifier.extrude.extrudeAmount))
+//            {
+//                return false;
+//            }
+//
+//            break;
+//        }
+//
+//        default:
+//            break;
+//        }
+//    }
+//
+//    MeshData renderMesh;
+//
+//    if (!m_editableMesh.BuildRenderMesh(
+//        renderMesh))
+//    {
+//        return false;
+//    }
+//
+//    return CreateFromMeshData(
+//        renderMesh
+//    );
+//}
+//
+//// ###############################################################################################################
+//// ########################################### Shading ##########################################################
+//// ###############################################################################################################
+//
+//void Entity::SetSmoothShading(bool smooth)
+//{
+//    if (smooth)
+//    {
+//        m_editableMesh.SetShadingMode(
+//            ShadingMode::Smooth
+//        );
+//    }
+//    else
+//    {
+//        m_editableMesh.SetShadingMode(
+//            ShadingMode::Flat
+//        );
+//    }
+//
+//
+//    // Rebuild the render mesh because
+//    // changing shading changes the normals.
+//    MeshData renderMesh;
+//
+//    if (m_editableMesh.BuildRenderMesh(
+//        renderMesh))
+//    {
+//        CreateFromMeshData(
+//            renderMesh
+//        );
+//    }
+//}
+//
+//
+//bool Entity::IsSmoothShading() const
+//{
+//    return
+//        m_editableMesh.GetShadingMode() ==
+//        ShadingMode::Smooth;
+//}
+//
+//
+//
+//// ########################################################################################################
+//// ############################################### Rendering ##############################################
+//// ########################################################################################################
+//
+//void Entity::RenderInternal(const Shader& shader, const glm::mat4& view, const glm::mat4& projection, const glm::vec3& cameraPosition)
+//{
+//    if (!m_visible || m_vao == 0)
+//    {
+//        return;
+//    }
+//
+//    shader.Use();
+//
+//    // --------------------------------
+//    // Transform
+//    // --------------------------------
+//
+//    shader.setMat4(
+//        "uModel",
+//        CalculateModelMatrix()
+//    );
+//
+//    shader.setMat4(
+//        "uView",
+//        view
+//    );
+//
+//    shader.setMat4(
+//        "uProjection",
+//        projection
+//    );
+//
+//    shader.setVec3(
+//        "uCameraPosition",
+//        cameraPosition
+//    );
+//
+//    // --------------------------------
+//    // Material
+//    // --------------------------------
+//
+//    glm::vec4 renderColor =
+//        m_material.GetBaseColor();
+//
+//
+//    shader.setVec4(
+//        "uBaseColor",
+//        renderColor
+//    );
+//
+//
+//    // --------------------------------
+//    // Material Slot Color
+//    // --------------------------------
+//    constexpr std::size_t
+//        MaxMaterialSlots = 8;
+//
+//
+//    for (std::size_t index = 0;
+//        index < MaxMaterialSlots;
+//        ++index)
+//    {
+//        glm::vec4 color(1.0f);
+//
+//        GLuint textureID = 0;
+//
+//        GLuint normalTextureID = 0; // tangent space normal map texture ID
+//
+//        GLuint roughnessTextureID = 0; // roughness texture ID
+//
+//        GLuint aoTextureID = 0; // ambient occlusion texture ID
+//
+//        float metallic = 0.0f;
+//        float roughness = 0.5f;
+//
+//        int materialType = 0;       // glass or standard material type
+//        float transmission = 0.0f;  // glass transmission factor
+//        float ior = 1.5f;           // glass index of refraction
+//        // --------------------------------
+//        // Emission
+//        // --------------------------------
+//
+//        glm::vec3 emissionColor(0.0f);
+//        float emissionStrength = 0.0f;
+//
+//        bool useTexture = false;
+//
+//        bool useNormalTexture = false; // tangent space normal map usage flag
+//
+//        bool useRoughnessTexture = false; // roughness texture usage flag
+//
+//        bool useAOTexture = false;
+//
+//        float normalStrength = 1.0f; // tangent space normal map strength
+//
+//
+//        // --------------------------------
+//        // Get material slot information.
+//        // --------------------------------
+//
+//        if (index < m_materialSlots.size())
+//        {
+//            const Material& material =
+//                m_materialSlots[index];
+//
+//            color = material.GetBaseColor();
+//
+//            color.a = material.GetAlpha();
+//
+//            textureID =
+//                material.GetBaseColorTexture();
+//
+//            useTexture =
+//                material.UsesBaseColorTexture();
+//
+//            metallic =
+//                material.GetMetallic();
+//
+//            roughness = material.GetRoughness();
+//
+//            roughnessTextureID = material.GetRoughnessTexture(); // roughness texture ID
+//
+//            useRoughnessTexture = material.UsesRoughnessTexture(); // roughness texture usage flag
+//
+//            aoTextureID = material.GetAOTexture();
+//            useAOTexture = material.UsesAOTexture();
+//
+//            materialType = static_cast<int>(material.GetType()); // 0 = standard, 1 = glass
+//
+//            transmission = material.GetTransmission();           // only used for glass materials
+//
+//            ior = material.GetIOR();                             // only used for glass materials
+//
+//            emissionColor =
+//                material.GetEmissionColor();
+//
+//            emissionStrength =
+//                material.GetEmissionStrength();
+//
+//            // Normal map tangent space texture information
+//            normalTextureID =
+//                material.GetNormalTexture();
+//
+//            useNormalTexture =
+//                material.UsesNormalTexture();
+//
+//            normalStrength =
+//                material.GetNormalStrength();
+//        }
+//        // --------------------------------
+//        // Metallic
+//        // --------------------------------
+//
+//        const std::string metallicUniform =
+//            "uMaterialMetallic[" +
+//            std::to_string(index) +
+//            "]";
+//
+//        shader.SetUniformFloat(
+//            metallicUniform.c_str(),
+//            metallic
+//        );
+//        // --------------------------------
+//        // Roughness
+//        // --------------------------------
+//        const std::string roughnessUniform =
+//            "uMaterialRoughness[" +
+//            std::to_string(index) +
+//            "]";
+//
+//
+//
+//        shader.SetUniformFloat(
+//            roughnessUniform.c_str(),
+//            roughness
+//        );
+//
+//        // --------------------------------
+//        // Roughness Map
+//        // --------------------------------
+//
+//        const std::string roughnessTextureUniform =
+//            "uMaterialRoughnessTextures[" +
+//            std::to_string(index) +
+//            "]";
+//
+//        const std::string useRoughnessTextureUniform =
+//            "uMaterialUsesRoughnessTexture[" +
+//            std::to_string(index) +
+//            "]";
+//
+//        shader.SetUniformInt(
+//            roughnessTextureUniform.c_str(),
+//            static_cast<int>(
+//                index + (MaxMaterialSlots * 2)
+//                )
+//        );
+//
+//        shader.SetUniformInt(
+//            useRoughnessTextureUniform.c_str(),
+//            useRoughnessTexture ? 1 : 0
+//        );
+//
+//        // --------------------------------
+//        // Ambient Occlusion map (units 24-31)
+//        // --------------------------------
+//        const std::string aoTextureUniform =
+//            "uMaterialAOTextures[" + std::to_string(index) + "]";
+//        const std::string useAOTextureUniform =
+//            "uMaterialUsesAOTexture[" + std::to_string(index) + "]";
+//
+//        shader.SetUniformInt(
+//            aoTextureUniform.c_str(),
+//            static_cast<int>(index + (MaxMaterialSlots * 3))
+//        );
+//        shader.SetUniformInt(
+//            useAOTextureUniform.c_str(),
+//            useAOTexture ? 1 : 0
+//        );
+//
+//
+//        // --------------------------------
+//        // Material Type set standard or glass material type
+//        // --------------------------------
+//
+//        const std::string materialTypeUniform =
+//            "uMaterialType[" +
+//            std::to_string(index) +
+//            "]";
+//
+//        shader.SetUniformInt(
+//            materialTypeUniform.c_str(),
+//            materialType
+//        );
+//
+//
+//        // --------------------------------
+//        // Transmission
+//        // --------------------------------
+//
+//        const std::string transmissionUniform =
+//            "uMaterialTransmission[" +
+//            std::to_string(index) +
+//            "]";
+//
+//        shader.SetUniformFloat(
+//            transmissionUniform.c_str(),
+//            transmission
+//        );
+//
+//
+//        // --------------------------------
+//        // Index Of Refraction
+//        // --------------------------------
+//
+//        const std::string iorUniform =
+//            "uMaterialIOR[" +
+//            std::to_string(index) +
+//            "]";
+//
+//        shader.SetUniformFloat(
+//            iorUniform.c_str(),
+//            ior
+//        );
+//
+//
+//
+//
+//
+//        // ===================================
+//        // tangent space normal map strength
+//        // ===================================
+//
+//        const std::string normalTextureUniform =
+//            "uMaterialNormalTextures[" +
+//            std::to_string(index) +
+//            "]";
+//
+//        const std::string useNormalTextureUniform =
+//            "uMaterialUsesNormalTexture[" +
+//            std::to_string(index) +
+//            "]";
+//
+//        const std::string normalStrengthUniform =
+//            "uMaterialNormalStrength[" +
+//            std::to_string(index) +
+//            "]";
+//
+//
+//        shader.SetUniformInt(
+//            normalTextureUniform.c_str(),
+//            static_cast<int>(index + 8)
+//        );
+//
+//        shader.SetUniformInt(
+//            useNormalTextureUniform.c_str(),
+//            useNormalTexture ? 1 : 0
+//        );
+//
+//        shader.SetUniformFloat(
+//            normalStrengthUniform.c_str(),
+//            normalStrength
+//        );
+//        // --------------------------------
+//        // Emission strength
+//        // --------------------------------
+//
+//        const std::string
+//            emissionColorUniform =
+//            "uMaterialEmissionColor[" +
+//            std::to_string(index) +
+//            "]";
+//
+//        shader.setVec3(
+//            emissionColorUniform.c_str(),
+//            emissionColor
+//        );
+//
+//        const std::string
+//            emissionStrengthUniform =
+//            "uMaterialEmissionStrength[" +
+//            std::to_string(index) +
+//            "]";
+//
+//        shader.SetUniformFloat(
+//            emissionStrengthUniform.c_str(),
+//            emissionStrength
+//        );
+//
+//
+//        // --------------------------------
+//        // Material colour
+//        // --------------------------------
+//
+//        const std::string colorUniform =
+//            "uMaterialColors[" +
+//            std::to_string(index) +
+//            "]";
+//
+//
+//        shader.setVec4(
+//            colorUniform.c_str(),
+//            color
+//        );
+//
+//
+//        // --------------------------------
+//        // Does this slot use a texture?
+//        // --------------------------------
+//
+//        const std::string useTextureUniform =
+//            "uMaterialUsesTexture[" +
+//            std::to_string(index) +
+//            "]";
+//
+//
+//        shader.SetUniformInt(
+//            useTextureUniform.c_str(),
+//            useTexture ? 1 : 0
+//        );
+//
+//
+//        // --------------------------------
+//        // Tell sampler which texture unit
+//        // belongs to this material.
+//        // --------------------------------
+//
+//        const std::string textureUniform =
+//            "uMaterialTextures[" +
+//            std::to_string(index) +
+//            "]";
+//
+//
+//        shader.SetUniformInt(
+//            textureUniform.c_str(),
+//            static_cast<int>(index)
+//        );
+//
+//
+//        // --------------------------------
+//        // Bind texture.
+//        //
+//        // Slot 0 -> GL_TEXTURE0
+//        // Slot 1 -> GL_TEXTURE1
+//        // etc.
+//        // --------------------------------
+//
+//        glActiveTexture(GL_TEXTURE0 + static_cast<GLenum>(index));
+//
+//        glBindTexture(GL_TEXTURE_2D, useTexture ? textureID : 0);
+//
+//        // --------------------------------
+//        // Normal Map
+//        // --------------------------------
+//
+//        glActiveTexture(
+//            GL_TEXTURE0 +
+//            static_cast<GLenum>(
+//                index + MaxMaterialSlots
+//                )
+//        );
+//
+//        glBindTexture(
+//            GL_TEXTURE_2D,
+//            useNormalTexture
+//            ? normalTextureID
+//            : 0
+//        );
+//
+//        // --------------------------------
+//        // Roughness Map
+//        // --------------------------------
+//
+//        glActiveTexture(
+//            GL_TEXTURE0 +
+//            static_cast<GLenum>(
+//                index + (MaxMaterialSlots * 2)
+//                )
+//        );
+//
+//        glBindTexture(
+//            GL_TEXTURE_2D,
+//            useRoughnessTexture
+//            ? roughnessTextureID
+//            : 0
+//        );
+//
+//        // AO map
+//        glActiveTexture(
+//            GL_TEXTURE0 + static_cast<GLenum>(index + (MaxMaterialSlots * 3))
+//        );
+//        glBindTexture(GL_TEXTURE_2D, useAOTexture ? aoTextureID : 0);
+//
+//
+//    }
+//
+//    // --------------------------------
+//    // Lighting
+//    // --------------------------------
+//
+//    shader.setVec3(
+//        "uLightPosition",
+//        glm::vec3(
+//            3.0f,
+//            4.0f,
+//            3.0f
+//        )
+//    );
+//
+//    shader.setVec3(
+//        "uLightColor",
+//        glm::vec3(1.0f)
+//    );
+//
+//
+//    glDisable(GL_BLEND);
+//    glDepthMask(GL_TRUE);
+//
+//    DrawMesh();
+//
+//    // cleanup: unbind textures to avoid affecting other objects
+//    for (std::size_t index = 0;
+//        index < MaxMaterialSlots;
+//        ++index)
+//    {
+//        // Unbind the base color texture
+//        glActiveTexture(
+//            GL_TEXTURE0 +
+//            static_cast<GLenum>(index)
+//        );
+//
+//        glBindTexture(GL_TEXTURE_2D, 0);
+//
+//        // Normal Map
+//        glActiveTexture(
+//            GL_TEXTURE0 +
+//            static_cast<GLenum>(index + 8)
+//        );
+//
+//        glBindTexture(GL_TEXTURE_2D, 0);
+//
+//        // Roughness Map
+//        glActiveTexture(
+//            GL_TEXTURE0 +
+//            static_cast<GLenum>(
+//                index + (MaxMaterialSlots * 2)
+//                )
+//        );
+//
+//        glBindTexture(GL_TEXTURE_2D, 0);
+//
+//        // AO map
+//        glActiveTexture(
+//            GL_TEXTURE0 + static_cast<GLenum>(index + (MaxMaterialSlots * 3))
+//        );
+//        glBindTexture(GL_TEXTURE_2D, 0);
+//
+//    }
+//
+//    // Restore default texture unit.
+//    glActiveTexture(GL_TEXTURE0);
+//    glBindTexture(GL_TEXTURE_2D, 0);
+//
+//}
+//
+//
+//
+//// New RenderPreview function that takes Shader and Camera objects as parameters
+//void Entity::RenderScene(const Shader& shader, const Camera& camera, float aspectRatio)
+//{
+//
+//    RenderInternal(shader, camera.GetViewMatrix(), camera.GetProjectionMatrix(aspectRatio),
+//        camera.Position);
+//
+//}
+//// revised RenderPreview function that takes view and projection matrices as parameters
+//void Entity::RenderPreview(const Shader& shader, const glm::mat4& view, const glm::mat4& projection, const glm::vec3& cameraPosition)
+//{
+//
+//    RenderInternal(shader, view, projection, cameraPosition);
+//
+//}
+//
+//
+//
+//glm::mat4 Entity::GetModelMatrix() const
+//{
+//    glm::mat4 model =
+//        glm::mat4(1.0f);
+//
+//    model = glm::translate(
+//        model,
+//        m_position
+//    );
+//
+//    model = glm::rotate(
+//        model,
+//        glm::radians(m_rotation.x),
+//        glm::vec3(1.0f, 0.0f, 0.0f)
+//    );
+//
+//    model = glm::rotate(
+//        model,
+//        glm::radians(m_rotation.y),
+//        glm::vec3(0.0f, 1.0f, 0.0f)
+//    );
+//
+//    model = glm::rotate(
+//        model,
+//        glm::radians(m_rotation.z),
+//        glm::vec3(0.0f, 0.0f, 1.0f)
+//    );
+//
+//    model = glm::scale(
+//        model,
+//        m_scale
+//    );
+//
+//    return model;
+//}
+//
+//const glm::vec3& Entity::GetAABBMin() const
+//{
+//    return m_aabbMin;
+//}
+//
+//const glm::vec3& Entity::GetAABBMax() const
+//{
+//    return m_aabbMax;
+//}
+//
+//glm::mat4 Entity::CalculateModelMatrix() const
+//{
+//    glm::mat4 model(1.0f);
+//
+//    model = glm::translate(
+//        model,
+//        m_position
+//    );
+//
+//    model = glm::rotate(
+//        model,
+//        glm::radians(m_rotation.x),
+//        glm::vec3(1.0f, 0.0f, 0.0f)
+//    );
+//
+//    model = glm::rotate(
+//        model,
+//        glm::radians(m_rotation.y),
+//        glm::vec3(0.0f, 1.0f, 0.0f)
+//    );
+//
+//    model = glm::rotate(
+//        model,
+//        glm::radians(m_rotation.z),
+//        glm::vec3(0.0f, 0.0f, 1.0f)
+//    );
+//
+//    model = glm::scale(
+//        model,
+//        m_scale
+//    );
+//
+//    return model;
+//}
+//// ##################################################################################################
+//// ########################################### Matirials ############################################
+//// ##################################################################################################
+//bool Entity::SetFaceMaterial(std::size_t faceIndex, std::size_t materialIndex)
+//{
+//    if (faceIndex >=
+//        m_editableMesh.GetFaceCount())
+//    {
+//        return false;
+//    }
+//
+//    if (materialIndex >=
+//        m_materialSlots.size())
+//    {
+//        return false;
+//    }
+//
+//    m_editableMesh.GetFace(faceIndex).materialIndex = materialIndex;
+//
+//    return true;
+//}
+//
+//std::size_t Entity::AddMaterialSlot(const Material& material)
+//{
+//    m_materialSlots.push_back(material);
+//
+//    return m_materialSlots.size() - 1;
+//}
+//
+//
+//
+//
+//
+//void Entity::Destroy()
+//{
+//    if (m_ebo != 0)
+//    {
+//        glDeleteBuffers(1, &m_ebo);
+//
+//        m_ebo = 0;
+//    }
+//
+//    if (m_vbo != 0)
+//    {
+//        glDeleteBuffers(1, &m_vbo);
+//        m_vbo = 0;
+//    }
+//
+//    if (m_vao != 0)
+//    {
+//        glDeleteVertexArrays(1, &m_vao);
+//        m_vao = 0;
+//    }
+//
+//    m_vertexCount = 0;
+//    m_indexCount = 0;
+//    m_useIndices = false;
+//
+//    m_meshData.vertices.clear();
+//    m_meshData.indices.clear();
+//}
+//
+//
+//
+//
