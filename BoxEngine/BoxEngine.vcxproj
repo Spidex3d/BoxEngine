@@ -169,6 +169,8 @@
     <ClInclude Include="inc\mesh\modifiers\LoopCut.h" />
     <ClInclude Include="inc\mesh\modifiers\ModifierData.h" />
     <ClInclude Include="inc\mesh\modifiers\RoundInset.h" />
+    <ClInclude Include="inc\mesh\ParticleSystem\GrassBlade.h" />
+    <ClInclude Include="inc\mesh\ParticleSystem\GrassClump.h" />
     <ClInclude Include="inc\mesh\ParticleSystem\ParticleScatter.h" />
     <ClInclude Include="inc\mesh\UV\UVMapping.h" />
     <ClInclude Include="inc\rendering\Framebuffer.h" />
@@ -208,6 +210,8 @@
     <ClCompile Include="src\mesh\modifiers\FaceRemove.cpp" />
     <ClCompile Include="src\mesh\modifiers\LoopCut.cpp" />
     <ClCompile Include="src\mesh\modifiers\RoundInset.cpp" />
+    <ClCompile Include="src\mesh\ParticleSystem\GrassBlade.cpp" />
+    <ClCompile Include="src\mesh\ParticleSystem\GrassClump.cpp" />
     <ClCompile Include="src\mesh\ParticleSystem\ParticleScatter.cpp" />
     <ClCompile Include="src\mesh\UV\UVMapping.cpp" />
     <ClCompile Include="src\rendering\Framebuffer.cpp" />

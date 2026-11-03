@@ -468,6 +468,31 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             ImGui::EndMenu();
         }
 
+        // =====================================================
+        // TEST OBJECTS
+        // =====================================================
+
+        if (ImGui::BeginMenu("Test Objects"))
+        {
+            if (ImGui::MenuItem("Grass Blade"))
+            {
+                action = ViewportAction::TestGrassBlade;
+            }
+
+            ImGui::Separator();
+
+            ImGui::BeginDisabled();
+
+            ImGui::MenuItem("Grass Clump");
+            ImGui::MenuItem("Procedural Rock");
+            ImGui::MenuItem("Procedural Tree");
+
+            ImGui::EndDisabled();
+
+            ImGui::EndMenu();
+        }
+
+
         if (ImGui::BeginMenu("Modifiers")) {
 
 			// ############################################ Extrude Modifier ############################################

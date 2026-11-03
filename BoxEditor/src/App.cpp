@@ -684,6 +684,22 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
 		}
 		break;
 
+        // =====================================================
+        // TEST OBJECTS
+        // =====================================================
+
+    case ViewportAction::TestGrassBlade:
+    {
+        if (!engine.CreateTestGrassBlade())
+        {
+            BOX_LOG_ERROR(
+                "Could not create test grass blade"
+            );
+        }
+
+        break;
+    }
+
 		// -------------------------------------------- Ecosystem Panel --------------------------------------------
 	case ViewportAction::Ecosystem:
 

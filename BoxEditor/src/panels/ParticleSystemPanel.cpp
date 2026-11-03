@@ -380,32 +380,6 @@ void ParticleSystemPanel::Draw(Entity* entity, FaceEditController& faceEditContr
     ImGui::Spacing();
 
 
-    // ============================================
-// TEST PARTICLE SCATTER
-// ============================================
-
-    //if (ImGui::Button("Test Scatter"))
-    //{
-    //    MeshEditing testMesh;
-
-    //    testMesh.CreateCube();
-
-    //    std::vector<ScatterPoint> points =
-    //        ParticleScatter::GenerateOnFace(
-    //            testMesh,
-    //            0,       // First face
-    //            100,     // Number of points
-    //            12345    // Random seed
-    //        );
-
-    //    std::cout
-    //        << "Generated "
-    //        << points.size()
-    //        << " scatter points"
-    //        << std::endl;
-    //}
-
-
 
     // ============================================
     // REMOVE MODIFIER

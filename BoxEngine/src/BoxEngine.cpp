@@ -15,6 +15,7 @@
 
 #include <cmath>
 #include <limits>
+#include <array>
 
 #include <glm/gtc/matrix_inverse.hpp>
 
@@ -29,6 +30,9 @@
 #include <rendering/TerrainBrush.h>
 // water
 #include <rendering/Water.h>
+// test grass blade
+#include <mesh/ParticleSystem/GrassBlade.h>
+
 
 // ----------------------------------------
 // Game Engine
@@ -186,6 +190,44 @@ bool BoxEngine::Initialize()
         return false;
     }
 
+    // =====================================================
+    // GRASS BLADE SHADER
+    // =====================================================
+
+    const std::string grassVertexShaderPath =
+        helpers.GetAssetPath(
+            "assets/shader/grassBlade.vert"
+        );
+
+    const std::string grassFragmentShaderPath =
+        helpers.GetAssetPath(
+            "assets/shader/grassBlade.frag"
+        );
+
+    m_grassBladeShader =
+        std::make_unique<Shader>(
+            grassVertexShaderPath,
+            grassFragmentShaderPath
+        );
+
+    if (!m_grassBladeShader ||
+        m_grassBladeShader->ID() == 0)
+    {
+        BOX_LOG_ERROR(
+            "Failed to create grass blade shader"
+        );
+
+        m_grassBladeShader.reset();
+
+        return false;
+    }
+
+    BOX_LOG_INFO("Grass Blade Shader initialized");
+
+
+	// end testing grass blade
+
+
 	// Create the terrain Brush for visualizing the area of effect when editing the terrain
     const std::string terrainBrushVertexPath =
         helpers.GetAssetPath(
@@ -330,6 +372,9 @@ void BoxEngine::Shutdown()
     }
 
     m_waterShader.reset();
+
+    m_testGrassBlade.reset();
+    m_grassBladeShader.reset();
 
     // Entity destructors delete their OpenGL buffers.
     m_entities.clear();
@@ -656,6 +701,59 @@ Entity* BoxEngine::AddEditableGrassClump(const MeshEditing& grassMesh, const glm
 
     return result;
 }
+// --------------------------------------------------------
+// New Grass Blade function for testing
+// --------------------------------------------------------
+// =====================================================
+// CREATE TEST GRASS BLADE
+// =====================================================
+
+bool BoxEngine::CreateTestGrassBlade()
+{
+    // If already created, toggle its visibility.
+    if (m_testGrassBlade)
+    {
+        m_showTestGrassBlade =
+            !m_showTestGrassBlade;
+
+        return true;
+    }
+
+    // Create our grass blade.
+    m_testGrassBlade =
+        std::make_unique<GrassBlade>();
+
+    // Use the default dimensions:
+    // Width  = 0.01 metres
+    // Height = 0.20 metres
+
+    m_testGrassBlade->SetPosition(
+        glm::vec3(0.0f, 0.0f, 0.0f)
+    );
+
+    // Generate the OpenGL geometry.
+    if (!m_testGrassBlade->CreateGrassBlade())
+    {
+        BOX_LOG_ERROR(
+            "Failed to create test grass blade"
+        );
+
+        m_testGrassBlade.reset();
+
+        return false;
+    }
+
+    m_showTestGrassBlade = true;
+
+    BOX_LOG_INFO(
+        "Test grass blade created successfully"
+    );
+
+    return true;
+}
+
+// end of new grass blade function for testing
+
 
 
 // Load a skybox from a folder containing the six images for the skybox faces
@@ -1476,6 +1574,198 @@ void BoxEngine::RenderScene()
                 entity->RenderScene(*m_sceneShader, *m_camera, aspectRatio);
             }
         }
+
+        // =====================================================
+// TEST GRASS BLADE RENDERING
+// =====================================================
+
+        if (m_showTestGrassBlade &&
+            m_testGrassBlade &&
+            m_grassBladeShader &&
+            m_grassBladeShader->ID() != 0)
+        {
+            m_grassBladeShader->Use();
+
+            // ---------------------------------------------
+            // Model matrix
+            // ---------------------------------------------
+
+            glm::mat4 model(1.0f);
+
+            model = glm::translate(
+                model,
+                m_testGrassBlade->GetPosition()
+            );
+
+            // Make the test blade 10 times larger
+            // so we can inspect its shape easily.
+            model = glm::scale(
+                model,
+                glm::vec3(10.0f)
+            );
+
+            // ---------------------------------------------
+            // Shader matrices
+            // ---------------------------------------------
+
+            m_grassBladeShader->setMat4(
+                "uModel",
+                model
+            );
+
+            m_grassBladeShader->setMat4(
+                "uView",
+                view
+            );
+
+            m_grassBladeShader->setMat4(
+                "uProjection",
+                projection
+            );
+
+            // ---------------------------------------------
+            // Grass lighting
+            // ---------------------------------------------
+
+            m_grassBladeShader->setVec3(
+                "uLightDirection",
+                glm::normalize(
+                    glm::vec3(0.5f, 1.0f, 0.4f)
+                )
+            );
+
+            m_grassBladeShader->setVec3(
+                "uLightColor",
+                glm::vec3(1.0f)
+            );
+
+            m_grassBladeShader->SetUniformFloat(
+                "uAmbientStrength",
+                0.35f
+            );
+
+            // ---------------------------------------------
+            // Draw both sides
+            // ---------------------------------------------
+
+            GLboolean cullingEnabled =
+                glIsEnabled(GL_CULL_FACE);
+
+            glDisable(GL_CULL_FACE);
+
+
+            // =====================================================
+            // DRAW TEST GRASS CLUMP
+            // =====================================================
+
+            m_testGrassClump.Draw(
+                *m_testGrassBlade,
+                *m_grassBladeShader,
+                model
+            );
+
+
+            //m_testGrassBlade->Draw();
+            // =====================================================
+            // TEST GRASS CLUMP - 7 BLADES
+            // =====================================================
+
+            //struct GrassBladeTransform
+            //{
+            //    float angle;
+            //    float heightScale;
+            //    float widthScale;
+            //    float tilt;
+            //};
+
+            //const std::array<GrassBladeTransform, 7> blades =
+            //{ {
+            //        // Angle, Height, Width, Tilt
+
+            //        /*{   0.0f, 1.00f, 1.00f,  0.0f },
+            //        {  52.0f, 0.85f, 0.90f,  8.0f },
+            //        { 105.0f, 1.15f, 1.05f, 12.0f },
+            //        { 158.0f, 0.90f, 0.85f,  6.0f },
+            //        { 210.0f, 1.20f, 1.10f, 10.0f },
+            //        { 265.0f, 0.80f, 0.95f, 14.0f },
+            //        { 315.0f, 1.05f, 1.00f,  7.0f }*/
+
+            //        {   0.0f, 1.00f, 1.00f,  0.0f },
+            //        {  52.0f, 0.85f, 0.90f, 15.0f },
+            //        { 105.0f, 1.15f, 1.05f, 20.0f },
+            //        { 158.0f, 0.90f, 0.85f, 12.0f },
+            //        { 210.0f, 1.20f, 1.10f, 18.0f },
+            //        { 265.0f, 0.80f, 0.95f, 23.0f },
+            //        { 315.0f, 1.05f, 1.00f, 14.0f }
+            //    } };
+
+            //for (const GrassBladeTransform& blade : blades)
+            //{
+            //    // Start with the existing test object model.
+            //    glm::mat4 bladeModel = model;
+
+            //    // ---------------------------------------------
+            //    // Rotate around the vertical axis
+            //    // ---------------------------------------------
+
+            //    bladeModel = glm::rotate(
+            //        bladeModel,
+            //        glm::radians(blade.angle),
+            //        glm::vec3(0.0f, 1.0f, 0.0f)
+            //    );
+
+            //    // ---------------------------------------------
+            //    // Tilt slightly away from vertical
+            //    // ---------------------------------------------
+
+            //    bladeModel = glm::rotate(
+            //        bladeModel,
+            //        glm::radians(blade.tilt),
+            //        glm::vec3(1.0f, 0.0f, 0.0f)
+            //    );
+
+            //    // ---------------------------------------------
+            //    // Height and width variation
+            //    // ---------------------------------------------
+
+            //    bladeModel = glm::scale(
+            //        bladeModel,
+            //        glm::vec3(
+            //            blade.widthScale,
+            //            blade.heightScale,
+            //            blade.widthScale
+            //        )
+            //    );
+
+            //    // ---------------------------------------------
+            //    // Update model matrix
+            //    // ---------------------------------------------
+
+            //    m_grassBladeShader->setMat4(
+            //        "uModel",
+            //        bladeModel
+            //    );
+
+            //    // ---------------------------------------------
+            //    // Draw shared grass mesh
+            //    // ---------------------------------------------
+
+            //    m_testGrassBlade->Draw();
+            //}
+
+
+
+			// ##############################################
+            if (cullingEnabled)
+            {
+                glEnable(GL_CULL_FACE);
+            }
+        }
+
+        // =====================================================
+        // END TEST GRASS BLADE RENDERING
+        // =====================================================
+
 
 
         // -------------------------------------------------

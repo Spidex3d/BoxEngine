@@ -271,5 +271,7 @@
     <None Include="assets\shader\TerrainBrush.frag" />
     <None Include="assets\shader\Water.vert" />
     <None Include="assets\shader\Water.frag" />
+    <None Include="assets\shader\grassBlade.vert" />
+    <None Include="assets\shader\grassBlade.frag" />
   </ItemGroup>
 </Project>

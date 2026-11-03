@@ -10,6 +10,9 @@
 #include <runtime\Game.h>
 #include <runtime\CharacterController.h>
 
+#include <mesh/ParticleSystem/GrassClump.h>
+
+
 class Shader;
 class Grid;
 class Entity;
@@ -19,6 +22,7 @@ class Sky;
 class Terrain;
 class TerrainBrush;
 class Water;
+class GrassBlade;
 
 enum class TransformTool
 {
@@ -105,7 +109,8 @@ public:
 
     // grass
     Entity* AddEditableGrassClump(const MeshEditing& grassMesh, const glm::vec3& position);
-
+	// new grass blade function for testing
+    bool CreateTestGrassBlade();
 
 
 	// Load a skybox from a folder containing the six images for the skybox faces
@@ -352,8 +357,19 @@ private:
 	float m_waveSpeed = 0.30f;
 	float m_waveStrength = 0.15f;
 	float m_waterSpecularPower = 8.0f;
-    
 
+    // ============================================
+    // Grass blade shader
+    std::unique_ptr<Shader> m_grassBladeShader;
+
+    std::unique_ptr<GrassBlade> m_testGrassBlade;
+
+    bool m_showTestGrassBlade = false;
+
+    GrassClump m_testGrassClump;
+
+    // End Test Objects
+    // ============================================
 
 private:
     Framebuffer m_sceneFramebuffer;
