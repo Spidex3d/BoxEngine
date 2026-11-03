@@ -12,7 +12,12 @@
 #include <mesh\modifiers\LoopCut.h>
 #include <mesh\modifiers\FaceCut.h>
 #include <mesh\modifiers\Bevel.h>
-
+// particle system
+#include <mesh/ParticleSystem/ParticleScatter.h>
+#include <mesh/modifiers/ModifierData.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+// #####
 #include <runtime\Player.h>
 
 ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const EditorIcons& icons)
@@ -443,8 +448,25 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             }
             ImGui::EndMenu();
 		}
+		// ------------------------------------------------
+		// Particle System menu
+		// ------------------------------------------------
+        if (ImGui::BeginMenu("Particle System")) {
+            // Particle system menu items...
+			if (ImGui::MenuItem("Surface Scatter")) {
+				action = ViewportAction::AddParticleSystem;
+			}
+            ImGui::Separator();
 
-        
+            ImGui::BeginDisabled();
+
+            ImGui::MenuItem("Dynamic Emitter");
+            ImGui::MenuItem("Surface Strands");
+
+            ImGui::EndDisabled();
+
+            ImGui::EndMenu();
+        }
 
         if (ImGui::BeginMenu("Modifiers")) {
 
@@ -650,10 +672,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             if (ImGui::MenuItem("Solidify"))
             {
             }
-            ImGui::Separator();
-            if (ImGui::MenuItem("Scatter"))
-            {
-            }
+            
             ImGui::EndMenu();
         }
 
@@ -765,6 +784,166 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
         {
             
             ImGui::Image((ImTextureID)(static_cast<intptr_t>(sceneTexture)), availableSize, ImVec2(0, 1), ImVec2(1, 0));
+
+            // =====================================================
+            // PARTICLE SCATTER DEBUG DISPLAY
+            // =====================================================
+
+            Entity* scatterEntity = engine.GetSelectedEntity();
+
+            if (scatterEntity)
+            {
+                const MeshEditing& mesh = scatterEntity->GetEditableMesh();
+                {
+                    // ---------------------------------------------
+                    // Get camera matrices
+                    // ---------------------------------------------
+
+                    Camera& camera =
+                        engine.GetCamera();
+
+                    const glm::mat4 view =
+                        camera.GetViewMatrix();
+
+                    const float aspectRatio =
+                        availableSize.x / availableSize.y;
+
+                    const glm::mat4 projection =
+                        camera.GetProjectionMatrix(aspectRatio);
+
+                    const glm::mat4 model =
+                        scatterEntity->GetModelMatrix();
+
+                    const glm::mat4 MVP =
+                        projection * view * model;
+
+                    // ---------------------------------------------
+                    // Get the screen rectangle of our viewport
+                    // ---------------------------------------------
+
+                    const ImVec2 imageMin =
+                        ImGui::GetItemRectMin();
+
+                    const ImVec2 imageMax =
+                        ImGui::GetItemRectMax();
+
+                    ImDrawList* drawList =
+                        ImGui::GetWindowDrawList();
+
+                    drawList->PushClipRect(
+                        imageMin,
+                        imageMax,
+                        true
+                    );
+
+                    // ---------------------------------------------
+                    // Find active Surface Scatter modifiers
+                    // ---------------------------------------------
+
+                    const auto& modifiers =
+                        scatterEntity->GetModifiers();
+
+                    for (std::size_t modifierIndex = 0;
+                        modifierIndex < modifiers.size();
+                        ++modifierIndex)
+                    {
+                        const ModifierData& modifier = modifiers[modifierIndex];
+
+                        if (modifier.type != ModifierType::Scatter)
+                            continue;
+
+                        if (!modifier.modEnabled)
+                            continue;
+
+                        const ParticleScatterData& scatter =
+                            modifier.scatter;
+
+                        // -----------------------------------------
+                        // Generate scatter positions
+                        // -----------------------------------------
+
+
+                        // ============================================
+                        // GET CACHED SCATTER POINTS
+                        // ============================================
+
+                        if (scatter.faceIndices.empty())
+                            continue;
+
+                        const std::size_t targetFace =
+                            scatter.faceIndices[0];
+
+                        if (targetFace >= mesh.GetFaceCount())
+                            continue;
+
+                        const std::vector<ScatterPoint>& points =
+                            ParticleScatter::GetCachedOnFace(
+                                scatterEntity->GetID(),
+                                modifierIndex,
+                                mesh,
+                                targetFace,
+                                scatter.count,
+                                scatter.seed
+                            );
+                     
+
+                        // -----------------------------------------
+                        // Draw each point
+                        // -----------------------------------------
+
+                        for (const ScatterPoint& point : points)
+                        {
+                            // Convert local position to clip space
+                            const glm::vec4 clipPosition =
+                                MVP * glm::vec4(point.position, 1.0f);
+
+                            // Ignore points behind the camera
+                            if (clipPosition.w <= 0.0f)
+                                continue;
+
+                            // Perspective division
+                            const glm::vec3 ndc =
+                                glm::vec3(clipPosition) /
+                                clipPosition.w;
+
+                            // Ignore points outside clip depth
+                            if (ndc.z < -1.0f || ndc.z > 1.0f)
+                                continue;
+
+                            // Convert NDC to viewport screen coordinates
+                            const float screenX =
+                                imageMin.x +
+                                (ndc.x * 0.5f + 0.5f) *
+                                (imageMax.x - imageMin.x);
+
+                            const float screenY =
+                                imageMin.y +
+                                (1.0f - (ndc.y * 0.5f + 0.5f)) *
+                                (imageMax.y - imageMin.y);
+
+                            // Draw a small green point
+                            drawList->AddCircleFilled(
+                                ImVec2(screenX, screenY),
+                                3.0f,
+                                IM_COL32(40, 255, 60, 255)
+                            );
+                        }
+                    }
+
+                    drawList->PopClipRect();
+                }
+            }
+
+            // =====================================================
+            // END PARTICLE SCATTER DEBUG DISPLAY
+            // =====================================================
+
+
+
+
+
+
+			// ################################ End Test Code #########################################
 
             m_sceneViewportPos = ImGui::GetItemRectMin();
             m_sceneViewportSize = ImGui::GetItemRectSize();

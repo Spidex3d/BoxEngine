@@ -9,6 +9,7 @@
 #include "panels/HelpPanel.h"
 #include <panels/MaterialEditorPanel.h>
 #include <panels/MaterialDisplayPanel.h>
+#include <panels/ParticleSystemPanel.h>
 #include <panels/EcosystemPanel.h>
 #include <panels/UVPanel.h>
 #include <FileDialog.h>
@@ -111,8 +112,27 @@ bool App::Init()
 	m_uvPanel = std::make_unique<UVPanel>();
 
     m_materialEditorPanel = std::make_unique<MaterialEditorPanel>();
+    
+
+	// ############################## Initialize the Particle System panel for ImGui ###############
+	m_particleSystemPanel = std::make_unique<ParticleSystemPanel>();
+
+    if (!m_particleSystemPanel->Initialize())
+    {
+        BOX_LOG_ERROR("ParticleSystemPanel failed to initialize");
+
+        m_particleSystemPanel.reset();
+        return false;
+    }
+
+   
 
 
+
+
+
+
+	// ############################## Initialize the Material Editor panel for ImGui ###############
     if (!m_materialEditorPanel->Initialize())
     {
         BOX_LOG_ERROR(
@@ -281,6 +301,17 @@ int App::Run()
 			}
 		}
 
+		// ----------------------- Draw the Particle System panel if it is open -----------------------
+		
+
+        if (m_particleSystemPanel)
+        {
+            Entity* entity =
+                m_engine->GetSelectedEntity();
+
+            m_particleSystemPanel->Draw(entity, m_sceneViewport->GetFaceEditController());
+        }
+        
         // ------------------------------------------------------------------------------
         // Ecosystem, Rocks, floor, water, terrain, grass, plants & tree generation 
         // ------------------------------------------------------------------------------
@@ -645,6 +676,14 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
         }
 
         break;
+
+	case ViewportAction::AddParticleSystem:
+		if (m_particleSystemPanel)
+		{
+			m_particleSystemPanel->Open();
+		}
+		break;
+
 		// -------------------------------------------- Ecosystem Panel --------------------------------------------
 	case ViewportAction::Ecosystem:
 

@@ -68,6 +68,9 @@ enum class ViewportAction
     Ecosystem,
 	AddEditableFloor,
 	AddEditableRock,
+	// Add a new particle system to the scene
+    AddParticleSystem,
+
 
     ResetCamera,
 

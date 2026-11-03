@@ -149,6 +149,7 @@
     <ClCompile Include="src\panels\MaterialEditor.cpp" />
     <ClCompile Include="src\panels\MaterialEditorPanel.cpp" />
     <ClCompile Include="src\panels\ObjectExplorerPanel.cpp" />
+    <ClCompile Include="src\panels\ParticleSystemPanel.cpp" />
     <ClCompile Include="src\panels\SceneCollectionPanel.cpp" />
     <ClCompile Include="src\panels\SceneViewportPanel.cpp" />
     <ClCompile Include="src\panels\UVPanel.cpp" />
@@ -192,6 +193,7 @@
     <ClInclude Include="inc\panels\MaterialEditor.h" />
     <ClInclude Include="inc\panels\MaterialEditorPanel.h" />
     <ClInclude Include="inc\panels\ObjectExplorerPanel.h" />
+    <ClInclude Include="inc\panels\ParticleSystemPanel.h" />
     <ClInclude Include="inc\panels\SceneCollectionPanel.h" />
     <ClInclude Include="inc\panels\SceneViewportPanel.h" />
     <ClInclude Include="inc\panels\UVPanel.h" />

@@ -126,6 +126,9 @@
     <ClInclude Include="inc\rendering\Water.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="inc\mesh\ParticleSystem\ParticleScatter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\BoxEngine.cpp">
@@ -231,6 +234,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\rendering\Water.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mesh\ParticleSystem\ParticleScatter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

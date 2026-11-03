@@ -1,8 +1,46 @@
 #pragma once
 #include <cstddef>
+#include <vector>
 
 // used to define the type of modifier and its parameters
 // this will let know which modifier is being used so we can display the correct UI and apply the correct logic to the mesh data
+
+enum class ParticleScatterType
+{
+    Grass,
+    Rocks,
+    Trees,
+    CustomMesh
+};
+
+struct ParticleScatterData
+{
+    ParticleScatterType type =
+        ParticleScatterType::Grass;
+
+    // Number of instances
+    int count = 100;
+
+    // Random distribution
+    unsigned int seed = 12345;
+
+    // Scale variation
+    float minScale = 0.8f;
+    float maxScale = 1.2f;
+
+    // Rotation variation
+    float randomRotation = 360.0f;
+
+    // Terrain slope restriction
+    float maxSlope = 45.0f;
+
+    // Selected faces
+    std::vector<std::size_t> faceIndices;
+};
+
+
+
+
 
 // =====================================================
 // Modelling operation type
@@ -128,5 +166,12 @@ struct ModifierData
     ExtrudeModifierData extrude;
 
     InsetModifierData inset;
+
+    // New Particle Scatter
+    ParticleScatterData scatter;
 };
+
+// ----------------------------------------------------------------
+// Particle system modifier data
+// ----------------------------------------------------------------
 

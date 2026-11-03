@@ -5,8 +5,7 @@
 #include "panels\SceneViewportPanel.h"
 #include "panels\SceneCollectionPanel.h"
 #include "panels\ObjectExplorerPanel.h"
-//#include "panels\MaterialEditorPanel.h"
-//#include "panels/HelpPanel.h"
+
 #include <UI/EditorIcons.h>
 #include <fileManager\mbxManager.h> 
 #include <miniBoxLog.h>
@@ -21,6 +20,7 @@ class ObjectExplorerPanel;
 class HelpPanel;
 class MaterialEditorPanel;
 class MaterialDisplayPanel;
+class ParticleSystemPanel;
 class EcosystemPanel;
 class UVPanel;
 
@@ -64,6 +64,8 @@ private:
 	std::unique_ptr<MaterialEditorPanel> m_materialEditorPanel; // Material Editor panel for ImGui
 
 	std::unique_ptr<MaterialDisplayPanel> m_materialDisplayPanel; // Material Display panel for ImGui
+
+	std::unique_ptr<ParticleSystemPanel> m_particleSystemPanel; // Particle System panel for ImGui
 
 	std::unique_ptr<HelpPanel> m_helpPanel; // Help panel for ImGui
 
