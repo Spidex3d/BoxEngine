@@ -1,3 +1,5 @@
+#define GLM_ENABLE_EXPERIMENTAL
+
 #include "BoxEngine.h"
 #include <shader/Shader.h>
 #include <entity/Entity.h>
@@ -33,7 +35,11 @@
 // test grass blade
 #include <mesh/ParticleSystem/GrassBlade.h>
 
+#include <mesh/ParticleSystem/ParticleScatter.h>
+#include <mesh/ParticleSystem/GrassClump.h>
+#include <mesh/modifiers/ModifierData.h>
 
+#include <glm/gtx/quaternion.hpp>
 // ----------------------------------------
 // Game Engine
 // ----------------------------------------
@@ -225,7 +231,31 @@ bool BoxEngine::Initialize()
     BOX_LOG_INFO("Grass Blade Shader initialized");
 
 
-	// end testing grass blade
+    // =====================================================
+    // CREATE SHARED GRASS BLADE MESH
+    // =====================================================
+
+    m_testGrassBlade =
+        std::make_unique<GrassBlade>();
+
+    if (!m_testGrassBlade->CreateGrassBlade())
+    {
+        BOX_LOG_ERROR(
+            "Failed to create shared grass blade mesh"
+        );
+
+        m_testGrassBlade.reset();
+        return false;
+    }
+
+    // Don't show the test clump automatically.
+    m_showTestGrassBlade = false;
+
+	// =====================================================
+	// END TESTING GRASS BLADE
+	// =====================================================
+
+
 
 
 	// Create the terrain Brush for visualizing the area of effect when editing the terrain
@@ -1575,9 +1605,265 @@ void BoxEngine::RenderScene()
             }
         }
 
+        // =======================================================================================================
+		// ================================= PARTICLE SCATTER - GRASS CLUMPS =====================================
+		// =======================================================================================================
+
+        if (m_testGrassBlade &&
+            m_grassBladeShader &&
+            m_grassBladeShader->ID() != 0)
+        {
+            m_grassBladeShader->Use();
+
+            // ---------------------------------------------
+            // Camera matrices
+            // ---------------------------------------------
+
+            m_grassBladeShader->setMat4(
+                "uView",
+                view
+            );
+
+            m_grassBladeShader->setMat4(
+                "uProjection",
+                projection
+            );
+
+            // ---------------------------------------------
+            // Lighting
+            // ---------------------------------------------
+
+            m_grassBladeShader->setVec3(
+                "uLightDirection",
+                glm::normalize(
+                    glm::vec3(0.5f, 1.0f, 0.4f)
+                )
+            );
+
+            m_grassBladeShader->setVec3(
+                "uLightColor",
+                glm::vec3(1.0f)
+            );
+
+            m_grassBladeShader->SetUniformFloat(
+                "uAmbientStrength",
+                0.35f
+            );
+
+            // Grass is double-sided.
+            const GLboolean cullingEnabled =
+                glIsEnabled(GL_CULL_FACE);
+
+            glDisable(GL_CULL_FACE);
+
+            // =====================================================
+            // GPU INSTANCING - COLLECT ALL GRASS BLADES
+            // =====================================================
+
+            std::vector<glm::mat4> allGrassMatrices;
+
+            // Reserve some space to avoid unnecessary allocations.
+            // 20 clumps x 7 blades = 140 blade instances.
+            allGrassMatrices.reserve(140);
+
+            // =============================================
+            // CHECK ALL ENTITIES
+            // =============================================
+
+            for (const auto& entity : m_entities)
+            {
+                if (!entity)
+                    continue;
+
+                const MeshEditing& mesh =
+                    entity->GetEditableMesh();
+
+                const glm::mat4 entityModel =
+                    entity->GetModelMatrix();
+
+                const auto& modifiers =
+                    entity->GetModifiers();
+
+                // =========================================
+                // CHECK PARTICLE MODIFIERS
+                // =========================================
+
+                for (std::size_t modifierIndex = 0;
+                    modifierIndex < modifiers.size();
+                    ++modifierIndex)
+                {
+                    const ModifierData& modifier =
+                        modifiers[modifierIndex];
+
+                    if (modifier.type != ModifierType::Scatter)
+                        continue;
+
+                    if (!modifier.modEnabled)
+                        continue;
+
+                    const ParticleScatterData& scatter =
+                        modifier.scatter;
+
+                    // Only Grass for this first test.
+                    if (scatter.type != ParticleScatterType::Grass)
+                        continue;
+
+                    if (scatter.faceIndices.empty())
+                        continue;
+
+                    const std::size_t faceIndex =
+                        scatter.faceIndices[0];
+
+                    if (faceIndex >= mesh.GetFaceCount())
+                        continue;
+
+                    // =====================================
+                    // GET CACHED SCATTER POSITIONS
+                    // =====================================
+
+                    const std::vector<ScatterPoint>& points =
+                        ParticleScatter::GetCachedOnFace(
+                            entity->GetID(),
+                            modifierIndex,
+                            mesh,
+                            faceIndex,
+                            scatter.count,
+                            scatter.seed
+                        );
+
+                    // Limit the first test to 20 clumps.
+                    const std::size_t clumpCount = std::min(points.size(), std::size_t(20));
+
+                    // =====================================
+                    // DRAW GRASS CLUMPS
+                    // =====================================
+
+                    for (std::size_t i = 0;
+                        i < clumpCount;
+                        ++i)
+                    {
+                        const ScatterPoint& point =
+                            points[i];
+
+                        // ---------------------------------
+                        // Position on the selected surface
+                        // ---------------------------------
+
+                        glm::mat4 model =
+                            entityModel;
+
+                        model = glm::translate(
+                            model,
+                            point.position
+                        );
+
+                        // ---------------------------------
+                        // Align grass with surface normal
+                        // ---------------------------------
+
+                        const glm::vec3 up(
+                            0.0f, 1.0f, 0.0f
+                        );
+
+                        const glm::vec3 normal =
+                            glm::normalize(point.normal);
+
+                        const glm::quat alignment =
+                            glm::rotation(up, normal);
+
+                        model *= glm::mat4_cast(alignment);
+
+                        // ---------------------------------
+                        // Random orientation per clump
+                        // Deterministic from its index.
+                        // ---------------------------------
+
+                        const float angle =
+                            static_cast<float>(
+                                (i * 137) % 360
+                                );
+
+                        model = glm::rotate(
+                            model,
+                            glm::radians(angle),
+                            up
+                        );
+
+                        // ---------------------------------
+                        // Use REAL grass dimensions.
+                        // No 10x test enlargement.
+                        // ---------------------------------
+
+                        
+                        // ---------------------------------
+                        // Collect seven blades for instancing
+                        // ---------------------------------
+
+                        m_testGrassClump.AppendInstanceMatrices(
+                            model,
+                            allGrassMatrices
+                        );
+
+                    }
+
+
+
+
+
+
+                }
+            }
+
+            // =====================================================
+            // DRAW ALL SCATTERED GRASS USING GPU INSTANCING
+            // =====================================================
+
+            if (!allGrassMatrices.empty())
+            {
+                m_grassBladeShader->Use();
+
+                // Enable GPU instancing
+                m_grassBladeShader->SetUniformInt(
+                    "uUseInstancing",
+                    1
+                );
+
+                // Instance matrices already contain
+                // the complete world transformations.
+                m_grassBladeShader->setMat4(
+                    "uModel",
+                    glm::mat4(1.0f)
+                );
+
+                // ONE draw call for all scattered blades!
+                m_testGrassBlade->DrawInstanced(
+                    allGrassMatrices
+                );
+
+                // Restore normal drawing mode
+                m_grassBladeShader->SetUniformInt(
+                    "uUseInstancing",
+                    0
+                );
+            }
+
+            // Restore face culling
+            if (cullingEnabled)
+            {
+                glEnable(GL_CULL_FACE);
+            }
+
+        }
+
         // =====================================================
-// TEST GRASS BLADE RENDERING
-// =====================================================
+        // END GRASS SCATTER
+        // =====================================================
+
+
+
+        // =====================================================
+        // TEST GRASS BLADE RENDERING
+        // =====================================================
 
         if (m_showTestGrassBlade &&
             m_testGrassBlade &&
@@ -1657,105 +1943,58 @@ void BoxEngine::RenderScene()
             // =====================================================
             // DRAW TEST GRASS CLUMP
             // =====================================================
+            m_grassBladeShader->SetUniformInt("uUseInstancing", 0);
 
-            m_testGrassClump.Draw(
+            // -------------------------------------------------
+            // TEST GPU INSTANCED GRASS CLUMP
+            // -------------------------------------------------
+
+            std::vector<glm::mat4> grassMatrices;
+
+            grassMatrices.reserve(7);
+
+            // Generate transformations for seven blades
+            m_testGrassClump.AppendInstanceMatrices(
+                model,
+                grassMatrices
+            );
+
+            // Activate grass shader
+            m_grassBladeShader->Use();
+
+            // Tell shader we are using instancing
+            m_grassBladeShader->SetUniformInt(
+                "uUseInstancing",
+                1
+            );
+
+            // The individual matrices now contain the model transforms
+            m_grassBladeShader->setMat4(
+                "uModel",
+                glm::mat4(1.0f)
+            );
+
+            // Draw all seven blades in ONE OpenGL draw call
+            m_testGrassBlade->DrawInstanced(
+                grassMatrices
+            );
+
+            // Restore normal rendering mode
+            m_grassBladeShader->SetUniformInt(
+                "uUseInstancing",
+                0
+            );
+
+            /*m_testGrassClump.Draw(
                 *m_testGrassBlade,
                 *m_grassBladeShader,
                 model
-            );
-
-
-            //m_testGrassBlade->Draw();
-            // =====================================================
-            // TEST GRASS CLUMP - 7 BLADES
-            // =====================================================
-
-            //struct GrassBladeTransform
-            //{
-            //    float angle;
-            //    float heightScale;
-            //    float widthScale;
-            //    float tilt;
-            //};
-
-            //const std::array<GrassBladeTransform, 7> blades =
-            //{ {
-            //        // Angle, Height, Width, Tilt
-
-            //        /*{   0.0f, 1.00f, 1.00f,  0.0f },
-            //        {  52.0f, 0.85f, 0.90f,  8.0f },
-            //        { 105.0f, 1.15f, 1.05f, 12.0f },
-            //        { 158.0f, 0.90f, 0.85f,  6.0f },
-            //        { 210.0f, 1.20f, 1.10f, 10.0f },
-            //        { 265.0f, 0.80f, 0.95f, 14.0f },
-            //        { 315.0f, 1.05f, 1.00f,  7.0f }*/
-
-            //        {   0.0f, 1.00f, 1.00f,  0.0f },
-            //        {  52.0f, 0.85f, 0.90f, 15.0f },
-            //        { 105.0f, 1.15f, 1.05f, 20.0f },
-            //        { 158.0f, 0.90f, 0.85f, 12.0f },
-            //        { 210.0f, 1.20f, 1.10f, 18.0f },
-            //        { 265.0f, 0.80f, 0.95f, 23.0f },
-            //        { 315.0f, 1.05f, 1.00f, 14.0f }
-            //    } };
-
-            //for (const GrassBladeTransform& blade : blades)
-            //{
-            //    // Start with the existing test object model.
-            //    glm::mat4 bladeModel = model;
-
-            //    // ---------------------------------------------
-            //    // Rotate around the vertical axis
-            //    // ---------------------------------------------
-
-            //    bladeModel = glm::rotate(
-            //        bladeModel,
-            //        glm::radians(blade.angle),
-            //        glm::vec3(0.0f, 1.0f, 0.0f)
-            //    );
-
-            //    // ---------------------------------------------
-            //    // Tilt slightly away from vertical
-            //    // ---------------------------------------------
-
-            //    bladeModel = glm::rotate(
-            //        bladeModel,
-            //        glm::radians(blade.tilt),
-            //        glm::vec3(1.0f, 0.0f, 0.0f)
-            //    );
-
-            //    // ---------------------------------------------
-            //    // Height and width variation
-            //    // ---------------------------------------------
-
-            //    bladeModel = glm::scale(
-            //        bladeModel,
-            //        glm::vec3(
-            //            blade.widthScale,
-            //            blade.heightScale,
-            //            blade.widthScale
-            //        )
-            //    );
-
-            //    // ---------------------------------------------
-            //    // Update model matrix
-            //    // ---------------------------------------------
-
-            //    m_grassBladeShader->setMat4(
-            //        "uModel",
-            //        bladeModel
-            //    );
-
-            //    // ---------------------------------------------
-            //    // Draw shared grass mesh
-            //    // ---------------------------------------------
-
-            //    m_testGrassBlade->Draw();
-            //}
-
-
+            );*/
 
 			// ##############################################
+			// END TEST GRASS CLUMP RENDERING
+			// ##############################################
+
             if (cullingEnabled)
             {
                 glEnable(GL_CULL_FACE);
@@ -2028,53 +2267,6 @@ bool BoxEngine::RayIntersectsAABB(
         }
     }
 
-    /*for (int axis = 0; axis < 3; ++axis)
-    {
-        if (std::abs(
-            rayDirectionLocal[axis]) <
-            epsilon)
-        {
-            if (rayOriginLocal[axis] <
-                aabbMinLocal[axis] ||
-                rayOriginLocal[axis] >
-                aabbMaxLocal[axis])
-            {
-                return false;
-            }
-
-            continue;
-        }
-
-        const float inverseDirection =
-            1.0f /
-            rayDirectionLocal[axis];
-
-        float t1 =
-            (aabbMinLocal[axis] -
-                rayOriginLocal[axis]) *
-            inverseDirection;
-
-        float t2 =
-            (aabbMaxLocal[axis] -
-                rayOriginLocal[axis]) *
-            inverseDirection;
-
-        if (t1 > t2)
-        {
-            std::swap(t1, t2);
-        }
-
-        tMin =
-            std::max(tMin, t1);
-
-        tMax =
-            std::min(tMax, t2);
-
-        if (tMin > tMax)
-        {
-            return false;
-        }
-    }*/
 
     const glm::vec3 localHitPoint =
         rayOriginLocal +
@@ -2370,8 +2562,8 @@ bool BoxEngine::LoadScene(
     }
 
     // =================================================
-// RESTORE MATERIAL TEXTURES
-// =================================================
+    // RESTORE MATERIAL TEXTURES
+    // =================================================
 
     for (auto& entity : loadedEntities)
     {
@@ -2631,29 +2823,7 @@ bool BoxEngine::PlayerCollidesAt(const glm::vec3& position, const Entity* ignore
         const glm::vec3 entityPosition =
             entity->GetPosition();
 
-       /* const glm::vec3 worldMin =
-            entityPosition +
-            entity->GetAABBMin();
-
-        const glm::vec3 worldMax =
-            entityPosition +
-            entity->GetAABBMax();*/
-
-       /* if (worldMax.y <=
-            playerFeetY + groundTolerance)
-        {
-            continue;
-        }*/
-
-        /*if (Collision::CapsuleVsAABB(
-            position,
-            playerRadius,
-            playerHalfHeight,
-            worldMin,
-            worldMax))
-        {
-            return true;
-        }*/
+       
     }
 
     return false;

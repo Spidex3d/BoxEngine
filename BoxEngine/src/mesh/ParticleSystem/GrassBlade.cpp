@@ -299,9 +299,66 @@ bool GrassBlade::CreateGrassBlade()
         GL_FALSE,
         sizeof(GrassVertex),
         reinterpret_cast<void*>(
-            offsetof(GrassVertex, position)
-            )
+            offsetof(GrassVertex, position)));
+
+    // =====================================================
+    // INSTANCE MATRIX BUFFER
+    // =====================================================
+
+    glGenBuffers(1, &m_instanceVbo);
+
+    if (m_instanceVbo == 0)
+    {
+        glBindVertexArray(0);
+        Destroy();
+        return false;
+    }
+
+    glBindBuffer(
+        GL_ARRAY_BUFFER,
+        m_instanceVbo
     );
+
+    // Initially allocate no instance data.
+    glBufferData(
+        GL_ARRAY_BUFFER,
+        0,
+        nullptr,
+        GL_DYNAMIC_DRAW
+    );
+
+    // A mat4 occupies four vertex attribute locations.
+    //
+    // 3 = first column
+    // 4 = second column
+    // 5 = third column
+    // 6 = fourth column
+
+    for (GLuint i = 0; i < 4; ++i)
+    {
+        const GLuint location = 3 + i;
+
+        glEnableVertexAttribArray(location);
+
+        glVertexAttribPointer(
+            location,
+            4,
+            GL_FLOAT,
+            GL_FALSE,
+            sizeof(glm::mat4),
+            reinterpret_cast<void*>(
+                sizeof(glm::vec4) * i
+                )
+        );
+
+        // Advance once per instance, not per vertex.
+        glVertexAttribDivisor(
+            location,
+            1
+        );
+    }
+
+
 
     // ---------------------------------------------
     // Attribute 1: Normal
@@ -446,6 +503,59 @@ void GrassBlade::SetColor(
     m_color = color;
 }
 
+// =====================================================
+// DRAW INSTANCED GRASS
+// =====================================================
+
+void GrassBlade::DrawInstanced(
+    const std::vector<glm::mat4>& instanceMatrices) const
+{
+    if (m_vao == 0 ||
+        m_instanceVbo == 0 ||
+        m_indexCount == 0 ||
+        instanceMatrices.empty())
+    {
+        return;
+    }
+
+    // ================================================
+    // Upload instance matrices
+    // ================================================
+
+    glBindBuffer(
+        GL_ARRAY_BUFFER,
+        m_instanceVbo
+    );
+
+    glBufferData(
+        GL_ARRAY_BUFFER,
+        instanceMatrices.size() * sizeof(glm::mat4),
+        instanceMatrices.data(),
+        GL_DYNAMIC_DRAW
+    );
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // ================================================
+    // Draw all instances
+    // ================================================
+
+    glBindVertexArray(m_vao);
+
+    glDrawElementsInstanced(
+        GL_TRIANGLES,
+        m_indexCount,
+        GL_UNSIGNED_INT,
+        nullptr,
+        static_cast<GLsizei>(
+            instanceMatrices.size()
+            )
+    );
+
+    glBindVertexArray(0);
+}
+
+
 
 // =====================================================
 // Destroy OpenGL Resources
@@ -469,6 +579,16 @@ void GrassBlade::Destroy()
     {
         glDeleteVertexArrays(1, &m_vao);
         m_vao = 0;
+    }
+
+    if (m_instanceVbo != 0)
+    {
+        glDeleteBuffers(
+            1,
+            &m_instanceVbo
+        );
+
+        m_instanceVbo = 0;
     }
 
     m_indexCount = 0;

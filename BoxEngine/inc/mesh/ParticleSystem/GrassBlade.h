@@ -1,7 +1,7 @@
 #pragma once
 #include <glad/glad.h>
 #include <glm/glm.hpp>
-
+#include <vector>
 
 class GrassBlade
 {
@@ -14,6 +14,9 @@ public:
 	GrassBlade& operator=(const GrassBlade&) = delete;
 
 	bool CreateGrassBlade();
+
+	// Draw many copies of the same grass mesh.
+	void DrawInstanced(const std::vector<glm::mat4>& instanceMatrices) const;
 
 	void Draw() const;
 
@@ -36,6 +39,7 @@ private:
 	GLuint m_vbo = 0;
 	GLuint m_ebo = 0;
 
+	GLuint m_instanceVbo = 0;
 	GLsizei m_indexCount = 0;
 
 	glm::vec3 m_position = glm::vec3(0.0f);
