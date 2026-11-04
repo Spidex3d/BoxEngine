@@ -361,12 +361,21 @@ private:
     // ============================================
     // Grass blade shader
     std::unique_ptr<Shader> m_grassBladeShader;
+    // =====================================================
+    // GRASS GPU INSTANCE CACHE
+    // =====================================================
+
+    // Last transformations uploaded to the GPU.
+    std::vector<glm::mat4> m_cachedGrassMatrices;
 
     std::unique_ptr<GrassBlade> m_testGrassBlade;
+    // Separate mesh and instance buffer for the preview clump.
+    std::unique_ptr<GrassBlade> m_previewGrassBlade;
 
     bool m_showTestGrassBlade = false;
 
     GrassClump m_testGrassClump;
+   
 
     // End Test Objects
     // ============================================

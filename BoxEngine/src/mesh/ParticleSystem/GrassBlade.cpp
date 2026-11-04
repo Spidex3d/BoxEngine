@@ -503,24 +503,25 @@ void GrassBlade::SetColor(
     m_color = color;
 }
 
+
 // =====================================================
-// DRAW INSTANCED GRASS
+// UPLOAD INSTANCE MATRICES TO GPU
 // =====================================================
 
-void GrassBlade::DrawInstanced(
-    const std::vector<glm::mat4>& instanceMatrices) const
+void GrassBlade::UploadInstanceMatrices(
+    const std::vector<glm::mat4>& instanceMatrices
+)
 {
-    if (m_vao == 0 ||
-        m_instanceVbo == 0 ||
-        m_indexCount == 0 ||
-        instanceMatrices.empty())
+    if (m_instanceVbo == 0)
     {
+        m_instanceCount = 0;
         return;
     }
 
-    // ================================================
-    // Upload instance matrices
-    // ================================================
+    m_instanceCount = 0;
+
+    if (instanceMatrices.empty())
+        return;
 
     glBindBuffer(
         GL_ARRAY_BUFFER,
@@ -536,9 +537,24 @@ void GrassBlade::DrawInstanced(
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    // ================================================
-    // Draw all instances
-    // ================================================
+    m_instanceCount =
+        static_cast<GLsizei>(instanceMatrices.size());
+}
+
+
+// =====================================================
+// DRAW CACHED GPU INSTANCES
+// =====================================================
+
+void GrassBlade::DrawCachedInstances() const
+{
+    if (m_vao == 0 ||
+        m_instanceVbo == 0 ||
+        m_indexCount == 0 ||
+        m_instanceCount == 0)
+    {
+        return;
+    }
 
     glBindVertexArray(m_vao);
 
@@ -547,13 +563,75 @@ void GrassBlade::DrawInstanced(
         m_indexCount,
         GL_UNSIGNED_INT,
         nullptr,
-        static_cast<GLsizei>(
-            instanceMatrices.size()
-            )
+        m_instanceCount
     );
 
     glBindVertexArray(0);
 }
+
+
+// =====================================================
+// ORIGINAL INSTANCED DRAWING FUNCTION
+// =====================================================
+
+void GrassBlade::DrawInstanced(
+    const std::vector<glm::mat4>& instanceMatrices
+)
+{
+    UploadInstanceMatrices(instanceMatrices);
+
+    DrawCachedInstances();
+}
+
+
+
+//void GrassBlade::DrawInstanced(
+//    const std::vector<glm::mat4>& instanceMatrices)
+//{
+//    if (m_vao == 0 ||
+//        m_instanceVbo == 0 ||
+//        m_indexCount == 0 ||
+//        instanceMatrices.empty())
+//    {
+//        return;
+//    }
+//
+//    // ================================================
+//    // Upload instance matrices
+//    // ================================================
+//
+//    glBindBuffer(
+//        GL_ARRAY_BUFFER,
+//        m_instanceVbo
+//    );
+//
+//    glBufferData(
+//        GL_ARRAY_BUFFER,
+//        instanceMatrices.size() * sizeof(glm::mat4),
+//        instanceMatrices.data(),
+//        GL_DYNAMIC_DRAW
+//    );
+//
+//    glBindBuffer(GL_ARRAY_BUFFER, 0);
+//
+//    // ================================================
+//    // Draw all instances
+//    // ================================================
+//
+//    glBindVertexArray(m_vao);
+//
+//    glDrawElementsInstanced(
+//        GL_TRIANGLES,
+//        m_indexCount,
+//        GL_UNSIGNED_INT,
+//        nullptr,
+//        static_cast<GLsizei>(
+//            instanceMatrices.size()
+//            )
+//    );
+//
+//    glBindVertexArray(0);
+//}
 
 
 
@@ -592,4 +670,5 @@ void GrassBlade::Destroy()
     }
 
     m_indexCount = 0;
+    m_instanceCount = 0;
 }

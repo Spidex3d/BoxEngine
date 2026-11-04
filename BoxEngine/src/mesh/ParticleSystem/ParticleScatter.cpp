@@ -347,14 +347,14 @@ ParticleScatter::GetCachedOnFace(
         cache.vertexPositions = std::move(currentPositions);
 
         // Temporary test output
-        std::cout
+        /*std::cout
             << "Scatter regenerated: Entity "
             << entityID
             << ", Modifier "
             << modifierIndex
             << ", Points "
             << cache.points.size()
-            << std::endl;
+            << std::endl;*/
     }
 
     return cache.points;

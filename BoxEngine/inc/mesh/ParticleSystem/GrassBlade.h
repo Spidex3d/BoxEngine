@@ -15,8 +15,18 @@ public:
 
 	bool CreateGrassBlade();
 
+	// =====================================================
+	// GPU INSTANCE BUFFER
+	// =====================================================
+
+	// Upload transformations to the GPU.
+	void UploadInstanceMatrices(const std::vector<glm::mat4>& instanceMatrices);
+
+	// Draw instances already stored on the GPU.
+	void DrawCachedInstances() const;
+
 	// Draw many copies of the same grass mesh.
-	void DrawInstanced(const std::vector<glm::mat4>& instanceMatrices) const;
+	void DrawInstanced(const std::vector<glm::mat4>& instanceMatrices);
 
 	void Draw() const;
 
@@ -40,7 +50,11 @@ private:
 	GLuint m_ebo = 0;
 
 	GLuint m_instanceVbo = 0;
+
 	GLsizei m_indexCount = 0;
+
+	// Number of blade instances currently stored on the GPU.
+	GLsizei m_instanceCount = 0;
 
 	glm::vec3 m_position = glm::vec3(0.0f);
 

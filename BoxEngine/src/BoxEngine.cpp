@@ -235,8 +235,7 @@ bool BoxEngine::Initialize()
     // CREATE SHARED GRASS BLADE MESH
     // =====================================================
 
-    m_testGrassBlade =
-        std::make_unique<GrassBlade>();
+    m_testGrassBlade = std::make_unique<GrassBlade>();
 
     if (!m_testGrassBlade->CreateGrassBlade())
     {
@@ -245,6 +244,23 @@ bool BoxEngine::Initialize()
         );
 
         m_testGrassBlade.reset();
+        return false;
+    }
+
+    // =====================================================
+    // SEPARATE TEST GRASS PREVIEW
+    // =====================================================
+
+    m_previewGrassBlade =
+        std::make_unique<GrassBlade>();
+
+    if (!m_previewGrassBlade->CreateGrassBlade())
+    {
+        BOX_LOG_ERROR(
+            "Failed to create grass preview mesh"
+        );
+
+        m_previewGrassBlade.reset();
         return false;
     }
 
@@ -403,6 +419,8 @@ void BoxEngine::Shutdown()
 
     m_waterShader.reset();
 
+    m_previewGrassBlade.reset();
+    m_cachedGrassMatrices.clear();
     m_testGrassBlade.reset();
     m_grassBladeShader.reset();
 
@@ -1604,6 +1622,8 @@ void BoxEngine::RenderScene()
                 entity->RenderScene(*m_sceneShader, *m_camera, aspectRatio);
             }
         }
+        // ---------------------------------- End Terrain rendering -------------------------------------------
+
 
         // =======================================================================================================
 		// ================================= PARTICLE SCATTER - GRASS CLUMPS =====================================
@@ -1730,17 +1750,19 @@ void BoxEngine::RenderScene()
                             scatter.count,
                             scatter.seed
                         );
+                   
+                    // Number of clumps is controlled by the modifier panel.
+                    const std::size_t clumpCount = points.size();
+
 
                     // Limit the first test to 20 clumps.
-                    const std::size_t clumpCount = std::min(points.size(), std::size_t(20));
+                    //const std::size_t clumpCount = std::min(points.size(), std::size_t(20));
 
                     // =====================================
                     // DRAW GRASS CLUMPS
                     // =====================================
 
-                    for (std::size_t i = 0;
-                        i < clumpCount;
-                        ++i)
+                    for (std::size_t i = 0; i < clumpCount; ++i)
                     {
                         const ScatterPoint& point =
                             points[i];
@@ -1807,10 +1829,6 @@ void BoxEngine::RenderScene()
                     }
 
 
-
-
-
-
                 }
             }
 
@@ -1818,29 +1836,69 @@ void BoxEngine::RenderScene()
             // DRAW ALL SCATTERED GRASS USING GPU INSTANCING
             // =====================================================
 
-            if (!allGrassMatrices.empty())
+            // =====================================================
+            // GPU INSTANCE BUFFER CACHING
+            // =====================================================
+
+            // Have the grass transformations changed?
+            bool grassChanged =
+                allGrassMatrices.size() != m_cachedGrassMatrices.size();
+
+            if (!grassChanged)
+            {
+                for (std::size_t i = 0; i < allGrassMatrices.size(); ++i)
+                {
+                    const glm::mat4& current = allGrassMatrices[i];
+                    const glm::mat4& cached = m_cachedGrassMatrices[i];
+
+                    // Compare the four columns of each matrix.
+                    for (int column = 0; column < 4; ++column)
+                    {
+                        if (!glm::all(glm::equal(
+                            current[column],
+                            cached[column])))
+                        {
+                            grassChanged = true;
+                            break;
+                        }
+                    }
+
+                    if (grassChanged)
+                        break;
+                }
+            }
+
+            // Upload only if the matrices have changed.
+            if (grassChanged)
+            {
+                m_testGrassBlade->UploadInstanceMatrices(
+                    allGrassMatrices
+                );
+
+                m_cachedGrassMatrices = std::move(allGrassMatrices);
+            }
+
+            // =====================================================
+            // DRAW CACHED GRASS
+            // =====================================================
+
+            if (!m_cachedGrassMatrices.empty())
             {
                 m_grassBladeShader->Use();
 
-                // Enable GPU instancing
                 m_grassBladeShader->SetUniformInt(
                     "uUseInstancing",
                     1
                 );
 
-                // Instance matrices already contain
-                // the complete world transformations.
                 m_grassBladeShader->setMat4(
                     "uModel",
                     glm::mat4(1.0f)
                 );
 
-                // ONE draw call for all scattered blades!
-                m_testGrassBlade->DrawInstanced(
-                    allGrassMatrices
-                );
+                // No GPU upload here!
+                m_testGrassBlade->DrawCachedInstances();
 
-                // Restore normal drawing mode
                 m_grassBladeShader->SetUniformInt(
                     "uUseInstancing",
                     0
@@ -1866,7 +1924,7 @@ void BoxEngine::RenderScene()
         // =====================================================
 
         if (m_showTestGrassBlade &&
-            m_testGrassBlade &&
+            m_previewGrassBlade &&
             m_grassBladeShader &&
             m_grassBladeShader->ID() != 0)
         {
@@ -1880,7 +1938,7 @@ void BoxEngine::RenderScene()
 
             model = glm::translate(
                 model,
-                m_testGrassBlade->GetPosition()
+                m_previewGrassBlade->GetPosition()
             );
 
             // Make the test blade 10 times larger
@@ -1975,7 +2033,7 @@ void BoxEngine::RenderScene()
             );
 
             // Draw all seven blades in ONE OpenGL draw call
-            m_testGrassBlade->DrawInstanced(
+            m_previewGrassBlade->DrawInstanced(
                 grassMatrices
             );
 
@@ -1984,26 +2042,16 @@ void BoxEngine::RenderScene()
                 "uUseInstancing",
                 0
             );
-
-            /*m_testGrassClump.Draw(
-                *m_testGrassBlade,
-                *m_grassBladeShader,
-                model
-            );*/
-
-			// ##############################################
-			// END TEST GRASS CLUMP RENDERING
-			// ##############################################
-
+                        
             if (cullingEnabled)
             {
                 glEnable(GL_CULL_FACE);
             }
         }
 
-        // =====================================================
+        // =================================================================================================================
         // END TEST GRASS BLADE RENDERING
-        // =====================================================
+        // =================================================================================================================
 
 
 
@@ -2012,7 +2060,6 @@ void BoxEngine::RenderScene()
         // -------------------------------------------------
         m_sceneFramebuffer.CopyDepthTexture();
 		
-        // ---------------------------------- End Terrain rendering -------------------------------------------
         
         // -------------------------------------------------
         // Water
