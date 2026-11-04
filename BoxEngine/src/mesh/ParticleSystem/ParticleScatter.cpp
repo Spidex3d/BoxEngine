@@ -2,12 +2,14 @@
 #include "mesh/MeshEditing.h"
 
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include <map>
 #include <utility>
 #include <random>
 #include <vector>
 #include <cmath>
+#include <tuple>
 #include <algorithm>
 #include <iostream>
 
@@ -225,8 +227,16 @@ namespace
 
         bool generated = false;
     };
+    // =====================================================
+    // MULTI-PARTICLE CACHE KEY
+    // =====================================================
 
-    using CacheKey = std::pair<int, std::size_t>;
+    // Entity ID
+    // Modifier Index
+    // Entry Index
+    // Face Index
+
+    using CacheKey = std::tuple<int, std::size_t, std::size_t, std::size_t>;
 
     std::map<CacheKey, ScatterCacheEntry> scatterCache;
 
@@ -240,9 +250,8 @@ namespace
     }
 }
 
-
 // =====================================================
-// GET CACHED SCATTER POINTS
+// ORIGINAL CACHE FUNCTION
 // =====================================================
 
 const std::vector<ScatterPoint>&
@@ -254,19 +263,55 @@ ParticleScatter::GetCachedOnFace(
     int count,
     std::uint32_t seed)
 {
-    const CacheKey key{ entityID, modifierIndex };
+    // Legacy scatter uses entry zero.
+    return GetCachedOnFace(
+        entityID,
+        modifierIndex,
+        0,
+        mesh,
+        faceIndex,
+        count,
+        seed
+    );
+}
+
+// =====================================================
+// MULTI-PARTICLE SCATTER CACHE
+// =====================================================
+
+const std::vector<ScatterPoint>&
+ParticleScatter::GetCachedOnFace(
+    int entityID,
+    std::size_t modifierIndex,
+    std::size_t entryIndex,
+    const MeshEditing& mesh,
+    std::size_t faceIndex,
+    int count,
+    std::uint32_t seed)
+{
+    // A unique cache for every particle entry and face.
+    const CacheKey key{
+        entityID,
+        modifierIndex,
+        entryIndex,
+        faceIndex
+    };
 
     ScatterCacheEntry& cache = scatterCache[key];
 
-    // Check whether any generation settings changed.
+    // Check whether settings changed.
     bool needsUpdate =
+        !cache.generated ||
         cache.faceIndex != faceIndex ||
         cache.count != count ||
         cache.seed != seed ||
         cache.vertexCount != mesh.GetVertexCount() ||
         cache.faceCount != mesh.GetFaceCount();
 
-    // Collect the current target face's geometry.
+    // ================================================
+    // CAPTURE CURRENT FACE GEOMETRY
+    // ================================================
+
     std::vector<std::size_t> currentIndices;
     std::vector<glm::vec3> currentPositions;
 
@@ -276,24 +321,30 @@ ParticleScatter::GetCachedOnFace(
 
         currentIndices = face.vertices;
 
-        for (std::size_t index : face.vertices)
+        for (std::size_t vertexIndex : face.vertices)
         {
-            if (index < mesh.GetVertexCount())
+            if (vertexIndex < mesh.GetVertexCount())
             {
                 currentPositions.push_back(
-                    mesh.GetVertex(index).position
+                    mesh.GetVertex(vertexIndex).position
                 );
             }
         }
     }
 
-    // Check whether the face's vertex indices changed.
+    // ================================================
+    // CHECK VERTEX INDICES
+    // ================================================
+
     if (cache.vertexIndices != currentIndices)
     {
         needsUpdate = true;
     }
 
-    // Check whether any vertex positions changed.
+    // ================================================
+    // CHECK VERTEX POSITIONS
+    // ================================================
+
     if (cache.vertexPositions.size() !=
         currentPositions.size())
     {
@@ -305,9 +356,15 @@ ParticleScatter::GetCachedOnFace(
             i < currentPositions.size();
             ++i)
         {
-            if (!SamePosition(
-                cache.vertexPositions[i],
-                currentPositions[i]))
+            const glm::vec3& a =
+                cache.vertexPositions[i];
+
+            const glm::vec3& b =
+                currentPositions[i];
+
+            if (a.x != b.x ||
+                a.y != b.y ||
+                a.z != b.z)
             {
                 needsUpdate = true;
                 break;
@@ -315,15 +372,9 @@ ParticleScatter::GetCachedOnFace(
         }
     }
 
-    // Also generate on the first request.
-    // The map creates a new entry with empty geometry.
-    
-    if (!cache.generated)
-    {
-        needsUpdate = true;
-    }
-    
-    
+    // ================================================
+    // REGENERATE ONLY WHEN NECESSARY
+    // ================================================
 
     if (needsUpdate)
     {
@@ -334,8 +385,6 @@ ParticleScatter::GetCachedOnFace(
             seed
         );
 
-        cache.generated = true;
-
         cache.faceIndex = faceIndex;
         cache.count = count;
         cache.seed = seed;
@@ -343,21 +392,94 @@ ParticleScatter::GetCachedOnFace(
         cache.vertexCount = mesh.GetVertexCount();
         cache.faceCount = mesh.GetFaceCount();
 
-        cache.vertexIndices = std::move(currentIndices);
-        cache.vertexPositions = std::move(currentPositions);
+        cache.vertexIndices =
+            std::move(currentIndices);
 
-        // Temporary test output
-        /*std::cout
-            << "Scatter regenerated: Entity "
-            << entityID
-            << ", Modifier "
-            << modifierIndex
-            << ", Points "
-            << cache.points.size()
-            << std::endl;*/
+        cache.vertexPositions =
+            std::move(currentPositions);
+
+        cache.generated = true;
     }
 
     return cache.points;
+}
+
+// =====================================================
+// CALCULATE FACE AREA IN WORLD SPACE
+// =====================================================
+
+float ParticleScatter::CalculateFaceArea(
+    const MeshEditing& mesh,
+    std::size_t faceIndex,
+    const glm::mat4& modelMatrix)
+{
+    // Check that the face exists.
+    if (faceIndex >= mesh.GetFaceCount())
+        return 0.0f;
+
+    const EditFace& face = mesh.GetFace(faceIndex);
+
+    // A face needs at least three vertices.
+    if (face.vertices.size() < 3)
+        return 0.0f;
+
+    float totalArea = 0.0f;
+
+    // ---------------------------------------------
+    // First vertex of the face
+    // ---------------------------------------------
+
+    const glm::vec3 firstPosition =
+        mesh.GetVertex(face.vertices[0]).position;
+
+    const glm::vec3 worldA =
+        glm::vec3(
+            modelMatrix *
+            glm::vec4(firstPosition, 1.0f)
+        );
+
+    // ---------------------------------------------
+    // Calculate the area using triangles
+    // ---------------------------------------------
+
+    for (std::size_t i = 1;
+        i + 1 < face.vertices.size();
+        ++i)
+    {
+        const glm::vec3 positionB =
+            mesh.GetVertex(face.vertices[i]).position;
+
+        const glm::vec3 positionC =
+            mesh.GetVertex(face.vertices[i + 1]).position;
+
+        // Transform vertices into world space.
+        const glm::vec3 worldB =
+            glm::vec3(
+                modelMatrix *
+                glm::vec4(positionB, 1.0f)
+            );
+
+        const glm::vec3 worldC =
+            glm::vec3(
+                modelMatrix *
+                glm::vec4(positionC, 1.0f)
+            );
+
+        // Two edges of the triangle.
+        const glm::vec3 edge1 = worldB - worldA;
+        const glm::vec3 edge2 = worldC - worldA;
+
+        // Triangle area = half the cross-product length.
+        const float triangleArea =
+            0.5f *
+            glm::length(
+                glm::cross(edge1, edge2)
+            );
+
+        totalArea += triangleArea;
+    }
+
+    return totalArea;
 }
 
 
@@ -369,25 +491,13 @@ void ParticleScatter::InvalidateCache(
     int entityID,
     std::size_t modifierIndex)
 {
-    const CacheKey key{ entityID, modifierIndex };
-
-    scatterCache.erase(key);
-}
-
-// =====================================================
-// CLEAR ALL PARTICLE CACHES FOR AN ENTITY
-// =====================================================
-
-void ParticleScatter::ClearEntityCache(int entityID)
-{
     for (auto it = scatterCache.begin();
         it != scatterCache.end();)
     {
-        // Cache key:
-        // first  = Entity ID
-        // second = Modifier Index
+        const CacheKey& key = it->first;
 
-        if (it->first.first == entityID)
+        if (std::get<0>(key) == entityID &&
+            std::get<1>(key) == modifierIndex)
         {
             it = scatterCache.erase(it);
         }
@@ -397,3 +507,26 @@ void ParticleScatter::ClearEntityCache(int entityID)
         }
     }
 }
+
+// =====================================================
+// CLEAR ALL PARTICLE CACHES FOR AN ENTITY
+// =====================================================
+
+void ParticleScatter::ClearEntityCache(
+    int entityID)
+{
+    for (auto it = scatterCache.begin();
+        it != scatterCache.end();)
+    {
+        if (std::get<0>(it->first) == entityID)
+        {
+            it = scatterCache.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
+    }
+}
+
+

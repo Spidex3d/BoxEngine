@@ -1,7 +1,8 @@
 #pragma once
 #include <cstddef>
 #include <vector>
-
+#include <string>
+#include <cstdint>
 // used to define the type of modifier and its parameters
 // this will let know which modifier is being used so we can display the correct UI and apply the correct logic to the mesh data
 
@@ -12,30 +13,89 @@ enum class ParticleScatterType
     Trees,
     CustomMesh
 };
+// =====================================================
+// INDIVIDUAL PARTICLE SCATTER ENTRY
+// =====================================================
 
-struct ParticleScatterData
+struct ScatterEntry
 {
+    // Name displayed in the Particle System panel
+    std::string name = "New Particle";
+
+    // Category
     ParticleScatterType type =
         ParticleScatterType::Grass;
 
-    // Number of instances
-    int count = 100;
+    // Enable or disable this individual entry
+    bool enabled = true;
 
-    // Random distribution
-    unsigned int seed = 12345;
+    // Number of clumps per square metre
+    float density = 10.0f;
 
-    // Scale variation
+    // Variation
     float minScale = 0.8f;
     float maxScale = 1.2f;
 
-    // Rotation variation
-    float randomRotation = 360.0f;
+    float minRotation = 0.0f;
+    float maxRotation = 360.0f;
 
-    // Terrain slope restriction
+    // Independent random distribution
+    std::uint32_t seedOffset = 0;
+
+    // Which asset to scatter
+    // 0 = Fine Grass
+    // 1 = Meadow Grass
+    // 2 = Wild Grass
+    int assetID = 0;
+
+    // =====================================================
+    // GROWTH DIRECTION
+    // =====================================================
+
+    // 0.0 = Vertical growth
+    // 0.5 = Partially follows the surface
+    // 1.0 = Fully aligned with surface normal
+
+    float surfaceAlignment = 0.0f;
+
+
+};
+
+struct ParticleScatterData
+{
+    // =================================================
+   // NEW MULTI-PARTICLE SYSTEM
+   // =================================================
+
+   // Every entry represents one grass, rock,
+   // plant or other particle asset.
+    std::vector<ScatterEntry> entries;
+
+    // Overall seed for this modifier
+    std::uint32_t seed = 12345;
+
+    // Selected faces shared by all entries
+    std::vector<std::size_t> faceIndices;
+
+    // Maximum permitted surface slope
     float maxSlope = 45.0f;
 
-    // Selected faces
-    std::vector<std::size_t> faceIndices;
+    // =================================================
+    // LEGACY SETTINGS
+    // Keep these until the new renderer is working.
+    // =================================================
+
+    ParticleScatterType type =
+        ParticleScatterType::Grass;
+
+    int count = 100;
+
+    float minScale = 0.8f;
+    float maxScale = 1.2f;
+
+    float randomRotation = 360.0f;
+
+    
 };
 
 

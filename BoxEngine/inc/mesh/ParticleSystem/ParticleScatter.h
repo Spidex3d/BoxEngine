@@ -38,6 +38,32 @@ public:
         std::uint32_t seed
     );
 
+ // =====================================================
+// MULTI-PARTICLE SCATTER CACHE
+// =====================================================
+
+// Each modifier can contain multiple particle entries,
+// and each entry can scatter across multiple faces.
+
+    static const std::vector<ScatterPoint>& GetCachedOnFace(
+        int entityID,
+        std::size_t modifierIndex,
+        std::size_t entryIndex,
+        const MeshEditing& mesh,
+        std::size_t faceIndex,
+        int count,
+        std::uint32_t seed
+    );
+
+    // =====================================================
+    // CALCULATE SURFACE AREA
+    // =====================================================
+
+    // Returns the area of a mesh face in square metres.
+    // Includes object scaling through the model matrix.
+    static float CalculateFaceArea(const MeshEditing& mesh, std::size_t faceIndex,
+        const glm::mat4& modelMatrix);
+
     // Force this modifier's points to regenerate next time.
     static void InvalidateCache(int entityID, std::size_t modifierIndex);
 

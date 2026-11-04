@@ -10,7 +10,6 @@
 #include <Helpers.h>
 #include <miniBoxLog.h>
 
-#include <glm/gtc/matrix_transform.hpp>
 
 #include <string>
 #include <algorithm>
@@ -19,7 +18,9 @@
 #include <limits>
 #include <array>
 
-#include <glm/gtc/matrix_inverse.hpp>
+#include <random>
+#include <cstdint>
+
 
 #include <mesh/MeshCombiner.h>
 
@@ -39,7 +40,11 @@
 #include <mesh/ParticleSystem/GrassClump.h>
 #include <mesh/modifiers/ModifierData.h>
 
-#include <glm/gtx/quaternion.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/matrix_inverse.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/glm.hpp>
 // ----------------------------------------
 // Game Engine
 // ----------------------------------------
@@ -1622,7 +1627,9 @@ void BoxEngine::RenderScene()
                 entity->RenderScene(*m_sceneShader, *m_camera, aspectRatio);
             }
         }
+        // ----------------------------------------------------------------------------------------------------
         // ---------------------------------- End Terrain rendering -------------------------------------------
+		// ----------------------------------------------------------------------------------------------------
 
 
         // =======================================================================================================
@@ -1708,6 +1715,10 @@ void BoxEngine::RenderScene()
                 // CHECK PARTICLE MODIFIERS
                 // =========================================
 
+                // =====================================================
+                // MULTI-PARTICLE SURFACE SCATTER
+                // =====================================================
+
                 for (std::size_t modifierIndex = 0;
                     modifierIndex < modifiers.size();
                     ++modifierIndex)
@@ -1724,112 +1735,432 @@ void BoxEngine::RenderScene()
                     const ParticleScatterData& scatter =
                         modifier.scatter;
 
-                    // Only Grass for this first test.
-                    if (scatter.type != ParticleScatterType::Grass)
-                        continue;
-
                     if (scatter.faceIndices.empty())
                         continue;
 
-                    const std::size_t faceIndex =
-                        scatter.faceIndices[0];
+                    // =================================================
+                    // EACH SELECTED FACE
+                    // =================================================
 
-                    if (faceIndex >= mesh.GetFaceCount())
-                        continue;
-
-                    // =====================================
-                    // GET CACHED SCATTER POSITIONS
-                    // =====================================
-
-                    const std::vector<ScatterPoint>& points =
-                        ParticleScatter::GetCachedOnFace(
-                            entity->GetID(),
-                            modifierIndex,
-                            mesh,
-                            faceIndex,
-                            scatter.count,
-                            scatter.seed
-                        );
-                   
-                    // Number of clumps is controlled by the modifier panel.
-                    const std::size_t clumpCount = points.size();
-
-
-                    // Limit the first test to 20 clumps.
-                    //const std::size_t clumpCount = std::min(points.size(), std::size_t(20));
-
-                    // =====================================
-                    // DRAW GRASS CLUMPS
-                    // =====================================
-
-                    for (std::size_t i = 0; i < clumpCount; ++i)
+                    for (std::size_t faceIndex : scatter.faceIndices)
                     {
-                        const ScatterPoint& point =
-                            points[i];
+                        if (faceIndex >= mesh.GetFaceCount())
+                            continue;
 
-                        // ---------------------------------
-                        // Position on the selected surface
-                        // ---------------------------------
+                        // Calculate the actual world-space area.
+                        const float faceArea =
+                            ParticleScatter::CalculateFaceArea(
+                                mesh,
+                                faceIndex,
+                                entityModel
+                            );
 
-                        glm::mat4 model =
-                            entityModel;
+                        if (faceArea <= 0.0f)
+                            continue;
 
-                        model = glm::translate(
-                            model,
-                            point.position
-                        );
+                        // =================================================
+                        // EACH PARTICLE ENTRY
+                        // =================================================
 
-                        // ---------------------------------
-                        // Align grass with surface normal
-                        // ---------------------------------
+                        for (std::size_t entryIndex = 0;
+                            entryIndex < scatter.entries.size();
+                            ++entryIndex)
+                        {
+                            const ScatterEntry& entry =
+                                scatter.entries[entryIndex];
 
-                        const glm::vec3 up(
-                            0.0f, 1.0f, 0.0f
-                        );
+                            if (!entry.enabled)
+                                continue;
 
-                        const glm::vec3 normal =
-                            glm::normalize(point.normal);
+                            // Grass only for this first implementation.
+                            if (entry.type != ParticleScatterType::Grass)
+                                continue;
 
-                        const glm::quat alignment =
-                            glm::rotation(up, normal);
+                            // =============================================
+                            // CALCULATE CLUMP COUNT FROM DENSITY
+                            // =============================================
 
-                        model *= glm::mat4_cast(alignment);
+                            const double requestedCount =
+                                static_cast<double>(faceArea) *
+                                static_cast<double>(
+                                    std::max(0.0f, entry.density)
+                                    );
 
-                        // ---------------------------------
-                        // Random orientation per clump
-                        // Deterministic from its index.
-                        // ---------------------------------
+                            // Temporary safety limit per entry per face.
+                            constexpr int MAX_CLUMPS_PER_ENTRY = 10000;
 
-                        const float angle =
-                            static_cast<float>(
-                                (i * 137) % 360
+                            const int clumpCount =
+                                static_cast<int>(
+                                    std::clamp(
+                                        requestedCount,
+                                        0.0,
+                                        static_cast<double>(
+                                            MAX_CLUMPS_PER_ENTRY
+                                            )
+                                    )
+                                    );
+
+                            if (clumpCount <= 0)
+                                continue;
+
+                            // =============================================
+                            // INDEPENDENT SEED FOR EACH ENTRY AND FACE
+                            // =============================================
+
+                            std::uint32_t entrySeed =
+                                scatter.seed;
+
+                            entrySeed ^= entry.seedOffset +
+                                0x9e3779b9u +
+                                (entrySeed << 6) +
+                                (entrySeed >> 2);
+
+                            const std::uint32_t faceSeed =
+                                static_cast<std::uint32_t>(faceIndex);
+
+                            entrySeed ^= faceSeed +
+                                0x85ebca6bu +
+                                (entrySeed << 6) +
+                                (entrySeed >> 2);
+
+                            // =============================================
+                            // GET CACHED SCATTER POINTS
+                            // =============================================
+
+                            const std::vector<ScatterPoint>& points =
+                                ParticleScatter::GetCachedOnFace(
+                                    entity->GetID(),
+                                    modifierIndex,
+                                    entryIndex,
+                                    mesh,
+                                    faceIndex,
+                                    clumpCount,
+                                    entrySeed
                                 );
 
-                        model = glm::rotate(
-                            model,
-                            glm::radians(angle),
-                            up
-                        );
+                            // =============================================
+                            // RANDOM SCALE AND ROTATION
+                            // =============================================
 
-                        // ---------------------------------
-                        // Use REAL grass dimensions.
-                        // No 10x test enlargement.
-                        // ---------------------------------
+                            std::mt19937 random(entrySeed ^ 0xA511E9B3u);
 
-                        
-                        // ---------------------------------
-                        // Collect seven blades for instancing
-                        // ---------------------------------
+                            const float minScale =
+                                std::max(0.01f, entry.minScale);
 
-                        m_testGrassClump.AppendInstanceMatrices(
-                            model,
-                            allGrassMatrices
-                        );
+                            const float maxScale =
+                                std::max(minScale, entry.maxScale);
 
+                            std::uniform_real_distribution<float>
+                                randomScale(
+                                    minScale,
+                                    maxScale
+                                );
+
+                            const float minRotation =
+                                std::clamp(
+                                    entry.minRotation,
+                                    0.0f,
+                                    360.0f
+                                );
+
+                            const float maxRotation =
+                                std::clamp(
+                                    entry.maxRotation,
+                                    minRotation,
+                                    360.0f
+                                );
+
+                            std::uniform_real_distribution<float>
+                                randomRotation(
+                                    minRotation,
+                                    maxRotation
+                                );
+
+                            // =============================================
+                            // GENERATE GRASS CLUMP MATRICES
+                            // =============================================
+
+                            for (const ScatterPoint& point : points)
+                            {
+
+                                // =====================================================
+                                // GRASS GROWTH DIRECTION
+                                // =====================================================
+
+                                // World-space position of the scatter point.
+                                const glm::vec3 worldPosition =
+                                    glm::vec3(
+                                        entityModel *
+                                        glm::vec4(point.position, 1.0f)
+                                    );
+
+                                // World-space surface normal.
+                                // The inverse-transpose handles non-uniform object scaling.
+                                const glm::mat3 normalMatrix =
+                                    glm::transpose(
+                                        glm::inverse(glm::mat3(entityModel))
+                                    );
+
+                                glm::vec3 worldNormal =
+                                    normalMatrix * point.normal;
+
+                                // Protect against an invalid normal.
+                                if (glm::dot(worldNormal, worldNormal) < 0.000001f)
+                                {
+                                    worldNormal = glm::vec3(0.0f, 1.0f, 0.0f);
+                                }
+                                else
+                                {
+                                    worldNormal = glm::normalize(worldNormal);
+                                }
+
+                                // Vertical growth direction.
+                                const glm::vec3 up(0.0f, 1.0f, 0.0f);
+
+                               
+
+                                    // =====================================================
+                                    // CALCULATE ROTATION FROM UP TO SURFACE NORMAL
+                                    // =====================================================
+
+                                const float dotProduct =
+                                    glm::clamp(
+                                        glm::dot(up, worldNormal),
+                                        -1.0f,
+                                        1.0f
+                                    );
+
+                                glm::quat surfaceRotation;
+
+                                // Surface normal points upwards.
+                                if (dotProduct > 0.9999f)
+                                {
+                                    surfaceRotation = glm::quat(
+                                        1.0f, 0.0f, 0.0f, 0.0f
+                                    );
+                                }
+                                // Surface normal points downwards.
+                                else if (dotProduct < -0.9999f)
+                                {
+                                    surfaceRotation = glm::angleAxis(
+                                        glm::radians(180.0f),
+                                        glm::vec3(1.0f, 0.0f, 0.0f)
+                                    );
+                                }
+                                else
+                                {
+                                    const glm::vec3 axis =
+                                        glm::normalize(
+                                            glm::cross(up, worldNormal)
+                                        );
+
+                                    const float angle =
+                                        std::acos(dotProduct);
+
+                                    surfaceRotation =
+                                        glm::angleAxis(angle, axis);
+                                }
+
+                                // No alignment: the grass stays vertical.
+                                const glm::quat verticalRotation(
+                                    1.0f,
+                                    0.0f,
+                                    0.0f,
+                                    0.0f
+                                );
+
+                                // Blend between vertical and surface normal.
+                                const glm::quat finalRotation =
+                                    glm::normalize(
+                                        glm::slerp(
+                                            verticalRotation,
+                                            surfaceRotation,
+                                            entry.surfaceAlignment
+                                        )
+                                    );
+
+                                // Build the grass transformation in world space.
+                                glm::mat4 model(1.0f);
+
+                                model = glm::translate(
+                                    model,
+                                    worldPosition
+                                );
+
+                                model *= glm::mat4_cast(finalRotation);
+
+                                //glm::mat4 model = entityModel;
+
+                                //// Position on surface.
+                                //model = glm::translate(
+                                //    model,
+                                //    point.position
+                                //);
+
+                                //// Align with the face normal.
+                                //const glm::vec3 up(
+                                //    0.0f, 1.0f, 0.0f
+                                //);
+
+                                //const glm::vec3 normal =
+                                //    glm::normalize(point.normal);
+
+                                //const glm::quat alignment =
+                                //    glm::rotation(up, normal);
+
+                                //model *= glm::mat4_cast(alignment);
+
+
+                                // Random rotation.
+                                model = glm::rotate(
+                                    model,
+                                    glm::radians(randomRotation(random)),
+                                    up
+                                );
+
+                                // Random size.
+                                const float scale =
+                                    randomScale(random);
+
+                                model = glm::scale(
+                                    model,
+                                    glm::vec3(scale)
+                                );
+
+                                // Add seven blades to the instance batch.
+                                m_testGrassClump.AppendInstanceMatrices(
+                                    model,
+                                    allGrassMatrices
+                                );
+                            }
+                        }
                     }
-
-
                 }
+
+
+                //for (std::size_t modifierIndex = 0;
+                //    modifierIndex < modifiers.size();
+                //    ++modifierIndex)
+                //{
+                //    const ModifierData& modifier =
+                //        modifiers[modifierIndex];
+
+                //    if (modifier.type != ModifierType::Scatter)
+                //        continue;
+
+                //    if (!modifier.modEnabled)
+                //        continue;
+
+                //    const ParticleScatterData& scatter =
+                //        modifier.scatter;
+
+                //    // Only Grass for this first test.
+                //    if (scatter.type != ParticleScatterType::Grass)
+                //        continue;
+
+                //    if (scatter.faceIndices.empty())
+                //        continue;
+
+                //    const std::size_t faceIndex =
+                //        scatter.faceIndices[0];
+
+                //    if (faceIndex >= mesh.GetFaceCount())
+                //        continue;
+
+                //    
+                //    // =====================================
+                //    // GET CACHED SCATTER POSITIONS
+                //    // =====================================
+
+                //    const std::vector<ScatterPoint>& points =
+                //        ParticleScatter::GetCachedOnFace(
+                //            entity->GetID(),
+                //            modifierIndex,
+                //            mesh,
+                //            faceIndex,
+                //            scatter.count,
+                //            scatter.seed
+                //        );
+                //   
+                //    // Number of clumps is controlled by the modifier panel.
+                //    const std::size_t clumpCount = points.size();
+
+
+                //    // Limit the first test to 20 clumps.
+                //    //const std::size_t clumpCount = std::min(points.size(), std::size_t(20));
+
+                //    // =====================================
+                //    // DRAW GRASS CLUMPS
+                //    // =====================================
+
+                //    for (std::size_t i = 0; i < clumpCount; ++i)
+                //    {
+                //        const ScatterPoint& point =
+                //            points[i];
+
+                //        // ---------------------------------
+                //        // Position on the selected surface
+                //        // ---------------------------------
+
+                //        glm::mat4 model =
+                //            entityModel;
+
+                //        model = glm::translate(
+                //            model,
+                //            point.position
+                //        );
+
+                //        // ---------------------------------
+                //        // Align grass with surface normal
+                //        // ---------------------------------
+
+                //        const glm::vec3 up(
+                //            0.0f, 1.0f, 0.0f
+                //        );
+
+                //        const glm::vec3 normal =
+                //            glm::normalize(point.normal);
+
+                //        const glm::quat alignment =
+                //            glm::rotation(up, normal);
+
+                //        model *= glm::mat4_cast(alignment);
+
+                //        // ---------------------------------
+                //        // Random orientation per clump
+                //        // Deterministic from its index.
+                //        // ---------------------------------
+
+                //        const float angle =
+                //            static_cast<float>(
+                //                (i * 137) % 360
+                //                );
+
+                //        model = glm::rotate(
+                //            model,
+                //            glm::radians(angle),
+                //            up
+                //        );
+
+                //        // ---------------------------------
+                //        // Use REAL grass dimensions.
+                //        // No 10x test enlargement.
+                //        // ---------------------------------
+
+                //        
+                //        // ---------------------------------
+                //        // Collect seven blades for instancing
+                //        // ---------------------------------
+
+                //        m_testGrassClump.AppendInstanceMatrices(
+                //            model,
+                //            allGrassMatrices
+                //        );
+
+                //    }
+
+
+                //}
             }
 
             // =====================================================

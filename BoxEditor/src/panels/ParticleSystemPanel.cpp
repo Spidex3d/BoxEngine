@@ -124,6 +124,63 @@ void ParticleSystemPanel::Draw(Entity* entity, FaceEditController& faceEditContr
 
         newModifier.scatter.seed = 12345;
 
+        // =====================================================
+        // DEFAULT GRASS MIXTURE
+        // =====================================================
+
+        // Grass 1 - Fine Grass
+        ScatterEntry fineGrass;
+
+        fineGrass.name = "Fine Grass";
+        fineGrass.type = ParticleScatterType::Grass;
+        fineGrass.assetID = 0;
+
+        fineGrass.density = 100.0f;
+
+        fineGrass.minScale = 0.6f;
+        fineGrass.maxScale = 0.9f;
+
+        fineGrass.seedOffset = 1001;
+
+
+        // Grass 2 - Meadow Grass
+        ScatterEntry meadowGrass;
+
+        meadowGrass.name = "Meadow Grass";
+        meadowGrass.type = ParticleScatterType::Grass;
+        meadowGrass.assetID = 1;
+
+        meadowGrass.density = 300.0f;
+
+        meadowGrass.minScale = 0.9f;
+        meadowGrass.maxScale = 1.2f;
+
+        meadowGrass.seedOffset = 2002;
+
+
+        // Grass 3 - Wild Grass
+        ScatterEntry wildGrass;
+
+        wildGrass.name = "Wild Grass";
+        wildGrass.type = ParticleScatterType::Grass;
+        wildGrass.assetID = 2;
+
+        wildGrass.density = 10.0f;
+
+        wildGrass.minScale = 1.3f;
+        wildGrass.maxScale = 1.8f;
+
+        wildGrass.seedOffset = 3003;
+
+
+        // Add all three grass types to the mixture
+        newModifier.scatter.entries.push_back(fineGrass);
+        newModifier.scatter.entries.push_back(meadowGrass);
+        newModifier.scatter.entries.push_back(wildGrass);
+
+
+
+
         newModifier.scatter.minScale = 0.8f;
         newModifier.scatter.maxScale = 1.2f;
 
@@ -249,10 +306,10 @@ void ParticleSystemPanel::Draw(Entity* entity, FaceEditController& faceEditContr
     // ENABLE / DISABLE
     // ============================================
 
-    ImGui::Checkbox(
+    /*ImGui::Checkbox(
         "Enable Scatter",
         &modifier.modEnabled
-    );
+    );*/
 
     ImGui::Spacing();
 
@@ -282,47 +339,7 @@ void ParticleSystemPanel::Draw(Entity* entity, FaceEditController& faceEditContr
                 );
     }
 
-    // ============================================
-    // PARTICLE COUNT
-    // ============================================
-
-	ImGui::InputInt(
-		"Particle Count",
-		&scatter.count
-	);
-
-    // ============================================
-    // RANDOM SEED
-    // ============================================
-
-    ImGui::SetNextItemWidth(150.0f);
-
-    ImGui::InputScalar("##RandomSeed", ImGuiDataType_U32, &scatter.seed);
-
-    ImGui::SameLine();
-
-    if (ImGui::Button("Randomise"))
-    {
-        static std::random_device rd;
-
-        static std::mt19937 randomGenerator(rd());
-
-        std::uniform_int_distribution<std::uint32_t>
-            distribution;
-
-        std::uint32_t newSeed;
-
-        do
-        {
-            newSeed = distribution(randomGenerator);
-        } while (newSeed == scatter.seed);
-
-        scatter.seed = newSeed;
-    }
-
-    ImGui::SameLine();
-
-    ImGui::TextUnformatted("Seed");
+    
 
     // ============================================
     // SCALE VARIATION
@@ -405,17 +422,212 @@ void ParticleSystemPanel::Draw(Entity* entity, FaceEditController& faceEditContr
         return;
     }
 
-    /*if (ImGui::Button("Remove Scatter Modifier"))
+    // =====================================================
+// GRASS PARTICLE LIBRARY
+// =====================================================
+
+    if (ImGui::CollapsingHeader(
+        "Grass",
+        ImGuiTreeNodeFlags_DefaultOpen))
     {
-        modifiers.erase(
-            modifiers.begin() + selectedIndex
+        ImGui::TextDisabled(
+            "Select and configure grass varieties."
         );
 
-        entity->SetSelectedModifierIndex(-1);
+        ImGui::Spacing();
 
-        ImGui::End();
-        return;
-    }*/
+        // ================================================
+        // DISPLAY GRASS ENTRIES
+        // ================================================
+
+        for (std::size_t i = 0;
+            i < scatter.entries.size();
+            ++i)
+        {
+            ScatterEntry& entry = scatter.entries[i];
+
+            if (entry.type != ParticleScatterType::Grass)
+                continue;
+
+            ImGui::PushID(static_cast<int>(i));
+
+            ImGui::SeparatorText(entry.name.c_str());
+
+            // --------------------------------------------
+            // Enable individual grass type
+            // --------------------------------------------
+
+            ImGui::Checkbox(
+                "Enabled",
+                &entry.enabled
+            );
+
+            // --------------------------------------------
+            // Density per square metre
+            // --------------------------------------------
+
+            ImGui::SetNextItemWidth(120.0f);
+
+            ImGui::InputFloat(
+                "Density / m2",
+                &entry.density,
+                1.0f,
+                10.0f,
+                "%.1f"
+            );
+
+            entry.density = std::max(
+                0.0f,
+                entry.density
+            );
+
+            // --------------------------------------------
+            // Scale variation
+            // --------------------------------------------
+
+            ImGui::SetNextItemWidth(120.0f);
+
+            ImGui::InputFloat(
+                "Minimum Scale",
+                &entry.minScale,
+                0.1f,
+                0.5f,
+                "%.2f"
+            );
+
+            entry.minScale = std::max(
+                0.01f,
+                entry.minScale
+            );
+
+            ImGui::SetNextItemWidth(120.0f);
+
+            ImGui::InputFloat(
+                "Maximum Scale",
+                &entry.maxScale,
+                0.1f,
+                0.5f,
+                "%.2f"
+            );
+
+            entry.maxScale = std::max(
+                entry.minScale,
+                entry.maxScale
+            );
+
+            // --------------------------------------------
+            // Rotation variation
+            // --------------------------------------------
+
+            ImGui::SetNextItemWidth(120.0f);
+
+            ImGui::InputFloat(
+                "Minimum Rotation",
+                &entry.minRotation,
+                1.0f,
+                10.0f,
+                "%.1f"
+            );
+
+            ImGui::SetNextItemWidth(120.0f);
+
+            ImGui::InputFloat(
+                "Maximum Rotation",
+                &entry.maxRotation,
+                1.0f,
+                10.0f,
+                "%.1f"
+            );
+
+            entry.minRotation =
+                std::clamp(
+                    entry.minRotation,
+                    0.0f,
+                    360.0f
+                );
+
+            entry.maxRotation =
+                std::clamp(
+                    entry.maxRotation,
+                    entry.minRotation,
+                    360.0f
+                );
+
+            ImGui::Spacing();
+
+            // =====================================================
+            // GRASS GROWTH DIRECTION
+            // =====================================================
+
+            ImGui::SetNextItemWidth(120.0f);
+
+            ImGui::InputFloat(
+                "Surface Alignment",
+                &entry.surfaceAlignment,
+                0.1f,
+                0.5f,
+                "%.2f"
+            );
+
+            // Restrict between vertical and surface normal.
+            entry.surfaceAlignment =
+                std::clamp(
+                    entry.surfaceAlignment,
+                    0.0f,
+                    1.0f
+                );
+
+            if (ImGui::IsItemHovered())
+            {
+                ImGui::SetTooltip(
+                    "0.0 = Vertical\n"
+                    "0.5 = Partially follows surface\n"
+                    "1.0 = Follows surface normal"
+                );
+            }
+
+            ImGui::Spacing();
+
+            ImGui::PopID();
+        }
+
+        // ================================================
+        // DISPLAY TOTAL GRASS DENSITY
+        // ================================================
+
+        float totalDensity = 0.0f;
+
+        for (const ScatterEntry& entry : scatter.entries)
+        {
+            if (entry.enabled &&
+                entry.type == ParticleScatterType::Grass)
+            {
+                totalDensity += entry.density;
+            }
+        }
+
+        ImGui::Separator();
+
+        ImGui::Text(
+            "Total Grass Density: %.1f clumps/m2",
+            totalDensity
+        );
+    }
+
+    if (ImGui::CollapsingHeader("Plants & Flowers"))
+    {
+        // Plant asset thumbnails
+    }
+
+    if (ImGui::CollapsingHeader("Rocks"))
+    {
+        // Rock asset thumbnails
+    }
+
+    if (ImGui::CollapsingHeader("Trees"))
+    {
+        // Tree asset thumbnails
+    }
 
     ImGui::End();
 }
