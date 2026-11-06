@@ -1376,6 +1376,17 @@ bool Entity::IsFaceSelected(std::size_t index) const
         m_selectedFaces.end(), index) != m_selectedFaces.end();
 }
 
+// =====================================================
+// GET ALL SELECTED FACES
+// =====================================================
+
+const std::vector<std::size_t>&
+Entity::GetSelectedFaces() const
+{
+    return m_selectedFaces;
+}
+
+
 void Entity::AddSelectedFace(std::size_t index)
 {
     if (index >= m_editableMesh.GetFaceCount())

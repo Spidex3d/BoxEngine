@@ -27,7 +27,8 @@ struct ScatterEntry
         ParticleScatterType::Grass;
 
     // Enable or disable this individual entry
-    bool enabled = true;
+    //bool enabled = true;
+    bool enabled = false;
 
     // Number of clumps per square metre
     float density = 10.0f;
@@ -55,8 +56,29 @@ struct ScatterEntry
     // 0.0 = Vertical growth
     // 0.5 = Partially follows the surface
     // 1.0 = Fully aligned with surface normal
-
     float surfaceAlignment = 0.0f;
+
+    // =====================================================
+    // GRASS CLUMP SETTINGS
+    // =====================================================
+
+    // Number of blades per clump
+    int bladeCount = 7;
+
+    // Maximum distance from clump centre (metres)
+    float bladeSpread = 0.035f;
+
+    // Individual blade height variation
+    float minBladeHeight = 0.8f;
+    float maxBladeHeight = 1.2f;
+
+    // Individual blade width variation
+    float minBladeWidth = 0.8f;
+    float maxBladeWidth = 1.2f;
+
+    // Outward tilt
+    float minBladeTilt = 5.0f;
+    float maxBladeTilt = 25.0f;
 
 
 };

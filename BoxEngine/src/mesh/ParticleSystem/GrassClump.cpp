@@ -9,7 +9,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <array>
-
+#include <random>
+#include <algorithm>
+#include <cmath>
 
 // =====================================================
 // Grass Clump
@@ -106,6 +108,8 @@ void GrassClump::Draw(
     }
 }
 
+
+
 void GrassClump::AppendInstanceMatrices(
     const glm::mat4& clumpModel,
     std::vector<glm::mat4>& matrices
@@ -162,3 +166,319 @@ void GrassClump::AppendInstanceMatrices(
         matrices.push_back(bladeModel);
     }
 }
+// =====================================================
+// GENERATE NATURAL OUTWARD-GROWING GRASS CLUMP
+// =====================================================
+
+void GrassClump::AppendInstanceMatrices(
+    const glm::mat4& clumpModel,
+    const GrassClumpSettings& settings,
+    std::uint32_t seed,
+    std::vector<glm::mat4>& matrices
+) const
+{
+    // ================================================
+    // VALIDATE SETTINGS
+    // ================================================
+
+    const int bladeCount =
+        std::clamp(settings.bladeCount, 1, 100);
+
+    const float spread =
+        std::max(0.0f, settings.spread);
+
+    const float minHeight =
+        std::max(0.01f, settings.minHeight);
+
+    const float maxHeight =
+        std::max(minHeight, settings.maxHeight);
+
+    const float minWidth =
+        std::max(0.01f, settings.minWidth);
+
+    const float maxWidth =
+        std::max(minWidth, settings.maxWidth);
+
+    const float minTilt =
+        std::clamp(settings.minTilt, 0.0f, 90.0f);
+
+    const float maxTilt =
+        std::clamp(
+            settings.maxTilt,
+            minTilt,
+            90.0f
+        );
+
+    // ================================================
+    // RANDOM GENERATOR
+    // ================================================
+
+    std::mt19937 random(seed);
+
+    std::uniform_real_distribution<float>
+        random01(0.0f, 1.0f);
+
+    std::uniform_real_distribution<float>
+        randomAngle(0.0f, 360.0f);
+
+    std::uniform_real_distribution<float>
+        randomHeight(minHeight, maxHeight);
+
+    std::uniform_real_distribution<float>
+        randomWidth(minWidth, maxWidth);
+
+    std::uniform_real_distribution<float>
+        randomTilt(minTilt, maxTilt);
+
+    // A small amount of directional variation.
+    std::uniform_real_distribution<float>
+        randomDirectionVariation(-8.0f, 8.0f);
+
+    // ================================================
+    // GENERATE BLADES
+    // ================================================
+
+    for (int i = 0; i < bladeCount; ++i)
+    {
+        // --------------------------------------------
+        // Position within the clump
+        // --------------------------------------------
+
+        const float radialAngle =
+            glm::radians(randomAngle(random));
+
+        const float distance =
+            std::sqrt(random01(random)) * spread;
+
+        const float offsetX =
+            std::cos(radialAngle) * distance;
+
+        const float offsetZ =
+            std::sin(radialAngle) * distance;
+
+        // --------------------------------------------
+        // Calculate outward direction
+        // --------------------------------------------
+
+        // Our grass blade curves towards local -Z.
+        // Rotate that direction to point away from
+        // the centre of the clump.
+
+        const float outwardAngle =
+            std::atan2(
+                -std::cos(radialAngle),
+                -std::sin(radialAngle)
+            );
+
+        // Small random variation to avoid perfection.
+        const float directionVariation =
+            glm::radians(
+                randomDirectionVariation(random)
+            );
+
+        const float finalAngle =
+            outwardAngle + directionVariation;
+
+        // --------------------------------------------
+        // Individual blade variation
+        // --------------------------------------------
+
+        const float heightScale =
+            randomHeight(random);
+
+        const float widthScale =
+            randomWidth(random);
+
+        const float tilt =
+            glm::radians(randomTilt(random));
+
+        // --------------------------------------------
+        // Build blade transformation
+        // --------------------------------------------
+
+        glm::mat4 bladeModel = clumpModel;
+
+        // Position the blade within the clump.
+        bladeModel = glm::translate(
+            bladeModel,
+            glm::vec3(
+                offsetX,
+                0.0f,
+                offsetZ
+            )
+        );
+
+        // Rotate so the curved tip points outwards.
+        bladeModel = glm::rotate(
+            bladeModel,
+            finalAngle,
+            glm::vec3(0.0f, 1.0f, 0.0f)
+        );
+
+        // Tilt outwards in the same direction.
+        bladeModel = glm::rotate(
+            bladeModel,
+            tilt,
+            glm::vec3(1.0f, 0.0f, 0.0f)
+        );
+
+        // Apply blade dimensions.
+        bladeModel = glm::scale(
+            bladeModel,
+            glm::vec3(
+                widthScale,
+                heightScale,
+                widthScale
+            )
+        );
+
+        // Add to GPU instance collection.
+        matrices.push_back(bladeModel);
+    }
+}
+
+//// =====================================================
+//// GENERATE CONFIGURABLE GRASS CLUMP
+//// =====================================================
+//
+//void GrassClump::AppendInstanceMatrices(
+//    const glm::mat4& clumpModel,
+//    const GrassClumpSettings& settings,
+//    std::uint32_t seed,
+//    std::vector<glm::mat4>& matrices
+//) const
+//{
+//    // ================================================
+//    // VALIDATE SETTINGS
+//    // ================================================
+//
+//    const int bladeCount =
+//        std::clamp(settings.bladeCount, 1, 100);
+//
+//    const float spread =
+//        std::max(0.0f, settings.spread);
+//
+//    const float minHeight =
+//        std::max(0.01f, settings.minHeight);
+//
+//    const float maxHeight =
+//        std::max(minHeight, settings.maxHeight);
+//
+//    const float minWidth =
+//        std::max(0.01f, settings.minWidth);
+//
+//    const float maxWidth =
+//        std::max(minWidth, settings.maxWidth);
+//
+//    const float minTilt =
+//        std::clamp(settings.minTilt, 0.0f, 90.0f);
+//
+//    const float maxTilt =
+//        std::clamp(
+//            settings.maxTilt,
+//            minTilt,
+//            90.0f
+//        );
+//
+//    // ================================================
+//    // RANDOM GENERATOR
+//    // ================================================
+//
+//    std::mt19937 random(seed);
+//
+//    std::uniform_real_distribution<float>
+//        random01(0.0f, 1.0f);
+//
+//    std::uniform_real_distribution<float>
+//        randomAngle(0.0f, 360.0f);
+//
+//    std::uniform_real_distribution<float>
+//        randomHeight(minHeight, maxHeight);
+//
+//    std::uniform_real_distribution<float>
+//        randomWidth(minWidth, maxWidth);
+//
+//    std::uniform_real_distribution<float>
+//        randomTilt(minTilt, maxTilt);
+//
+//    // ================================================
+//    // GENERATE INDIVIDUAL BLADES
+//    // ================================================
+//
+//    for (int i = 0; i < bladeCount; ++i)
+//    {
+//        // --------------------------------------------
+//        // Random position within a circular clump
+//        // --------------------------------------------
+//
+//        const float angle =
+//            glm::radians(randomAngle(random));
+//
+//        // Square root gives an even distribution
+//        // over the area of a circle.
+//        const float distance =
+//            std::sqrt(random01(random)) * spread;
+//
+//        const float offsetX =
+//            std::cos(angle) * distance;
+//
+//        const float offsetZ =
+//            std::sin(angle) * distance;
+//
+//        // --------------------------------------------
+//        // Random blade variations
+//        // --------------------------------------------
+//
+//        const float heightScale =
+//            randomHeight(random);
+//
+//        const float widthScale =
+//            randomWidth(random);
+//
+//        const float tilt =
+//            glm::radians(randomTilt(random));
+//
+//        // --------------------------------------------
+//        // Build transformation
+//        // --------------------------------------------
+//
+//        glm::mat4 bladeModel = clumpModel;
+//
+//        // Position blade within the clump.
+//        bladeModel = glm::translate(
+//            bladeModel,
+//            glm::vec3(
+//                offsetX,
+//                0.0f,
+//                offsetZ
+//            )
+//        );
+//
+//        // Rotate around vertical axis.
+//        bladeModel = glm::rotate(
+//            bladeModel,
+//            angle,
+//            glm::vec3(0.0f, 1.0f, 0.0f)
+//        );
+//
+//        // Tilt blade outwards.
+//        bladeModel = glm::rotate(
+//            bladeModel,
+//            tilt,
+//            glm::vec3(1.0f, 0.0f, 0.0f)
+//        );
+//
+//        // Apply height and width variation.
+//        bladeModel = glm::scale(
+//            bladeModel,
+//            glm::vec3(
+//                widthScale,
+//                heightScale,
+//                widthScale
+//            )
+//        );
+//
+//        // Store transformation for GPU instancing.
+//        matrices.push_back(bladeModel);
+//    }
+//}

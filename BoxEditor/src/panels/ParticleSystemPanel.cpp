@@ -96,23 +96,42 @@ void ParticleSystemPanel::Draw(Entity* entity, FaceEditController& faceEditContr
 
         newModifier.modEnabled = true;
 
-        // ============================================
-        // CAPTURE SELECTED FACE
-        // ============================================
 
-        if (faceEditController.HasSelectedFace())
+        // =====================================================
+        // CAPTURE ALL SELECTED FACES
+        // =====================================================
+
+        const std::vector<std::size_t>& selectedFaces =
+            entity->GetSelectedFaces();
+
+        const std::size_t totalFaces =
+            entity->GetEditableMesh().GetFaceCount();
+
+        for (std::size_t faceIndex : selectedFaces)
         {
-            const std::size_t selectedFace =
-                faceEditController.GetSelectedFace();
+            // Ignore invalid face indices.
+            if (faceIndex >= totalFaces)
+                continue;
 
-            if (selectedFace <
-                entity->GetEditableMesh().GetFaceCount())
-            {
-                newModifier.scatter.faceIndices.push_back(
-                    selectedFace
-                );
-            }
+            // Store this face permanently in the modifier.
+            newModifier.scatter.faceIndices.push_back(
+                faceIndex
+            );
         }
+
+        // Avoid duplicate face indices.
+        std::sort(
+            newModifier.scatter.faceIndices.begin(),
+            newModifier.scatter.faceIndices.end()
+        );
+
+        newModifier.scatter.faceIndices.erase(
+            std::unique(
+                newModifier.scatter.faceIndices.begin(),
+                newModifier.scatter.faceIndices.end()
+            ),
+            newModifier.scatter.faceIndices.end()
+        );
 
 
 
@@ -135,12 +154,24 @@ void ParticleSystemPanel::Draw(Entity* entity, FaceEditController& faceEditContr
         fineGrass.type = ParticleScatterType::Grass;
         fineGrass.assetID = 0;
 
-        fineGrass.density = 100.0f;
+        fineGrass.density = 1.0f;
 
         fineGrass.minScale = 0.6f;
         fineGrass.maxScale = 0.9f;
 
         fineGrass.seedOffset = 1001;
+        // ####
+        fineGrass.bladeCount = 35;
+        fineGrass.bladeSpread = 0.045f;
+
+        fineGrass.minBladeHeight = 0.91f;
+        fineGrass.maxBladeHeight = 2.11f;
+
+        fineGrass.minBladeWidth = 6.21f;
+        fineGrass.maxBladeWidth = 9.71f;
+
+        fineGrass.minBladeTilt = 0.0f;
+        fineGrass.maxBladeTilt = 0.0f;
 
 
         // Grass 2 - Meadow Grass
@@ -150,13 +181,24 @@ void ParticleSystemPanel::Draw(Entity* entity, FaceEditController& faceEditContr
         meadowGrass.type = ParticleScatterType::Grass;
         meadowGrass.assetID = 1;
 
-        meadowGrass.density = 300.0f;
+        meadowGrass.density = 1.0f;
 
         meadowGrass.minScale = 0.9f;
         meadowGrass.maxScale = 1.2f;
 
         meadowGrass.seedOffset = 2002;
+        // ####
+        meadowGrass.bladeCount = 25;
+        meadowGrass.bladeSpread = 0.045f;
 
+        meadowGrass.minBladeHeight = 0.60f;
+        meadowGrass.maxBladeHeight = 1.2f;
+
+        meadowGrass.minBladeWidth = 5.208f;
+        meadowGrass.maxBladeWidth = 6.21f;
+
+        meadowGrass.minBladeTilt = 0.0f;
+        meadowGrass.maxBladeTilt = 0.0f;
 
         // Grass 3 - Wild Grass
         ScatterEntry wildGrass;
@@ -165,12 +207,24 @@ void ParticleSystemPanel::Draw(Entity* entity, FaceEditController& faceEditContr
         wildGrass.type = ParticleScatterType::Grass;
         wildGrass.assetID = 2;
 
-        wildGrass.density = 10.0f;
+        wildGrass.density = 1.0f;
 
         wildGrass.minScale = 1.3f;
         wildGrass.maxScale = 1.8f;
 
         wildGrass.seedOffset = 3003;
+        //####
+        wildGrass.bladeCount = 7;
+        wildGrass.bladeSpread = 0.045f;
+
+        wildGrass.minBladeHeight = 0.9f;
+        wildGrass.maxBladeHeight = 1.4f;
+
+        wildGrass.minBladeWidth = 0.9f;
+        wildGrass.maxBladeWidth = 1.2f;
+
+        wildGrass.minBladeTilt = 0.0f;
+        wildGrass.maxBladeTilt = 0.0f;
 
 
         // Add all three grass types to the mixture
@@ -271,29 +325,83 @@ void ParticleSystemPanel::Draw(Entity* entity, FaceEditController& faceEditContr
         static_cast<int>(scatter.faceIndices.size())
     );
 
-    if (ImGui::Button("Use Selected Face"))
+    // =====================================================
+    // USE CURRENT MULTI-FACE SELECTION
+    // =====================================================
+
+    if (ImGui::Button("Use Selected Faces"))
     {
-        if (faceEditController.HasSelectedFace())
+        const std::vector<std::size_t>& selectedFaces =
+            entity->GetSelectedFaces();
+
+        const std::size_t totalFaces =
+            entity->GetEditableMesh().GetFaceCount();
+
+        if (!selectedFaces.empty())
         {
-            const std::size_t faceIndex =
-                faceEditController.GetSelectedFace();
+            scatter.faceIndices.clear();
 
-            if (faceIndex <
-                entity->GetEditableMesh().GetFaceCount())
+            for (std::size_t faceIndex : selectedFaces)
             {
-                // Replace the previous selection
-                scatter.faceIndices.clear();
-
-                scatter.faceIndices.push_back(faceIndex);
+                if (faceIndex < totalFaces)
+                {
+                    scatter.faceIndices.push_back(
+                        faceIndex
+                    );
+                }
             }
+
+            std::sort(
+                scatter.faceIndices.begin(),
+                scatter.faceIndices.end()
+            );
+
+            scatter.faceIndices.erase(
+                std::unique(
+                    scatter.faceIndices.begin(),
+                    scatter.faceIndices.end()
+                ),
+                scatter.faceIndices.end()
+            );
+
+            // Remove old cached distributions.
+            ParticleScatter::InvalidateCache(
+                entity->GetID(),
+                static_cast<std::size_t>(selectedIndex)
+            );
         }
     }
+
+   
 
     ImGui::SameLine();
 
     if (ImGui::Button("Clear Faces"))
     {
         scatter.faceIndices.clear();
+    }
+
+    ImGui::SameLine();
+    // ============================================
+    // REMOVE MODIFIER
+    // ============================================
+
+    if (ImGui::Button("Remove Scatter Modifier"))
+    {
+        // Clear existing cached points for this object.
+        // Modifier indices may change after erase().
+        ParticleScatter::ClearEntityCache(entity->GetID());
+
+        // Remove the selected modifier.
+        modifiers.erase(
+            modifiers.begin() + selectedIndex
+        );
+
+        // Nothing selected after removal.
+        entity->SetSelectedModifierIndex(-1);
+
+        ImGui::End();
+        return;
     }
 
 	// ============================================ End Buttons =========================================
@@ -306,18 +414,14 @@ void ParticleSystemPanel::Draw(Entity* entity, FaceEditController& faceEditContr
     // ENABLE / DISABLE
     // ============================================
 
-    /*ImGui::Checkbox(
-        "Enable Scatter",
-        &modifier.modEnabled
-    );*/
-
+    
     ImGui::Spacing();
 
     // ============================================
     // PARTICLE TYPE
     // ============================================
 
-    const char* particleTypes[] =
+    /*const char* particleTypes[] =
     {
         "Grass",
         "Rocks",
@@ -337,7 +441,7 @@ void ParticleSystemPanel::Draw(Entity* entity, FaceEditController& faceEditContr
             static_cast<ParticleScatterType>(
                 particleType
                 );
-    }
+    }*/
 
     
 
@@ -345,7 +449,7 @@ void ParticleSystemPanel::Draw(Entity* entity, FaceEditController& faceEditContr
     // SCALE VARIATION
     // ============================================
 
-    ImGui::SeparatorText("Scale Variation");
+   /* ImGui::SeparatorText("Scale Variation");
 
     ImGui::SliderFloat(
         "Minimum Scale",
@@ -359,33 +463,33 @@ void ParticleSystemPanel::Draw(Entity* entity, FaceEditController& faceEditContr
         &scatter.maxScale,
         0.1f,
         5.0f
-    );
+    );*/
 
     // Ensure maximum is never below minimum
-    scatter.maxScale =
+    /*scatter.maxScale =
         std::max(
             scatter.minScale,
             scatter.maxScale
-        );
+        );*/
 
     // ============================================
     // ROTATION
     // ============================================
 
-    ImGui::SeparatorText("Rotation");
+    /*ImGui::SeparatorText("Rotation");
 
     ImGui::SliderFloat(
         "Random Rotation",
         &scatter.randomRotation,
         0.0f,
         360.0f
-    );
+    );*/
 
     // ============================================
     // TERRAIN SLOPE
     // ============================================
 
-    ImGui::SeparatorText("Surface Restrictions");
+    /*ImGui::SeparatorText("Surface Restrictions");
 
     ImGui::SliderFloat(
         "Maximum Slope",
@@ -394,33 +498,15 @@ void ParticleSystemPanel::Draw(Entity* entity, FaceEditController& faceEditContr
         180.0f
     );
 
-    ImGui::Spacing();
+    ImGui::Spacing();*/
 
 
 
-    // ============================================
-    // REMOVE MODIFIER
-    // ============================================
+    
 
     ImGui::Separator();
 
-    if (ImGui::Button("Remove Scatter Modifier"))
-    {
-        // Clear existing cached points for this object.
-        // Modifier indices may change after erase().
-        ParticleScatter::ClearEntityCache(entity->GetID());
-
-        // Remove the selected modifier.
-        modifiers.erase(
-            modifiers.begin() + selectedIndex
-        );
-
-        // Nothing selected after removal.
-        entity->SetSelectedModifierIndex(-1);
-
-        ImGui::End();
-        return;
-    }
+    
 
     // =====================================================
 // GRASS PARTICLE LIBRARY
@@ -553,7 +639,7 @@ void ParticleSystemPanel::Draw(Entity* entity, FaceEditController& faceEditContr
                     360.0f
                 );
 
-            ImGui::Spacing();
+           
 
             // =====================================================
             // GRASS GROWTH DIRECTION
@@ -585,6 +671,160 @@ void ParticleSystemPanel::Draw(Entity* entity, FaceEditController& faceEditContr
                     "1.0 = Follows surface normal"
                 );
             }
+
+			// =====================================================
+			// GRASS CLUMP SETTINGS
+			// =====================================================
+            // =====================================================
+            // INDIVIDUAL GRASS BLADE SETTINGS
+            // =====================================================
+
+            ImGui::SeparatorText("Blade Settings");
+
+            // ---------------------------------------------
+            // Blade Count
+            // ---------------------------------------------
+
+            ImGui::SetNextItemWidth(120.0f);
+
+            ImGui::InputInt(
+                "Blade Count",
+                &entry.bladeCount
+            );
+
+            entry.bladeCount =
+                std::clamp(
+                    entry.bladeCount,
+                    1,
+                    100
+                );
+
+            // ---------------------------------------------
+            // Blade Spread
+            // ---------------------------------------------
+
+            ImGui::SetNextItemWidth(120.0f);
+
+            ImGui::InputFloat(
+                "Blade Spread",
+                &entry.bladeSpread,
+                0.005f,
+                0.01f,
+                "%.3f"
+            );
+
+            entry.bladeSpread =
+                std::max(
+                    0.0f,
+                    entry.bladeSpread
+                );
+
+            // ---------------------------------------------
+            // Height Variation
+            // ---------------------------------------------
+
+            ImGui::SetNextItemWidth(120.0f);
+
+            ImGui::InputFloat(
+                "Minimum Blade Height",
+                &entry.minBladeHeight,
+                0.1f,
+                0.5f,
+                "%.2f"
+            );
+
+            ImGui::SetNextItemWidth(120.0f);
+
+            ImGui::InputFloat(
+                "Maximum Blade Height",
+                &entry.maxBladeHeight,
+                0.1f,
+                0.5f,
+                "%.2f"
+            );
+
+            entry.minBladeHeight =
+                std::max(0.01f, entry.minBladeHeight);
+
+            entry.maxBladeHeight =
+                std::max(
+                    entry.minBladeHeight,
+                    entry.maxBladeHeight
+                );
+
+            // ---------------------------------------------
+            // Width Variation
+            // ---------------------------------------------
+
+            ImGui::SetNextItemWidth(120.0f);
+
+            ImGui::InputFloat(
+                "Minimum Blade Width",
+                &entry.minBladeWidth,
+                0.1f,
+                0.5f,
+                "%.2f"
+            );
+
+            ImGui::SetNextItemWidth(120.0f);
+
+            ImGui::InputFloat(
+                "Maximum Blade Width",
+                &entry.maxBladeWidth,
+                0.1f,
+                0.5f,
+                "%.2f"
+            );
+
+            entry.minBladeWidth =
+                std::max(0.01f, entry.minBladeWidth);
+
+            entry.maxBladeWidth =
+                std::max(
+                    entry.minBladeWidth,
+                    entry.maxBladeWidth
+                );
+
+            // ---------------------------------------------
+            // Blade Tilt
+            // ---------------------------------------------
+
+            ImGui::SetNextItemWidth(120.0f);
+
+            ImGui::InputFloat(
+                "Minimum Blade Tilt",
+                &entry.minBladeTilt,
+                1.0f,
+                5.0f,
+                "%.1f"
+            );
+
+            ImGui::SetNextItemWidth(120.0f);
+
+            ImGui::InputFloat(
+                "Maximum Blade Tilt",
+                &entry.maxBladeTilt,
+                1.0f,
+                5.0f,
+                "%.1f"
+            );
+
+            entry.minBladeTilt =
+                std::clamp(
+                    entry.minBladeTilt,
+                    0.0f,
+                    90.0f
+                );
+
+            entry.maxBladeTilt =
+                std::clamp(
+                    entry.maxBladeTilt,
+                    entry.minBladeTilt,
+                    90.0f
+                );
+
+
+
 
             ImGui::Spacing();
 

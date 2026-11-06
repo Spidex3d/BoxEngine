@@ -1880,8 +1880,45 @@ void BoxEngine::RenderScene()
                             // GENERATE GRASS CLUMP MATRICES
                             // =============================================
 
-                            for (const ScatterPoint& point : points)
+                            // =====================================================
+                            // GRASS CLUMP SETTINGS FROM PARTICLE ENTRY
+                            // =====================================================
+
+                            GrassClumpSettings clumpSettings;
+
+                            clumpSettings.bladeCount =
+                                entry.bladeCount;
+
+                            clumpSettings.spread =
+                                entry.bladeSpread;
+
+                            clumpSettings.minHeight =
+                                entry.minBladeHeight;
+
+                            clumpSettings.maxHeight =
+                                entry.maxBladeHeight;
+
+                            clumpSettings.minWidth =
+                                entry.minBladeWidth;
+
+                            clumpSettings.maxWidth =
+                                entry.maxBladeWidth;
+
+                            clumpSettings.minTilt =
+                                entry.minBladeTilt;
+
+                            clumpSettings.maxTilt =
+                                entry.maxBladeTilt;
+
+
+                            for (std::size_t pointIndex = 0;
+                                pointIndex < points.size();
+                                ++pointIndex)
                             {
+                                const ScatterPoint& point = points[pointIndex];
+
+                            /*for (const ScatterPoint& point : points)
+                            {*/
 
                                 // =====================================================
                                 // GRASS GROWTH DIRECTION
@@ -2027,11 +2064,37 @@ void BoxEngine::RenderScene()
                                     glm::vec3(scale)
                                 );
 
-                                // Add seven blades to the instance batch.
+                                // =====================================================
+                                // UNIQUE SEED FOR EACH GRASS CLUMP
+                                // =====================================================
+
+                                std::uint32_t clumpSeed = entrySeed;
+
+                                const std::uint32_t indexSeed =
+                                    static_cast<std::uint32_t>(pointIndex);
+
+                                clumpSeed ^= indexSeed +
+                                    0x9e3779b9u +
+                                    (clumpSeed << 6) +
+                                    (clumpSeed >> 2);
+
+                                // =====================================================
+                                // GENERATE CONFIGURABLE GRASS CLUMP
+                                // =====================================================
+
                                 m_testGrassClump.AppendInstanceMatrices(
                                     model,
+                                    clumpSettings,
+                                    clumpSeed,
                                     allGrassMatrices
                                 );
+
+
+                                // Add seven blades to the instance batch.
+                                /*m_testGrassClump.AppendInstanceMatrices(
+                                    model,
+                                    allGrassMatrices
+                                );*/
                             }
                         }
                     }

@@ -155,8 +155,9 @@ public:
 
     bool SetSelectedFacesMaterial(std::size_t materialIndex);
 
-
     bool IsFaceSelected(std::size_t index) const;
+
+    const std::vector<std::size_t>& GetSelectedFaces() const;
 
 
 
