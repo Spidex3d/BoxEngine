@@ -688,15 +688,9 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
         // TEST OBJECTS
         // =====================================================
 
-    case ViewportAction::TestGrassBlade:
+    case ViewportAction::PlantPreview:
     {
-        if (!engine.CreateTestGrassBlade())
-        {
-            BOX_LOG_ERROR(
-                "Could not create test grass blade"
-            );
-        }
-
+        engine.TogglePlantPreview();
         break;
     }
 

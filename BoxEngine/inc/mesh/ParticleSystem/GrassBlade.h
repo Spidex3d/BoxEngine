@@ -14,6 +14,7 @@ public:
 	GrassBlade& operator=(const GrassBlade&) = delete;
 
 	bool CreateGrassBlade();
+	bool CreateBrokenGrassBlade();
 
 	// =====================================================
 	// GPU INSTANCE BUFFER
@@ -41,6 +42,13 @@ public:
 
 	const glm::vec4& GetColor() const;
 	void SetColor(const glm::vec4& color);
+	// broken grass settings
+	void SetBreakPosition(float position);
+	void SetBreakAngle(float angle);
+
+	float GetBreakPosition() const;
+	float GetBreakAngle() const;
+
 
 	void Destroy();
 
@@ -69,6 +77,21 @@ private:
 	float m_concavity = 0.0015f;
 
 	glm::vec4 m_color = glm::vec4(1.0f);
+
+	// =====================================================
+// BROKEN GRASS SETTINGS
+// =====================================================
+
+// Position of the break along the blade.
+// 0.0 = base, 1.0 = tip.
+	float m_breakPosition = 0.40f;
+
+	// Angle of the bend in degrees.
+	float m_breakAngle = 90.0f;
+
+	// Shared geometry generator.
+	// Used by both normal and broken blades.
+	bool CreateGrassBladeInternal(bool broken);
 
 
 };

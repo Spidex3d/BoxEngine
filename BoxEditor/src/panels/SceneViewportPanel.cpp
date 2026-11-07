@@ -474,9 +474,9 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 
         if (ImGui::BeginMenu("Test Objects"))
         {
-            if (ImGui::MenuItem("Grass Blade"))
+            if (ImGui::MenuItem("Test Plant Preview"))
             {
-                action = ViewportAction::TestGrassBlade;
+                action = ViewportAction::PlantPreview;
             }
 
             ImGui::Separator();

@@ -10,6 +10,7 @@
 #include <runtime\Game.h>
 #include <runtime\CharacterController.h>
 
+#include <mesh/ParticleSystem/PlantPreview.h>
 #include <mesh/ParticleSystem/GrassClump.h>
 #include <mesh/ParticleSystem/ParticleSystemRender.h>
 
@@ -117,8 +118,17 @@ public:
     // grass
     Entity* AddEditableGrassClump(const MeshEditing& grassMesh, const glm::vec3& position);
 	// new grass blade function for testing
-    bool CreateTestGrassBlade();
+    //bool CreateTestGrassBlade();
+    bool TogglePlantPreview();
+    
+    // plant preview
+    PlantPreview m_plantPreview; 
 
+
+
+    // =====================================================
+    // END OF PARTICLE SYSTEM RENDERER
+    // =====================================================
 
 	// Load a skybox from a folder containing the six images for the skybox faces
     bool LoadSkyBox(const std::string& folderPath);
@@ -379,7 +389,7 @@ private:
     // Separate mesh and instance buffer for the preview clump.
     std::unique_ptr<GrassBlade> m_previewGrassBlade;
 
-    bool m_showTestGrassBlade = false;
+    bool m_showPlantPreview = false;
 
     GrassClump m_testGrassClump;
    

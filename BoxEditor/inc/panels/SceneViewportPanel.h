@@ -70,7 +70,7 @@ enum class ViewportAction
 	AddEditableRock,
 	// Add a new particle system to the scene
     AddParticleSystem,
-    TestGrassBlade,
+    PlantPreview,
 
     ResetCamera,
 

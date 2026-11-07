@@ -39,6 +39,7 @@
 #include <mesh/ParticleSystem/ParticleScatter.h>
 #include <mesh/ParticleSystem/GrassClump.h>
 #include <mesh/modifiers/ModifierData.h>
+#include <mesh/ParticleSystem/PlantPreview.h>
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
@@ -270,7 +271,7 @@ bool BoxEngine::Initialize()
     }
 
     // Don't show the test clump automatically.
-    m_showTestGrassBlade = false;
+   // m_showTestGrassBlade = false;
 
 	// =====================================================
 	// END TESTING GRASS BLADE
@@ -683,8 +684,9 @@ bool BoxEngine::AddEditableTerrain(const glm::vec3& position, int width, int dep
     return false;
 }
 
-
+// ===============================================================
 // Grass clump creation
+// ===============================================================
 Entity* BoxEngine::AddEditableGrassClump(const MeshEditing& grassMesh, const glm::vec3& position)
 {
     if (grassMesh.GetVertexCount() == 0 ||
@@ -755,56 +757,33 @@ Entity* BoxEngine::AddEditableGrassClump(const MeshEditing& grassMesh, const glm
 
     return result;
 }
-// --------------------------------------------------------
-// New Grass Blade function for testing
-// --------------------------------------------------------
+
 // =====================================================
-// CREATE TEST GRASS BLADE
+// NEW CREATE PLANT PREVIEW
+// =====================================================
+// =====================================================
+// TOGGLE PLANT PREVIEW
 // =====================================================
 
-bool BoxEngine::CreateTestGrassBlade()
+bool BoxEngine::TogglePlantPreview()
 {
-    // If already created, toggle its visibility.
-    if (m_testGrassBlade)
-    {
-        m_showTestGrassBlade =
-            !m_showTestGrassBlade;
-
-        return true;
-    }
-
-    // Create our grass blade.
-    m_testGrassBlade =
-        std::make_unique<GrassBlade>();
-
-    // Use the default dimensions:
-    // Width  = 0.01 metres
-    // Height = 0.20 metres
-
-    m_testGrassBlade->SetPosition(
-        glm::vec3(0.0f, 0.0f, 0.0f)
-    );
-
-    // Generate the OpenGL geometry.
-    if (!m_testGrassBlade->CreateGrassBlade())
-    {
-        BOX_LOG_ERROR(
-            "Failed to create test grass blade"
-        );
-
-        m_testGrassBlade.reset();
-
+    if (!m_previewGrassBlade)
         return false;
-    }
 
-    m_showTestGrassBlade = true;
-
-    BOX_LOG_INFO(
-        "Test grass blade created successfully"
-    );
+    m_plantPreview.Toggle();
 
     return true;
 }
+
+//bool BoxEngine::CreateTestGrassBlade()
+//{
+//    if (!m_previewGrassBlade)
+//        return false;
+//
+//    m_plantPreview.Toggle();
+//
+//    return true;
+//}
 
 // end of new grass blade function for testing
 
@@ -1658,140 +1637,27 @@ void BoxEngine::RenderScene()
 		// ======================================= END PARTICLE SCATTER ======================================================
 		// ===================================================================================================================
 
-
-
         // =====================================================
-        // TEST GRASS BLADE RENDERING
+        // TEST PLANT PREVIEW RENDERING
         // =====================================================
 
-        if (m_showTestGrassBlade &&
-            m_previewGrassBlade &&
+        
+        if (m_previewGrassBlade &&
             m_grassBladeShader &&
             m_grassBladeShader->ID() != 0)
         {
-            m_grassBladeShader->Use();
-
-            // ---------------------------------------------
-            // Model matrix
-            // ---------------------------------------------
-
-            glm::mat4 model(1.0f);
-
-            model = glm::translate(
-                model,
-                m_previewGrassBlade->GetPosition()
-            );
-
-            // Make the test blade 10 times larger
-            // so we can inspect its shape easily.
-            model = glm::scale(
-                model,
-                glm::vec3(10.0f)
-            );
-
-            // ---------------------------------------------
-            // Shader matrices
-            // ---------------------------------------------
-
-            m_grassBladeShader->setMat4(
-                "uModel",
-                model
-            );
-
-            m_grassBladeShader->setMat4(
-                "uView",
-                view
-            );
-
-            m_grassBladeShader->setMat4(
-                "uProjection",
+            
+            m_plantPreview.Render(
+                *m_previewGrassBlade,
+                m_testGrassClump,
+                *m_grassBladeShader,
+                view,
                 projection
             );
-
-            // ---------------------------------------------
-            // Grass lighting
-            // ---------------------------------------------
-
-            m_grassBladeShader->setVec3(
-                "uLightDirection",
-                glm::normalize(
-                    glm::vec3(0.5f, 1.0f, 0.4f)
-                )
-            );
-
-            m_grassBladeShader->setVec3(
-                "uLightColor",
-                glm::vec3(1.0f)
-            );
-
-            m_grassBladeShader->SetUniformFloat(
-                "uAmbientStrength",
-                0.35f
-            );
-
-            // ---------------------------------------------
-            // Draw both sides
-            // ---------------------------------------------
-
-            GLboolean cullingEnabled =
-                glIsEnabled(GL_CULL_FACE);
-
-            glDisable(GL_CULL_FACE);
-
-
-            // =====================================================
-            // DRAW TEST GRASS CLUMP
-            // =====================================================
-            m_grassBladeShader->SetUniformInt("uUseInstancing", 0);
-
-            // -------------------------------------------------
-            // TEST GPU INSTANCED GRASS CLUMP
-            // -------------------------------------------------
-
-            std::vector<glm::mat4> grassMatrices;
-
-            grassMatrices.reserve(7);
-
-            // Generate transformations for seven blades
-            m_testGrassClump.AppendInstanceMatrices(
-                model,
-                grassMatrices
-            );
-
-            // Activate grass shader
-            m_grassBladeShader->Use();
-
-            // Tell shader we are using instancing
-            m_grassBladeShader->SetUniformInt(
-                "uUseInstancing",
-                1
-            );
-
-            // The individual matrices now contain the model transforms
-            m_grassBladeShader->setMat4(
-                "uModel",
-                glm::mat4(1.0f)
-            );
-
-            // Draw all seven blades in ONE OpenGL draw call
-            m_previewGrassBlade->DrawInstanced(
-                grassMatrices
-            );
-
-            // Restore normal rendering mode
-            m_grassBladeShader->SetUniformInt(
-                "uUseInstancing",
-                0
-            );
-                        
-            if (cullingEnabled)
-            {
-                glEnable(GL_CULL_FACE);
-            }
         }
 
         // =================================================================================================================
-        // END TEST GRASS BLADE RENDERING
+        // END TEST PLANT PREVIEW RENDERING
         // =================================================================================================================
 
 

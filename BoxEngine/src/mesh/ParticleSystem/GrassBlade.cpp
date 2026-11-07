@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm>
 #include <cstddef>
+#include <cmath>
 
 #include <glm/glm.hpp>
 
@@ -37,13 +38,40 @@ GrassBlade::~GrassBlade()
 // =====================================================
 // Create Grass Blade
 // =====================================================
+// =====================================================
+// NORMAL GRASS BLADE
+// =====================================================
 
 bool GrassBlade::CreateGrassBlade()
+{
+    return CreateGrassBladeInternal(false);
+}
+
+
+// =====================================================
+// BROKEN GRASS BLADE
+// =====================================================
+
+bool GrassBlade::CreateBrokenGrassBlade()
+{
+    return CreateGrassBladeInternal(true);
+}
+
+
+//bool GrassBlade::CreateGrassBlade()
+bool GrassBlade::CreateGrassBladeInternal(bool broken)
 {
     // Remove any previously generated geometry.
     Destroy();
 
-    constexpr int rows = 7;
+    /*constexpr int rows = 7;
+    constexpr int columns = 3;*/
+
+    // Normal blade: 7 rows.
+    // Broken blade: 11 rows, including a row at the break.
+
+    const int rows = broken ? 11 : 7;
+
     constexpr int columns = 3;
 
     std::vector<GrassVertex> vertices;
@@ -58,10 +86,40 @@ bool GrassBlade::CreateGrassBlade()
 
     for (int row = 0; row < rows; ++row)
     {
+        float t = 0.0f;
+
+        if (broken)
+        {
+            // Five sections below the break,
+            // five sections above it.
+            constexpr int breakRow = 5;
+
+            if (row <= breakRow)
+            {
+                t = m_breakPosition *
+                    static_cast<float>(row) /
+                    static_cast<float>(breakRow);
+            }
+            else
+            {
+                t = m_breakPosition +
+                    (1.0f - m_breakPosition) *
+                    static_cast<float>(row - breakRow) /
+                    static_cast<float>(rows - 1 - breakRow);
+            }
+        }
+        else
+        {
+            t = static_cast<float>(row) /
+                static_cast<float>(rows - 1);
+        }
+
+
+
         // 0.0 = base, 1.0 = tip
-        const float t =
+        /*const float t =
             static_cast<float>(row) /
-            static_cast<float>(rows - 1);
+            static_cast<float>(rows - 1);*/
 
         // ---------------------------------------------
         // Height
@@ -128,13 +186,98 @@ bool GrassBlade::CreateGrassBlade()
                 groove = -grooveDepth;
             }
 
-            const float z =
-                bend + groove;
+            // =====================================================
+            // NORMAL VERTEX POSITION
+            // =====================================================
+
+            const float z = bend + groove;
+
+            glm::vec3 position(x, y, z);
+
+
+            // =====================================================
+            // BROKEN BLADE DEFORMATION
+            // =====================================================
+
+            if (broken && t > m_breakPosition)
+            {
+                // ---------------------------------------------
+                // Find the bend location
+                // ---------------------------------------------
+
+                const float hingeY =
+                    m_height * m_breakPosition;
+
+                const float hingeBend =
+                    -m_curvature *
+                    m_breakPosition *
+                    m_breakPosition;
+
+                // Keep the centre groove continuous.
+                float hingeGroove = 0.0f;
+
+                if (column == 1)
+                {
+                    hingeGroove =
+                        -m_concavity *
+                        (1.0f - m_breakPosition);
+                }
+
+                const float hingeZ =
+                    hingeBend + hingeGroove;
+
+                // ---------------------------------------------
+                // Rotate upper section around the hinge
+                // ---------------------------------------------
+
+                // Negative rotation bends towards local -Z.
+                const float angle =
+                    -glm::radians(m_breakAngle);
+
+                const float cosAngle =
+                    std::cos(angle);
+
+                const float sinAngle =
+                    std::sin(angle);
+
+                // Position relative to the hinge.
+                const float relativeY =
+                    position.y - hingeY;
+
+                const float relativeZ =
+                    position.z - hingeZ;
+
+                // Rotation around the X axis.
+                const float rotatedY =
+                    relativeY * cosAngle -
+                    relativeZ * sinAngle;
+
+                const float rotatedZ =
+                    relativeY * sinAngle +
+                    relativeZ * cosAngle;
+
+                // Move back into blade coordinates.
+                position.y = hingeY + rotatedY;
+                position.z = hingeZ + rotatedZ;
+            }
+
+
+            // =====================================================
+            // STORE VERTEX
+            // =====================================================
 
             GrassVertex vertex{};
 
-            vertex.position =
-                glm::vec3(x, y, z);
+            vertex.position = position;
+
+
+
+
+            /*const float z = bend + groove;
+
+            GrassVertex vertex{};
+
+            vertex.position = glm::vec3(x, y, z);*/
 
             // Normals calculated after triangles.
             vertex.normal =
@@ -414,10 +557,17 @@ bool GrassBlade::CreateGrassBlade()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-    m_indexCount =
-        static_cast<GLsizei>(indices.size());
+    m_indexCount = static_cast<GLsizei>(indices.size());
 
-    return m_indexCount == 72;
+    const GLsizei expectedIndexCount =
+        static_cast<GLsizei>((rows - 1) * (columns - 1) * 6);
+
+    return m_indexCount == expectedIndexCount;
+
+    //return m_indexCount == 72;
+
+
+
 }
 
 
@@ -512,6 +662,32 @@ void GrassBlade::SetColor(
     const glm::vec4& color)
 {
     m_color = color;
+}
+
+// =====================================================
+// BROKEN GRASS SETTINGS
+// =====================================================
+
+void GrassBlade::SetBreakPosition(float position)
+{
+    m_breakPosition =
+        std::clamp(position, 0.05f, 0.95f);
+}
+
+void GrassBlade::SetBreakAngle(float angle)
+{
+    m_breakAngle =
+        std::clamp(angle, 0.0f, 180.0f);
+}
+
+float GrassBlade::GetBreakPosition() const
+{
+    return m_breakPosition;
+}
+
+float GrassBlade::GetBreakAngle() const
+{
+    return m_breakAngle;
 }
 
 
