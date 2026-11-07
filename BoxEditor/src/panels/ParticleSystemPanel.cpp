@@ -372,15 +372,7 @@ void ParticleSystemPanel::Draw(Entity* entity, FaceEditController& faceEditContr
         }
     }
 
-   
-
-    ImGui::SameLine();
-
-    if (ImGui::Button("Clear Faces"))
-    {
-        scatter.faceIndices.clear();
-    }
-
+       
     ImGui::SameLine();
     // ============================================
     // REMOVE MODIFIER
@@ -402,6 +394,68 @@ void ParticleSystemPanel::Draw(Entity* entity, FaceEditController& faceEditContr
 
         ImGui::End();
         return;
+    }
+    // =====================================================
+    // ADD SELECTED FACES TO EXISTING SCATTER
+    // =====================================================
+
+    
+
+    if (ImGui::Button("Add Selected Faces"))
+    {
+        const std::vector<std::size_t>& selectedFaces =
+            entity->GetSelectedFaces();
+
+        const std::size_t totalFaces =
+            entity->GetEditableMesh().GetFaceCount();
+
+        bool facesAdded = false;
+
+        for (std::size_t faceIndex : selectedFaces)
+        {
+            // Ignore invalid face indices.
+            if (faceIndex >= totalFaces)
+                continue;
+
+            // Check whether this face is already assigned.
+            const bool alreadyAssigned =
+                std::find(
+                    scatter.faceIndices.begin(),
+                    scatter.faceIndices.end(),
+                    faceIndex
+                ) != scatter.faceIndices.end();
+
+            // Only add faces we don't already have.
+            if (!alreadyAssigned)
+            {
+                scatter.faceIndices.push_back(
+                    faceIndex
+                );
+
+                facesAdded = true;
+            }
+        }
+
+        // Only invalidate the cache if something changed.
+        if (facesAdded)
+        {
+            std::sort(
+                scatter.faceIndices.begin(),
+                scatter.faceIndices.end()
+            );
+
+            ParticleScatter::InvalidateCache(
+                entity->GetID(),
+                static_cast<std::size_t>(selectedIndex)
+            );
+        }
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("Clear All Faces"))
+    {
+        scatter.faceIndices.clear();
     }
 
 	// ============================================ End Buttons =========================================

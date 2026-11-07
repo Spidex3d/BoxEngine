@@ -358,6 +358,17 @@ bool GrassBlade::CreateGrassBlade()
         );
     }
 
+    // =====================================================
+// RESTORE GRASS VERTEX BUFFER
+// =====================================================
+
+// The instance matrix attributes use m_instanceVbo.
+// Normal and UV attributes must use the grass VBO.
+
+    glBindBuffer(
+        GL_ARRAY_BUFFER,
+        m_vbo
+    );
 
 
     // ---------------------------------------------

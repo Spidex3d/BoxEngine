@@ -135,6 +135,12 @@
     <ClInclude Include="inc\mesh\ParticleSystem\GrassClump.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="inc\mesh\ParticleSystem\ParticleSystemRender.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\mesh\ParticleSystem\PlantPreview.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\BoxEngine.cpp">
@@ -249,6 +255,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\mesh\ParticleSystem\GrassClump.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mesh\ParticleSystem\ParticleSystemRender.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mesh\ParticleSystem\PlantPreview.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

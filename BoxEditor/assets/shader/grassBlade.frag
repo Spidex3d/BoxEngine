@@ -112,6 +112,7 @@ void main()
     vec3 lightDirection =
         normalize(uLightDirection);
 
+
     float diffuseStrength =
         max(
             dot(normal, lightDirection),
@@ -138,7 +139,7 @@ void main()
     // ========================================
     // FINAL COLOUR
     // ========================================
-
+   
     vec3 finalColor = ambient + diffuse;
 
     FragColor = vec4(finalColor, 1.0);

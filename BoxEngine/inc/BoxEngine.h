@@ -11,6 +11,7 @@
 #include <runtime\CharacterController.h>
 
 #include <mesh/ParticleSystem/GrassClump.h>
+#include <mesh/ParticleSystem/ParticleSystemRender.h>
 
 
 class Shader;
@@ -106,6 +107,12 @@ public:
 	// Add an editable terrain mesh to the scene with specified parameters
 	bool AddEditableTerrain(const glm::vec3& position = glm::vec3(0.0f), int width = 10, int depth = 10, int subdivisionsX = 10, int subdivisionsZ = 10,
 		float heightScale = 1.0f, std::uint32_t seed = 1234);
+
+    // =====================================================
+    // PARTICLE SYSTEM RENDERER
+    // =====================================================
+
+    ParticleSystemRender m_particleSystemRender;
 
     // grass
     Entity* AddEditableGrassClump(const MeshEditing& grassMesh, const glm::vec3& position);
