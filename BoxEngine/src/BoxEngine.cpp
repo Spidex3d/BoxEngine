@@ -254,6 +254,26 @@ bool BoxEngine::Initialize()
     }
 
     // =====================================================
+    // CREATE SHARED BROKEN GRASS BLADE
+    // =====================================================
+
+    m_brokenGrassBlade = std::make_unique<GrassBlade>();
+
+    m_brokenGrassBlade->SetBreakPosition(0.80f);
+    m_brokenGrassBlade->SetBreakAngle(160.0f);
+
+    if (!m_brokenGrassBlade->CreateBrokenGrassBlade())
+    {
+        BOX_LOG_ERROR(
+            "Failed to create broken grass blade mesh"
+        );
+
+        m_brokenGrassBlade.reset();
+
+        return false;
+    }
+
+    // =====================================================
     // SEPARATE TEST GRASS PREVIEW
     // =====================================================
 
@@ -269,6 +289,34 @@ bool BoxEngine::Initialize()
         m_previewGrassBlade.reset();
         return false;
     }
+
+    // =====================================================
+    // CREATE BROKEN GRASS PREVIEW
+    // =====================================================
+
+    m_previewBrokenBlade =
+        std::make_unique<GrassBlade>();
+
+    // Initial test settings.
+	m_previewBrokenBlade->SetBreakPosition(0.80f); // 65% 70% 80% of the way up the blade
+	m_previewBrokenBlade->SetBreakAngle(125.0f);    // 125 plus degrees for a more natural bend
+
+    // Generate the broken geometry.
+    if (!m_previewBrokenBlade->CreateBrokenGrassBlade())
+    {
+        BOX_LOG_ERROR(
+            "Failed to create broken grass preview mesh"
+        );
+
+        m_previewBrokenBlade.reset();
+        return false;
+    }
+
+    BOX_LOG_INFO("Broken grass preview initialized");
+
+
+
+
 
     // Don't show the test clump automatically.
    // m_showTestGrassBlade = false;
@@ -429,6 +477,10 @@ void BoxEngine::Shutdown()
     //m_cachedGrassMatrices.clear();
     m_particleSystemRender.ClearGrassCache();
     m_testGrassBlade.reset();
+    m_brokenGrassBlade.reset();
+    m_previewGrassBlade.reset();
+    m_previewBrokenBlade.reset();
+
     m_grassBladeShader.reset();
 
     // Entity destructors delete their OpenGL buffers.
@@ -684,6 +736,19 @@ bool BoxEngine::AddEditableTerrain(const glm::vec3& position, int width, int dep
     return false;
 }
 
+// =========================================================================================================================
+// =========================== ============ SELECT PLANT PREVIEW MODE ======================================================
+// =========================================================================================================================
+
+void BoxEngine::SetPlantPreviewMode(PlantPreviewMode mode)
+{
+    m_plantPreview.SetMode(mode);
+
+    // Automatically show the preview
+    // when a new mode is selected.
+    m_plantPreview.Show();
+}
+
 // ===============================================================
 // Grass clump creation
 // ===============================================================
@@ -775,16 +840,106 @@ bool BoxEngine::TogglePlantPreview()
     return true;
 }
 
-//bool BoxEngine::CreateTestGrassBlade()
-//{
-//    if (!m_previewGrassBlade)
-//        return false;
-//
-//    m_plantPreview.Toggle();
-//
-//    return true;
-//}
+// =====================================================
+// APPLY PLANT PREVIEW SETTINGS
+// =====================================================
 
+bool BoxEngine::ApplyPlantPreviewSettings()
+{
+    if (!m_previewGrassBlade || !m_previewBrokenBlade)
+        return false;
+
+    PlantPreviewSettings& settings =
+        m_plantPreview.GetSettings();
+
+    // Keep geometry measurements sensible.
+    settings.bladeWidth =
+        glm::max(settings.bladeWidth, 0.0001f);
+
+    settings.bladeHeight =
+        glm::max(settings.bladeHeight, 0.001f);
+
+    settings.concavity =
+        glm::max(settings.concavity, 0.0f);
+
+    settings.breakPosition =
+        glm::clamp(settings.breakPosition, 0.05f, 0.95f);
+
+    settings.breakAngle =
+        glm::clamp(settings.breakAngle, 0.0f, 180.0f);
+
+    settings.previewScale =
+        glm::max(settings.previewScale, 0.01f);
+
+    // -------------------------------------------------
+    // Normal grass blade
+    // -------------------------------------------------
+
+    m_previewGrassBlade->SetSize(
+        settings.bladeWidth,
+        settings.bladeHeight
+    );
+
+    m_previewGrassBlade->SetCurvature(
+        settings.curvature
+    );
+
+    m_previewGrassBlade->SetConcavity(
+        settings.concavity
+    );
+
+    if (!m_previewGrassBlade->CreateGrassBlade())
+    {
+        BOX_LOG_ERROR(
+            "Failed to rebuild normal grass preview"
+        );
+
+        return false;
+    }
+
+    // -------------------------------------------------
+    // Broken grass blade
+    // -------------------------------------------------
+
+    m_previewBrokenBlade->SetSize(
+        settings.bladeWidth,
+        settings.bladeHeight
+    );
+
+    m_previewBrokenBlade->SetCurvature(
+        settings.curvature
+    );
+
+    m_previewBrokenBlade->SetConcavity(
+        settings.concavity
+    );
+
+    m_previewBrokenBlade->SetBreakPosition(
+        settings.breakPosition
+    );
+
+    m_previewBrokenBlade->SetBreakAngle(
+        settings.breakAngle
+    );
+
+    if (!m_previewBrokenBlade->CreateBrokenGrassBlade())
+    {
+        BOX_LOG_ERROR(
+            "Failed to rebuild broken grass preview"
+        );
+
+        return false;
+    }
+
+    // -------------------------------------------------
+    // Preview size
+    // -------------------------------------------------
+
+    m_plantPreview.ApplyPreviewScale();
+
+    return true;
+}
+// ================================================ END NEW CREATE PLANT PREVIEW ================================================
 // end of new grass blade function for testing
 
 
@@ -1620,17 +1775,32 @@ void BoxEngine::RenderScene()
         // =====================================================
 
         if (m_testGrassBlade &&
+            m_brokenGrassBlade &&
             m_grassBladeShader &&
             m_grassBladeShader->ID() != 0)
+
+        /*if (m_testGrassBlade &&
+            m_grassBladeShader &&
+            m_grassBladeShader->ID() != 0)*/
         {
             m_particleSystemRender.RenderGrass(
+                m_entities,
+                *m_testGrassBlade,
+                *m_brokenGrassBlade,
+                m_testGrassClump,
+                *m_grassBladeShader,
+                view,
+                projection
+            );
+
+            /*m_particleSystemRender.RenderGrass(
                 m_entities,
                 *m_testGrassBlade,
                 m_testGrassClump,
                 *m_grassBladeShader,
                 view,
                 projection
-            );
+            );*/
         }
 
         // ===================================================================================================================
@@ -1638,30 +1808,79 @@ void BoxEngine::RenderScene()
 		// ===================================================================================================================
 
         // =====================================================
-        // TEST PLANT PREVIEW RENDERING
+        // PLANT PREVIEW RENDERING
         // =====================================================
 
-        
-        if (m_previewGrassBlade &&
-            m_grassBladeShader &&
+        if (m_grassBladeShader &&
             m_grassBladeShader->ID() != 0)
         {
-            
-            m_plantPreview.Render(
-                *m_previewGrassBlade,
-                m_testGrassClump,
-                *m_grassBladeShader,
-                view,
-                projection
-            );
+            switch (m_plantPreview.GetMode())
+            {
+                // =============================================
+                // NORMAL GRASS BLADE
+                // =============================================
+
+            case PlantPreviewMode::NormalBlade:
+            {
+                if (m_previewGrassBlade)
+                {
+                    m_plantPreview.RenderSingleBlade(
+                        *m_previewGrassBlade,
+                        *m_grassBladeShader,
+                        view,
+                        projection
+                    );
+                }
+
+                break;
+            }
+
+            // =============================================
+            // BROKEN GRASS BLADE
+            // =============================================
+
+            case PlantPreviewMode::BrokenBlade:
+            {
+                if (m_previewBrokenBlade)
+                {
+                    m_plantPreview.RenderSingleBlade(
+                        *m_previewBrokenBlade,
+                        *m_grassBladeShader,
+                        view,
+                        projection
+                    );
+                }
+
+                break;
+            }
+
+            // =============================================
+            // GRASS CLUMP
+            // =============================================
+
+            case PlantPreviewMode::GrassClump:
+            {
+                if (m_previewGrassBlade)
+                {
+                    m_plantPreview.Render(
+                        *m_previewGrassBlade,
+                        m_testGrassClump,
+                        *m_grassBladeShader,
+                        view,
+                        projection
+                    );
+                }
+
+                break;
+            }
+            }
         }
 
-        // =================================================================================================================
-        // END TEST PLANT PREVIEW RENDERING
-        // =================================================================================================================
+        // ============================================================================================================
+        // ==============================================  END PLANT PREVIEW RENDERING
+        // =============================================================================================================
 
-
-
+       
         // -------------------------------------------------
         // Save scene depth before drawing transparent water.
         // -------------------------------------------------

@@ -96,21 +96,6 @@
     <ClInclude Include="inc\mesh\UV\UVMapping.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="inc\runtime\Game.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\runtime\Player.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\runtime\Collision.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\runtime\CharacterController.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\runtime\Collectible.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="inc\mesh\MeshCombiner.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -139,6 +124,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="inc\mesh\ParticleSystem\PlantPreview.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\runtime\CharacterController.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\runtime\Collectible.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\runtime\Collision.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\runtime\Game.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\runtime\Player.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -218,21 +218,6 @@
     <ClCompile Include="src\mesh\UV\UVMapping.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\runtime\Game.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\runtime\Player.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\runtime\Collision.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\runtime\CharacterController.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\runtime\Collectible.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\mesh\MeshCombiner.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -261,6 +246,21 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\mesh\ParticleSystem\PlantPreview.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\runtime\CharacterController.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\runtime\Collectible.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\runtime\Collision.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\runtime\Game.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\runtime\Player.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

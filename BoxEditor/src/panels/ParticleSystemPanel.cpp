@@ -797,6 +797,123 @@ void ParticleSystemPanel::Draw(Entity* entity, FaceEditController& faceEditContr
                 "%.2f"
             );
 
+            // =====================================================
+            // BROKEN GRASS BLADE PERCENTAGE
+            // =====================================================
+
+            ImGui::SetNextItemWidth(120.0f);
+
+            if (ImGui::InputFloat(
+                "Broken Blades %",
+                &entry.brokenBladePercentage,
+                1.0f,
+                5.0f,
+                "%.1f"
+            ))
+            {
+                entry.brokenBladePercentage =
+                    std::clamp(
+                        entry.brokenBladePercentage,
+                        0.0f,
+                        100.0f
+                    );
+            }
+
+            // =====================================================
+            // GRASS BLADE SHAPE SETTINGS
+            // =====================================================
+
+            ImGui::SeparatorText("Grass Blade Shape");
+
+            // -----------------------------------------------------
+            // Curvature
+            // -----------------------------------------------------
+
+            ImGui::SetNextItemWidth(120.0f);
+
+            ImGui::InputFloat(
+                "Curvature",
+                &entry.bladeCurvature,
+                0.005f,
+                0.01f,
+                "%.4f"
+            );
+
+            // -----------------------------------------------------
+            // Concavity
+            // -----------------------------------------------------
+
+            ImGui::SetNextItemWidth(120.0f);
+
+            ImGui::InputFloat(
+                "Concavity",
+                &entry.bladeConcavity,
+                0.0005f,
+                0.001f,
+                "%.4f"
+            );
+
+            // -----------------------------------------------------
+            // Break Position
+            // -----------------------------------------------------
+
+            ImGui::SetNextItemWidth(120.0f);
+
+            ImGui::InputFloat(
+                "Break Position",
+                &entry.bladeBreakPosition,
+                0.05f,
+                0.10f,
+                "%.2f"
+            );
+
+            // -----------------------------------------------------
+            // Break Angle
+            // -----------------------------------------------------
+
+            ImGui::SetNextItemWidth(120.0f);
+
+            ImGui::InputFloat(
+                "Break Angle",
+                &entry.bladeBreakAngle,
+                5.0f,
+                10.0f,
+                "%.1f"
+            );
+
+            // =====================================================
+            // VALIDATE SETTINGS
+            // =====================================================
+
+            entry.bladeCurvature =
+                std::clamp(
+                    entry.bladeCurvature,
+                    -1.0f,
+                    1.0f
+                );
+
+            entry.bladeConcavity =
+                std::clamp(
+                    entry.bladeConcavity,
+                    0.0f,
+                    0.1f
+                );
+
+            entry.bladeBreakPosition =
+                std::clamp(
+                    entry.bladeBreakPosition,
+                    0.05f,
+                    0.95f
+                );
+
+            entry.bladeBreakAngle =
+                std::clamp(
+                    entry.bladeBreakAngle,
+                    0.0f,
+                    180.0f
+                );
+
+
             entry.minBladeHeight =
                 std::max(0.01f, entry.minBladeHeight);
 

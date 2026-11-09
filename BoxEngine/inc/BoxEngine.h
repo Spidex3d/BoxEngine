@@ -117,9 +117,13 @@ public:
 
     // grass
     Entity* AddEditableGrassClump(const MeshEditing& grassMesh, const glm::vec3& position);
-	// new grass blade function for testing
+	// new plant function for testing
+    void SetPlantPreviewMode(PlantPreviewMode mode);
+
     //bool CreateTestGrassBlade();
     bool TogglePlantPreview();
+
+    bool ApplyPlantPreviewSettings();
     
     // plant preview
     PlantPreview m_plantPreview; 
@@ -384,10 +388,18 @@ private:
 
     // Last transformations uploaded to the GPU.
     std::vector<glm::mat4> m_cachedGrassMatrices;
-
+	// Shared grass blade mesh for surface scattering.
     std::unique_ptr<GrassBlade> m_testGrassBlade;
+
+    // Shared broken blade mesh for surface scattering.
+    std::unique_ptr<GrassBlade> m_brokenGrassBlade;
+
+
     // Separate mesh and instance buffer for the preview clump.
     std::unique_ptr<GrassBlade> m_previewGrassBlade;
+
+    // Broken blade used by Plant Preview.
+    std::unique_ptr<GrassBlade> m_previewBrokenBlade;
 
     bool m_showPlantPreview = false;
 

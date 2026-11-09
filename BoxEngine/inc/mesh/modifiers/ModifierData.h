@@ -68,6 +68,27 @@ struct ScatterEntry
     // Maximum distance from clump centre (metres)
     float bladeSpread = 0.035f;
 
+    // Percentage of broken blades in each clump.
+    // 0 = none, 100 = all blades broken.
+    float brokenBladePercentage = 15.0f;
+
+    // =====================================================
+    // GRASS BLADE SHAPE
+    // =====================================================
+
+    // How much the blade curves towards its tip.
+    float bladeCurvature = 0.035f;
+
+    // Depth of the central V-shaped groove.
+    float bladeConcavity = 0.0015f;
+
+    // Position where the blade bends over.
+    // 0.0 = base, 1.0 = tip.
+    float bladeBreakPosition = 0.80f;
+
+    // Angle of the broken section in degrees.
+    float bladeBreakAngle = 125.0f;
+
     // Individual blade height variation
     float minBladeHeight = 0.8f;
     float maxBladeHeight = 1.2f;

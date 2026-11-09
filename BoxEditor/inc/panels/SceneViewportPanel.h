@@ -71,6 +71,9 @@ enum class ViewportAction
 	// Add a new particle system to the scene
     AddParticleSystem,
     PlantPreview,
+    PreviewNormalBlade,
+    PreviewBrokenBlade,
+    PreviewGrassClump,
 
     ResetCamera,
 

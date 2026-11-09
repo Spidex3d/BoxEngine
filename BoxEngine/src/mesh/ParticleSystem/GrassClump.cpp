@@ -12,6 +12,10 @@
 #include <random>
 #include <algorithm>
 #include <cmath>
+#include <numeric>
+
+
+
 
 // =====================================================
 // Grass Clump
@@ -337,148 +341,97 @@ void GrassClump::AppendInstanceMatrices(
     }
 }
 
-//// =====================================================
-//// GENERATE CONFIGURABLE GRASS CLUMP
-//// =====================================================
-//
-//void GrassClump::AppendInstanceMatrices(
-//    const glm::mat4& clumpModel,
-//    const GrassClumpSettings& settings,
-//    std::uint32_t seed,
-//    std::vector<glm::mat4>& matrices
-//) const
-//{
-//    // ================================================
-//    // VALIDATE SETTINGS
-//    // ================================================
-//
-//    const int bladeCount =
-//        std::clamp(settings.bladeCount, 1, 100);
-//
-//    const float spread =
-//        std::max(0.0f, settings.spread);
-//
-//    const float minHeight =
-//        std::max(0.01f, settings.minHeight);
-//
-//    const float maxHeight =
-//        std::max(minHeight, settings.maxHeight);
-//
-//    const float minWidth =
-//        std::max(0.01f, settings.minWidth);
-//
-//    const float maxWidth =
-//        std::max(minWidth, settings.maxWidth);
-//
-//    const float minTilt =
-//        std::clamp(settings.minTilt, 0.0f, 90.0f);
-//
-//    const float maxTilt =
-//        std::clamp(
-//            settings.maxTilt,
-//            minTilt,
-//            90.0f
-//        );
-//
-//    // ================================================
-//    // RANDOM GENERATOR
-//    // ================================================
-//
-//    std::mt19937 random(seed);
-//
-//    std::uniform_real_distribution<float>
-//        random01(0.0f, 1.0f);
-//
-//    std::uniform_real_distribution<float>
-//        randomAngle(0.0f, 360.0f);
-//
-//    std::uniform_real_distribution<float>
-//        randomHeight(minHeight, maxHeight);
-//
-//    std::uniform_real_distribution<float>
-//        randomWidth(minWidth, maxWidth);
-//
-//    std::uniform_real_distribution<float>
-//        randomTilt(minTilt, maxTilt);
-//
-//    // ================================================
-//    // GENERATE INDIVIDUAL BLADES
-//    // ================================================
-//
-//    for (int i = 0; i < bladeCount; ++i)
-//    {
-//        // --------------------------------------------
-//        // Random position within a circular clump
-//        // --------------------------------------------
-//
-//        const float angle =
-//            glm::radians(randomAngle(random));
-//
-//        // Square root gives an even distribution
-//        // over the area of a circle.
-//        const float distance =
-//            std::sqrt(random01(random)) * spread;
-//
-//        const float offsetX =
-//            std::cos(angle) * distance;
-//
-//        const float offsetZ =
-//            std::sin(angle) * distance;
-//
-//        // --------------------------------------------
-//        // Random blade variations
-//        // --------------------------------------------
-//
-//        const float heightScale =
-//            randomHeight(random);
-//
-//        const float widthScale =
-//            randomWidth(random);
-//
-//        const float tilt =
-//            glm::radians(randomTilt(random));
-//
-//        // --------------------------------------------
-//        // Build transformation
-//        // --------------------------------------------
-//
-//        glm::mat4 bladeModel = clumpModel;
-//
-//        // Position blade within the clump.
-//        bladeModel = glm::translate(
-//            bladeModel,
-//            glm::vec3(
-//                offsetX,
-//                0.0f,
-//                offsetZ
-//            )
-//        );
-//
-//        // Rotate around vertical axis.
-//        bladeModel = glm::rotate(
-//            bladeModel,
-//            angle,
-//            glm::vec3(0.0f, 1.0f, 0.0f)
-//        );
-//
-//        // Tilt blade outwards.
-//        bladeModel = glm::rotate(
-//            bladeModel,
-//            tilt,
-//            glm::vec3(1.0f, 0.0f, 0.0f)
-//        );
-//
-//        // Apply height and width variation.
-//        bladeModel = glm::scale(
-//            bladeModel,
-//            glm::vec3(
-//                widthScale,
-//                heightScale,
-//                widthScale
-//            )
-//        );
-//
-//        // Store transformation for GPU instancing.
-//        matrices.push_back(bladeModel);
-//    }
-//}
+// =====================================================
+// GENERATE MIXED NORMAL AND BROKEN GRASS BLADES
+// =====================================================
+
+void GrassClump::AppendMixedInstanceMatrices(
+    const glm::mat4& clumpModel,
+    const GrassClumpSettings& settings,
+    std::uint32_t seed,
+    std::vector<glm::mat4>& normalMatrices,
+    std::vector<glm::mat4>& brokenMatrices
+) const
+{
+    // Generate the original blade transformations.
+    // This preserves our existing outward growth.
+    std::vector<glm::mat4> clumpMatrices;
+
+    AppendInstanceMatrices(
+        clumpModel,
+        settings,
+        seed,
+        clumpMatrices
+    );
+
+    const std::size_t bladeCount =
+        clumpMatrices.size();
+
+    if (bladeCount == 0)
+        return;
+
+    // Clamp the requested percentage.
+    const float percentage = std::clamp(
+        settings.brokenBladePercentage,
+        0.0f,
+        100.0f
+    );
+
+    // Work out how many blades should be broken.
+    const std::size_t brokenCount =
+        static_cast<std::size_t>(
+            std::round(
+                static_cast<float>(bladeCount) *
+                percentage / 100.0f
+            )
+            );
+
+    // Create one index for each blade.
+    std::vector<std::size_t> indices(bladeCount);
+
+    std::iota(
+        indices.begin(),
+        indices.end(),
+        std::size_t{ 0 }
+    );
+
+    // Randomise which blades will be broken.
+    // Using a seed gives repeatable results.
+    std::mt19937 random(
+        seed ^ 0xBADC0DEu
+    );
+
+    std::shuffle(
+        indices.begin(),
+        indices.end(),
+        random
+    );
+
+    // Mark the selected broken blades.
+    std::vector<bool> isBroken(
+        bladeCount,
+        false
+    );
+
+    for (std::size_t i = 0; i < brokenCount; ++i)
+    {
+        isBroken[indices[i]] = true;
+    }
+
+    // Separate the transformations into two groups.
+    for (std::size_t i = 0; i < bladeCount; ++i)
+    {
+        if (isBroken[i])
+        {
+            brokenMatrices.push_back(
+                clumpMatrices[i]
+            );
+        }
+        else
+        {
+            normalMatrices.push_back(
+                clumpMatrices[i]
+            );
+        }
+    }
+}

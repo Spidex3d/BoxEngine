@@ -140,3 +140,103 @@ void PlantPreview::Render(
         glEnable(GL_CULL_FACE);
     }
 }
+
+// =====================================================
+// RENDER SINGLE PLANT BLADE
+// =====================================================
+
+void PlantPreview::RenderSingleBlade(
+    GrassBlade& grassBlade,
+    Shader& shader,
+    const glm::mat4& view,
+    const glm::mat4& projection)
+{
+    if (!m_visible || shader.ID() == 0)
+        return;
+
+    shader.Use();
+
+    // Camera matrices
+    shader.setMat4("uView", view);
+    shader.setMat4("uProjection", projection);
+
+    // Lighting
+    shader.setVec3(
+        "uLightDirection",
+        glm::normalize(
+            glm::vec3(0.5f, 1.0f, 0.4f)
+        )
+    );
+
+    shader.setVec3(
+        "uLightColor",
+        glm::vec3(1.0f)
+    );
+
+    shader.SetUniformFloat(
+        "uAmbientStrength",
+        0.35f
+    );
+
+    // Position and scale.
+    glm::mat4 model(1.0f);
+
+    model = glm::translate(
+        model,
+        m_position
+    );
+
+    model = glm::scale(
+        model,
+        glm::vec3(m_previewScale)
+    );
+
+    shader.SetUniformInt(
+        "uUseInstancing",
+        0
+    );
+
+    shader.setMat4(
+        "uModel",
+        model
+    );
+
+    // Render both sides of the leaf.
+    const GLboolean cullingEnabled =
+        glIsEnabled(GL_CULL_FACE);
+
+    glDisable(GL_CULL_FACE);
+
+    grassBlade.Draw();
+
+    if (cullingEnabled)
+    {
+        glEnable(GL_CULL_FACE);
+    }
+}
+void PlantPreview::SetMode(PlantPreviewMode mode)
+{
+    m_mode = mode;
+}
+
+PlantPreviewMode PlantPreview::GetMode() const
+{
+    return m_mode;
+}
+
+// =====================================================
+// PLANT PREVIEW SETTINGS
+// =====================================================
+
+PlantPreviewSettings& PlantPreview::GetSettings()
+{
+    return m_settings;
+}
+
+void PlantPreview::ApplyPreviewScale()
+{
+    m_previewScale = glm::max(
+        m_settings.previewScale,
+        0.01f
+    );
+}

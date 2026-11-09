@@ -472,22 +472,33 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
         // TEST OBJECTS
         // =====================================================
 
-        if (ImGui::BeginMenu("Test Objects"))
+        // =====================================================
+        // PLANT PREVIEW MENU
+        // =====================================================
+
+        if (ImGui::BeginMenu("Plant Preview"))
         {
-            if (ImGui::MenuItem("Test Plant Preview"))
+            if (ImGui::MenuItem("Normal Grass Blade"))
             {
-                action = ViewportAction::PlantPreview;
+                action = ViewportAction::PreviewNormalBlade;
+            }
+
+            if (ImGui::MenuItem("Broken Grass Blade"))
+            {
+                action = ViewportAction::PreviewBrokenBlade;
+            }
+
+            if (ImGui::MenuItem("Grass Clump"))
+            {
+                action = ViewportAction::PreviewGrassClump;
             }
 
             ImGui::Separator();
 
-            ImGui::BeginDisabled();
-
-            ImGui::MenuItem("Grass Clump");
-            ImGui::MenuItem("Procedural Rock");
-            ImGui::MenuItem("Procedural Tree");
-
-            ImGui::EndDisabled();
+            if (ImGui::MenuItem("Show / Hide Preview"))
+            {
+                action = ViewportAction::PlantPreview;
+            }
 
             ImGui::EndMenu();
         }
@@ -810,163 +821,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             
             ImGui::Image((ImTextureID)(static_cast<intptr_t>(sceneTexture)), availableSize, ImVec2(0, 1), ImVec2(1, 0));
 
-            // =====================================================
-            // PARTICLE SCATTER DEBUG DISPLAY
-            // =====================================================
-
-            //Entity* scatterEntity = engine.GetSelectedEntity();
-
-            //if (scatterEntity)
-            //{
-            //    const MeshEditing& mesh = scatterEntity->GetEditableMesh();
-            //    {
-            //        // ---------------------------------------------
-            //        // Get camera matrices
-            //        // ---------------------------------------------
-
-            //        Camera& camera =
-            //            engine.GetCamera();
-
-            //        const glm::mat4 view =
-            //            camera.GetViewMatrix();
-
-            //        const float aspectRatio =
-            //            availableSize.x / availableSize.y;
-
-            //        const glm::mat4 projection =
-            //            camera.GetProjectionMatrix(aspectRatio);
-
-            //        const glm::mat4 model =
-            //            scatterEntity->GetModelMatrix();
-
-            //        const glm::mat4 MVP =
-            //            projection * view * model;
-
-            //        // ---------------------------------------------
-            //        // Get the screen rectangle of our viewport
-            //        // ---------------------------------------------
-
-            //        const ImVec2 imageMin =
-            //            ImGui::GetItemRectMin();
-
-            //        const ImVec2 imageMax =
-            //            ImGui::GetItemRectMax();
-
-            //        ImDrawList* drawList =
-            //            ImGui::GetWindowDrawList();
-
-            //        drawList->PushClipRect(
-            //            imageMin,
-            //            imageMax,
-            //            true
-            //        );
-
-            //        // ---------------------------------------------
-            //        // Find active Surface Scatter modifiers
-            //        // ---------------------------------------------
-
-            //        const auto& modifiers =
-            //            scatterEntity->GetModifiers();
-
-            //        for (std::size_t modifierIndex = 0;
-            //            modifierIndex < modifiers.size();
-            //            ++modifierIndex)
-            //        {
-            //            const ModifierData& modifier = modifiers[modifierIndex];
-
-            //            if (modifier.type != ModifierType::Scatter)
-            //                continue;
-
-            //            if (!modifier.modEnabled)
-            //                continue;
-
-            //            const ParticleScatterData& scatter =
-            //                modifier.scatter;
-
-            //            // -----------------------------------------
-            //            // Generate scatter positions
-            //            // -----------------------------------------
-
-
-            //            // ============================================
-            //            // GET CACHED SCATTER POINTS
-            //            // ============================================
-
-            //            if (scatter.faceIndices.empty())
-            //                continue;
-
-            //            const std::size_t targetFace =
-            //                scatter.faceIndices[0];
-
-            //            if (targetFace >= mesh.GetFaceCount())
-            //                continue;
-
-            //            const std::vector<ScatterPoint>& points =
-            //                ParticleScatter::GetCachedOnFace(
-            //                    scatterEntity->GetID(),
-            //                    modifierIndex,
-            //                    mesh,
-            //                    targetFace,
-            //                    scatter.count,
-            //                    scatter.seed
-            //                );
-            //         
-
-            //            // -----------------------------------------
-            //            // Draw each point
-            //            // -----------------------------------------
-
-            //            for (const ScatterPoint& point : points)
-            //            {
-            //                // Convert local position to clip space
-            //                const glm::vec4 clipPosition =
-            //                    MVP * glm::vec4(point.position, 1.0f);
-
-            //                // Ignore points behind the camera
-            //                if (clipPosition.w <= 0.0f)
-            //                    continue;
-
-            //                // Perspective division
-            //                const glm::vec3 ndc =
-            //                    glm::vec3(clipPosition) /
-            //                    clipPosition.w;
-
-            //                // Ignore points outside clip depth
-            //                if (ndc.z < -1.0f || ndc.z > 1.0f)
-            //                    continue;
-
-            //                // Convert NDC to viewport screen coordinates
-            //                const float screenX =
-            //                    imageMin.x +
-            //                    (ndc.x * 0.5f + 0.5f) *
-            //                    (imageMax.x - imageMin.x);
-
-            //                const float screenY =
-            //                    imageMin.y +
-            //                    (1.0f - (ndc.y * 0.5f + 0.5f)) *
-            //                    (imageMax.y - imageMin.y);
-
-            //                // Draw a small green point
-            //                drawList->AddCircleFilled(
-            //                    ImVec2(screenX, screenY),
-            //                    3.0f,
-            //                    IM_COL32(40, 255, 60, 255)
-            //                );
-            //            }
-            //        }
-
-            //        drawList->PopClipRect();
-            //    }
-            //}
-
-            // =====================================================
-            // END PARTICLE SCATTER DEBUG DISPLAY
-            // =====================================================
-
-
-
-
-
+            
 
 			// ################################ End Test Code #########################################
 
@@ -1066,11 +921,11 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                     originalSpeed;
             }
 
-            // ################################ Game Camera ########################################
+             //################################ Game Camera ########################################
 
-            // ########################################################################
-            // Play Mode Camera Input
-            // ########################################################################
+             //########################################################################
+             //Play Mode Camera Input
+             //########################################################################
 
             if (engine.IsPlaying())
             {
@@ -1231,7 +1086,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
            
             // ########################################################################
             const bool objectModeActive = m_EditMode == 1;
-           // m_transformTools.HandleInput(engine, viewportHovered, objectModeActive);
+            //m_transformTools.HandleInput(engine, viewportHovered, objectModeActive);
 
 			// Only allow transform tools to handle input when the engine is not playing 
             const bool editorInputActive = !engine.IsPlaying();

@@ -23,9 +23,17 @@
 // PARTICLE SYSTEM - GRASS RENDERING
 // =====================================================
 
+//void ParticleSystemRender::RenderGrass(
+//    const std::vector<std::unique_ptr<Entity>>& entities,
+//    GrassBlade& grassBlade,
+//    const GrassClump& grassClump,
+//    Shader& shader,
+//    const glm::mat4& view,
+//    const glm::mat4& projection)
 void ParticleSystemRender::RenderGrass(
     const std::vector<std::unique_ptr<Entity>>& entities,
     GrassBlade& grassBlade,
+    GrassBlade& brokenGrassBlade,
     const GrassClump& grassClump,
     Shader& shader,
     const glm::mat4& view,
@@ -53,6 +61,7 @@ void ParticleSystemRender::RenderGrass(
     glDisable(GL_CULL_FACE);
 
     std::vector<glm::mat4> allGrassMatrices;
+    std::vector<glm::mat4> allBrokenGrassMatrices;
 
     // =================================================
     // CHECK ALL ENTITIES
@@ -236,6 +245,13 @@ void ParticleSystemRender::RenderGrass(
                     settings.minTilt = entry.minBladeTilt;
                     settings.maxTilt = entry.maxBladeTilt;
 
+                    // Temporary setting until we connect the panel.
+                    //settings.brokenBladePercentage = 15.0f;
+
+                    // Broken blade percentage from the particle settings.
+                    settings.brokenBladePercentage =
+                        entry.brokenBladePercentage;
+
                     // =================================
                     // GENERATE CLUMPS
                     // =================================
@@ -361,12 +377,20 @@ void ParticleSystemRender::RenderGrass(
                             (clumpSeed << 6) +
                             (clumpSeed >> 2);
 
-                        grassClump.AppendInstanceMatrices(
+                        grassClump.AppendMixedInstanceMatrices(
+                            model,
+                            settings,
+                            clumpSeed,
+                            allGrassMatrices,
+                            allBrokenGrassMatrices
+                        );
+
+                        /*grassClump.AppendInstanceMatrices(
                             model,
                             settings,
                             clumpSeed,
                             allGrassMatrices
-                        );
+                        );*/
                     }
                 }
             }
@@ -377,33 +401,41 @@ void ParticleSystemRender::RenderGrass(
     // GPU INSTANCE BUFFER CACHING
     // =================================================
 
-    bool grassChanged =
-        allGrassMatrices.size() !=
-        m_cachedGrassMatrices.size();
+    // =================================================
+// GPU INSTANCE BUFFER CACHING
+// =================================================
 
-    if (!grassChanged)
+// Compare two collections of instance matrices.
+    auto matricesChanged = [](
+        const std::vector<glm::mat4>& current,
+        const std::vector<glm::mat4>& cached) -> bool
     {
-        for (std::size_t i = 0;
-            i < allGrassMatrices.size();
-            ++i)
+        if (current.size() != cached.size())
+            return true;
+
+        for (std::size_t i = 0; i < current.size(); ++i)
         {
             for (int column = 0; column < 4; ++column)
             {
                 if (!glm::all(glm::equal(
-                    allGrassMatrices[i][column],
-                    m_cachedGrassMatrices[i][column])))
+                    current[i][column],
+                    cached[i][column])))
                 {
-                    grassChanged = true;
-                    break;
+                    return true;
                 }
             }
-
-            if (grassChanged)
-                break;
         }
-    }
 
-    if (grassChanged)
+        return false;
+    };
+
+    // -------------------------------------------------
+    // Normal grass cache
+    // -------------------------------------------------
+
+    if (matricesChanged(
+        allGrassMatrices,
+        m_cachedGrassMatrices))
     {
         grassBlade.UploadInstanceMatrices(
             allGrassMatrices
@@ -413,25 +445,110 @@ void ParticleSystemRender::RenderGrass(
             std::move(allGrassMatrices);
     }
 
-    // =================================================
-    // DRAW CACHED GRASS
-    // =================================================
+    // -------------------------------------------------
+    // Broken grass cache
+    // -------------------------------------------------
 
-    if (!m_cachedGrassMatrices.empty())
+    if (matricesChanged(
+        allBrokenGrassMatrices,
+        m_cachedBrokenGrassMatrices))
     {
-        shader.Use();
-
-        shader.SetUniformInt("uUseInstancing", 1);
-
-        shader.setMat4(
-            "uModel",
-            glm::mat4(1.0f)
+        brokenGrassBlade.UploadInstanceMatrices(
+            allBrokenGrassMatrices
         );
 
-        grassBlade.DrawCachedInstances();
-
-        shader.SetUniformInt("uUseInstancing", 0);
+        m_cachedBrokenGrassMatrices =
+            std::move(allBrokenGrassMatrices);
     }
+
+    // =================================================
+    // DRAW INSTANCED GRASS
+    // =================================================
+
+    shader.Use();
+
+    shader.SetUniformInt(
+        "uUseInstancing",
+        1
+    );
+
+    shader.setMat4(
+        "uModel",
+        glm::mat4(1.0f)
+    );
+
+    // Draw all normal blades.
+    if (!m_cachedGrassMatrices.empty())
+    {
+        grassBlade.DrawCachedInstances();
+    }
+
+    // Draw all broken blades.
+    if (!m_cachedBrokenGrassMatrices.empty())
+    {
+        brokenGrassBlade.DrawCachedInstances();
+    }
+
+    shader.SetUniformInt(
+        "uUseInstancing",
+        0
+    );
+
+    //bool grassChanged =
+    //    allGrassMatrices.size() !=
+    //    m_cachedGrassMatrices.size();
+
+    //if (!grassChanged)
+    //{
+    //    for (std::size_t i = 0;
+    //        i < allGrassMatrices.size();
+    //        ++i)
+    //    {
+    //        for (int column = 0; column < 4; ++column)
+    //        {
+    //            if (!glm::all(glm::equal(
+    //                allGrassMatrices[i][column],
+    //                m_cachedGrassMatrices[i][column])))
+    //            {
+    //                grassChanged = true;
+    //                break;
+    //            }
+    //        }
+
+    //        if (grassChanged)
+    //            break;
+    //    }
+    //}
+
+    //if (grassChanged)
+    //{
+    //    grassBlade.UploadInstanceMatrices(
+    //        allGrassMatrices
+    //    );
+
+    //    m_cachedGrassMatrices =
+    //        std::move(allGrassMatrices);
+    //}
+
+    //// =================================================
+    //// DRAW CACHED GRASS
+    //// =================================================
+
+    //if (!m_cachedGrassMatrices.empty())
+    //{
+    //    shader.Use();
+
+    //    shader.SetUniformInt("uUseInstancing", 1);
+
+    //    shader.setMat4(
+    //        "uModel",
+    //        glm::mat4(1.0f)
+    //    );
+
+    //    grassBlade.DrawCachedInstances();
+
+    //    shader.SetUniformInt("uUseInstancing", 0);
+    //}
 
     // Restore the previous face-culling state.
     if (cullingEnabled)
@@ -443,8 +560,14 @@ void ParticleSystemRender::RenderGrass(
 // =====================================================
 // CLEAR GRASS CACHE
 // =====================================================
-
 void ParticleSystemRender::ClearGrassCache()
 {
     m_cachedGrassMatrices.clear();
+    m_cachedBrokenGrassMatrices.clear();
 }
+
+
+//void ParticleSystemRender::ClearGrassCache()
+//{
+//    m_cachedGrassMatrices.clear();
+//}

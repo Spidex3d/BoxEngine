@@ -254,6 +254,121 @@ int App::Run()
         ViewportAction viewportAction = m_sceneViewport->DrawSceneViewport(*m_engine, *m_editorIcons);
 
         HandleViewportAction(viewportAction, *m_engine);
+
+        // =====================================================
+		// ===================================== PLANT PREVIEW SETTINGS WINDOW ========================================
+        // =====================================================
+
+        if (m_engine->m_plantPreview.IsVisible())
+        {
+            bool previewOpen = true;
+
+            ImGui::SetNextWindowSize(
+                ImVec2(340.0f, 360.0f),
+                ImGuiCond_FirstUseEver
+            );
+
+            if (ImGui::Begin(
+                "Plant Preview Settings",
+                &previewOpen
+            ))
+            {
+                PlantPreviewSettings& settings =
+                    m_engine->m_plantPreview.GetSettings();
+
+                ImGui::Text("Plant Geometry");
+
+                ImGui::Separator();
+
+                ImGui::InputFloat(
+                    "Blade Width",
+                    &settings.bladeWidth,
+                    0.001f,
+                    0.01f,
+                    "%.4f"
+                );
+
+                ImGui::InputFloat(
+                    "Blade Height",
+                    &settings.bladeHeight,
+                    0.01f,
+                    0.10f,
+                    "%.3f"
+                );
+
+                ImGui::InputFloat(
+                    "Curvature",
+                    &settings.curvature,
+                    0.005f,
+                    0.01f,
+                    "%.4f"
+                );
+
+                ImGui::InputFloat(
+                    "Concavity",
+                    &settings.concavity,
+                    0.0005f,
+                    0.001f,
+                    "%.4f"
+                );
+
+                ImGui::Spacing();
+
+                ImGui::Text("Broken Blade");
+
+                ImGui::Separator();
+
+                ImGui::InputFloat(
+                    "Break Position",
+                    &settings.breakPosition,
+                    0.05f,
+                    0.10f,
+                    "%.2f"
+                );
+
+                ImGui::InputFloat(
+                    "Break Angle",
+                    &settings.breakAngle,
+                    5.0f,
+                    10.0f,
+                    "%.1f"
+                );
+
+                ImGui::Spacing();
+
+                ImGui::Text("Preview");
+
+                ImGui::Separator();
+
+                ImGui::InputFloat(
+                    "Preview Scale",
+                    &settings.previewScale,
+                    1.0f,
+                    5.0f,
+                    "%.2f"
+                );
+
+                ImGui::Spacing();
+
+                if (ImGui::Button(
+                    "Apply Settings",
+                    ImVec2(-1.0f, 0.0f)
+                ))
+                {
+                    m_engine->ApplyPlantPreviewSettings();
+                }
+            }
+
+            ImGui::End();
+
+            // Closing the settings window also hides the preview.
+            if (!previewOpen)
+            {
+                m_engine->m_plantPreview.Hide();
+            }
+        }
+
+		// ############################################# END PLANT PREVIEW ########################################
         
 		m_imgSceneCollection->DrawSceneCollection(*m_engine); // Draw the Scene Collection panel cubes and other entities in the scene
 		// ------------------------------ Object Explorer Panel --------------------------------------
@@ -337,16 +452,13 @@ int App::Run()
         }
 
         // -----------------------------------------
-     // Runtime game update
-     // -----------------------------------------
+        // Runtime game update
+        // -----------------------------------------
 
         if (m_engine->IsPlaying())
         {
             m_engine->GetGame().Update(*m_engine, m_deltaTime);
         }
-
-
-
 
 		m_imgui->RenderImGui();
 
@@ -659,15 +771,8 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
 
 		engine.AddEditableTorus(glm::vec3(0.0f, 0.0f, 0.0f));
 		break;
-        // ---------------------------------------------------------
-        // Ecosystem - Rock
-        // ---------------------------------------------------------
-    /*case ViewportAction::AddEditableRock:
-
-        engine.AddEditableRock(glm::vec3(0.0f, 0.0f, 0.0f));
-
-        break;*/
-
+        
+		// Material Editor action
     case ViewportAction::AddMaterial:
         
         if (m_materialEditorPanel)
@@ -685,7 +790,7 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
 		break;
 
         // =====================================================
-        // TEST OBJECTS
+		// TEST OBJECTS PLANT PREVIEW
         // =====================================================
 
     case ViewportAction::PlantPreview:
@@ -693,6 +798,28 @@ void App::HandleViewportAction(ViewportAction action, BoxEngine& engine)
         engine.TogglePlantPreview();
         break;
     }
+
+    case ViewportAction::PreviewNormalBlade:
+    {
+        engine.SetPlantPreviewMode(PlantPreviewMode::NormalBlade);
+
+        break;
+    }
+
+    case ViewportAction::PreviewBrokenBlade:
+    {
+        engine.SetPlantPreviewMode(PlantPreviewMode::BrokenBlade);
+
+        break;
+    }
+
+    case ViewportAction::PreviewGrassClump:
+    {
+        engine.SetPlantPreviewMode(PlantPreviewMode::GrassClump);
+
+        break;
+    }
+
 
 		// -------------------------------------------- Ecosystem Panel --------------------------------------------
 	case ViewportAction::Ecosystem:
@@ -1558,8 +1685,6 @@ void App::RebuildImportedMaterialSlots(BoxEngine& engine, Entity& entity, const 
         );
     }
 }
-
-
 
 // shutdown the window and ImGui context and go to bed.
 void App::Shutdown()

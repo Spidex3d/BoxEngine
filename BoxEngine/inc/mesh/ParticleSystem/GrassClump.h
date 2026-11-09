@@ -18,6 +18,9 @@ struct GrassClumpSettings
     // Number of blades in one clump
     int bladeCount = 7;
 
+    // Percentage of broken blades in each clump.
+    float brokenBladePercentage = 15.0f;
+
     // Maximum distance from clump centre (metres)
     float spread = 0.035f;
 
@@ -65,6 +68,19 @@ public:
         std::uint32_t seed,
         std::vector<glm::mat4>& matrices
     ) const;
+
+    // Generate a mixture of normal and broken blades.
+    void AppendMixedInstanceMatrices(
+        const glm::mat4& clumpModel,
+        const GrassClumpSettings& settings,
+        std::uint32_t seed,
+        std::vector<glm::mat4>& normalMatrices,
+        std::vector<glm::mat4>& brokenMatrices
+    ) const;
+
+
+
+
 };
 
 
