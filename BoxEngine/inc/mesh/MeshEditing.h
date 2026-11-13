@@ -69,7 +69,8 @@ public:
 	// ----------------------------- Ecosystem Mesh Creation -----------------------------
 	bool CreateFloor(float width, float depth, int subdivisionsX, int subdivisionsZ);
     //bool CreateRock(int rockSectors, int rockStacks, float rockRadius, float rockRoughness, std::uint32_t rockSeed, float rockFlattening);
-    bool CreateRock(int rockSubdivisions, float rockRadius, float rockRoughness, std::uint32_t rockSeed, float rockFlattening);
+    bool CreateRock(int rockSubdivisions, float rockRadius, float rockRoughness, std::uint32_t rockSeed, float rockFlattening, 
+        float rockElongation, float rockAngularity, int flatFaceCount = 0, float cutDepth = 0.0f, bool randomFaceDirection = false);
 
 
     std::size_t GetVertexCount() const;

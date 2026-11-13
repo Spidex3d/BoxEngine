@@ -669,7 +669,8 @@ bool BoxEngine::AddEditableFloor(const glm::vec3& position, float width, float d
 }
 //bool BoxEngine::AddEditableRock(const glm::vec3& position)
 bool BoxEngine::AddEditableRock(const glm::vec3& position, float radius,
-    int subdivisions, float roughness, std::uint32_t seed, float flattening)
+    int subdivisions, float roughness, std::uint32_t seed, float flattening, float elongation, float angularity,
+    int flatFaceCount, float cutDepth, bool randomFaceDirection)
 {
     BOX_LOG_INFO(
         "AddEditableRock - Seed = "
@@ -713,7 +714,12 @@ bool BoxEngine::AddEditableRock(const glm::vec3& position, float radius,
         radius,
         roughness,
         seed,
-        flattening))
+        flattening,
+        elongation,
+        angularity,
+        flatFaceCount,
+        cutDepth,
+        randomFaceDirection))
     {
         BOX_LOG_ERROR(
             "Failed to add editable rock"
@@ -721,6 +727,9 @@ bool BoxEngine::AddEditableRock(const glm::vec3& position, float radius,
 
         return false;
     }
+
+    // NEW: Remember that this is a rock.
+    rock->SetPrimitiveType(EntityPrimitiveType::Rock);
 
     m_entities.push_back(std::move(rock));
 

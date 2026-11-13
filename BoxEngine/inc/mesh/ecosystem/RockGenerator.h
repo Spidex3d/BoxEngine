@@ -16,7 +16,12 @@ public:
         int subdivisions,
         float roughness,
         std::uint32_t seed,
-        float rockFlattening
+        float rockFlattening,
+        float rockElongation = 1.0f,
+        float rockAngularity = 0.0f,
+        int flatFaceCount = 0,
+        float cutDepth = 0.0f,
+        bool randomFaceDirection = false
     );
 
 private:

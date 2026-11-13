@@ -6,55 +6,200 @@
 #include <random>
 #include <glm\gtc\constants.hpp>
 #include <unordered_map>
+#include <cfloat>
+#include <array>
+#include <limits>
+
+
+
 
 namespace
 {
+    // =====================================================
+    // HASH FUNCTION
+    // =====================================================
+
+    std::uint32_t RockHash(std::uint32_t value)
+    {
+        value ^= value >> 16;
+        value *= 0x7FEB352Du;
+        value ^= value >> 15;
+        value *= 0x846CA68Bu;
+        value ^= value >> 16;
+
+        return value;
+    }
+
+    // =====================================================
+    // GRADIENT DIRECTION
+    // =====================================================
+
+    glm::vec3 RockGradient(
+        int x,
+        int y,
+        int z,
+        std::uint32_t seed)
+    {
+        std::uint32_t hash = RockHash(
+            static_cast<std::uint32_t>(x) * 73856093u ^
+            static_cast<std::uint32_t>(y) * 19349663u ^
+            static_cast<std::uint32_t>(z) * 83492791u ^
+            seed
+        );
+
+        static const glm::vec3 gradients[] =
+        {
+            { 1, 1, 0 }, { -1, 1, 0 },
+            { 1,-1, 0 }, { -1,-1, 0 },
+
+            { 1, 0, 1 }, { -1, 0, 1 },
+            { 1, 0,-1 }, { -1, 0,-1 },
+
+            { 0, 1, 1 }, { 0,-1, 1 },
+            { 0, 1,-1 }, { 0,-1,-1 }
+        };
+
+        return glm::normalize(
+            gradients[hash % 12]
+        );
+    }
+
+    // =====================================================
+    // SMOOTH INTERPOLATION
+    // =====================================================
+
+    float RockFade(float t)
+    {
+        return t * t * t *
+            (t * (t * 6.0f - 15.0f) + 10.0f);
+    }
+
+    // =====================================================
+    // 3D GRADIENT NOISE
+    // =====================================================
+
+    float RockGradientNoise(
+        const glm::vec3& p,
+        std::uint32_t seed)
+    {
+        const glm::vec3 cell = glm::floor(p);
+        const glm::vec3 local = p - cell;
+
+        const int x = static_cast<int>(cell.x);
+        const int y = static_cast<int>(cell.y);
+        const int z = static_cast<int>(cell.z);
+
+        const glm::vec3 fade(
+            RockFade(local.x),
+            RockFade(local.y),
+            RockFade(local.z)
+        );
+
+        float values[2][2][2];
+
+        for (int dz = 0; dz < 2; ++dz)
+        {
+            for (int dy = 0; dy < 2; ++dy)
+            {
+                for (int dx = 0; dx < 2; ++dx)
+                {
+                    const glm::vec3 gradient =
+                        RockGradient(
+                            x + dx,
+                            y + dy,
+                            z + dz,
+                            seed
+                        );
+
+                    const glm::vec3 offset =
+                        local - glm::vec3(
+                            static_cast<float>(dx),
+                            static_cast<float>(dy),
+                            static_cast<float>(dz)
+                        );
+
+                    values[dx][dy][dz] =
+                        glm::dot(gradient, offset);
+                }
+            }
+        }
+
+        const float x00 = glm::mix(
+            values[0][0][0],
+            values[1][0][0],
+            fade.x
+        );
+
+        const float x10 = glm::mix(
+            values[0][1][0],
+            values[1][1][0],
+            fade.x
+        );
+
+        const float x01 = glm::mix(
+            values[0][0][1],
+            values[1][0][1],
+            fade.x
+        );
+
+        const float x11 = glm::mix(
+            values[0][1][1],
+            values[1][1][1],
+            fade.x
+        );
+
+        const float y0 = glm::mix(
+            x00,
+            x10,
+            fade.y
+        );
+
+        const float y1 = glm::mix(
+            x01,
+            x11,
+            fade.y
+        );
+
+        return glm::mix(
+            y0,
+            y1,
+            fade.z
+        );
+    }
+
+    // =====================================================
+    // MULTI-OCTAVE ROCK NOISE
+    // =====================================================
+
     float RockNoise(
         const glm::vec3& p,
         std::uint32_t seed)
     {
-        // Turn the integer seed into several
-        // different deterministic offsets.
-        const float seedX =
-            static_cast<float>((seed * 16807u) % 1000u)
-            * 0.017f;
+        float noise = 0.0f;
+        float amplitude = 1.0f;
+        float frequency = 1.6f;
+        float totalAmplitude = 0.0f;
 
-        const float seedY =
-            static_cast<float>((seed * 48271u) % 1000u)
-            * 0.019f;
+        constexpr int octaves = 4;
 
-        const float seedZ =
-            static_cast<float>((seed * 69621u) % 1000u)
-            * 0.023f;
+        for (int i = 0; i < octaves; ++i)
+        {
+            noise += RockGradientNoise(
+                p * frequency,
+                seed + static_cast<std::uint32_t>(i) * 1013u
+            ) * amplitude;
 
-        // Large-scale shape.
-        const float noise1 = std::sin(
-            (p.x + seedX) * 2.3f +
-            (p.y + seedY) * 1.7f +
-            (p.z + seedZ) * 2.9f
-        );
+            totalAmplitude += amplitude;
 
-        // Medium-scale lumps.
-        const float noise2 = std::sin(
-            (p.x + seedZ) * 4.1f -
-            (p.y + seedX) * 3.3f +
-            (p.z + seedY) * 3.7f
-        );
+            amplitude *= 0.5f;
+            frequency *= 2.0f;
+        }
 
-        // Smaller irregularities.
-        const float noise3 = std::sin(
-            (p.x + seedY) * 7.3f +
-            (p.y + seedZ) * 5.1f -
-            (p.z + seedX) * 6.7f
-        );
-
-        return
-            noise1 * 0.55f +
-            noise2 * 0.30f +
-            noise3 * 0.15f;
+        return totalAmplitude > 0.0f
+            ? noise / totalAmplitude
+            : 0.0f;
     }
 }
-
 
 
 void MeshEditing::Clear()
@@ -354,7 +499,8 @@ bool MeshEditing::CreateFloor(float width, float depth, int subdivisionsX, int s
 
 // ----------------------------- Rock Creation -----------------------------
 //bool MeshEditing::CreateRock(int rockSubdivisions, float rockRadius, float rockRadius, float rockRoughness, std::uint32_t rockSeed, float rockFlattening)
-bool MeshEditing::CreateRock(int rockSubdivisions, float rockRadius, float rockRoughness, std::uint32_t rockSeed, float rockFlattening)
+bool MeshEditing::CreateRock(int rockSubdivisions, float rockRadius, float rockRoughness, std::uint32_t rockSeed, float rockFlattening,
+    float rockElongation, float rockAngularity, int flatFaceCount, float cutDepth, bool randomFaceDirection)
 
 {
     // -------------------------------------------------
@@ -374,6 +520,10 @@ bool MeshEditing::CreateRock(int rockSubdivisions, float rockRadius, float rockR
     // Rocks start flat shaded.
     m_shadingMode = ShadingMode::Flat;
 
+    rockElongation = glm::clamp(rockElongation, 0.25f, 4.0f);
+
+    rockAngularity = glm::clamp(rockAngularity, 0.0f, 1.0f);
+
     // -------------------------------------------------
     // Scale IcoSphere to requested rock radius
     //
@@ -381,39 +531,266 @@ bool MeshEditing::CreateRock(int rockSubdivisions, float rockRadius, float rockR
     // Therefore radius 1.0 requires a scale of 2.0.
     // -------------------------------------------------
 
-    const float radiusScale =
-        rockRadius / 0.5f;
+    const float radiusScale = rockRadius / 0.5f;
+
 
     for (EditVertex& vertex : m_vertices)
     {
-        // Direction from the centre of the IcoSphere.
+        // Direction from the IcoSphere centre.
         const glm::vec3 direction =
             glm::normalize(vertex.position);
 
-        // Seeded procedural deformation.
-        const float noise =
-            RockNoise(
-                direction,
-                rockSeed
-            );
+        // ================================================
+        // PROCEDURAL ROUGHNESS
+        // ================================================
+
+        const float noise = RockNoise(
+            direction,
+            rockSeed
+        );
 
         const float distortion =
-            1.0f +
-            noise * rockRoughness;
+            1.0f + noise * rockRoughness;
 
-        // Scale the sphere to the requested radius,
-        // then deform it radially.
+        // ================================================
+        // ANGULARITY
+        // ================================================
+        // Intersect the radial direction with an
+        // imaginary collection of planar rock faces.
+        // Blending this radius with the sphere radius
+        // produces increasingly faceted shapes.
+
+        const glm::vec3 planes[] =
+        {
+            { 1.0f,  0.0f,  0.0f },
+            {-1.0f,  0.0f,  0.0f },
+            { 0.0f,  1.0f,  0.0f },
+            { 0.0f, -1.0f,  0.0f },
+            { 0.0f,  0.0f,  1.0f },
+            { 0.0f,  0.0f, -1.0f },
+
+            glm::normalize(glm::vec3(1,  1,  1)),
+            glm::normalize(glm::vec3(-1,  1,  1)),
+            glm::normalize(glm::vec3(1, -1,  1)),
+            glm::normalize(glm::vec3(1,  1, -1)),
+
+            glm::normalize(glm::vec3(-1, -1,  1)),
+            glm::normalize(glm::vec3(-1,  1, -1)),
+            glm::normalize(glm::vec3(1, -1, -1)),
+            glm::normalize(glm::vec3(-1, -1, -1))
+        };
+
+        float angularRadius = 2.0f;
+
+        for (const glm::vec3& plane : planes)
+        {
+            const float projection =
+                glm::dot(direction, plane);
+
+            if (projection > 0.001f)
+            {
+                // Distance to the supporting plane.
+                const float distance =
+                    0.85f / projection;
+
+                angularRadius = glm::min(
+                    angularRadius,
+                    distance
+                );
+            }
+        }
+
+        const float shapeFactor = glm::mix(
+            1.0f,
+            angularRadius,
+            rockAngularity
+        );
+
+        // ================================================
+        // FINAL ROCK SHAPE
+        // ================================================
+
         vertex.position *=
-            radiusScale * distortion;
+            radiusScale * distortion * shapeFactor;
 
-        // Give the rock broader proportions.
-        vertex.position.x *= 1.10f;
+        // Elongation along the X axis.
+        vertex.position.x *= rockElongation;
+
+        // Slight natural depth compression.
         vertex.position.z *= 0.95f;
 
-        // Flatten vertically.
+        // Vertical flattening.
         vertex.position.y *=
             (1.0f - rockFlattening);
     }
+
+    // =====================================================
+    // CREATE LARGE FLAT ROCK FACES
+    // =====================================================
+
+    flatFaceCount = std::clamp(flatFaceCount, 0, 4);
+    cutDepth = glm::clamp(cutDepth, 0.0f, 0.45f);
+
+    // Fixed cutting directions.
+    // The first one creates the side-facing cut
+    // that we liked in the previous test.
+    const std::array<glm::vec3, 4> fixedNormals =
+    {
+        glm::normalize(glm::vec3(1.0f, 0.20f, 0.15f)),
+        glm::normalize(glm::vec3(0.20f, 1.0f, 0.15f)),
+        glm::normalize(glm::vec3(0.15f, 0.20f, 1.0f)),
+        glm::normalize(glm::vec3(-0.85f, 0.30f, -0.40f))
+    };
+
+    // Deterministic random directions.
+    std::mt19937 rng(rockSeed ^ 0x5A17C9E3u);
+
+    std::uniform_real_distribution<float> random01(
+        0.0f, 1.0f
+    );
+
+    constexpr float PI = 3.14159265358979323846f;
+
+    for (int faceIndex = 0;
+        faceIndex < flatFaceCount;
+        ++faceIndex)
+    {
+        glm::vec3 planeNormal = fixedNormals[faceIndex];
+
+        // ---------------------------------------------
+        // Random plane direction
+        // ---------------------------------------------
+
+        if (randomFaceDirection)
+        {
+            const float angle =
+                random01(rng) * 2.0f * PI;
+
+            const float y =
+                random01(rng) * 2.0f - 1.0f;
+
+            const float horizontal =
+                std::sqrt(std::max(
+                    0.0f,
+                    1.0f - y * y
+                ));
+
+            planeNormal = glm::vec3(
+                std::cos(angle) * horizontal,
+                y,
+                std::sin(angle) * horizontal
+            );
+        }
+
+        // ---------------------------------------------
+        // Find the rock's extent along the normal
+        // ---------------------------------------------
+
+        float maxDistance =
+            std::numeric_limits<float>::lowest();
+
+        float minDistance =
+            std::numeric_limits<float>::max();
+
+        for (const EditVertex& vertex : m_vertices)
+        {
+            const float distance =
+                glm::dot(
+                    vertex.position,
+                    planeNormal
+                );
+
+            maxDistance = std::max(
+                maxDistance,
+                distance
+            );
+
+            minDistance = std::min(
+                minDistance,
+                distance
+            );
+        }
+
+        // ---------------------------------------------
+        // Calculate the cutting plane
+        // ---------------------------------------------
+
+        const float rockExtent =
+            maxDistance - minDistance;
+
+        if (rockExtent <= 0.00001f)
+            continue;
+
+        const float planeDistance =
+            maxDistance - rockExtent * cutDepth;
+
+        // ---------------------------------------------
+        // Flatten vertices outside the plane
+        // ---------------------------------------------
+
+        for (EditVertex& vertex : m_vertices)
+        {
+            const float distance =
+                glm::dot(
+                    vertex.position,
+                    planeNormal
+                );
+
+            if (distance > planeDistance)
+            {
+                vertex.position -=
+                    planeNormal *
+                    (distance - planeDistance);
+            }
+        }
+    }
+
+
+
+    //// Direction of our imaginary cutting plane.
+    //// This produces a slightly angled flat face.
+    //const glm::vec3 planeNormal = glm::normalize(
+    //    glm::vec3(1.0f, 0.20f, 0.15f)
+    //);
+
+    //// Find the outermost extent of the rock along
+    //// the cutting plane direction.
+    //float maxDistance = -FLT_MAX;
+    //float minDistance = FLT_MAX;
+
+    //for (const EditVertex& vertex : m_vertices)
+    //{
+    //    const float distance =
+    //        glm::dot(vertex.position, planeNormal);
+
+    //    maxDistance = glm::max(maxDistance, distance);
+    //    minDistance = glm::min(minDistance, distance);
+    //}
+
+    //// How deeply the plane cuts into the rock.
+    //// Higher angularity creates a larger flat face.
+    ////const float cutDepth = glm::mix(0.0f, 0.40f, rockAngularity);
+
+    //const float planeDistance =
+    //    maxDistance -
+    //    (maxDistance - minDistance) * cutDepth;
+
+    //// Project any vertices outside the plane
+    //// directly onto the flat surface.
+    //for (EditVertex& vertex : m_vertices)
+    //{
+    //    const float distance =
+    //        glm::dot(vertex.position, planeNormal);
+
+    //    if (distance > planeDistance)
+    //    {
+    //        vertex.position -=
+    //            planeNormal * (distance - planeDistance);
+    //    }
+    //}
+
+
+    
 
     BOX_LOG_INFO(
         "Created IcoSphere based rock. "

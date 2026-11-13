@@ -12,7 +12,12 @@ bool RockGenerator::Generate(
     int subdivisions,
     float roughness,
     std::uint32_t seed,
-    float rockFlattening)
+    float rockFlattening,
+    float rockElongation,
+    float rockAngularity,
+    int flatFaceCount,
+    float cutDepth,
+    bool randomFaceDirection)
 {
     if (radius <= 0.0f)
     {
@@ -31,7 +36,9 @@ bool RockGenerator::Generate(
         radius,
         roughness,
         seed,
-        rockFlattening
+        rockFlattening,
+        rockElongation,
+        rockAngularity
     );
 }
 

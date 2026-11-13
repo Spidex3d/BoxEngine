@@ -883,6 +883,10 @@ void App::HandleEcoSystemAction(
 
     
     }
+	// ---------------------------------------------
+    // ADD ROCK
+	// ---------------------------------------------
+
     case EcoSystemAction::AddRocks:
     {
         m_engine->AddEditableRock(
@@ -890,10 +894,13 @@ void App::HandleEcoSystemAction(
             m_ecosystemPanel->GetRockRadius(),
             m_ecosystemPanel->GetRockSubdivisions(),
             m_ecosystemPanel->GetRockRoughness(),
-            static_cast<std::uint32_t>(
-                m_ecosystemPanel->GetRockSeed()
-                ),
-            m_ecosystemPanel->GetRockFlattening()
+            static_cast<std::uint32_t>(m_ecosystemPanel->GetRockSeed()),
+            m_ecosystemPanel->GetRockFlattening(),
+            m_ecosystemPanel->GetRockElongation(),
+            m_ecosystemPanel->GetRockAngularity(),
+            m_ecosystemPanel->GetRockFlatFaceCount(),
+            m_ecosystemPanel->GetRockCutDepth(),
+            m_ecosystemPanel->GetRockRandomFaceDirection()
         );
 
         BOX_LOG_INFO(
@@ -901,10 +908,83 @@ void App::HandleEcoSystemAction(
             << m_ecosystemPanel->GetRockSeed()
             << " Flattening: "
             << m_ecosystemPanel->GetRockFlattening()
+            << " Elongation: "
+            << m_ecosystemPanel->GetRockElongation()
+            << " Angularity: "
+            << m_ecosystemPanel->GetRockAngularity()
         );
 
         break;
     }
+
+
+    case EcoSystemAction::RegenerateRock:
+    {
+        // ============================================
+        // FIND THE SELECTED ROCK
+        // ============================================
+
+        Entity* rock = m_engine->GetSelectedEntity();
+
+        if (!rock)
+        {
+            BOX_LOG_WARNING(
+                "Regenerate Rock: No entity selected"
+            );
+
+            break;
+        }
+
+        if (rock->GetPrimitiveType() !=
+            EntityPrimitiveType::Rock)
+        {
+            BOX_LOG_WARNING(
+                "Regenerate Rock: Selected object is not a rock"
+            );
+
+            break;
+        }
+
+        // ============================================
+        // REGENERATE THE ROCK GEOMETRY
+        // ============================================
+
+        const bool success = rock->CreateRock(
+            m_ecosystemPanel->GetRockSubdivisions(),
+            m_ecosystemPanel->GetRockRadius(),
+            m_ecosystemPanel->GetRockRoughness(),
+            static_cast<std::uint32_t>(
+                m_ecosystemPanel->GetRockSeed()
+                ),
+            m_ecosystemPanel->GetRockFlattening(),
+            m_ecosystemPanel->GetRockElongation(),
+            m_ecosystemPanel->GetRockAngularity(),
+            m_ecosystemPanel->GetRockFlatFaceCount(),
+            m_ecosystemPanel->GetRockCutDepth(),
+            m_ecosystemPanel->GetRockRandomFaceDirection()
+        );
+
+        if (!success)
+        {
+            BOX_LOG_ERROR(
+                "Failed to regenerate selected rock"
+            );
+
+            break;
+        }
+
+        // Keep its procedural-rock identity.
+        rock->SetPrimitiveType(
+            EntityPrimitiveType::Rock
+        );
+
+        BOX_LOG_INFO(
+            "Regenerated rock: " << rock->GetName()
+        );
+
+        break;
+    }
+
 
     case EcoSystemAction::AddGrass:
     {

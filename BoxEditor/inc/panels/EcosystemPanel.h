@@ -10,6 +10,7 @@ enum class EcoSystemAction
 	AddFloor,
 	Addterrain,
 	AddRocks,
+	RegenerateRock,
 	AddWater,
 	AddPlants,
 	AddGrass,
@@ -92,6 +93,32 @@ public:
 	{
 		return m_rockFlattening;
 	}
+
+	float GetRockElongation() const
+	{
+		return m_rockElongation;
+	}
+
+	float GetRockAngularity() const
+	{
+		return m_rockAngularity;
+	}
+
+	int GetRockFlatFaceCount() const
+	{
+		return m_rockFlatFaceCount;
+	}
+
+	float GetRockCutDepth() const
+	{
+		return m_rockCutDepth;
+	}
+
+	bool GetRockRandomFaceDirection() const
+	{
+		return m_rockRandomFaceDirection;
+	}
+
 	// ------------------------------ Rock Generator End ----------------
 
 	// ---------------------------------------------------------------------------------------------------------
@@ -209,7 +236,7 @@ private:
 	int m_floorSubdivisionsZ = 20;
 	// ---------------- floor generator End -------------
 
-	// ---------------- Rock Generator ----------------
+	// ---------------- Rock Generator settings ----------------
 
 	int m_rockSeed = 1234;
 
@@ -220,6 +247,17 @@ private:
 	float m_rockRoughness = 0.22f;
 
 	float m_rockFlattening = 0.20f;
+
+	// New rock shape settings
+	float m_rockElongation = 1.0f;
+	float m_rockAngularity = 0.0f;
+	// ============================================
+	// ROCK FLAT FACE SETTINGS
+	// ============================================
+
+	int m_rockFlatFaceCount = 1;
+	float m_rockCutDepth = 0.30f;
+	bool m_rockRandomFaceDirection = false;
 
 	// -------------- Rock Generator End --------------
 

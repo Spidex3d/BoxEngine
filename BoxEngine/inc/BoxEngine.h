@@ -103,7 +103,8 @@ public:
 	bool AddEditableFloor(const glm::vec3& position = glm::vec3(0.0f), float width = 10.0f, float depth = 10.0f, int subdivisionsX = 10, int subdivisionsZ = 10);
 	
     bool AddEditableRock(const glm::vec3& position = glm::vec3(0.0f), float radius = 1.0f, int subdivisions = 2,
-        float roughness = 0.22f, std::uint32_t seed = 1234, float flattening = 0.5f);
+        float roughness = 0.22f, std::uint32_t seed = 1234, float flattening = 0.5f, float elongation = 1.0f,
+        float angularity = 0.0f, int flatFaceCount = 0, float cutDepth = 0.0f, bool randomFaceDirection = false);
 
 	// Add an editable terrain mesh to the scene with specified parameters
 	bool AddEditableTerrain(const glm::vec3& position = glm::vec3(0.0f), int width = 10, int depth = 10, int subdivisionsX = 10, int subdivisionsZ = 10,
