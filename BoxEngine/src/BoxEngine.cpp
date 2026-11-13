@@ -314,8 +314,7 @@ bool BoxEngine::Initialize()
 
     BOX_LOG_INFO("Broken grass preview initialized");
 
-
-
+        
 
 
     // Don't show the test clump automatically.
@@ -324,6 +323,15 @@ bool BoxEngine::Initialize()
 	// =====================================================
 	// END TESTING GRASS BLADE
 	// =====================================================
+
+    // =====================================================
+    //  PARTICLE SYSTEM - ROCK ASSETS
+    // =====================================================
+
+    if (!m_particleSystemRender.LoadSmallRock())
+    {
+        BOX_LOG_ERROR("Failed to initialize small rock asset");
+    }
 
 
 
@@ -1811,6 +1819,8 @@ void BoxEngine::RenderScene()
                 projection
             );*/
         }
+
+        
 
         // ===================================================================================================================
 		// ======================================= END PARTICLE SCATTER ======================================================

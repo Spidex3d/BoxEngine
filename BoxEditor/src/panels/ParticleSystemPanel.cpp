@@ -1,4 +1,5 @@
 #include "panels/ParticleSystemPanel.h"
+#include <miniBoxLog.h>
 #include <imgui/ImGuiAF.h>
 #include <imgui/imgui.h>
 #include <entity/Entity.h>
@@ -14,6 +15,10 @@
 #include <string>
 #include <vector>
 #include <iostream>
+
+#include <filesystem>
+#include <utility>
+
 ParticleSystemPanel::~ParticleSystemPanel()
 {}
 

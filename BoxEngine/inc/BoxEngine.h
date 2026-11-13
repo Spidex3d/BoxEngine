@@ -129,6 +129,8 @@ public:
     // plant preview
     PlantPreview m_plantPreview; 
 
+    // rocks
+
 
 
     // =====================================================

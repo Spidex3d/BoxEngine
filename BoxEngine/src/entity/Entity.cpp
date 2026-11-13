@@ -636,7 +636,7 @@ bool Entity::CreateFloor(float width, float depth, int subdivisionsX, int subdiv
 
     return true;
 }
-
+// for making very_small, small, medium, large, very_large Rocks with different parameters
 bool Entity::CreateRock(
     int rockSubdivisions,
     float rockRadius,
@@ -649,10 +649,30 @@ bool Entity::CreateRock(
     float cutDepth,
     bool randomFaceDirection)
 {
+    // =====================================================
+	// REMEMBER THE ROCK'S MATERIAL ASSIGNMENT 
+    // =====================================================
+
+    std::size_t savedMaterialIndex = 0;
+
+    if (m_editableMesh.GetFaceCount() > 0)
+    {
+        savedMaterialIndex =
+            m_editableMesh.GetFace(0).materialIndex;
+    }
+
+    // Validate the material slot.
+    if (savedMaterialIndex >= m_materialSlots.size())
+    {
+        savedMaterialIndex = 0;
+    }
+
+
+
     Destroy();
 
     // ---------------------------------------------
-    // Create the native editable rock topology.
+    // Create the native editable  rock topology.
     // ---------------------------------------------
     if (!m_editableMesh.CreateRock(rockSubdivisions,
         rockRadius,
@@ -672,6 +692,20 @@ bool Entity::CreateRock(
 
         return false;
     }
+
+    // =====================================================
+    // RESTORE MATERIAL TO THE NEW ROCK FACES
+    // =====================================================
+
+    for (std::size_t faceIndex = 0;
+        faceIndex < m_editableMesh.GetFaceCount();
+        ++faceIndex)
+    {
+        m_editableMesh.GetFace(faceIndex).materialIndex =
+            savedMaterialIndex;
+    }
+
+
 
     // ---------------------------------------------
     // Keep a copy of the original editable mesh.

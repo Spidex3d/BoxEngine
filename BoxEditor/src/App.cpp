@@ -974,13 +974,9 @@ void App::HandleEcoSystemAction(
         }
 
         // Keep its procedural-rock identity.
-        rock->SetPrimitiveType(
-            EntityPrimitiveType::Rock
-        );
+        rock->SetPrimitiveType(EntityPrimitiveType::Rock);
 
-        BOX_LOG_INFO(
-            "Regenerated rock: " << rock->GetName()
-        );
+        BOX_LOG_INFO("Regenerated rock: " << rock->GetName());
 
         break;
     }

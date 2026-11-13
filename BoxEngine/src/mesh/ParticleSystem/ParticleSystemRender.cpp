@@ -1,5 +1,5 @@
 #include "mesh/ParticleSystem/ParticleSystemRender.h"
-
+#include <miniBoxLog.h>
 #include <entity/Entity.h>
 #include <mesh/MeshEditing.h>
 #include <mesh/ParticleSystem/ParticleScatter.h>
@@ -476,6 +476,87 @@ void ParticleSystemRender::RenderGrass(
 void ParticleSystemRender::ClearGrassCache()
 {
     m_grassVariants.clear();
+}
+
+
+
+bool ParticleSystemRender::LoadSmallRock()
+{
+    // Already loaded? Nothing else to do.
+    if (m_smallRockLoaded)
+    {
+        return true;
+    }
+
+    // ============================================
+    // LOAD OUR FIRST ROCK ASSET
+    // ============================================
+
+    const std::filesystem::path rockPath =
+        "assets/rocks/small/Small_Rock.mbx";
+
+    mbxManager manager;
+
+    MBXImportData importedRock;
+
+    if (!manager.ImportMBX(rockPath, importedRock))
+    {
+        BOX_LOG_ERROR(
+            "ParticleSystemRender: Failed to load "
+            << rockPath.string()
+        );
+
+        return false;
+    }
+
+    // ============================================
+    // CHECK THE MESH
+    // ============================================
+
+    if (!importedRock.mesh.IsValid())
+    {
+        BOX_LOG_ERROR(
+            "ParticleSystemRender: Invalid rock mesh"
+        );
+
+        return false;
+    }
+
+    // ============================================
+    // KEEP THE ROCK IN MEMORY
+    // ============================================
+
+    m_smallRockAsset = std::move(importedRock);
+
+    m_smallRockLoaded = true;
+
+    // ============================================
+    // DEBUG INFORMATION
+    // ============================================
+
+    BOX_LOG_INFO(
+        "Rock Asset Loaded: "
+        << m_smallRockAsset.objectName
+    );
+
+    BOX_LOG_INFO(
+        "Rock Vertices: "
+        << m_smallRockAsset.mesh.vertices.size()
+    );
+
+    BOX_LOG_INFO(
+        "Rock Materials: "
+        << m_smallRockAsset.materials.size()
+    );
+
+    BOX_LOG_INFO(
+        "Rock Scale: "
+        << m_smallRockAsset.scale.x << ", "
+        << m_smallRockAsset.scale.y << ", "
+        << m_smallRockAsset.scale.z
+    );
+
+    return true;
 }
 
 

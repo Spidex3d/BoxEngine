@@ -80,9 +80,6 @@ private:
 	// Build the mbx file then call ExportMBX to export it to a specified directory
 	std::string BuildMBX(const Entity& entity, const std::string& copiedTextureName) const;
 
-	/*bool CopyMaterialTextures(const Entity& entity, const std::filesystem::path& outputDirectory,
-		std::string& outBaseColorTextureName
-	) const;*/
 
 	bool CopyMaterialTextures(const Entity& entity, const std::filesystem::path& outputDirectory) const;
 

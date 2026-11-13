@@ -8,6 +8,8 @@
 #include <tuple>
 #include <vector>
 
+#include <fileManager/mbxManager.h>
+
 #include <mesh/ParticleSystem/GrassBlade.h>
 
 class Entity;
@@ -34,6 +36,19 @@ public:
 
     void ClearGrassCache();
 
+    // ========================================
+    // Rock Asset Loading
+    // ========================================
+
+    bool LoadSmallRock();
+
+    bool HasSmallRock() const
+    {
+        return m_smallRockLoaded;
+    }
+
+
+
 private:
     using GrassKey = std::tuple<int, std::size_t, std::size_t>;
 
@@ -55,5 +70,16 @@ private:
     };
 
     std::map<GrassKey, GrassVariant> m_grassVariants;
+
+    // ========================================
+    // ROCK ASSET CACHE
+    // ========================================
+
+    // Our first saved rock model.
+    MBXImportData m_smallRockAsset;
+
+    // True once the MBX file has loaded.
+    bool m_smallRockLoaded = false;
+
 };
 
