@@ -314,26 +314,96 @@ bool BoxEngine::Initialize()
 
     BOX_LOG_INFO("Broken grass preview initialized");
 
-        
+// ============================================
+// PARTICLE SYSTEM - SMALL ROCK
+// ============================================
 
-
-    // Don't show the test clump automatically.
-   // m_showTestGrassBlade = false;
-
-	// =====================================================
-	// END TESTING GRASS BLADE
-	// =====================================================
-
-    // =====================================================
-    //  PARTICLE SYSTEM - ROCK ASSETS
-    // =====================================================
-
-    if (!m_particleSystemRender.LoadSmallRock())
+    if (m_particleSystemRender.LoadSmallRock())
     {
-        BOX_LOG_ERROR("Failed to initialize small rock asset");
+        // Create the rock geometry on the GPU.
+        if (!m_particleSystemRender.CreateSmallRockBuffers())
+        {
+            BOX_LOG_ERROR(
+                "Failed to create Small Rock GPU buffers"
+            );
+        }
+
+        // Get the albedo texture path saved in the MBX.
+        const std::filesystem::path albedoPath =
+            m_particleSystemRender.GetSmallRockAlbedoPath();
+
+        if (!albedoPath.empty())
+        {
+            m_smallRockAlbedoTexture =
+                LoadTexture(albedoPath.string());
+
+            if (m_smallRockAlbedoTexture == 0)
+            {
+                BOX_LOG_ERROR(
+                    "Failed to load rock albedo: "
+                    << albedoPath.string()
+                );
+            }
+        }
+        else
+        {
+            BOX_LOG_WARNING(
+                "Small Rock has no albedo texture path"
+            );
+        }
+    }
+    else
+    {
+        BOX_LOG_ERROR(
+            "Failed to load Small_Rock.mbx"
+        );
+    }
+
+    // ============================================
+    // NEW ROCK LIBRARY
+    // ============================================
+
+    // ============================================
+    // INITIALIZE ROCK LIBRARY
+    // ============================================
+
+    if (m_particleSystemRender.LoadRockLibrary("assets/rocks"))
+    {
+        BOX_LOG_INFO(
+            "Rock Library contains "
+            << m_particleSystemRender.GetRockLibraryCount()
+            << " models"
+        );
+
+        // Create OpenGL buffers for all loaded rocks.
+        if (!m_particleSystemRender.CreateRockLibraryBuffers())
+        {
+            BOX_LOG_ERROR(
+                "Failed to initialize Rock Library GPU buffers"
+            );
+        }
+    }
+    else
+    {
+        BOX_LOG_ERROR(
+            "Failed to load Rock Library"
+        );
     }
 
 
+    /*if (!m_particleSystemRender.LoadRockLibrary("assets/rocks"))
+    {
+        BOX_LOG_ERROR("Failed to initialize Rock Library");
+    }
+    else
+    {
+        BOX_LOG_INFO(
+            "Rock Library contains " << m_particleSystemRender.GetRockLibraryCount() << " models");
+    }*/
+
+    // ============================================
+    // END PARTICLE SYSTEM - SMALL ROCK
+    // ============================================
 
 
 	// Create the terrain Brush for visualizing the area of effect when editing the terrain
@@ -488,6 +558,9 @@ void BoxEngine::Shutdown()
     m_brokenGrassBlade.reset();
     m_previewGrassBlade.reset();
     m_previewBrokenBlade.reset();
+
+    m_particleSystemRender.ClearRockCache();
+    
 
     m_grassBladeShader.reset();
 
@@ -1772,6 +1845,12 @@ void BoxEngine::RenderScene()
                 static_cast<float>(viewportHeight);
         }
 
+        // Ordinary scene objects do not use instancing.
+        m_sceneShader->Use();
+        m_sceneShader->SetUniformInt(
+            "uUseInstancing", 0
+        );
+
         for (const auto& entity : m_entities)
         {
             if (entity)
@@ -1787,6 +1866,23 @@ void BoxEngine::RenderScene()
         // =======================================================================================================
 		// ================================= PARTICLE SCATTER ====================================================
 		// =======================================================================================================
+        
+        // =====================================================
+        // PARTICLE SYSTEM - ROCKS
+        // =====================================================
+
+        if (m_sceneShader && m_sceneShader->ID() != 0)
+        {
+            m_particleSystemRender.RenderRocks(
+                m_entities,
+                *m_sceneShader,
+                view,
+                projection,
+                m_camera->Position,
+                m_smallRockAlbedoTexture);
+        }
+         
+        
         // =====================================================
         // PARTICLE SYSTEM - GRASS
         // =====================================================
@@ -1796,9 +1892,7 @@ void BoxEngine::RenderScene()
             m_grassBladeShader &&
             m_grassBladeShader->ID() != 0)
 
-        /*if (m_testGrassBlade &&
-            m_grassBladeShader &&
-            m_grassBladeShader->ID() != 0)*/
+        
         {
             m_particleSystemRender.RenderGrass(
                 m_entities,
@@ -1810,14 +1904,6 @@ void BoxEngine::RenderScene()
                 projection
             );
 
-            /*m_particleSystemRender.RenderGrass(
-                m_entities,
-                *m_testGrassBlade,
-                m_testGrassClump,
-                *m_grassBladeShader,
-                view,
-                projection
-            );*/
         }
 
         
@@ -1899,6 +1985,25 @@ void BoxEngine::RenderScene()
         // ==============================================  END PLANT PREVIEW RENDERING
         // =============================================================================================================
 
+
+        // =====================================================
+        // PARTICLE SYSTEM - ROCKS moved up
+        // =====================================================
+
+        /*if (m_sceneShader && m_sceneShader->ID() != 0)
+        {
+            m_particleSystemRender.RenderRocks(
+                m_entities,
+                *m_sceneShader,
+                view,
+                projection,
+                m_camera->Position,
+                m_smallRockAlbedoTexture);
+        }*/
+
+        // ===========================================================================================
+        // ============================= END PARTICLE SYSTEM - ROCKS =================================
+        // ===========================================================================================
        
         // -------------------------------------------------
         // Save scene depth before drawing transparent water.
@@ -2035,7 +2140,7 @@ void BoxEngine::RenderScene()
         }
         
         RenderSelectedEntityOutline(view, projection);
-		// ############################### new RenderScene ########################################
+		
        
     }
 

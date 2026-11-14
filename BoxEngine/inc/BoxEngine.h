@@ -131,6 +131,9 @@ public:
 
     // rocks
 
+    // Saved rock's albedo texture.
+    // Owned by BoxEngine::m_textures.
+    GLuint m_smallRockAlbedoTexture = 0;
 
 
     // =====================================================

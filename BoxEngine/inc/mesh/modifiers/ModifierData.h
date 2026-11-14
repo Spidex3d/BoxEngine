@@ -101,6 +101,13 @@ struct ScatterEntry
     float minBladeTilt = 5.0f;
     float maxBladeTilt = 25.0f;
 
+    // ========================================
+    // ROCK SCATTER SETTINGS
+    // ========================================
+
+    // Number of rocks on each selected face.
+    int rockCount = 4;
+
 
 };
 
@@ -137,6 +144,14 @@ struct ParticleScatterData
     float maxScale = 1.2f;
 
     float randomRotation = 360.0f;
+
+    // Rock positioning relative to the surface.
+    // Positive = above the surface.
+    // Negative = below the surface.
+    float rockSurfaceOffset = 0.0f;
+
+    // Extra distance between rocks and grass.
+    float grassClearance = 0.03f;
 
     
 };
@@ -272,6 +287,8 @@ struct ModifierData
 
     // New Particle Scatter
     ParticleScatterData scatter;
+
+    
 };
 
 // ----------------------------------------------------------------

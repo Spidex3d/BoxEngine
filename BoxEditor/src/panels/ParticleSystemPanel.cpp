@@ -476,93 +476,7 @@ void ParticleSystemPanel::Draw(Entity* entity, FaceEditController& faceEditContr
     
     ImGui::Spacing();
 
-    // ============================================
-    // PARTICLE TYPE
-    // ============================================
-
-    /*const char* particleTypes[] =
-    {
-        "Grass",
-        "Rocks",
-        "Trees",
-        "Custom Mesh"
-    };
-
-    int particleType = static_cast<int>(scatter.type);
-
-    if (ImGui::Combo(
-        "Particle Type",
-        &particleType,
-        particleTypes,
-        IM_ARRAYSIZE(particleTypes)))
-    {
-        scatter.type =
-            static_cast<ParticleScatterType>(
-                particleType
-                );
-    }*/
-
     
-
-    // ============================================
-    // SCALE VARIATION
-    // ============================================
-
-   /* ImGui::SeparatorText("Scale Variation");
-
-    ImGui::SliderFloat(
-        "Minimum Scale",
-        &scatter.minScale,
-        0.1f,
-        5.0f
-    );
-
-    ImGui::SliderFloat(
-        "Maximum Scale",
-        &scatter.maxScale,
-        0.1f,
-        5.0f
-    );*/
-
-    // Ensure maximum is never below minimum
-    /*scatter.maxScale =
-        std::max(
-            scatter.minScale,
-            scatter.maxScale
-        );*/
-
-    // ============================================
-    // ROTATION
-    // ============================================
-
-    /*ImGui::SeparatorText("Rotation");
-
-    ImGui::SliderFloat(
-        "Random Rotation",
-        &scatter.randomRotation,
-        0.0f,
-        360.0f
-    );*/
-
-    // ============================================
-    // TERRAIN SLOPE
-    // ============================================
-
-    /*ImGui::SeparatorText("Surface Restrictions");
-
-    ImGui::SliderFloat(
-        "Maximum Slope",
-        &scatter.maxSlope,
-        0.0f,
-        180.0f
-    );
-
-    ImGui::Spacing();*/
-
-
-
-    
-
     ImGui::Separator();
 
     
@@ -1035,9 +949,264 @@ void ParticleSystemPanel::Draw(Entity* entity, FaceEditController& faceEditContr
         // Plant asset thumbnails
     }
 
+
     if (ImGui::CollapsingHeader("Rocks"))
     {
-        // Rock asset thumbnails
+        ImGui::TextDisabled(
+            "Select how many of each rock to scatter."
+        );
+
+        ImGui::Spacing();
+
+        // ============================================
+        // ROCK LIBRARY NAMES
+        // ============================================
+
+        // These match the five sorted MBX files.
+        const char* rockNames[] =
+        {
+            "rock_01",
+            "rock_02",
+            "rock_03",
+            "rock_04",
+            "rock_05"
+        };
+
+        constexpr int rockCount = 5;
+
+        // ============================================
+        // ADD MISSING ROCK ENTRIES
+        // ============================================
+
+        if (ImGui::Button("Add Missing Rock Models"))
+        {
+            for (int rockIndex = 0;
+                rockIndex < rockCount;
+                ++rockIndex)
+            {
+                bool exists = false;
+
+                for (const ScatterEntry& entry :
+                    scatter.entries)
+                {
+                    if (entry.type ==
+                        ParticleScatterType::Rocks &&
+                        entry.assetID == rockIndex)
+                    {
+                        exists = true;
+                        break;
+                    }
+                }
+
+                if (exists)
+                    continue;
+
+                ScatterEntry rock;
+
+                rock.name = rockNames[rockIndex];
+                rock.type = ParticleScatterType::Rocks;
+                rock.assetID = rockIndex;
+
+                rock.enabled = true;
+                rock.rockCount = 2;
+
+                rock.minScale = 0.8f;
+                rock.maxScale = 1.2f;
+
+                rock.minRotation = 0.0f;
+                rock.maxRotation = 360.0f;
+
+                rock.surfaceAlignment = 1.0f;
+
+                rock.seedOffset =
+                    4004u +
+                    static_cast<std::uint32_t>(rockIndex)
+                    * 1001u;
+
+                scatter.entries.push_back(rock);
+            }
+        }
+
+        ImGui::SeparatorText("Rock Models");
+
+        // ============================================
+        // DISPLAY EACH ROCK TYPE
+        // ============================================
+
+        int totalRocks = 0;
+
+        for (int rockIndex = 0;
+            rockIndex < rockCount;
+            ++rockIndex)
+        {
+            ScatterEntry* rockEntry = nullptr;
+
+            for (ScatterEntry& entry : scatter.entries)
+            {
+                if (entry.type ==
+                    ParticleScatterType::Rocks &&
+                    entry.assetID == rockIndex)
+                {
+                    rockEntry = &entry;
+                    break;
+                }
+            }
+
+            if (!rockEntry)
+            {
+                ImGui::TextDisabled(
+                    "%s - Not added",
+                    rockNames[rockIndex]
+                );
+                continue;
+            }
+
+            ImGui::PushID(rockIndex);
+
+            ImGui::Text("%s", rockNames[rockIndex]);
+
+            ImGui::SameLine(150.0f);
+
+            ImGui::SetNextItemWidth(100.0f);
+
+            ImGui::InputInt(
+                "Count",
+                &rockEntry->rockCount
+            );
+
+            rockEntry->rockCount =
+                std::clamp(
+                    rockEntry->rockCount,
+                    0,
+                    1000
+                );
+
+            if (rockEntry->enabled)
+            {
+                totalRocks += rockEntry->rockCount;
+            }
+
+            ImGui::PopID();
+        }
+
+        ImGui::Spacing();
+        ImGui::Separator();
+
+        ImGui::Text(
+            "Total Rocks Per Face: %d",
+            totalRocks
+        );
+
+        // ============================================
+        // SHARED ROCK SETTINGS
+        // ============================================
+
+        ImGui::SeparatorText("Rock Variation");
+
+        // These values are shared across all
+        // rock entries in this modifier.
+        //
+        // We use the existing scatter fields.
+
+        ImGui::SetNextItemWidth(120.0f);
+
+        ImGui::InputFloat(
+            "Minimum Scale##Rocks",
+            &scatter.minScale,
+            0.1f,
+            0.5f,
+            "%.2f"
+        );
+
+        scatter.minScale =
+            std::max(0.01f, scatter.minScale);
+
+        ImGui::SetNextItemWidth(120.0f);
+
+        ImGui::InputFloat(
+            "Maximum Scale##Rocks",
+            &scatter.maxScale,
+            0.1f,
+            0.5f,
+            "%.2f"
+        );
+
+        scatter.maxScale =
+            std::max(
+                scatter.minScale,
+                scatter.maxScale
+            );
+
+        ImGui::SetNextItemWidth(120.0f);
+
+        ImGui::InputFloat(
+            "Random Rotation##Rocks",
+            &scatter.randomRotation,
+            1.0f,
+            10.0f,
+            "%.1f"
+        );
+
+        scatter.randomRotation =
+            std::clamp(
+                scatter.randomRotation,
+                0.0f,
+                360.0f
+            );
+
+        // ============================================
+        // ROCK SURFACE OFFSET
+        // ============================================
+
+        ImGui::SeparatorText("Rock Placement");
+
+        ImGui::SetNextItemWidth(120.0f);
+
+        ImGui::InputFloat(
+            "Surface Offset##Rocks",
+            &scatter.rockSurfaceOffset,
+            0.01f,
+            0.10f,
+            "%.3f"
+        );
+
+        scatter.rockSurfaceOffset =
+            std::clamp(
+                scatter.rockSurfaceOffset,
+                -2.0f,
+                2.0f
+            );
+
+        ImGui::TextDisabled(
+            "Negative = buried, Positive = raised"
+        );
+
+        // ============================================
+        // GRASS CLEARANCE
+        // ============================================
+
+        ImGui::SetNextItemWidth(120.0f);
+
+        ImGui::InputFloat(
+            "Grass Clearance##Rocks",
+            &scatter.grassClearance,
+            0.01f,
+            0.10f,
+            "%.3f"
+        );
+
+        scatter.grassClearance =
+            std::clamp(
+                scatter.grassClearance,
+                0.0f,
+                2.0f
+            );
+
+        ImGui::TextDisabled(
+            "Extra space between rocks and grass"
+        );
+
+
     }
 
     if (ImGui::CollapsingHeader("Trees"))
