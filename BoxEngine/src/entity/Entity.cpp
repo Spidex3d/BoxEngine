@@ -1267,41 +1267,6 @@ bool Entity::UploadMeshData()
     return true;
 
 
-    /*if (m_vbo == 0 || m_meshData.vertices.empty())
-    {
-        return false;
-    }
-
-    std::vector<float> vertices;
-
-    vertices.reserve(m_meshData.vertices.size() * 8);
-
-    for (const MeshVertex& vertex : m_meshData.vertices)
-    {
-        vertices.push_back(vertex.position.x);
-
-        vertices.push_back(vertex.position.y);
-
-        vertices.push_back(vertex.position.z);
-
-        vertices.push_back(vertex.normal.x);
-
-        vertices.push_back(vertex.normal.y);
-
-        vertices.push_back(vertex.normal.z);
-
-        vertices.push_back(vertex.uv.x);
-
-        vertices.push_back(vertex.uv.y);
-    }
-
-    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-
-    glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(float), vertices.data());
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    return true;*/
 }
 
 void Entity::AddSelectedVertex(std::size_t index)

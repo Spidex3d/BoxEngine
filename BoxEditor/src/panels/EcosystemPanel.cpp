@@ -1699,10 +1699,10 @@ EcoSystemAction EcosystemPanel::SkyTab(BoxEngine& engine)
     Sky& sky = engine.GetSky();
 
 
-    if (sky.IsLoading())
+    /*if (sky.IsLoading())
     {
         sky.LoadNextSky();
-    }
+    }*/
 
 
     // =================================================

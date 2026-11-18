@@ -6,6 +6,7 @@
 #include "lighting/Lighting.h"
 #include <memory>
 #include <vector>
+#include <filesystem>
 
 #include <runtime\Game.h>
 #include <runtime\CharacterController.h>
@@ -365,6 +366,16 @@ private:
 	// skybox
     std::unique_ptr<Sky> m_sky;
     std::unique_ptr<Shader> m_skyShader;
+
+    // ============================================
+    // SKYBOX SCENE RESTORATION
+    // ============================================
+
+    // Filename to select once the image is loaded.
+    std::filesystem::path m_pendingSceneSkyPath;
+
+    // True while a scene sky is waiting to be restored.
+    bool m_restoreSceneSky = false;
 
 	// Terrain
     std::unique_ptr<Terrain> m_terrain;

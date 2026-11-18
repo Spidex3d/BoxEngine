@@ -1162,11 +1162,7 @@ void ParticleSystemRender::RenderRocks(
                             rockRadius * instanceScale +
                             extraClearance;
                         
-                        /*constexpr float extraClearance = 0.03f;
-
-                        zone.radius =
-                            rockRadius * instanceScale +
-                            extraClearance;*/
+                       
 
                         m_rockExclusionZones.push_back(zone);
 

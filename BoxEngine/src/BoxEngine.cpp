@@ -1766,6 +1766,77 @@ void BoxEngine::ResizeSceneViewport(
 
 void BoxEngine::RenderScene()
 {
+
+    // ============================================
+    // UPDATE SKY LIBRARY
+    // ============================================
+
+    if (m_sky)
+    {
+        // Load one sky image each frame.
+        if (m_sky->IsLoading())
+        {
+            m_sky->LoadNextSky();
+        }
+
+        // ========================================
+        // RESTORE SAVED SKY SELECTION
+        // ========================================
+
+        if (m_restoreSceneSky)
+        {
+            const auto& skies =
+                m_sky->GetSkyTextures();
+
+            bool found = false;
+
+            for (std::size_t i = 0;
+                i < skies.size(); ++i)
+            {
+                const std::filesystem::path loadedPath =
+                    skies[i].path;
+
+                if (loadedPath.filename() ==
+                    m_pendingSceneSkyPath.filename())
+                {
+                    m_sky->SetSkyTexture(i);
+
+                    BOX_LOG_INFO(
+                        "Restored scene sky: "
+                        << loadedPath.string()
+                    );
+
+                    m_restoreSceneSky = false;
+                    m_pendingSceneSkyPath.clear();
+
+                    found = true;
+                    break;
+                }
+            }
+
+            // Avoid selecting another sky when the
+            // requested image could not be found.
+            if (!found)
+            {
+                m_sky->ClearSky();
+            }
+
+            // All loading has finished, but the
+            // requested sky was not found.
+            if (!found && !m_sky->IsLoading())
+            {
+                BOX_LOG_ERROR(
+                    "Scene sky not found in loaded library: "
+                    << m_pendingSceneSkyPath.string()
+                );
+
+                m_restoreSceneSky = false;
+                m_pendingSceneSkyPath.clear();
+            }
+        }
+    }
+
+
     if (!m_sceneFramebuffer.IsValid())
         return;
 
@@ -2420,26 +2491,64 @@ void BoxEngine::RenderSelectedEntityOutline(
     
 }
 
-bool BoxEngine::SaveScene(const std::filesystem::path& filePath)
+
+bool BoxEngine::SaveScene(
+    const std::filesystem::path& filePath)
 {
     SceneSerializer serializer;
 
+    // ============================================
+    // COLLECT SKYBOX INFORMATION
+    // ============================================
+
+    SceneSkyData skyData;
+
+    if (m_sky && m_sky->HasActiveSky())
+    {
+        const auto& skyTextures =
+            m_sky->GetSkyTextures();
+
+        const std::size_t selectedIndex =
+            m_sky->GetSelectedSkyIndex();
+
+        if (selectedIndex < skyTextures.size())
+        {
+            skyData.enabled = true;
+
+            skyData.texturePath =
+                skyTextures[selectedIndex].path;
+        }
+    }
+
+    // ============================================
+    // SAVE THE SCENE
+    // ============================================
+
     return serializer.SerializeScene(
         filePath,
-        m_entities
+        m_entities,
+        skyData
     );
 }
-bool BoxEngine::LoadScene(
-    const std::filesystem::path& filePath)
+
+bool BoxEngine::LoadScene(const std::filesystem::path& filePath)
 {
+
     SceneSerializer serializer;
 
     std::vector<std::unique_ptr<Entity>>
         loadedEntities;
 
+    SceneSkyData skyData;
+
+    // ============================================
+    // LOAD SCENE FILE
+    // ============================================
+
     if (!serializer.DeserializeScene(
         filePath,
-        loadedEntities))
+        loadedEntities,
+        skyData))
     {
         BOX_LOG_ERROR(
             "Failed to load scene: "
@@ -2508,9 +2617,6 @@ bool BoxEngine::LoadScene(
                 }
             }
             
-            
-            
-
             // -----------------------------------------
             // Normal map
             // -----------------------------------------
@@ -2558,90 +2664,6 @@ bool BoxEngine::LoadScene(
             );
     }
 
-    // =================================================
-    // RESTORE MATERIAL TEXTURES
-    // =================================================
-
-    for (auto& entity : loadedEntities)
-    {
-        if (!entity)
-            continue;
-
-        for (std::size_t i = 0;
-            i < entity->GetMaterialSlotCount();
-            ++i)
-        {
-            Material& material =
-                entity->GetMaterialSlot(i);
-
-            // -----------------------------------------
-            // Base colour texture
-            // -----------------------------------------
-            const std::string baseTexturePath =
-                material.GetBaseColorTexturePath();
-
-            if (material.UsesBaseColorTexture() &&
-                !baseTexturePath.empty())
-            {
-                const GLuint textureID =
-                    LoadTexture(baseTexturePath);
-
-                if (textureID != 0)
-                {
-                    material.SetBaseColorTexture(
-                        textureID,
-                        baseTexturePath
-                    );
-
-                    BOX_LOG_INFO(
-                        "Restored base texture: "
-                        << baseTexturePath
-                    );
-                }
-                else
-                {
-                    BOX_LOG_ERROR(
-                        "Failed to restore base texture: "
-                        << baseTexturePath
-                    );
-                }
-            }
-
-            // -----------------------------------------
-            // Normal texture
-            // -----------------------------------------
-            const std::string normalTexturePath =
-                material.GetNormalTexturePath();
-
-            if (material.UsesNormalTexture() &&
-                !normalTexturePath.empty())
-            {
-                const GLuint textureID =
-                    LoadTexture(normalTexturePath);
-
-                if (textureID != 0)
-                {
-                    material.SetNormalTexture(
-                        textureID,
-                        normalTexturePath
-                    );
-
-                    BOX_LOG_INFO(
-                        "Restored normal texture: "
-                        << normalTexturePath
-                    );
-                }
-                else
-                {
-                    BOX_LOG_ERROR(
-                        "Failed to restore normal texture: "
-                        << normalTexturePath
-                    );
-                }
-            }
-        }
-    }
-
     // -----------------------------------------
     // Scene loaded successfully.
     // Replace the current scene.
@@ -2651,8 +2673,70 @@ bool BoxEngine::LoadScene(
     m_entities =
         std::move(loadedEntities);
 
-    m_nextEntityID =
-        nextEntityID;
+    m_nextEntityID = nextEntityID;
+
+
+    // ============================================
+    // RESTORE SKYBOX FROM SCENE
+    // ============================================
+
+    m_restoreSceneSky = false;
+    m_pendingSceneSkyPath.clear();
+
+    if (m_sky)
+    {
+        // The newly loaded scene replaces the old sky.
+        m_sky->ClearSky();
+
+        if (skyData.enabled && !skyData.texturePath.empty())
+        {
+            namespace fs = std::filesystem;
+
+            fs::path skyPath(skyData.texturePath);
+
+            // Support older absolute paths if the
+            // BoxEditor project has been moved.
+            if (!fs::exists(skyPath))
+            {
+                skyPath =
+                    fs::path("assets/textures/skybox/NewSky") /
+                    skyPath.filename();
+            }
+
+            if (!fs::exists(skyPath))
+            {
+                BOX_LOG_ERROR(
+                    "Saved sky image not found: "
+                    << skyData.texturePath
+                );
+            }
+            else
+            {
+                m_pendingSceneSkyPath = skyPath;
+                m_restoreSceneSky = true;
+
+                // Load the library only when needed.
+                // If already loaded, we'll search it.
+                if (!m_sky->HasLoadedSkies() &&
+                    !m_sky->IsLoading())
+                {
+                    if (!m_sky->BeginLoadSkyFolder(
+                        skyPath.parent_path().string()))
+                    {
+                        BOX_LOG_ERROR(
+                            "Failed to start sky library: "
+                            << skyPath.parent_path().string()
+                        );
+
+                        m_restoreSceneSky = false;
+                        m_pendingSceneSkyPath.clear();
+                    }
+                }
+            }
+        }
+    }
+
+
 
     BOX_LOG_INFO(
         "Scene loaded successfully. Entities="

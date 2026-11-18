@@ -5,11 +5,319 @@
 #include <fstream>
 #include <iomanip>
 
+
+namespace
+{
+    // Read a named field from our scene file.
+    //
+    // Example:
+    // seed 12345
+    //
+    // ReadSceneField(file, "seed", scatter.seed);
+
+    template<typename... Args>
+    bool ReadSceneField(
+        std::istream& input,
+        const char* expected,
+        Args&... values)
+    {
+        std::string token;
+
+        if (!(input >> token))
+            return false;
+
+        if (token != expected)
+        {
+            BOX_LOG_ERROR(
+                "Expected [" << expected
+                << "] but found [" << token << "]"
+            );
+
+            return false;
+        }
+
+        return static_cast<bool>(
+            (input >> ... >> values)
+            );
+    }
+
+    bool ReadSceneMarker(
+        std::istream& input,
+        const char* expected)
+    {
+        std::string token;
+
+        if (!(input >> token))
+            return false;
+
+        if (token != expected)
+        {
+            BOX_LOG_ERROR(
+                "Expected [" << expected
+                << "] but found [" << token << "]"
+            );
+
+            return false;
+        }
+
+        return true;
+    }
+}
+
+
+namespace
+{
+    bool ReadScatterModifier(
+        std::istream& input,
+        ModifierData& modifier)
+    {
+        if (!ReadSceneMarker(
+            input, "scatter_modifier"))
+            return false;
+
+        modifier.type = ModifierType::Scatter;
+
+        ParticleScatterData& scatter =
+            modifier.scatter;
+
+        int enabled = 0;
+
+        if (!ReadSceneField(input, "enabled", enabled))
+            return false;
+
+        modifier.modEnabled = enabled != 0;
+
+        if (!ReadSceneField(input, "seed", scatter.seed))
+            return false;
+
+        if (!ReadSceneField(input, "max_slope", scatter.maxSlope))
+            return false;
+
+        if (!ReadSceneField(input, "min_scale", scatter.minScale))
+            return false;
+
+        if (!ReadSceneField(input, "max_scale", scatter.maxScale))
+            return false;
+
+        if (!ReadSceneField(input, "random_rotation",
+            scatter.randomRotation))
+            return false;
+
+        if (!ReadSceneField(input, "rock_surface_offset",
+            scatter.rockSurfaceOffset))
+            return false;
+
+        if (!ReadSceneField(input, "grass_clearance",
+            scatter.grassClearance))
+            return false;
+
+        // ========================================
+        // SELECTED FACES
+        // ========================================
+
+        std::size_t faceCount = 0;
+
+        if (!ReadSceneField(
+            input, "selected_faces", faceCount))
+            return false;
+
+        if (faceCount > 1000000)
+            return false;
+
+        scatter.faceIndices.clear();
+
+        for (std::size_t i = 0; i < faceCount; ++i)
+        {
+            std::size_t faceIndex = 0;
+
+            if (!(input >> faceIndex))
+                return false;
+
+            scatter.faceIndices.push_back(faceIndex);
+        }
+
+        // ========================================
+        // SCATTER ENTRIES
+        // ========================================
+
+        std::size_t entryCount = 0;
+
+        if (!ReadSceneField(
+            input, "scatter_entries", entryCount))
+            return false;
+
+        if (entryCount > 10000)
+            return false;
+
+        scatter.entries.clear();
+        scatter.entries.reserve(entryCount);
+
+        for (std::size_t i = 0; i < entryCount; ++i)
+        {
+            if (!ReadSceneMarker(
+                input, "scatter_entry"))
+                return false;
+
+            ScatterEntry entry;
+
+            // Read the quoted name.
+            if (!ReadSceneMarker(
+                input, "entry_name"))
+                return false;
+
+            if (!(input >> std::quoted(entry.name)))
+                return false;
+
+            int entryType = 0;
+            int entryEnabled = 0;
+
+            if (!ReadSceneField(
+                input, "entry_type", entryType))
+                return false;
+
+            if (entryType < 0 || entryType > 3)
+                return false;
+
+            entry.type =
+                static_cast<ParticleScatterType>(entryType);
+
+            if (!ReadSceneField(
+                input, "entry_enabled", entryEnabled))
+                return false;
+
+            entry.enabled = entryEnabled != 0;
+
+            if (!ReadSceneField(
+                input, "asset_id", entry.assetID))
+                return false;
+
+            if (!ReadSceneField(
+                input, "rock_count", entry.rockCount))
+                return false;
+
+            if (!ReadSceneField(
+                input, "density", entry.density))
+                return false;
+
+            if (!ReadSceneField(
+                input, "entry_min_scale", entry.minScale))
+                return false;
+
+            if (!ReadSceneField(
+                input, "entry_max_scale", entry.maxScale))
+                return false;
+
+            if (!ReadSceneField(
+                input, "min_rotation", entry.minRotation))
+                return false;
+
+            if (!ReadSceneField(
+                input, "max_rotation", entry.maxRotation))
+                return false;
+
+            if (!ReadSceneField(
+                input, "seed_offset", entry.seedOffset))
+                return false;
+
+            if (!ReadSceneField(
+                input, "surface_alignment",
+                entry.surfaceAlignment))
+                return false;
+
+            // ====================================
+            // GRASS SETTINGS
+            // ====================================
+
+            if (!ReadSceneField(
+                input, "blade_count", entry.bladeCount))
+                return false;
+
+            if (!ReadSceneField(
+                input, "blade_spread", entry.bladeSpread))
+                return false;
+
+            if (!ReadSceneField(
+                input, "broken_percentage",
+                entry.brokenBladePercentage))
+                return false;
+
+            if (!ReadSceneField(
+                input, "min_blade_height",
+                entry.minBladeHeight))
+                return false;
+
+            if (!ReadSceneField(
+                input, "max_blade_height",
+                entry.maxBladeHeight))
+                return false;
+
+            if (!ReadSceneField(
+                input, "min_blade_width",
+                entry.minBladeWidth))
+                return false;
+
+            if (!ReadSceneField(
+                input, "max_blade_width",
+                entry.maxBladeWidth))
+                return false;
+
+            if (!ReadSceneField(
+                input, "min_blade_tilt",
+                entry.minBladeTilt))
+                return false;
+
+            if (!ReadSceneField(
+                input, "max_blade_tilt",
+                entry.maxBladeTilt))
+                return false;
+
+            // ====================================
+            // GRASS BLADE SHAPE
+            // ====================================
+
+            if (!ReadSceneField(
+                input, "blade_curvature",
+                entry.bladeCurvature))
+                return false;
+
+            if (!ReadSceneField(
+                input, "blade_concavity",
+                entry.bladeConcavity))
+                return false;
+
+            if (!ReadSceneField(
+                input, "blade_break_position",
+                entry.bladeBreakPosition))
+                return false;
+
+            if (!ReadSceneField(
+                input, "blade_break_angle",
+                entry.bladeBreakAngle))
+                return false;
+
+            if (!ReadSceneMarker(
+                input, "endscatter_entry"))
+                return false;
+
+            scatter.entries.push_back(
+                std::move(entry)
+            );
+        }
+
+        return ReadSceneMarker(
+            input, "endscatter_modifier");
+    }
+}
+
+
+
+
+
 SceneSerializer::~SceneSerializer() = default;
 
 bool SceneSerializer::SerializeScene(
     const std::filesystem::path& filePath,
-    const std::vector<std::unique_ptr<Entity>>& entities)
+    const std::vector<std::unique_ptr<Entity>>& entities, const SceneSkyData& skyData)
 {
     std::filesystem::path finalPath = filePath;
 
@@ -77,11 +385,32 @@ bool SceneSerializer::SerializeScene(
     // Scene header.
     // ---------------------------------------------
     file << "# BoxEditor Scene\n";
-    file << "version 0 1\n\n";
+   // file << "version 0 1\n\n";
+    file << "version "
+        << MBSENE_VERSION_MAJOR << ' '
+        << MBSENE_VERSION_MINOR << "\n\n";
 
-    file << "entities "
-        << entities.size()
-        << "\n\n";
+
+    // ============================================
+    // SAVE SKYBOX
+    // ============================================
+
+    file << "skybox\n";
+
+    file << "enabled "
+        << (skyData.enabled ? 1 : 0)
+        << '\n';
+
+    file << "texture_path "
+        << std::quoted(skyData.texturePath)
+        << '\n';
+
+    file << "endskybox\n\n";
+
+
+    file << "entities " << entities.size() << "\n\n";
+
+
 
     // ---------------------------------------------
     // Serialize every entity.
@@ -121,6 +450,155 @@ bool SceneSerializer::SerializeScene(
 
     return true;
 }
+
+namespace
+{
+    void WriteScatterModifier(
+        std::ostream& output,
+        const ModifierData& modifier)
+    {
+        const ParticleScatterData& scatter =
+            modifier.scatter;
+
+        output << "scatter_modifier\n";
+
+        output << "enabled "
+            << (modifier.modEnabled ? 1 : 0) << '\n';
+
+        output << "seed "
+            << scatter.seed << '\n';
+
+        output << "max_slope "
+            << scatter.maxSlope << '\n';
+
+        output << "min_scale "
+            << scatter.minScale << '\n';
+
+        output << "max_scale "
+            << scatter.maxScale << '\n';
+
+        output << "random_rotation "
+            << scatter.randomRotation << '\n';
+
+        output << "rock_surface_offset "
+            << scatter.rockSurfaceOffset << '\n';
+
+        output << "grass_clearance "
+            << scatter.grassClearance << '\n';
+
+        // -----------------------------------------
+        // SELECTED FACES
+        // -----------------------------------------
+
+        output << "selected_faces "
+            << scatter.faceIndices.size();
+
+        for (std::size_t faceIndex :
+        scatter.faceIndices)
+        {
+            output << ' ' << faceIndex;
+        }
+
+        output << '\n';
+
+        // -----------------------------------------
+        // INDIVIDUAL GRASS AND ROCK ENTRIES
+        // -----------------------------------------
+
+        output << "scatter_entries "
+            << scatter.entries.size() << '\n';
+
+        for (const ScatterEntry& entry :
+            scatter.entries)
+        {
+            output << "scatter_entry\n";
+
+            output << "entry_name "
+                << std::quoted(entry.name) << '\n';
+
+            output << "entry_type "
+                << static_cast<int>(entry.type) << '\n';
+
+            output << "entry_enabled "
+                << (entry.enabled ? 1 : 0) << '\n';
+
+            output << "asset_id "
+                << entry.assetID << '\n';
+
+            output << "rock_count "
+                << entry.rockCount << '\n';
+
+            output << "density "
+                << entry.density << '\n';
+
+            output << "entry_min_scale "
+                << entry.minScale << '\n';
+
+            output << "entry_max_scale "
+                << entry.maxScale << '\n';
+
+            output << "min_rotation "
+                << entry.minRotation << '\n';
+
+            output << "max_rotation "
+                << entry.maxRotation << '\n';
+
+            output << "seed_offset "
+                << entry.seedOffset << '\n';
+
+            output << "surface_alignment "
+                << entry.surfaceAlignment << '\n';
+
+            // Grass clump settings
+
+            output << "blade_count "
+                << entry.bladeCount << '\n';
+
+            output << "blade_spread "
+                << entry.bladeSpread << '\n';
+
+            output << "broken_percentage "
+                << entry.brokenBladePercentage << '\n';
+
+            output << "min_blade_height "
+                << entry.minBladeHeight << '\n';
+
+            output << "max_blade_height "
+                << entry.maxBladeHeight << '\n';
+
+            output << "min_blade_width "
+                << entry.minBladeWidth << '\n';
+
+            output << "max_blade_width "
+                << entry.maxBladeWidth << '\n';
+
+            output << "min_blade_tilt "
+                << entry.minBladeTilt << '\n';
+
+            output << "max_blade_tilt "
+                << entry.maxBladeTilt << '\n';
+
+            // Grass shape settings
+
+            output << "blade_curvature "
+                << entry.bladeCurvature << '\n';
+
+            output << "blade_concavity "
+                << entry.bladeConcavity << '\n';
+
+            output << "blade_break_position "
+                << entry.bladeBreakPosition << '\n';
+
+            output << "blade_break_angle "
+                << entry.bladeBreakAngle << '\n';
+
+            output << "endscatter_entry\n";
+        }
+
+        output << "endscatter_modifier\n";
+    }
+}
+
 
 
 bool SceneSerializer::SerializeEntity(
@@ -407,16 +885,51 @@ bool SceneSerializer::SerializeEntity(
         output << "endmaterial\n";
     }
 
+    // =================================================
+    // SURFACE SCATTER MODIFIERS
+    // =================================================
+
+    const auto& modifiers = entity.GetModifiers();
+
+    std::size_t scatterModifierCount = 0;
+
+    for (const ModifierData& modifier : modifiers)
+    {
+        if (modifier.type == ModifierType::Scatter)
+        {
+            ++scatterModifierCount;
+        }
+    }
+
+    // Save the number of Surface Scatter modifiers.
+    output << "scatter_modifiers "
+        << scatterModifierCount << '\n';
+
+    // Save each Surface Scatter modifier.
+    for (const ModifierData& modifier : modifiers)
+    {
+        if (modifier.type != ModifierType::Scatter)
+            continue;
+
+        WriteScatterModifier(output, modifier);
+    }
+
+    // =================================================
+    // END ENTITY
+    // =================================================
 
     output << "endentity\n\n";
 
     return output.good();
+
+
 }
 
-//bool SceneSerializer::DeserializeScene(const std::filesystem::path& filePath)
-bool SceneSerializer::DeserializeScene(const std::filesystem::path& filePath, std::vector<std::unique_ptr<Entity>>& loadedEntities)
+bool SceneSerializer::DeserializeScene(const std::filesystem::path& filePath, std::vector<std::unique_ptr<Entity>>& loadedEntities,
+    SceneSkyData& skyData)
 {
     loadedEntities.clear();
+    skyData = SceneSkyData{};
     // ---------------------------------------------
     // Open scene file.
     // ---------------------------------------------
@@ -461,7 +974,7 @@ bool SceneSerializer::DeserializeScene(const std::filesystem::path& filePath, st
     // ---------------------------------------------
     // Read version.
     //
-    // version 0 1
+    // version 0 3
     // ---------------------------------------------
     std::string versionToken;
 
@@ -480,14 +993,31 @@ bool SceneSerializer::DeserializeScene(const std::filesystem::path& filePath, st
         return false;
     }
 
-    if (versionToken != "version")
+
+    // ============================================
+    // CHECK SUPPORTED SCENE VERSION
+    // ============================================
+
+    BOX_LOG_INFO(
+        "Reading scene version: "
+        << versionMajor << "." << versionMinor
+    );
+
+    // We support versions 0.1, 0.2 and 0.3.
+    if (versionMajor != 0 ||
+        (versionMinor != 1 &&
+            versionMinor != 2 &&
+            versionMinor != 3))
     {
         BOX_LOG_ERROR(
-            "Invalid scene version header"
+            "Unsupported scene version: "
+            << versionMajor << "."
+            << versionMinor
         );
 
         return false;
     }
+
 
     // ---------------------------------------------
     // Check supported version.
@@ -504,6 +1034,63 @@ bool SceneSerializer::DeserializeScene(const std::filesystem::path& filePath, st
 
         return false;
     }
+
+
+    // ============================================
+    // LOAD SKYBOX - VERSION 0.3
+    // ============================================
+
+    if (versionMinor >= 3)
+    {
+        std::string skyToken;
+
+        if (!(file >> skyToken) ||
+            skyToken != "skybox")
+        {
+            BOX_LOG_ERROR("Expected skybox block");
+            return false;
+        }
+
+        int skyEnabled = 0;
+
+        if (!(file >> skyToken >> skyEnabled) ||
+            skyToken != "enabled")
+        {
+            BOX_LOG_ERROR("Failed to read sky enabled");
+            return false;
+        }
+
+        skyData.enabled = (skyEnabled != 0);
+
+        if (!(file >> skyToken) ||
+            skyToken != "texture_path")
+        {
+            BOX_LOG_ERROR("Expected sky texture_path");
+            return false;
+        }
+
+        if (!(file >> std::quoted(skyData.texturePath)))
+        {
+            BOX_LOG_ERROR("Failed to read sky texture path");
+            return false;
+        }
+
+        if (!(file >> skyToken) ||
+            skyToken != "endskybox")
+        {
+            BOX_LOG_ERROR("Expected endskybox");
+            return false;
+        }
+
+        BOX_LOG_INFO(
+            "Scene skybox: Enabled="
+            << skyData.enabled
+            << " Path="
+            << skyData.texturePath
+        );
+    }
+
+
 
     // ---------------------------------------------
     // Read entity count.
@@ -1368,7 +1955,80 @@ bool SceneSerializer::DeserializeScene(const std::filesystem::path& filePath, st
 
             
             loadedMaterials.push_back(std::move(material));
-}
+        }
+
+
+        // =================================================
+        // LOAD SURFACE SCATTER MODIFIERS
+        // =================================================
+
+        std::vector<ModifierData> loadedScatterModifiers;
+
+        // Version 0.1 files do not contain modifiers.
+        // Version 0.2 files contain the new scatter block.
+        if (versionMinor >= 2)
+        {
+            std::size_t modifierCount = 0;
+
+            if (!ReadSceneField(
+                file, "scatter_modifiers", modifierCount))
+            {
+                BOX_LOG_ERROR(
+                    "Failed to read scatter modifier count"
+                );
+
+                return false;
+            }
+
+            if (modifierCount > 10000)
+                return false;
+
+            for (std::size_t modifierIndex = 0;
+                modifierIndex < modifierCount;
+                ++modifierIndex)
+            {
+                ModifierData modifier;
+
+                if (!ReadScatterModifier(file, modifier))
+                {
+                    BOX_LOG_ERROR(
+                        "Failed to read scatter modifier "
+                        << modifierIndex
+                    );
+
+                    return false;
+                }
+
+                // Ensure all saved face indices are valid
+                // for the mesh we just loaded.
+                for (std::size_t faceIndex :
+                modifier.scatter.faceIndices)
+                {
+                    if (faceIndex >= loadedFaces.size())
+                    {
+                        BOX_LOG_ERROR(
+                            "Invalid scatter face index: "
+                            << faceIndex
+                        );
+
+                        return false;
+                    }
+                }
+
+                loadedScatterModifiers.push_back(
+                    std::move(modifier)
+                );
+            }
+
+            BOX_LOG_INFO(
+                "Loaded "
+                << loadedScatterModifiers.size()
+                << " Surface Scatter modifiers"
+            );
+        }
+
+
+
 
 
         // =================================================
@@ -1462,13 +2122,32 @@ bool SceneSerializer::DeserializeScene(const std::filesystem::path& filePath, st
 
         if (!entity->RebuildFromEditableMesh())
         {
-            BOX_LOG_ERROR(
-                "Failed to rebuild loaded entity: "
-                << entityName
-            );
+            BOX_LOG_ERROR("Failed to rebuild loaded entity: " << entityName);
 
             return false;
         }
+
+        // ============================================
+        // RESTORE SURFACE SCATTER MODIFIERS
+        // ============================================
+
+        // The entity's editable mesh has now been
+        // reconstructed, so its face indices exist.
+
+        auto& entityModifiers = entity->GetModifiers();
+
+        entityModifiers.insert(
+            entityModifiers.end(),
+            loadedScatterModifiers.begin(),
+            loadedScatterModifiers.end()
+        );
+
+        BOX_LOG_INFO(
+            "Restored "
+            << loadedScatterModifiers.size()
+            << " scatter modifiers to "
+            << entityName
+        );
 
         BOX_LOG_INFO(
             "Successfully rebuilt loaded entity: "
