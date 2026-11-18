@@ -14,6 +14,7 @@ MenuAction MainMenuBar::DrawMainMenu()
         {
             if (ImGui::MenuItem("New Scene"))
             {
+                
                 action = MenuAction::NewScene;
             }
 

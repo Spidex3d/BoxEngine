@@ -177,6 +177,7 @@
     <ClInclude Include="inc\rendering\Framebuffer.h" />
     <ClInclude Include="inc\rendering\grid.h" />
     <ClInclude Include="inc\material\Material.h" />
+    <ClInclude Include="inc\rendering\Render.h" />
     <ClInclude Include="inc\rendering\Sky.h" />
     <ClInclude Include="inc\rendering\Terrain.h" />
     <ClInclude Include="inc\rendering\TerrainBrush.h" />
@@ -218,6 +219,7 @@
     <ClCompile Include="src\mesh\UV\UVMapping.cpp" />
     <ClCompile Include="src\rendering\Framebuffer.cpp" />
     <ClCompile Include="src\material\Material.cpp" />
+    <ClCompile Include="src\rendering\Render.cpp" />
     <ClCompile Include="src\rendering\Sky.cpp" />
     <ClCompile Include="src\rendering\Terrain.cpp" />
     <ClCompile Include="src\rendering\TerrainBrush.cpp" />

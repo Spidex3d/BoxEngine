@@ -50,6 +50,14 @@ public:
         m_cubemapTexture = 0;
     }
 
+    void CancelPendingLoad()
+    {
+        m_pendingSkyFiles.clear();
+        m_nextSkyFile = 0;
+        m_isLoading = false;
+        m_loadProgress = 0.0f;
+    }
+
     bool HasActiveSky() const
     {
         return m_cubemapTexture != 0;

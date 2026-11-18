@@ -477,6 +477,13 @@ void App::HandleMenuAction(MenuAction action, BoxEngine& engine)
         // -------------------------------------
 		// Handle scene actions Open, Save, New, Exit
 		// -------------------------------------
+	case MenuAction::NewScene:
+	{
+		engine.NewScene();
+		BOX_LOG_INFO("New Scene menu action triggered");
+		break;
+	}
+
 
     case MenuAction::OpenScene:
     {

@@ -2746,6 +2746,75 @@ bool BoxEngine::LoadScene(const std::filesystem::path& filePath)
     return true;
 }
 
+// =====================================================================================================
+// ========================================== New Scene =================================================
+// =====================================================================================================
+
+void BoxEngine::NewScene()
+{
+    BOX_LOG_INFO("Creating new empty scene");
+
+    // ============================================
+    // 1. CLEAR SELECTION
+    // ============================================
+
+    ClearSelectedEntity();
+    ClearSelectedEntities();
+
+    // ============================================
+    // 2. CLEAR PARTICLE SCATTER CACHES
+    // ============================================
+
+    m_particleSystemRender.ClearGrassCache();
+    m_particleSystemRender.ClearRockCache();
+
+    m_cachedGrassMatrices.clear();
+
+    // ============================================
+    // 3. REMOVE SCENE OBJECTS
+    // ============================================
+
+    // Entity destructors release their GPU buffers.
+    m_entities.clear();
+
+    // Start entity numbering from zero again.
+    m_nextEntityID = 0;
+
+    // ============================================
+    // 4. CLEAR SKYBOX
+    // ============================================
+
+    m_restoreSceneSky = false;
+    m_pendingSceneSkyPath.clear();
+
+    if (m_sky)
+    {
+        m_sky->CancelPendingLoad();
+        m_sky->ClearSky();
+    }
+
+    // ============================================
+    // 5. RESET WATER
+    // ============================================
+
+    SetWaterEnabled(false);
+
+    // ============================================
+    // 6. CLEAR TERRAIN BRUSH
+    // ============================================
+
+    HideTerrainBrush();
+
+    // ============================================
+    // FINISHED
+    // ============================================
+
+    BOX_LOG_INFO("New scene created successfully");
+}
+
+
+
+
 // ----------------------------------------------------------------------------------------------------
 // ------------------------------------ Game Engine Mode Management -----------------------------------
 // ----------------------------------------------------------------------------------------------------

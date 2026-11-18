@@ -304,6 +304,8 @@ public:
     bool SaveScene(const std::filesystem::path& filePath);
     bool LoadScene(const std::filesystem::path& filePath);
 
+    void NewScene();
+
 
 	// ---------------------- End Serialization ----------------------
     // --------------------------------------------------------------------------------------------------------------
