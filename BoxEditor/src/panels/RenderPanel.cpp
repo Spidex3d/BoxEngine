@@ -83,7 +83,8 @@ void RenderPanel::Draw(BoxEngine& engine)
 
 	if (ImGui::Button("Render Scene", ImVec2(140.0f, 32.0f)))
 	{
-		engine.SetGridVisible(false);
+		//engine.SetGridVisible(false);
+		engine.StartFinalRender();
 		
 	}
 
@@ -101,8 +102,33 @@ void RenderPanel::Draw(BoxEngine& engine)
 
 	if (ImGui::Button("Cancel Render", ImVec2(140.0f, 32.0f)))
 	{
-		engine.SetGridVisible(true);
+		//engine.SetGridVisible(true);
+		engine.CancelFinalRender();
 
+	}
+
+	// ============================================
+	// RENDER PROGRESS
+	// ============================================
+
+	ImGui::Spacing();
+	ImGui::SeparatorText("Render Progress");
+
+	const float progress =
+		engine.GetFinalRenderProgress();
+
+	ImGui::ProgressBar(
+		progress,
+		ImVec2(-1.0f, 22.0f)
+	);
+
+	if (engine.IsFinalRendering())
+	{
+		ImGui::Text("Rendering...");
+	}
+	else if (progress >= 1.0f)
+	{
+		ImGui::Text("Render complete");
 	}
 
 	

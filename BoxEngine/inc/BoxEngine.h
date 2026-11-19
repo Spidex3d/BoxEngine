@@ -26,6 +26,7 @@ class Terrain;
 class TerrainBrush;
 class Water;
 class GrassBlade;
+class Render;
 
 enum class TransformTool
 {
@@ -303,11 +304,20 @@ public:
     
     bool SaveScene(const std::filesystem::path& filePath);
     bool LoadScene(const std::filesystem::path& filePath);
-
     void NewScene();
 
-
 	// ---------------------- End Serialization ----------------------
+    
+    // ============================================
+    // BOX RENDERER
+    // ============================================
+
+    bool StartFinalRender();
+    void CancelFinalRender();
+
+    bool IsFinalRendering() const;
+    float GetFinalRenderProgress() const;
+
     // --------------------------------------------------------------------------------------------------------------
 
 	// ----------------------------------------
@@ -427,6 +437,15 @@ private:
 
     // End Test Objects
     // ============================================
+
+
+    // ============================================
+    // BOX RENDERER
+    // ============================================
+
+    std::unique_ptr<Render> m_boxRenderer;
+
+    bool m_showFinalRender = false;
 
 private:
     Framebuffer m_sceneFramebuffer;

@@ -46,6 +46,8 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/glm.hpp>
+// Rendering
+#include <rendering/Render.h>
 // ----------------------------------------
 // Game Engine
 // ----------------------------------------
@@ -550,6 +552,18 @@ void BoxEngine::Shutdown()
     }
 
     m_waterShader.reset();
+
+    // ============================================
+    // DESTROY BOX RENDERER
+    // ============================================
+
+    if (m_boxRenderer)
+    {
+        m_boxRenderer->Destroy();
+        m_boxRenderer.reset();
+    }
+
+    m_showFinalRender = false;
 
     m_previewGrassBlade.reset();
     //m_cachedGrassMatrices.clear();
@@ -1766,6 +1780,16 @@ void BoxEngine::ResizeSceneViewport(
 
 void BoxEngine::RenderScene()
 {
+    // ============================================
+    // UPDATE BOX RENDERER
+    // ============================================
+
+    if (m_boxRenderer &&
+        m_boxRenderer->IsRendering())
+    {
+        m_boxRenderer->Update();
+    }
+
 
     // ============================================
     // UPDATE SKY LIBRARY
@@ -2219,10 +2243,30 @@ void BoxEngine::RenderScene()
 }
 
 
+
 GLuint BoxEngine::GetSceneTexture() const
 {
+    // Show BoxRenderer image when requested.
+    if (m_showFinalRender && m_boxRenderer)
+    {
+        const GLuint renderTexture =
+            m_boxRenderer->GetRenderTexture();
+
+        if (renderTexture != 0)
+        {
+            return renderTexture;
+        }
+    }
+
+    // Otherwise show normal editor viewport.
     return m_sceneFramebuffer.GetColorTexture();
 }
+
+
+//GLuint BoxEngine::GetSceneTexture() const
+//{
+//    return m_sceneFramebuffer.GetColorTexture();
+//}
 
 bool BoxEngine::RayIntersectsAABB(
     const glm::vec3& rayOriginWorld,
@@ -2754,6 +2798,8 @@ void BoxEngine::NewScene()
 {
     BOX_LOG_INFO("Creating new empty scene");
 
+	CancelFinalRender(); // Stop any ongoing final render before clearing the scene.
+
     // ============================================
     // 1. CLEAR SELECTION
     // ============================================
@@ -2811,6 +2857,222 @@ void BoxEngine::NewScene()
 
     BOX_LOG_INFO("New scene created successfully");
 }
+
+
+// =============================================================================================================
+// =========================================== START FINAL RENDER =============================================
+// =============================================================================================================
+
+bool BoxEngine::StartFinalRender()
+{
+    const int width =
+        m_sceneFramebuffer.GetWidth();
+
+    const int height =
+        m_sceneFramebuffer.GetHeight();
+
+    if (width <= 0 || height <= 0)
+    {
+        BOX_LOG_ERROR("Invalid render dimensions");
+        return false;
+    }
+
+    if (!m_boxRenderer)
+    {
+        m_boxRenderer = std::make_unique<Render>();
+    }
+
+    // Stop any previous render before resizing.
+    m_boxRenderer->CancelRender();
+
+    if (!m_boxRenderer->Initialize(width, height))
+    {
+        BOX_LOG_ERROR("Failed to initialize BoxRenderer");
+        m_showFinalRender = false;
+        return false;
+    }
+
+
+    // ============================================
+    // CREATE SCENE SNAPSHOT
+    // ============================================
+
+    ::RenderScene renderScene;
+
+    // Match the existing editor camera.
+    const float aspect =
+        static_cast<float>(width) /
+        static_cast<float>(height);
+
+    renderScene.view = m_camera->GetViewMatrix();
+
+    renderScene.projection =
+        m_camera->GetProjectionMatrix(aspect);
+
+    // ============================================
+    // COPY EDITABLE MESH GEOMETRY
+    // ============================================
+
+    for (const auto& entity : m_entities)
+    {
+        if (!entity || !entity->IsVisible())
+            continue;
+
+        const MeshEditing& mesh =
+            entity->GetEditableMesh();
+
+        const auto& vertices =
+            mesh.GetVertices();
+
+        const auto& faces =
+            mesh.GetFaces();
+
+        // Transform local mesh coordinates to world.
+        const glm::mat4 model =
+            entity->GetModelMatrix();
+
+        // Every face can have multiple vertices.
+        for (const EditFace& face : faces)
+        {
+            if (face.vertices.size() < 3)
+                continue;
+
+
+            // ============================================
+            // GET FACE MATERIAL COLOUR
+            // ============================================
+
+            // Default colour if the face has no valid
+            // material assigned.
+            glm::vec3 faceColor(0.75f, 0.72f, 0.60f);
+
+            const std::size_t materialIndex =
+                face.materialIndex;
+
+            if (materialIndex < entity->GetMaterialSlotCount())
+            {
+                const Material& material =
+                    entity->GetMaterialSlot(materialIndex);
+
+                // BoxEditor stores base colours as RGBA.
+                // For now we only need RGB.
+                const glm::vec4 baseColor =
+                    material.GetBaseColor();
+
+                faceColor = glm::vec3(baseColor);
+            }
+
+
+            // Simple triangle fan for our first test.
+            // This is suitable for convex faces.
+            for (std::size_t i = 1;
+                i + 1 < face.vertices.size();
+                ++i)
+            {
+                const std::size_t ia = face.vertices[0];
+                const std::size_t ib = face.vertices[i];
+                const std::size_t ic = face.vertices[i + 1];
+
+                if (ia >= vertices.size() ||
+                    ib >= vertices.size() ||
+                    ic >= vertices.size())
+                {
+                    continue;
+                }
+
+                RenderTriangle triangle;
+
+                triangle.a = glm::vec3(
+                    model * glm::vec4(
+                        vertices[ia].position, 1.0f)
+                );
+
+                triangle.b = glm::vec3(
+                    model * glm::vec4(
+                        vertices[ib].position, 1.0f)
+                );
+
+                triangle.c = glm::vec3(
+                    model * glm::vec4(
+                        vertices[ic].position, 1.0f)
+                );
+
+                // ============================================
+                // ASSIGN MATERIAL COLOUR
+                // ============================================
+
+                triangle.color = faceColor;
+
+                renderScene.triangles.push_back(triangle);
+            }
+        }
+    }
+
+    BOX_LOG_INFO(
+        "BoxRenderer snapshot contains "
+        << renderScene.triangles.size()
+        << " triangles"
+    );
+
+    // Give the renderer its independent snapshot.
+    m_boxRenderer->SetScene(std::move(renderScene));
+
+
+
+    m_boxRenderer->StartRender();
+
+    m_showFinalRender = true;
+
+    BOX_LOG_INFO(
+        "BoxRenderer started: "
+        << width << " x " << height
+    );
+
+    return true;
+}
+
+// ============================================
+// CANCEL FINAL RENDER
+// ============================================
+
+void BoxEngine::CancelFinalRender()
+{
+    if (m_boxRenderer)
+    {
+        m_boxRenderer->CancelRender();
+    }
+
+    // Display normal OpenGL viewport again.
+    m_showFinalRender = false;
+
+    BOX_LOG_INFO("BoxRenderer cancelled");
+}
+
+// ============================================
+// IS RENDERING?
+// ============================================
+
+bool BoxEngine::IsFinalRendering() const
+{
+    return m_boxRenderer &&
+        m_boxRenderer->IsRendering();
+}
+
+// ============================================
+// RENDER PROGRESS
+// ============================================
+
+float BoxEngine::GetFinalRenderProgress() const
+{
+    if (!m_boxRenderer)
+        return 0.0f;
+
+    return m_boxRenderer->GetProgress();
+}
+
+// ----------------------------------------------------------------------------------------------------
+// ------------------------------------ END RENDER -----------------------------------
+// ----------------------------------------------------------------------------------------------------
 
 
 
