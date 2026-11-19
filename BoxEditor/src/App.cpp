@@ -11,6 +11,7 @@
 #include <panels/MaterialDisplayPanel.h>
 #include <panels/ParticleSystemPanel.h>
 #include <panels/EcosystemPanel.h>
+#include <panels/RenderPanel.h>
 #include <panels/UVPanel.h>
 #include <FileDialog.h>
 #include <string>
@@ -107,11 +108,13 @@ bool App::Init()
         return false;
     }
     
-    m_helpPanel = std::make_unique<HelpPanel>();
+	m_renderPanel = std::make_unique<RenderPanel>(); // Render panel for the main window
 
-	m_uvPanel = std::make_unique<UVPanel>();
+	m_helpPanel = std::make_unique<HelpPanel>();     // Help panel for the main window
 
-    m_materialEditorPanel = std::make_unique<MaterialEditorPanel>();
+	m_uvPanel = std::make_unique<UVPanel>();         // UV panel for the main window
+
+	m_materialEditorPanel = std::make_unique<MaterialEditorPanel>(); // Material Editor panel for the main window
     
 
 	// ############################## Initialize the Particle System panel for ImGui ###############
@@ -124,12 +127,6 @@ bool App::Init()
         m_particleSystemPanel.reset();
         return false;
     }
-
-   
-
-
-
-
 
 
 	// ############################## Initialize the Material Editor panel for ImGui ###############
@@ -444,7 +441,11 @@ int App::Run()
         {
             m_helpPanel->Draw();
         }
-
+		// ----------------------- Draw the Render panel if it is open -----------------------
+        if (m_renderPanel)
+        {
+            m_renderPanel->Draw(*m_engine);
+        }
 		// ----------------------- Draw the UV panel if it is open -----------------------
         if (m_uvPanel)
         {
@@ -623,7 +624,19 @@ void App::HandleMenuAction(MenuAction action, BoxEngine& engine)
 	
 
 	// ############################################ Handle other menu actions #####################################################
+	
+	// ---------------------------------------------
+	// Handle the Render Scene menu action
+	// ---------------------------------------------
+    case MenuAction::RenderScene:
 
+		if (m_renderPanel)
+		{
+			m_renderPanel->Open();
+		}
+
+		BOX_LOG_INFO("Render Scene menu action triggered");
+		break;
 
     case MenuAction::Exit:
         glfwSetWindowShouldClose(
@@ -639,9 +652,6 @@ void App::HandleMenuAction(MenuAction action, BoxEngine& engine)
         engine.AddEditablePlane();
         break;
 
-        /*case MenuAction::AddEditableFloor:
-        engine.AddEditableFloor();
-        break;*/
 
     case MenuAction::AddSphere:
 		engine.AddEditableSphere(glm::vec3(0.0f));
@@ -1809,6 +1819,12 @@ void App::Shutdown()
     if (m_uvPanel)
     {
         m_uvPanel.reset();
+    }
+
+    // Shutdown the Render panel
+    if (m_renderPanel)
+    {
+        m_renderPanel.reset();
     }
 
     // ImGui requires a valid GLFW window and OpenGL context during shutdown.

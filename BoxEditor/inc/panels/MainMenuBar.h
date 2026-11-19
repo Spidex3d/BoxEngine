@@ -16,6 +16,8 @@ enum class MenuAction
 	ExportOBJ,
 	ImportOBJ,
 
+	RenderScene,
+
 	AddCube,
 	AddPlane,
 	AddSphere,

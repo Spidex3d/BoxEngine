@@ -769,8 +769,7 @@ EcoSystemAction EcosystemPanel::TerrainTab(BoxEngine& engine)
 
     ImGui::SeparatorText("Grid Enabled");
 
-    bool gridEnabled =
-        engine.IsGridVisible();
+    bool gridEnabled = engine.IsGridVisible();
 
     if (ImGui::Checkbox(
         "Enable Grid",

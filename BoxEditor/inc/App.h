@@ -18,6 +18,7 @@ class BoxEngine;
 class EditorInput;
 class ObjectExplorerPanel;
 class HelpPanel;
+class RenderPanel;
 class MaterialEditorPanel;
 class MaterialDisplayPanel;
 class ParticleSystemPanel;
@@ -66,6 +67,8 @@ private:
 	std::unique_ptr<MaterialDisplayPanel> m_materialDisplayPanel; // Material Display panel for ImGui
 
 	std::unique_ptr<ParticleSystemPanel> m_particleSystemPanel; // Particle System panel for ImGui
+
+	std::unique_ptr<RenderPanel> m_renderPanel; // Render panel for ImGui	
 
 	std::unique_ptr<HelpPanel> m_helpPanel; // Help panel for ImGui
 

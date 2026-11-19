@@ -86,8 +86,9 @@ MenuAction MainMenuBar::DrawMainMenu()
 
         if (ImGui::BeginMenu("Render State"))
         {
-            if (ImGui::MenuItem("Render Image"))
+            if (ImGui::MenuItem("Render Scene"))
             {
+				action = MenuAction::RenderScene;
             }
 
             if (ImGui::MenuItem("Render Solid"))
