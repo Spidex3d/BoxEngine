@@ -21,6 +21,7 @@
 #include <random>
 #include <cstdint>
 
+#include <unordered_map>
 
 #include <mesh/MeshCombiner.h>
 
@@ -2860,7 +2861,7 @@ void BoxEngine::NewScene()
 
 
 // =============================================================================================================
-// =========================================== START FINAL RENDER =============================================
+// =========================================== START FINAL RENDER ==============================================
 // =============================================================================================================
 
 bool BoxEngine::StartFinalRender()
@@ -2900,14 +2901,131 @@ bool BoxEngine::StartFinalRender()
     ::RenderScene renderScene;
 
     // Match the existing editor camera.
-    const float aspect =
-        static_cast<float>(width) /
-        static_cast<float>(height);
+    const float aspect = static_cast<float>(width) / static_cast<float>(height);
 
     renderScene.view = m_camera->GetViewMatrix();
 
-    renderScene.projection =
-        m_camera->GetProjectionMatrix(aspect);
+    renderScene.projection = m_camera->GetProjectionMatrix(aspect);
+
+    // ============================================
+    // COPY DIRECTIONAL LIGHT
+    // ============================================
+
+    renderScene.lightDirection = glm::normalize(m_renderLightDirection);
+   
+    renderScene.lightIntensity = m_renderLightIntensity;
+
+
+    // ============================================
+    // RENDER TEXTURE SNAPSHOT CACHE
+    // ============================================
+
+    // Maps an OpenGL texture ID to its index
+    // inside renderScene.textures.
+    std::unordered_map<GLuint, int> textureLookup;
+
+    // Copies a loaded OpenGL texture into CPU memory.
+    // This runs only when the render is started.
+    auto captureAlbedoTexture =
+        [&](GLuint textureID) -> int
+    {
+        if (textureID == 0)
+            return -1;
+
+        // Already captured this texture.
+        auto found = textureLookup.find(textureID);
+
+        if (found != textureLookup.end())
+            return found->second;
+
+        GLint previousTexture = 0;
+        GLint previousPackAlignment = 4;
+        GLint previousPackBuffer = 0;
+
+        glGetIntegerv(
+            GL_TEXTURE_BINDING_2D,
+            &previousTexture
+        );
+
+        glGetIntegerv(
+            GL_PACK_ALIGNMENT,
+            &previousPackAlignment
+        );
+
+        glGetIntegerv(
+            GL_PIXEL_PACK_BUFFER_BINDING,
+            &previousPackBuffer
+        );
+
+        glBindTexture(GL_TEXTURE_2D, textureID);
+
+        RenderTexture texture;
+
+        glGetTexLevelParameteriv(
+            GL_TEXTURE_2D, 0,
+            GL_TEXTURE_WIDTH,
+            &texture.width
+        );
+
+        glGetTexLevelParameteriv(
+            GL_TEXTURE_2D, 0,
+            GL_TEXTURE_HEIGHT,
+            &texture.height
+        );
+
+        if (texture.width > 0 && texture.height > 0)
+        {
+            texture.pixels.resize(
+                static_cast<std::size_t>(texture.width) *
+                static_cast<std::size_t>(texture.height) * 4
+            );
+
+            // Read into ordinary CPU memory.
+            glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+            glPixelStorei(GL_PACK_ALIGNMENT, 1);
+
+            glGetTexImage(
+                GL_TEXTURE_2D,
+                0,
+                GL_RGBA,
+                GL_UNSIGNED_BYTE,
+                texture.pixels.data()
+            );
+        }
+
+        // Restore the OpenGL state we changed.
+        glPixelStorei(
+            GL_PACK_ALIGNMENT,
+            previousPackAlignment
+        );
+
+        glBindBuffer(
+            GL_PIXEL_PACK_BUFFER,
+            static_cast<GLuint>(previousPackBuffer)
+        );
+
+        glBindTexture(
+            GL_TEXTURE_2D,
+            static_cast<GLuint>(previousTexture)
+        );
+
+        if (!texture.IsValid())
+            return -1;
+
+        const int index =
+            static_cast<int>(renderScene.textures.size());
+
+        renderScene.textures.push_back(
+            std::move(texture)
+        );
+
+        textureLookup[textureID] = index;
+
+        return index;
+    };
+
+
+
 
     // ============================================
     // COPY EDITABLE MESH GEOMETRY
@@ -2926,6 +3044,61 @@ bool BoxEngine::StartFinalRender()
 
         const auto& faces =
             mesh.GetFaces();
+
+        // ============================================
+        // DEBUG MATERIAL TEXTURES
+        // ============================================
+
+        //BOX_LOG_INFO(
+        //    "Entity: " << entity->GetName()
+        //    << " Material slots: "
+        //    << entity->GetMaterialSlotCount()
+        //);
+
+        //// Check the entity's primary material.
+        //const Material& mainMaterial = entity->GetMaterial();
+
+        //BOX_LOG_INFO(
+        //    "Primary Material: "
+        //    << mainMaterial.GetName()
+        //    << " Texture ID: "
+        //    << mainMaterial.GetBaseColorTexture()
+        //    << " Uses Texture: "
+        //    << mainMaterial.UsesBaseColorTexture()
+        //);
+
+        //// Check each material slot.
+        //for (std::size_t slot = 0;
+        //    slot < entity->GetMaterialSlotCount();
+        //    ++slot)
+        //{
+        //    const Material& material =
+        //        entity->GetMaterialSlot(slot);
+
+        //    BOX_LOG_INFO(
+        //        "Material Slot " << slot
+        //        << " Name: " << material.GetName()
+        //        << " Texture ID: "
+        //        << material.GetBaseColorTexture()
+        //        << " Uses Texture: "
+        //        << material.UsesBaseColorTexture()
+        //    );
+        //}
+
+        //// Check which slot the first face uses.
+        //if (!faces.empty())
+        //{
+        //    BOX_LOG_INFO(
+        //        "First face material index: "
+        //        << faces[0].materialIndex
+        //        << " UV count: "
+        //        << faces[0].uvs.size()
+        //    );
+        //}
+
+
+
+        // ============================================= END TEST =====================================================
 
         // Transform local mesh coordinates to world.
         const glm::mat4 model =
@@ -2961,7 +3134,62 @@ bool BoxEngine::StartFinalRender()
 
                 faceColor = glm::vec3(baseColor);
             }
+            // ================================================================
 
+            // ============================================
+            // FIND FACE ALBEDO TEXTURE
+            // ============================================
+
+            int faceTextureIndex = -1;
+
+            if (face.materialIndex <
+                entity->GetMaterialSlotCount())
+            {
+                const Material& material =
+                    entity->GetMaterialSlot(face.materialIndex);
+
+                if (material.UsesBaseColorTexture())
+                {
+                    faceTextureIndex = captureAlbedoTexture(
+                        material.GetBaseColorTexture()
+                    );
+                }
+            }
+
+            // Only use texture mapping if this face
+            // has a complete set of UV coordinates.
+            const bool hasValidUVs = face.uvs.size() == face.vertices.size();
+
+
+            // ============================================
+            // AUTOMATIC FACE UV BOUNDS
+            // ============================================
+
+            glm::vec3 faceMin(
+                std::numeric_limits<float>::max()
+            );
+
+            glm::vec3 faceMax(
+                std::numeric_limits<float>::lowest()
+            );
+
+            for (std::size_t vertexIndex : face.vertices)
+            {
+                if (vertexIndex >= vertices.size())
+                    continue;
+
+                const glm::vec3& position =
+                    vertices[vertexIndex].position;
+
+                faceMin = glm::min(faceMin, position);
+                faceMax = glm::max(faceMax, position);
+            }
+
+            const glm::vec3 faceSize = faceMax - faceMin;
+
+
+
+			// =================================================================                                                                                 
 
             // Simple triangle fan for our first test.
             // This is suitable for convex faces.
@@ -3003,6 +3231,96 @@ bool BoxEngine::StartFinalRender()
 
                 triangle.color = faceColor;
 
+				// ============================================
+                // ============================================
+                // COPY FACE-CORNER UV COORDINATES
+                // ============================================
+
+
+                // ============================================
+                // ASSIGN TEXTURE UV COORDINATES
+                // ============================================
+
+                if (faceTextureIndex >= 0)
+                {
+                    if (hasValidUVs)
+                    {
+                        // Use the mesh's existing UV mapping.
+                        triangle.uvA = face.uvs[0];
+                        triangle.uvB = face.uvs[i];
+                        triangle.uvC = face.uvs[i + 1];
+                    }
+
+                    // ====================================
+                    // NORMALIZED PLANAR UV MAPPING
+                    // ====================================
+
+                    // All triangles on this face use the
+                    // same coordinate bounds.
+
+                    const glm::vec3& a = vertices[ia].position;
+                    const glm::vec3& b = vertices[ib].position;
+                    const glm::vec3& c = vertices[ic].position;
+
+                    const glm::vec3 normal = glm::abs(
+                        glm::cross(b - a, c - a)
+                    );
+
+                    constexpr float epsilon = 0.000001f;
+
+                    // Map a local vertex position into the
+                    // face's 0-1 UV coordinate range.
+                    auto projectUV =
+                        [&](const glm::vec3& p) -> glm::vec2
+                    {
+                        if (normal.x >= normal.y &&
+                            normal.x >= normal.z)
+                        {
+                            // X-facing face: YZ plane.
+                            return glm::vec2(
+                                (p.z - faceMin.z) /
+                                glm::max(faceSize.z, epsilon),
+                                (p.y - faceMin.y) /
+                                glm::max(faceSize.y, epsilon)
+                            );
+                        }
+                        else if (normal.y >= normal.z)
+                        {
+                            // Y-facing face: XZ plane.
+                            return glm::vec2(
+                                (p.x - faceMin.x) /
+                                glm::max(faceSize.x, epsilon),
+                                (p.z - faceMin.z) /
+                                glm::max(faceSize.z, epsilon)
+                            );
+                        }
+                        else
+                        {
+                            // Z-facing face: XY plane.
+                            return glm::vec2(
+                                (p.x - faceMin.x) /
+                                glm::max(faceSize.x, epsilon),
+                                (p.y - faceMin.y) /
+                                glm::max(faceSize.y, epsilon)
+                            );
+                        }
+                    };
+
+                    // Assign UVs to all three corners.
+                    triangle.uvA = projectUV(a);
+                    triangle.uvB = projectUV(b);
+                    triangle.uvC = projectUV(c);
+
+
+                    // Assign the captured CPU texture.
+                    triangle.textureIndex = faceTextureIndex;
+                }
+
+
+
+				// ============================================
+
+
                 renderScene.triangles.push_back(triangle);
             }
         }
@@ -3015,8 +3333,29 @@ bool BoxEngine::StartFinalRender()
     );
 
     // Give the renderer its independent snapshot.
+    // 
+    //m_boxRenderer->SetScene(std::move(renderScene));
+
+// ============================================
+// REPORT TEXTURE SNAPSHOT
+// ============================================
+
+    BOX_LOG_INFO(
+        "BoxRenderer captured "
+        << renderScene.textures.size()
+        << " unique albedo textures"
+    );
+
+    // ============================================
+    // PASS SCENE TO RENDERER
+    // ============================================
+
     m_boxRenderer->SetScene(std::move(renderScene));
 
+    
+    // ################################
+
+    BOX_LOG_INFO("BoxRenderer BVH nodes: " << m_boxRenderer->GetBVHNodeCount());
 
 
     m_boxRenderer->StartRender();
@@ -3059,7 +3398,7 @@ bool BoxEngine::IsFinalRendering() const
 }
 
 // ============================================
-// RENDER PROGRESS
+// RENDER PROGRESS BAR
 // ============================================
 
 float BoxEngine::GetFinalRenderProgress() const
@@ -3070,8 +3409,58 @@ float BoxEngine::GetFinalRenderProgress() const
     return m_boxRenderer->GetProgress();
 }
 
+
+// ============================================
+// GET FINAL RENDER TIME
+// ============================================
+
+double BoxEngine::GetFinalRenderTime() const
+{
+    if (!m_boxRenderer)
+        return 0.0;
+
+    return m_boxRenderer->GetRenderTime();
+}
+
+
+// ============================================
+// SET RENDER LIGHT DIRECTION
+// ============================================
+
+void BoxEngine::SetRenderLightDirection(
+    const glm::vec3& direction)
+{
+    // A zero-length direction is invalid.
+    // Ignore it until the user enters a
+    // valid direction again.
+
+    if (glm::dot(direction, direction) < 0.000001f)
+        return;
+
+    m_renderLightDirection = direction;
+}
+
+// ============================================
+// GET RENDER LIGHT DIRECTION
+// ============================================
+
+glm::vec3 BoxEngine::GetRenderLightDirection() const
+{
+    return m_renderLightDirection;
+}
+
+void BoxEngine::SetRenderLightIntensity(float intensity)
+{
+    m_renderLightIntensity = glm::max(0.0f, intensity);
+}
+
+float BoxEngine::GetRenderLightIntensity() const
+{
+    return m_renderLightIntensity;
+}
+
 // ----------------------------------------------------------------------------------------------------
-// ------------------------------------ END RENDER -----------------------------------
+// ----------------------------------------------------- END RENDER -----------------------------------
 // ----------------------------------------------------------------------------------------------------
 
 

@@ -308,15 +308,28 @@ public:
 
 	// ---------------------- End Serialization ----------------------
     
-    // ============================================
-    // BOX RENDERER
-    // ============================================
+    // =========================================================================================================
+	// ========================================== BOX RENDERER =================================================
+    // =========================================================================================================
 
     bool StartFinalRender();
     void CancelFinalRender();
 
     bool IsFinalRendering() const;
     float GetFinalRenderProgress() const;
+
+    double GetFinalRenderTime() const;
+
+    // ============================================
+    // BOX RENDERER LIGHTING
+    // ============================================
+
+    void SetRenderLightDirection(const glm::vec3& direction);
+
+    glm::vec3 GetRenderLightDirection() const;
+
+    void SetRenderLightIntensity(float intensity);
+    float GetRenderLightIntensity() const;
 
     // --------------------------------------------------------------------------------------------------------------
 
@@ -446,6 +459,10 @@ private:
     std::unique_ptr<Render> m_boxRenderer;
 
     bool m_showFinalRender = false;
+
+    // Default directional light.
+    glm::vec3 m_renderLightDirection{ -0.5f, 1.0f, 0.7f };
+    float m_renderLightIntensity = 1.0f;
 
 private:
     Framebuffer m_sceneFramebuffer;

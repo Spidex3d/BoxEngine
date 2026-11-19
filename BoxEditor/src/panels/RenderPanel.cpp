@@ -1,6 +1,7 @@
 #include "panels/RenderPanel.h"
 #include <imgui/imgui.h>
 #include <miniBoxLog.h>
+#include <cmath>
 
 #include <BoxEngine.h>
 
@@ -75,7 +76,86 @@ void RenderPanel::Draw(BoxEngine& engine)
 
 	ImGui::InputInt("Samples", &samplingMode);
 
+
+	// ============================================
+	// DIRECTIONAL LIGHT SETTINGS
+	// ============================================
+
+	ImGui::Spacing();
+	ImGui::SeparatorText("Directional Light");
+
+
+	glm::vec3 lightDirection = engine.GetRenderLightDirection();
+
+	ImGui::SeparatorText("Directional Light");
+
+	ImGui::TextDisabled("Direction towards the light source");
+
+	ImGui::Spacing();
+
+	// ============================================
+	// LIGHT DIRECTION X
+	// ============================================
+
+	ImGui::SetNextItemWidth(120.0f);
+
+	if (ImGui::InputFloat("Direction X", &lightDirection.x, 0.01f))
+	{
+		engine.SetRenderLightDirection(lightDirection);
+	}
+
+	// ============================================
+	// LIGHT DIRECTION Y
+	// ============================================
+
+	ImGui::SetNextItemWidth(120.0f);
+
+	if (ImGui::InputFloat("Direction Y", &lightDirection.y, 0.01f))
+	{
+		engine.SetRenderLightDirection(lightDirection);
+	}
+
+	// ============================================
+	// LIGHT DIRECTION Z
+	// ============================================
+
+	ImGui::SetNextItemWidth(120.0f);
+
+	if (ImGui::InputFloat("Direction Z", &lightDirection.z, 0.01f))
+	{
+		engine.SetRenderLightDirection(lightDirection);
+	}
+
+
+	ImGui::Spacing();
+
+	// ============================================
+	// RESET LIGHT
+	// ============================================
+
+	if (ImGui::Button("Reset Light"))
+	{
+		engine.SetRenderLightDirection(
+			glm::vec3(-0.5f, 1.0f, 0.7f)
+		);
+	}
+
+	ImGui::Spacing();
+
+	float lightIntensity = engine.GetRenderLightIntensity();
+
+	ImGui::SetNextItemWidth(120.0f);
+
 	
+	if (ImGui::InputFloat(
+		"Light Brightness",
+		&lightIntensity,
+		0.1f,
+		0.5f,
+		"%.2f"))
+	{
+		engine.SetRenderLightIntensity(lightIntensity);
+	}
 
 	// =============================================
 	// RENDER BUTTON GREEN
@@ -130,6 +210,31 @@ void RenderPanel::Draw(BoxEngine& engine)
 	{
 		ImGui::Text("Render complete");
 	}
+
+
+	// ============================================
+	// RENDER TIME DISPLAY
+	// ============================================
+
+	const double elapsedSeconds =
+		engine.GetFinalRenderTime();
+
+	const int minutes =
+		static_cast<int>(elapsedSeconds / 60.0);
+
+	const int seconds =
+		static_cast<int>(elapsedSeconds) % 60;
+
+	const int centiseconds =
+		static_cast<int>(
+			std::fmod(elapsedSeconds, 1.0) * 100.0
+			);
+
+	ImGui::Spacing();
+
+	ImGui::Text(
+		"Render Time: %02d:%02d.%02d", minutes, seconds, centiseconds);
+
 
 	
 	ImGui::End();
