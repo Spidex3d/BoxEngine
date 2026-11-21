@@ -38,7 +38,7 @@ private:
     void RoundInsetControls(Entity& entity, FaceEditController& faceEditController);
 	void LoopCutControls(Entity& entity, EdgeEditController& edgeEditController);
 	void BevelControls(Entity& entity, EdgeEditController& edgeEditController);
-
+    void MirrorControls(Entity& entity);
 
 
     std::unique_ptr<MaterialEditor> m_materialEditor;

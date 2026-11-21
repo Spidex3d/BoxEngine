@@ -617,6 +617,12 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                 }
 
             }
+            ImGui::Separator();
+			// ############################################ Mirror Modifier ############################################
+            if (ImGui::MenuItem("Mirror"))
+            {
+
+            }
 
             ImGui::Separator();
 			// ############################################ Face Cut Modifier ############################################

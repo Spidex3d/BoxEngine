@@ -515,6 +515,15 @@ void ObjectExplorerPanel::DrawModifiersTab(BoxEngine& engine, Entity& entity, Fa
 {
     ImGui::Text("Modifiers for: %s", entity.GetName().c_str());
 
+    // ============================================
+    // PERSISTENT MIRROR SELECTION
+    // ============================================
+
+    MirrorControls(entity);
+
+    ImGui::Spacing();
+    ImGui::Separator();
+
     ImGui::Separator();
 
     // =================================================
@@ -633,6 +642,34 @@ void ObjectExplorerPanel::ExtrudeControls(Entity& entity, FaceEditController& fa
 
         ImGui::Spacing();
 
+        // ============================================
+        // EXTRUSION MODE
+        // ============================================
+
+        ImGui::Spacing();
+
+        bool regionMode =
+            faceEditController.IsRegionExtrude();
+
+        if (ImGui::Checkbox(
+            "Extrude as Region",
+            &regionMode))
+        {
+            faceEditController.SetRegionExtrude(entity, regionMode);
+        }
+
+        ImGui::TextDisabled(
+            regionMode
+            ? "Connected faces extrude together"
+            : "Each face extrudes individually"
+        );
+
+        ImGui::Spacing();
+
+
+
+
+
 
         // ---------------------------------------------
         // Axis
@@ -654,8 +691,15 @@ void ObjectExplorerPanel::ExtrudeControls(Entity& entity, FaceEditController& fa
         case ExtrudeAxis::Z:
             axis = 3;
             break;
+            
+        case ExtrudeAxis::Normal:
+            axis = 4;
+            break;
 
         case ExtrudeAxis::None:
+
+
+
         default:
             axis = 0;
             break;
@@ -666,7 +710,8 @@ void ObjectExplorerPanel::ExtrudeControls(Entity& entity, FaceEditController& fa
             "None",
             "X",
             "Y",
-            "Z"
+            "Z",
+            "Normal"
         };
 
         if (ImGui::Combo(
@@ -695,7 +740,12 @@ void ObjectExplorerPanel::ExtrudeControls(Entity& entity, FaceEditController& fa
                     ExtrudeAxis::Z;
                 break;
 
-            case 0:
+            case 4:
+                newAxis =
+                    ExtrudeAxis::Normal;
+                break;
+
+
             default:
                 newAxis =
                     ExtrudeAxis::None;
@@ -1461,3 +1511,164 @@ void ObjectExplorerPanel::BevelControls(Entity& entity, EdgeEditController& edge
     );
 
 }
+
+void ObjectExplorerPanel::MirrorControls(
+    Entity& entity)
+{
+    auto& modifiers = entity.GetModifiers();
+
+    // Find this object's mirror modifier.
+    ModifierData* mirrorModifier = nullptr;
+
+    for (ModifierData& modifier : modifiers)
+    {
+        if (modifier.type == ModifierType::Mirror)
+        {
+            mirrorModifier = &modifier;
+            break;
+        }
+    }
+
+    ImGui::SeparatorText("Mirror Selection");
+
+    // Offer a way to add Mirror to this object.
+    if (!mirrorModifier)
+    {
+        if (ImGui::Button("Add Mirror Selection"))
+        {
+            ModifierData modifier;
+            modifier.type = ModifierType::Mirror;
+            modifier.modEnabled = true;
+
+            modifier.mirror.axis = ModifierAxis::X;
+            modifier.mirror.tolerance = 0.001f;
+
+            modifiers.push_back(modifier);
+
+            BOX_LOG_INFO(
+                "Added Mirror Selection to "
+                << entity.GetName()
+            );
+        }
+
+        return;
+    }
+
+    // ========================================
+    // ENABLE / DISABLE
+    // ========================================
+
+    ImGui::Checkbox(
+        "Enable Symmetry",
+        &mirrorModifier->modEnabled
+    );
+
+    ImGui::Spacing();
+
+    // ========================================
+    // MIRROR AXIS
+    // ========================================
+
+    int selectedAxis = 0;
+
+    switch (mirrorModifier->mirror.axis)
+    {
+    case ModifierAxis::Y:
+        selectedAxis = 1;
+        break;
+
+    case ModifierAxis::Z:
+        selectedAxis = 2;
+        break;
+
+    case ModifierAxis::X:
+    default:
+        selectedAxis = 0;
+        break;
+    }
+
+    const char* axisItems[] = {
+        "X", "Y", "Z"
+    };
+
+    ImGui::Text("Mirror Axis");
+
+    if (ImGui::Combo(
+        "##MirrorAxis",
+        &selectedAxis,
+        axisItems,
+        IM_ARRAYSIZE(axisItems)))
+    {
+        switch (selectedAxis)
+        {
+        case 1:
+            mirrorModifier->mirror.axis =
+                ModifierAxis::Y;
+            break;
+
+        case 2:
+            mirrorModifier->mirror.axis =
+                ModifierAxis::Z;
+            break;
+
+        default:
+            mirrorModifier->mirror.axis =
+                ModifierAxis::X;
+            break;
+        }
+    }
+
+    // ========================================
+    // MATCH TOLERANCE
+    // ========================================
+
+    ImGui::Spacing();
+    ImGui::Text("Match Tolerance");
+
+    if (ImGui::InputFloat(
+        "##MirrorTolerance",
+        &mirrorModifier->mirror.tolerance,
+        0.0001f,
+        0.001f,
+        "%.4f"))
+    {
+        mirrorModifier->mirror.tolerance =
+            std::clamp(
+                mirrorModifier->mirror.tolerance,
+                0.000001f,
+                0.1f
+            );
+    }
+
+    ImGui::TextDisabled(
+        "Mirror plane: local axis = 0"
+    );
+
+    ImGui::Spacing();
+
+    // ========================================
+    // REMOVE MIRROR MODIFIER
+    // ========================================
+
+    if (ImGui::Button("Remove Mirror Selection"))
+    {
+        modifiers.erase(
+            std::remove_if(
+                modifiers.begin(),
+                modifiers.end(),
+                [](const ModifierData& modifier)
+        {
+            return modifier.type ==
+                ModifierType::Mirror;
+        }
+            ),
+            modifiers.end()
+        );
+
+        BOX_LOG_INFO(
+            "Removed Mirror Selection from "
+            << entity.GetName()
+        );
+    }
+}
+

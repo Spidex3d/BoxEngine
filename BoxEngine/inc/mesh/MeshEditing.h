@@ -113,6 +113,9 @@ public:
         return m_shadingMode;
     }
 
+    std::size_t FindMirroredEdge(std::size_t edgeIndex, int mirrorAxis, float tolerance = 0.001f) const;
+
+
 	// -------------------------------------
 	// Rebuild edges based on the current faces and vertices.
 	// -------------------------------------

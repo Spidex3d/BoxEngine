@@ -3158,6 +3158,103 @@ void MeshEditing::RebuildEdges()
     }
 }
 
+    // ========================================
+    // FIND MIRRORED EDGE
+    // ========================================
+
+std::size_t MeshEditing::FindMirroredEdge(
+    std::size_t edgeIndex,
+    int mirrorAxis,
+    float tolerance) const
+{
+    constexpr std::size_t InvalidIndex =
+        static_cast<std::size_t>(-1);
+
+    if (edgeIndex >= m_edges.size())
+        return InvalidIndex;
+
+    if (mirrorAxis < 0 || mirrorAxis > 2)
+        return InvalidIndex;
+
+    const EditEdge& source = m_edges[edgeIndex];
+
+    if (source.vertexA >= m_vertices.size() ||
+        source.vertexB >= m_vertices.size())
+    {
+        return InvalidIndex;
+    }
+
+    // ========================================
+    // MIRROR THE TWO ENDPOINTS
+    // ========================================
+
+    glm::vec3 a =
+        m_vertices[source.vertexA].position;
+
+    glm::vec3 b =
+        m_vertices[source.vertexB].position;
+
+    a[mirrorAxis] = -a[mirrorAxis];
+    b[mirrorAxis] = -b[mirrorAxis];
+
+    const float toleranceSquared =
+        tolerance * tolerance;
+
+    auto positionsMatch =
+        [&](const glm::vec3& p,
+            const glm::vec3& q) -> bool
+    {
+        const glm::vec3 difference = p - q;
+
+        return glm::dot(difference, difference)
+            <= toleranceSquared;
+    };
+
+    // ========================================
+    // SEARCH FOR THE OPPOSITE EDGE
+    // ========================================
+
+    for (std::size_t i = 0;
+        i < m_edges.size();
+        ++i)
+    {
+        const EditEdge& candidate = m_edges[i];
+
+        if (candidate.vertexA >= m_vertices.size() ||
+            candidate.vertexB >= m_vertices.size())
+        {
+            continue;
+        }
+
+        const glm::vec3& c =
+            m_vertices[candidate.vertexA].position;
+
+        const glm::vec3& d =
+            m_vertices[candidate.vertexB].position;
+
+        // Same endpoint order.
+        const bool directMatch =
+            positionsMatch(a, c) &&
+            positionsMatch(b, d);
+
+        // Reversed endpoint order.
+        const bool reversedMatch =
+            positionsMatch(a, d) &&
+            positionsMatch(b, c);
+
+        if (directMatch || reversedMatch)
+        {
+            return i;
+        }
+    }
+
+    return InvalidIndex;
+}
+
+
+
+
+
 // ####################################################################################################################
 // ############################################ Mesh Editing add edge LoopCut #########################################
 // ####################################################################################################################

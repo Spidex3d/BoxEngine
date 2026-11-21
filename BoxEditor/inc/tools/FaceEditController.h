@@ -15,7 +15,8 @@ enum class ExtrudeAxis
     None,
     X,
     Y,
-    Z
+    Z,
+    Normal
 };
 
 enum class FaceMoveAxis
@@ -23,7 +24,8 @@ enum class FaceMoveAxis
     None,
     X,
     Y,
-    Z
+    Z,
+    Normal
 };
 
 class FaceEditController
@@ -44,8 +46,10 @@ public:
 
     bool m_isExtruding = false;
 
-    std::size_t m_extrudeFace =
-        InvalidFace;
+    std::size_t m_extrudeFace = InvalidFace;
+
+    // Faces captured when extrusion begins.
+    std::vector<std::size_t> m_extrudeFaces;
 
     ExtrudeAxis m_extrudeAxis = ExtrudeAxis::None;
 
@@ -54,6 +58,22 @@ public:
     ImVec2 m_extrudeStartMouse = ImVec2(0.0f, 0.0f);
 
     MeshEditing m_meshBeforeExtrude;
+
+    // False = individual faces
+    // True  = connected regions
+
+    bool IsRegionExtrude() const
+    {
+        return m_regionExtrude;
+    }
+
+    // ============================================
+    // REGION EXTRUSION
+    // ============================================
+
+    void SetRegionExtrude(Entity& entity, bool enabled);
+
+    
 
 	// ######################################## useful for our Object Explorer ############################
     
@@ -283,6 +303,12 @@ private:
     // ######## Object Explorer Extrude ###########################
     void UpdateExtrudeMesh(Entity& entity);
 
+    // False = Individual Faces
+    // True  = Region Extrusion
+    bool m_regionExtrude = false;
+    
+    
+
     // ######### Object Explorer Inset ############################
 	void UpdateInsetMesh(Entity& entity);
 
@@ -306,6 +332,30 @@ private:
 
 
     FaceMoveAxis m_moveAxis = FaceMoveAxis::None;
+
+    // Direction of the selected face before moving.
+    glm::vec3 m_moveFaceNormal{ 0.0f, 1.0f, 0.0f };
+
+    // ============================================
+    // MULTI-FACE MOVE DATA
+    // ============================================
+
+    struct MoveVertexData
+    {
+        std::size_t index = 0;
+
+        glm::vec3 startPosition{ 0.0f };
+
+        // Movement direction for this vertex.
+        glm::vec3 direction{ 0.0f };
+    };
+
+    std::vector<MoveVertexData> m_moveVertices;
+
+
+
+
+
     ImVec2 m_startMouse = ImVec2(0.0f, 0.0f);
 
     std::vector<FaceStartPosition>m_startVertexPositions;

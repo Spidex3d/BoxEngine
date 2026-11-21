@@ -209,6 +209,18 @@ enum class ModifierAxis
 };
 
 
+// ============================================
+// MIRROR SELECTION SETTINGS
+// ============================================
+
+struct MirrorModifierData
+{
+    ModifierAxis axis = ModifierAxis::X;
+
+    float tolerance = 0.001f;
+};
+
+
 // =====================================================
 // Extrude
 // =====================================================
@@ -217,11 +229,9 @@ struct ExtrudeModifierData
 {
     std::size_t faceIndex = 0;
 
-    ModifierAxis axis =
-        ModifierAxis::None;
+    ModifierAxis axis = ModifierAxis::None;
 
-    float extrudeAmount =
-        0.0f;
+    float extrudeAmount = 0.0f;
 };
 
 
@@ -287,6 +297,9 @@ struct ModifierData
 
     // New Particle Scatter
     ParticleScatterData scatter;
+
+	// New Mirror Modifier
+    MirrorModifierData mirror;
 
     
 };

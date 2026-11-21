@@ -12,14 +12,134 @@
 #include <mesh/modifiers/FaceInset.h>
 #include <mesh/modifiers/RoundInset.h>
 #include <mesh/modifiers/FaceRemove.h>
+#include <mesh/modifiers/ModifierData.h>
 
 
-void FaceEditController::HandleInput(
-    BoxEngine& engine,
-    bool viewportHovered,
-    bool faceModeActive,
-    const ImVec2& viewportPosition,
-    const ImVec2& viewportSize)
+// ============================================
+// MIRROR FACE MATCHING
+// BoxEditor - Symmetry Editing
+// ============================================
+
+namespace
+{
+    std::size_t FindMirroredFace(
+        const MeshEditing& mesh,
+        std::size_t sourceFaceIndex,
+        int mirrorAxis,
+        float tolerance)
+    {
+        constexpr std::size_t InvalidIndex =
+            static_cast<std::size_t>(-1);
+
+        if (sourceFaceIndex >= mesh.GetFaceCount())
+            return InvalidIndex;
+
+        const EditFace& sourceFace =
+            mesh.GetFace(sourceFaceIndex);
+
+        if (sourceFace.vertices.size() < 3)
+            return InvalidIndex;
+
+        const float toleranceSquared =
+            tolerance * tolerance;
+
+        // Check the other faces.
+        for (std::size_t candidateIndex = 0;
+            candidateIndex < mesh.GetFaceCount();
+            ++candidateIndex)
+        {
+            if (candidateIndex == sourceFaceIndex)
+                continue;
+
+            const EditFace& candidate =
+                mesh.GetFace(candidateIndex);
+
+            // Mirrored faces must have the same
+            // number of vertices.
+            if (candidate.vertices.size() !=
+                sourceFace.vertices.size())
+            {
+                continue;
+            }
+
+            std::vector<bool> matched(
+                candidate.vertices.size(), false
+            );
+
+            bool allMatched = true;
+
+            // ====================================
+            // MATCH EACH MIRRORED VERTEX
+            // ====================================
+
+            for (std::size_t sourceVertexIndex :
+            sourceFace.vertices)
+            {
+                if (sourceVertexIndex >=
+                    mesh.GetVertexCount())
+                {
+                    allMatched = false;
+                    break;
+                }
+
+                glm::vec3 mirroredPosition =
+                    mesh.GetVertex(
+                        sourceVertexIndex
+                    ).position;
+
+                // Reflect across the chosen
+                // local coordinate axis.
+                mirroredPosition[mirrorAxis] =
+                    -mirroredPosition[mirrorAxis];
+
+                bool foundVertex = false;
+
+                for (std::size_t j = 0;
+                    j < candidate.vertices.size();
+                    ++j)
+                {
+                    if (matched[j])
+                        continue;
+
+                    const std::size_t vertexIndex =
+                        candidate.vertices[j];
+
+                    if (vertexIndex >= mesh.GetVertexCount())
+                        continue;
+
+                    const glm::vec3 candidatePosition =
+                        mesh.GetVertex(vertexIndex).position;
+
+                    const glm::vec3 difference =
+                        candidatePosition - mirroredPosition;
+
+                    if (glm::dot(difference, difference)
+                        <= toleranceSquared)
+                    {
+                        matched[j] = true;
+                        foundVertex = true;
+                        break;
+                    }
+                }
+
+                if (!foundVertex)
+                {
+                    allMatched = false;
+                    break;
+                }
+            }
+
+            if (allMatched)
+                return candidateIndex;
+        }
+
+        return InvalidIndex;
+    }
+}
+
+
+void FaceEditController::HandleInput(BoxEngine& engine, bool viewportHovered,
+    bool faceModeActive, const ImVec2& viewportPosition, const ImVec2& viewportSize)
 {
     Entity* entity = engine.GetSelectedEntity();
 
@@ -97,12 +217,9 @@ void FaceEditController::HandleInput(
                 "Extrude axis Y"
             );
         }
-        else if (ImGui::IsKeyPressed(
-            ImGuiKey_Z,
-            false))
+        else if (ImGui::IsKeyPressed(ImGuiKey_Z, false))
         {
-            m_extrudeAxis =
-                ExtrudeAxis::Z;
+            m_extrudeAxis = ExtrudeAxis::Z;
 
             m_extrudeStartMouse =
                 ImGui::GetMousePos();
@@ -111,6 +228,16 @@ void FaceEditController::HandleInput(
                 "Extrude axis Z"
             );
         }
+        else if (ImGui::IsKeyPressed(ImGuiKey_N, false))
+        {
+            m_extrudeAxis = ExtrudeAxis::Normal;
+
+            m_extrudeStartMouse = ImGui::GetMousePos();
+
+            BOX_LOG_INFO("Extrude along face normals");
+        }
+        
+
 
 
         // ---------------------------------------------
@@ -152,6 +279,11 @@ void FaceEditController::HandleInput(
                 m_extrudeAmount =
                     deltaX *
                     m_moveSensitivity;
+                break;
+
+            case ExtrudeAxis::Normal:
+                m_extrudeAmount =
+                    deltaX * m_moveSensitivity;
                 break;
 
             case ExtrudeAxis::None:
@@ -217,22 +349,9 @@ void FaceEditController::HandleInput(
             // -----------------------------------------
             FaceExtrude extrude;
 
-            if (extrude.Use(
-                editableMesh,
-                m_extrudeFace,
-                direction,
-                m_extrudeAmount))
-            {
-                MeshData renderMesh;
+            UpdateExtrudeMesh(*entity);
 
-                if (editableMesh.BuildRenderMesh(
-                    renderMesh))
-                {
-                    entity->CreateFromMeshData(
-                        renderMesh
-                    );
-                }
-            }
+            
         }
 
 
@@ -701,6 +820,16 @@ void FaceEditController::HandleInput(
                 FaceMoveAxis::Z
             );
         }
+        else if (ImGui::IsKeyPressed(
+            ImGuiKey_N,
+            false))
+        {
+            EditBeginMove(
+                *entity,
+                FaceMoveAxis::Normal
+            );
+        }
+
     }
 
 
@@ -923,6 +1052,46 @@ void FaceEditController::BeginExtrude(Entity& entity)
 
     m_extrudeFace = m_selectedFace;
 
+
+    // ============================================
+    // CAPTURE ALL SELECTED FACES
+    // ============================================
+
+    m_extrudeFaces.clear();
+
+    for (std::size_t faceIndex = 0;
+        faceIndex < mesh.GetFaceCount();
+        ++faceIndex)
+    {
+        if (entity.IsFaceSelected(faceIndex))
+        {
+            m_extrudeFaces.push_back(faceIndex);
+        }
+    }
+
+    // The active face might not be selected
+    // after Shift-clicking.
+    // In that case, use the first selected face.
+    if (!m_extrudeFaces.empty() &&
+        !entity.IsFaceSelected(m_extrudeFace))
+    {
+        m_extrudeFace = m_extrudeFaces.front();
+    }
+
+    // Keep existing single-face behaviour
+    // if no selection is registered.
+    if (m_extrudeFaces.empty())
+    {
+        m_extrudeFaces.push_back(m_extrudeFace);
+    }
+
+    BOX_LOG_INFO(
+        "Extrusion captured "
+        << m_extrudeFaces.size()
+        << " selected faces"
+    );
+    // ######
+
     m_extrudeAxis = ExtrudeAxis::None;
 
     m_extrudeAmount = 0.0f;
@@ -933,6 +1102,21 @@ void FaceEditController::BeginExtrude(Entity& entity)
 
     BOX_LOG_INFO("Started extrusion on face " << m_extrudeFace);
 }
+
+
+void FaceEditController::SetRegionExtrude(
+    Entity& entity,
+    bool enabled)
+{
+    m_regionExtrude = enabled;
+
+    // Rebuild the current extrusion preview.
+    if (m_isExtruding)
+    {
+        UpdateExtrudeMesh(entity);
+    }
+}
+
 
 // ##########################################################################################################
 // ############################################ Object Explorer #############################################
@@ -1000,12 +1184,21 @@ void FaceEditController::ConfirmExtrude(Entity& entity)
         break;
     }
 
-    entity.SetLastExtrude(
-        m_extrudeFace,
-        storedAxis,
-        m_extrudeAmount,
-        m_meshBeforeExtrude
-    );
+    // The last-operation editor currently supports
+// only one face and X/Y/Z extrusion.
+
+    if (m_extrudeFaces.size() == 1 &&
+        m_extrudeAxis != ExtrudeAxis::Normal &&
+        m_extrudeAxis != ExtrudeAxis::None)
+    {
+        entity.SetLastExtrude(
+            m_extrudeFace,
+            storedAxis,
+            m_extrudeAmount,
+            m_meshBeforeExtrude
+        );
+    }
+
 
     m_isExtruding =
         false;
@@ -1017,6 +1210,8 @@ void FaceEditController::ConfirmExtrude(Entity& entity)
         "Extrude confirmed. Amount="
         << m_extrudeAmount
     );
+
+    m_extrudeFaces.clear();
 
 }
 
@@ -1049,13 +1244,14 @@ void FaceEditController::CancelExtrude(Entity& entity)
     m_extrudeAmount =
         0.0f;
 
-    BOX_LOG_INFO(
-        "Extrude cancelled"
-    );
+    BOX_LOG_INFO("Extrude cancelled");
+
+    m_extrudeFaces.clear();
 }
 
 
-void FaceEditController::UpdateExtrudeMesh(Entity& entity)
+void FaceEditController::UpdateExtrudeMesh(
+    Entity& entity)
 {
     if (!m_isExtruding ||
         m_extrudeAxis == ExtrudeAxis::None)
@@ -1063,73 +1259,230 @@ void FaceEditController::UpdateExtrudeMesh(Entity& entity)
         return;
     }
 
-    // Always restore the mesh to the state
-    // before this extrusion.
-    MeshEditing& editableMesh =
-        entity.GetEditableMesh();
+    MeshEditing& mesh = entity.GetEditableMesh();
 
-    editableMesh =
-        m_meshBeforeExtrude;
+    // Always begin from the original mesh.
+    mesh = m_meshBeforeExtrude;
 
+    // ============================================
+    // GET MIRROR SETTINGS
+    // ============================================
 
-    glm::vec3 direction(0.0f);
+    bool mirrorEnabled = false;
+    int mirrorAxis = 0;
+    float tolerance = 0.001f;
 
-    switch (m_extrudeAxis)
+    for (const ModifierData& modifier :
+        entity.GetModifiers())
     {
-    case ExtrudeAxis::X:
-        direction =
-            glm::vec3(
-                1.0f,
-                0.0f,
-                0.0f
-            );
-        break;
+        if (modifier.type != ModifierType::Mirror)
+            continue;
 
-    case ExtrudeAxis::Y:
-        direction =
-            glm::vec3(
-                0.0f,
-                1.0f,
-                0.0f
-            );
-        break;
+        mirrorEnabled = modifier.modEnabled;
+        tolerance = modifier.mirror.tolerance;
 
-    case ExtrudeAxis::Z:
-        direction =
-            glm::vec3(
-                0.0f,
-                0.0f,
-                1.0f
-            );
-        break;
+        switch (modifier.mirror.axis)
+        {
+        case ModifierAxis::Y:
+            mirrorAxis = 1;
+            break;
 
-    case ExtrudeAxis::None:
-    default:
+        case ModifierAxis::Z:
+            mirrorAxis = 2;
+            break;
+
+        default:
+            mirrorAxis = 0;
+            break;
+        }
+
+        break;
+    }
+
+    // ============================================
+    // CALCULATE FACE CENTRE
+    // ============================================
+
+    auto getFaceCentre =
+        [&](std::size_t faceIndex) -> glm::vec3
+    {
+        const EditFace& face =
+            mesh.GetFace(faceIndex);
+
+        glm::vec3 centre(0.0f);
+
+        for (std::size_t index : face.vertices)
+        {
+            centre += mesh.GetVertex(index).position;
+        }
+
+        return centre /
+            static_cast<float>(face.vertices.size());
+    };
+
+    const glm::vec3 activeCentre =
+        getFaceCentre(m_extrudeFace);
+
+    const float activeSide =
+        activeCentre[mirrorAxis];
+
+    // ============================================
+    // COLLECT EXTRUSION DIRECTIONS
+    // ============================================
+
+    std::vector<std::size_t> faces;
+    std::vector<glm::vec3> directions;
+
+    for (std::size_t faceIndex : m_extrudeFaces)
+    {
+        if (faceIndex >= mesh.GetFaceCount())
+            continue;
+
+        const EditFace& face =
+            mesh.GetFace(faceIndex);
+
+        if (face.vertices.size() < 3)
+            continue;
+
+        glm::vec3 direction(0.0f);
+
+        // ========================================
+        // FACE NORMAL
+        // ========================================
+
+        if (m_extrudeAxis == ExtrudeAxis::Normal)
+        {
+            const glm::vec3 a =
+                mesh.GetVertex(face.vertices[0]).position;
+
+            const glm::vec3 b =
+                mesh.GetVertex(face.vertices[1]).position;
+
+            const glm::vec3 c =
+                mesh.GetVertex(face.vertices[2]).position;
+
+            direction = glm::cross(
+                b - a,
+                c - a
+            );
+
+            if (glm::length(direction) < 0.000001f)
+                continue;
+
+            direction = glm::normalize(direction);
+        }
+        else
+        {
+            // ====================================
+            // WORLD-ALIGNED LOCAL AXES
+            // ====================================
+
+            switch (m_extrudeAxis)
+            {
+            case ExtrudeAxis::X:
+                direction.x = 1.0f;
+                break;
+
+            case ExtrudeAxis::Y:
+                direction.y = 1.0f;
+                break;
+
+            case ExtrudeAxis::Z:
+                direction.z = 1.0f;
+                break;
+
+            default:
+                continue;
+            }
+
+            // ====================================
+            // MIRROR THE AXIS DISPLACEMENT
+            // ====================================
+
+            if (mirrorEnabled &&
+                direction[mirrorAxis] != 0.0f)
+            {
+                const float faceSide =
+                    getFaceCentre(faceIndex)[mirrorAxis];
+
+                if (std::abs(faceSide) <= tolerance)
+                {
+                    // Don't push a centre-plane face
+                    // off the mirror plane.
+                    continue;
+                }
+
+                if (std::abs(activeSide) > tolerance &&
+                    faceSide * activeSide < 0.0f)
+                {
+                    direction = -direction;
+                }
+            }
+        }
+
+        faces.push_back(faceIndex);
+        directions.push_back(direction);
+    }
+
+    if (faces.empty())
+    {
+        BOX_LOG_WARNING(
+            "Extrusion: no valid faces or directions"
+        );
         return;
     }
+
+    // ============================================
+    // EXTRUDE ALL SELECTED FACES
+    // ============================================
+
 
     FaceExtrude extrude;
 
-    if (!extrude.Use(
-        editableMesh,
-        m_extrudeFace,
-        direction,
-        m_extrudeAmount))
+    bool success = false;
+
+    // ============================================
+    // CHOOSE EXTRUSION METHOD
+    // ============================================
+
+    if (m_regionExtrude)
     {
+        success = extrude.UseRegion(
+            mesh,
+            faces,
+            directions,
+            m_extrudeAmount
+        );
+    }
+    else
+    {
+        success = extrude.UseMultiple(
+            mesh,
+            faces,
+            directions,
+            m_extrudeAmount
+        );
+    }
+
+    if (!success)
+    {
+        mesh = m_meshBeforeExtrude;
         return;
     }
+    // ########
+
+    
+
+    // ============================================
+    // REBUILD DISPLAY MESH
+    // ============================================
 
     MeshData renderMesh;
 
-    if (!editableMesh.BuildRenderMesh(
-        renderMesh))
+    if (mesh.BuildRenderMesh(renderMesh))
     {
-        return;
+        entity.CreateFromMeshData(renderMesh);
     }
-
-    entity.CreateFromMeshData(
-        renderMesh
-    );
 }
 
 // ------------------------------------------------------
@@ -1356,61 +1709,7 @@ void FaceEditController::BeginInset(
         << m_insetFace
     );
 }
-//void FaceEditController::BeginInset(Entity& entity)
-//{
-//    if (m_selectedFace == InvalidFace)
-//    {
-//        return;
-//    }
-//
-//    MeshEditing& mesh =
-//        entity.GetEditableMesh();
-//
-//    if (m_selectedFace >=
-//        mesh.GetFaceCount())
-//    {
-//        return;
-//    }
-//
-//    // Stage 1 currently supports quads only.
-//    if (mesh.GetFace(
-//        m_selectedFace
-//    ).vertices.size() != 4)
-//    {
-//        BOX_LOG_WARNING(
-//            "Round Inset currently supports quad faces only"
-//        );
-//
-//        return;
-//    }
-//
-//    // Save mesh before this operation.
-//    m_meshBeforeRoundInset =
-//        mesh;
-//
-//    m_roundInsetFace =
-//        m_selectedFace;
-//
-//    m_roundInsetAmount =
-//        0.0f;
-//
-//    m_roundSegs =
-//        1;
-//
-//    m_roundRound =
-//        1.0f;
-//
-//    m_roundInsetStartMouse =
-//        ImGui::GetMousePos();
-//
-//    m_isRoundingInset =
-//        true;
-//
-//    BOX_LOG_INFO(
-//        "Started round inset on face "
-//        << m_roundInsetFace
-//    );
-//}
+
 
 void FaceEditController::SetInsetAmount(Entity& entity, float amount)
 {
@@ -2248,6 +2547,97 @@ bool FaceEditController::PickFace(BoxEngine& engine, const ImVec2& viewportPosit
     }
 
 
+
+    // ============================================
+    // MIRROR FACE SELECTION - FIRST TEST
+    // ============================================
+
+
+// ============================================
+// READ MIRROR MODIFIER SETTINGS
+// ============================================
+
+    bool mirrorEnabled = false;
+    int mirrorAxis = 0;
+    float mirrorTolerance = 0.001f;
+
+    // Check this object's modifiers.
+    for (const ModifierData& modifier :
+        entity->GetModifiers())
+    {
+        if (modifier.type != ModifierType::Mirror)
+            continue;
+
+        mirrorEnabled = modifier.modEnabled;
+
+        mirrorTolerance =
+            modifier.mirror.tolerance;
+
+        switch (modifier.mirror.axis)
+        {
+        case ModifierAxis::Y:
+            mirrorAxis = 1;
+            break;
+
+        case ModifierAxis::Z:
+            mirrorAxis = 2;
+            break;
+
+        case ModifierAxis::X:
+        default:
+            mirrorAxis = 0;
+            break;
+        }
+
+        break;
+    }
+
+
+    
+    if (mirrorEnabled)
+    {
+        const MeshEditing& editableMesh =
+            entity->GetEditableMesh();
+
+        const std::size_t oppositeFace =
+            FindMirroredFace(
+                editableMesh,
+                pickedFace,
+                mirrorAxis,
+                mirrorTolerance
+            );
+
+        constexpr std::size_t InvalidIndex =
+            static_cast<std::size_t>(-1);
+
+        if (oppositeFace != InvalidIndex)
+        {
+            // Make the mirrored face's selection
+            // match the face the user clicked.
+            const bool shouldBeSelected =
+                entity->IsFaceSelected(pickedFace);
+
+            const bool oppositeIsSelected =
+                entity->IsFaceSelected(oppositeFace);
+
+            if (shouldBeSelected != oppositeIsSelected)
+            {
+                entity->ToggleSelectedFace(
+                    oppositeFace
+                );
+            }
+
+            BOX_LOG_INFO(
+                "Mirror selected face "
+                << pickedFace
+                << " -> "
+                << oppositeFace
+            );
+        }
+    }
+
+
+
     BOX_LOG_INFO(
         "Selected face index: "
         << pickedFace
@@ -2258,260 +2648,441 @@ bool FaceEditController::PickFace(BoxEngine& engine, const ImVec2& viewportPosit
 
 }
 
+
 void FaceEditController::EditBeginMove(Entity& entity, FaceMoveAxis axis)
 {
+    MeshEditing& mesh = entity.GetEditableMesh();
 
-    if (m_selectedFace == InvalidFace)
-    {
+    if (mesh.GetFaceCount() == 0)
         return;
-    }
 
-    const std::vector<LogicalFace> faces =
-        BuildLogicalFace(entity);
+    // ============================================
+    // GET MIRROR SETTINGS
+    // ============================================
 
-    /*
-     * m_selectedFace is now the real
-     * MeshEditing face index.
-     *
-     * Find the LogicalFace that represents
-     * that editable face.
-     */
-    const LogicalFace* selectedFace =
-        nullptr;
+    bool mirrorEnabled = false;
+    int mirrorAxis = 0;
+    float tolerance = 0.001f;
 
-    for (const LogicalFace& face : faces)
+    for (const ModifierData& modifier :
+        entity.GetModifiers())
     {
-        if (face.editableFaceIndex ==
-            m_selectedFace)
-        {
-            selectedFace =
-                &face;
+        if (modifier.type != ModifierType::Mirror)
+            continue;
 
+        mirrorEnabled = modifier.modEnabled;
+
+        tolerance = modifier.mirror.tolerance;
+
+        switch (modifier.mirror.axis)
+        {
+        case ModifierAxis::Y:
+            mirrorAxis = 1;
+            break;
+
+        case ModifierAxis::Z:
+            mirrorAxis = 2;
+            break;
+
+        default:
+            mirrorAxis = 0;
             break;
         }
+
+        break;
     }
 
-    if (!selectedFace)
+    // ============================================
+    // COLLECT SELECTED FACES
+    // ============================================
+
+    std::vector<std::size_t> selectedFaces;
+
+    for (std::size_t i = 0;
+        i < mesh.GetFaceCount();
+        ++i)
     {
-        BOX_LOG_WARNING(
-            "EditBeginMove: selected editable face "
-            << m_selectedFace
-            << " was not found"
-        );
-
-        return;
-    }
-
-    MeshEditing& editableMesh =
-        entity.GetEditableMesh();
-
-    if (m_selectedFace >=
-        editableMesh.GetFaceCount())
-    {
-        return;
-    }
-
-    const EditFace& editFace =
-        editableMesh.GetFace(
-            m_selectedFace
-        );
-
-    m_editableFaceVertices =
-        editFace.vertices;
-
-    m_editableStartPositions.clear();
-
-    for (const std::size_t vertexIndex :
-    m_editableFaceVertices)
-    {
-        m_editableStartPositions.push_back(
-            editableMesh
-            .GetVertex(vertexIndex)
-            .position
-        );
-    }
-
-    /*
-     * We can still keep the render-index data
-     * temporarily while converting the system.
-     */
-    const MeshData& mesh =
-        entity.GetMeshData();
-
-    m_startVertexPositions.clear();
-
-    const auto AddStartVertex =
-        [&](std::size_t index)
-    {
-        if (index >= mesh.vertices.size())
+        if (entity.IsFaceSelected(i))
         {
-            return;
+            selectedFaces.push_back(i);
+        }
+    }
+
+    if (selectedFaces.empty())
+        return;
+
+    // The active face controls the direction
+    // of mirrored X/Y/Z movement.
+    std::size_t activeFace = m_selectedFace;
+
+    if (activeFace >= mesh.GetFaceCount() ||
+        !entity.IsFaceSelected(activeFace))
+    {
+        activeFace = selectedFaces.front();
+    }
+
+    // ============================================
+    // CALCULATE FACE CENTRE
+    // ============================================
+
+    auto getFaceCentre =
+        [&](std::size_t faceIndex) -> glm::vec3
+    {
+        const EditFace& face =
+            mesh.GetFace(faceIndex);
+
+        glm::vec3 centre(0.0f);
+        std::size_t count = 0;
+
+        for (std::size_t index : face.vertices)
+        {
+            if (index >= mesh.GetVertexCount())
+                continue;
+
+            centre += mesh.GetVertex(index).position;
+            ++count;
         }
 
-        for (const FaceStartPosition& existing :
-            m_startVertexPositions)
+        return count > 0
+            ? centre / static_cast<float>(count)
+            : glm::vec3(0.0f);
+    };
+
+    const glm::vec3 activeCentre =
+        getFaceCentre(activeFace);
+
+    const float activeSide =
+        activeCentre[mirrorAxis];
+
+    // ============================================
+    // GET AXIS MOVEMENT DIRECTION
+    // ============================================
+
+    glm::vec3 axisDirection(0.0f);
+
+    switch (axis)
+    {
+    case FaceMoveAxis::X:
+        axisDirection.x = 1.0f;
+        break;
+
+    case FaceMoveAxis::Y:
+        axisDirection.y = 1.0f;
+        break;
+
+    case FaceMoveAxis::Z:
+        axisDirection.z = 1.0f;
+        break;
+
+    case FaceMoveAxis::Normal:
+        break;
+
+    default:
+        return;
+    }
+
+    // ============================================
+    // COLLECT VERTICES AND DIRECTIONS
+    // ============================================
+
+    m_moveVertices.clear();
+
+    // Used to average movement directions
+    // where faces share the same vertex.
+    std::vector<int> directionCount;
+
+    for (std::size_t faceIndex : selectedFaces)
+    {
+        const EditFace& face =
+            mesh.GetFace(faceIndex);
+
+        if (face.vertices.size() < 3)
+            continue;
+
+        const glm::vec3 faceCentre =
+            getFaceCentre(faceIndex);
+
+        glm::vec3 faceDirection = axisDirection;
+
+        // ========================================
+        // NORMAL DIRECTION
+        // ========================================
+
+        if (axis == FaceMoveAxis::Normal)
         {
-            if (existing.index == index)
+            const std::size_t ia = face.vertices[0];
+            const std::size_t ib = face.vertices[1];
+            const std::size_t ic = face.vertices[2];
+
+            if (ia >= mesh.GetVertexCount() ||
+                ib >= mesh.GetVertexCount() ||
+                ic >= mesh.GetVertexCount())
             {
-                return;
+                continue;
+            }
+
+            const glm::vec3 a =
+                mesh.GetVertex(ia).position;
+
+            const glm::vec3 b =
+                mesh.GetVertex(ib).position;
+
+            const glm::vec3 c =
+                mesh.GetVertex(ic).position;
+
+            const glm::vec3 normal =
+                glm::cross(b - a, c - a);
+
+            const float length = glm::length(normal);
+
+            if (length < 0.000001f)
+                continue;
+
+            faceDirection = normal / length;
+        }
+
+        // ========================================
+        // SYMMETRICAL AXIS MOVEMENT
+        // ========================================
+
+        else if (mirrorEnabled &&
+            axisDirection[mirrorAxis] != 0.0f)
+        {
+            const float faceSide =
+                faceCentre[mirrorAxis];
+
+            // A face centred on the mirror plane
+            // must not move away from that plane
+            // along the mirrored axis.
+            if (std::abs(faceSide) <= tolerance)
+            {
+                faceDirection = glm::vec3(0.0f);
+            }
+            else if (std::abs(activeSide) > tolerance &&
+                faceSide * activeSide < 0.0f)
+            {
+                // Opposite side of the mirror plane.
+                faceDirection = -axisDirection;
             }
         }
 
-        FaceStartPosition start;
+        // ========================================
+        // STORE EACH VERTEX ONLY ONCE
+        // ========================================
 
-        start.index = index;
-        start.position =
-            mesh.vertices[index].position;
+        for (std::size_t vertexIndex : face.vertices)
+        {
+            if (vertexIndex >= mesh.GetVertexCount())
+                continue;
 
-        m_startVertexPositions.push_back(
-            start
-        );
-    };
+            auto found = std::find_if(
+                m_moveVertices.begin(),
+                m_moveVertices.end(),
+                [vertexIndex](const MoveVertexData& item)
+            {
+                return item.index == vertexIndex;
+            }
+            );
+
+            if (found == m_moveVertices.end())
+            {
+                MoveVertexData data;
+
+                data.index = vertexIndex;
+
+                data.startPosition =
+                    mesh.GetVertex(vertexIndex).position;
+
+                data.direction = faceDirection;
+
+                m_moveVertices.push_back(data);
+
+                directionCount.push_back(1);
+            }
+            else
+            {
+                const std::size_t position =
+                    static_cast<std::size_t>(
+                        std::distance(
+                            m_moveVertices.begin(),
+                            found
+                        )
+                        );
+
+                found->direction += faceDirection;
+
+                ++directionCount[position];
+            }
+        }
+    }
+
+    // ============================================
+    // AVERAGE SHARED VERTEX DIRECTIONS
+    // ============================================
+
+    for (std::size_t i = 0;
+        i < m_moveVertices.size();
+        ++i)
+    {
+        m_moveVertices[i].direction /=
+            static_cast<float>(directionCount[i]);
+
+        // Keep centreline vertices on the
+        // symmetry plane for Normal movement.
+        if (mirrorEnabled &&
+            axis == FaceMoveAxis::Normal &&
+            std::abs(
+                m_moveVertices[i]
+                .startPosition[mirrorAxis]
+            ) <= tolerance)
+        {
+            m_moveVertices[i].direction[mirrorAxis] =
+                0.0f;
+        }
+    }
+
+    if (m_moveVertices.empty())
+        return;
+
+    // ============================================
+    // BEGIN MOVE
+    // ============================================
 
     m_moveAxis = axis;
-
     m_startMouse = ImGui::GetMousePos();
+    m_isMoving = true;
 
-    m_isMoving = !m_editableFaceVertices.empty();
-
+    BOX_LOG_INFO(
+        "Multi-face move started: "
+        << selectedFaces.size() << " faces, "
+        << m_moveVertices.size() << " vertices"
+    );
 }
 
 void FaceEditController::EditUpdateMove(Entity& entity)
 {
     if (!m_isMoving)
-    {
         return;
-    }
 
-    const ImVec2 currentMouse =
-        ImGui::GetMousePos();
+    const ImVec2 mouse = ImGui::GetMousePos();
 
     const float deltaX =
-        currentMouse.x -
-        m_startMouse.x;
+        mouse.x - m_startMouse.x;
 
     const float deltaY =
-        currentMouse.y -
-        m_startMouse.y;
+        mouse.y - m_startMouse.y;
 
-    glm::vec3 movement(0.0f);
+    // ============================================
+    // CALCULATE MOVE DISTANCE
+    // ============================================
+
+    float amount = 0.0f;
 
     switch (m_moveAxis)
     {
-    case FaceMoveAxis::X:
-        movement.x =
-            deltaX *
-            m_moveSensitivity;
-        break;
-
     case FaceMoveAxis::Y:
-        movement.y =
-            -deltaY *
-            m_moveSensitivity;
+        amount = -deltaY * m_moveSensitivity;
         break;
 
+    case FaceMoveAxis::X:
     case FaceMoveAxis::Z:
-        movement.z =
-            deltaX *
-            m_moveSensitivity;
+    case FaceMoveAxis::Normal:
+        amount = deltaX * m_moveSensitivity;
         break;
 
-    case FaceMoveAxis::None:
     default:
         return;
     }
 
+    // ============================================
+    // MOVE ALL SELECTED VERTICES
+    // ============================================
 
-    MeshEditing& editableMesh = entity.GetEditableMesh();
-
-    for (std::size_t i = 0;
-        i < m_editableFaceVertices.size();
-        ++i)
-    {
-        const std::size_t vertexIndex =
-            m_editableFaceVertices[i];
-
-        editableMesh
-            .GetVertex(vertexIndex)
-            .position =
-            m_editableStartPositions[i] +
-            movement;
-    }
-
-    /*
-     * MeshEditing is now the source of truth.
-     * Regenerate the render mesh from it.
-     */
-    MeshData renderMesh;
-
-    if (!editableMesh.BuildRenderMesh(
-        renderMesh))
-    {
-        BOX_LOG_ERROR("Face move: failed to rebuild render mesh");
-
-        return;
-    }
-
-    if (!entity.CreateFromMeshData(
-        renderMesh))
-    {
-        BOX_LOG_ERROR("Face move: failed to update GPU mesh");
-
-        return;
-    }
-
-}
-// confirm the move operation and finalize the face's new position
-void FaceEditController::EditConfirmMove()
-{
-
-    m_isMoving = false;
-
-    m_moveAxis =
-        FaceMoveAxis::None;
-
-    m_startVertexPositions.clear();
-
-    m_editableFaceVertices.clear();
-    m_editableStartPositions.clear();
-
-}
-// cancel the move operation and revert the face to its original position
-void FaceEditController::EditCancelMove(Entity& entity)
-{
-
-    MeshEditing& editableMesh =
+    MeshEditing& mesh =
         entity.GetEditableMesh();
 
-    for (std::size_t i = 0;
-        i < m_editableFaceVertices.size();
-        ++i)
+    for (const MoveVertexData& vertex :
+        m_moveVertices)
     {
-        editableMesh
-            .GetVertex(
-                m_editableFaceVertices[i]
-            )
-            .position =
-            m_editableStartPositions[i];
+        if (vertex.index >= mesh.GetVertexCount())
+            continue;
+
+        mesh.GetVertex(vertex.index).position =
+            vertex.startPosition +
+            vertex.direction * amount;
+    }
+
+    // ============================================
+    // REBUILD RENDER MESH
+    // ============================================
+
+    MeshData renderMesh;
+
+    if (!mesh.BuildRenderMesh(renderMesh))
+    {
+        BOX_LOG_ERROR(
+            "Multi-face move: failed to build mesh"
+        );
+        return;
+    }
+
+    if (!entity.CreateFromMeshData(renderMesh))
+    {
+        BOX_LOG_ERROR(
+            "Multi-face move: failed to update GPU mesh"
+        );
+    }
+}
+
+
+void FaceEditController::EditConfirmMove()
+{
+    m_isMoving = false;
+    m_moveAxis = FaceMoveAxis::None;
+
+    m_moveVertices.clear();
+
+    // Clear the older move data as well.
+    m_startVertexPositions.clear();
+    m_editableFaceVertices.clear();
+    m_editableStartPositions.clear();
+
+    BOX_LOG_INFO("Multi-face move confirmed");
+}
+
+
+void FaceEditController::EditCancelMove(
+    Entity& entity)
+{
+    MeshEditing& mesh =
+        entity.GetEditableMesh();
+
+    // Restore every original vertex position.
+    for (const MoveVertexData& vertex :
+        m_moveVertices)
+    {
+        if (vertex.index >= mesh.GetVertexCount())
+            continue;
+
+        mesh.GetVertex(vertex.index).position =
+            vertex.startPosition;
     }
 
     MeshData renderMesh;
 
-    if (editableMesh.BuildRenderMesh(
-        renderMesh))
+    if (mesh.BuildRenderMesh(renderMesh))
     {
-        entity.CreateFromMeshData(
-            renderMesh
-        );
+        entity.CreateFromMeshData(renderMesh);
     }
 
     m_isMoving = false;
+    m_moveAxis = FaceMoveAxis::None;
 
-    m_moveAxis =
-        FaceMoveAxis::None;
+    m_moveVertices.clear();
 
     m_startVertexPositions.clear();
     m_editableFaceVertices.clear();
     m_editableStartPositions.clear();
 
+    BOX_LOG_INFO("Multi-face move cancelled");
 }
