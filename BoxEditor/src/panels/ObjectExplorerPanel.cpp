@@ -11,6 +11,7 @@
 #include <miniBoxLog.h>
 #include <tools/FaceEditController.h>
 #include <tools/EdgeEditController.h>
+#include <tools/VertexEditController.h>
 #include <algorithm>
 
 ObjectExplorerPanel::ObjectExplorerPanel() = default;
@@ -40,7 +41,7 @@ bool ObjectExplorerPanel::Initialize()
 
 
 void ObjectExplorerPanel::DrawObjectExplorer(BoxEngine& engine, FaceEditController& faceEditController,
-    EdgeEditController& edgeEditController)
+    EdgeEditController& edgeEditController, VertexEditController& vertexEditController)
 {
 
     Entity* selected =
@@ -112,7 +113,7 @@ void ObjectExplorerPanel::DrawObjectExplorer(BoxEngine& engine, FaceEditControll
         // ####################################################
         if (ImGui::BeginTabItem("Modifiers"))
         {
-            DrawModifiersTab(engine, *selected, faceEditController, edgeEditController);
+            DrawModifiersTab(engine, *selected, faceEditController, edgeEditController, vertexEditController);
 
             ImGui::EndTabItem();
         }
@@ -511,7 +512,7 @@ void ObjectExplorerPanel::DrawLightingTab(BoxEngine& engine)
 }
 
 void ObjectExplorerPanel::DrawModifiersTab(BoxEngine& engine, Entity& entity, FaceEditController& faceEditController,
-    EdgeEditController& edgeEditController)
+    EdgeEditController& edgeEditController, VertexEditController& vertexEditController)
 {
     ImGui::Text("Modifiers for: %s", entity.GetName().c_str());
 
@@ -529,6 +530,32 @@ void ObjectExplorerPanel::DrawModifiersTab(BoxEngine& engine, Entity& entity, Fa
     // =================================================
     // ACTIVE OPERATION ALWAYS HAS PRIORITY
     // =================================================
+
+    // =================================================
+    // ACTIVE VERTEX MOVEMENT
+    // =================================================
+
+    if (vertexEditController.IsMoving())
+    {
+        VertexMoveControls(entity, vertexEditController);
+
+        return;
+    }
+
+    // ============================================
+    // ACTIVE EDGE MOVEMENT
+    // ============================================
+
+    if (edgeEditController.IsMultiMoving())
+    {
+        EdgeMoveControls(entity, edgeEditController);
+
+        return;
+    }
+
+    // ============================================
+    // ACTIVE FACE MOVEMENT
+    // ============================================
 
     // Extrude
     if (faceEditController.IsExtruding())
@@ -569,6 +596,30 @@ void ObjectExplorerPanel::DrawModifiersTab(BoxEngine& engine, Entity& entity, Fa
 		return;
 	}
 
+    // ============================================
+    // VERTEX SELECTION - SHOW MOVE CONTROLS
+    // ============================================
+
+    if (!entity.GetSelectedVertices().empty())
+    {
+        VertexMoveControls(entity, vertexEditController);
+
+        return;
+    }
+
+    // ============================================
+    // EDGE SELECTION - SHOW MOVE CONTROLS
+    // ============================================
+
+    if (!entity.GetSelectedEdges().empty())
+    {
+        EdgeMoveControls(
+            entity,
+            edgeEditController
+        );
+
+        return;
+    }
 
     // =================================================
     // NO ACTIVE OPERATION
@@ -1672,3 +1723,356 @@ void ObjectExplorerPanel::MirrorControls(
     }
 }
 
+
+// =================================================
+// PRECISE VERTEX MOVE CONTROLS
+// =================================================
+
+
+void ObjectExplorerPanel::VertexMoveControls(
+    Entity& entity,
+    VertexEditController& vertexEditController)
+{
+    const bool isMoving =
+        vertexEditController.IsMoving();
+
+    ImGui::SeparatorText(
+        isMoving
+        ? "Active Operation"
+        : "Vertex Movement"
+    );
+
+    ImGui::Text(
+        "Selected Vertices: %d",
+        static_cast<int>(
+            entity.GetSelectedVertices().size()
+            )
+    );
+
+    ImGui::Spacing();
+
+    // ============================================
+    // AXIS SELECTION
+    // ============================================
+
+    const char* axisItems[] =
+    {
+        "None",
+        "X",
+        "Y",
+        "Z",
+        "Normal"
+    };
+
+    // During a move, display the active axis.
+    if (isMoving)
+    {
+        switch (vertexEditController.GetMoveAxis())
+        {
+        case VertexMoveAxis::X:
+            m_vertexMoveAxis = 1;
+            break;
+
+        case VertexMoveAxis::Y:
+            m_vertexMoveAxis = 2;
+            break;
+
+        case VertexMoveAxis::Z:
+            m_vertexMoveAxis = 3;
+            break;
+
+        case VertexMoveAxis::Normal:
+            m_vertexMoveAxis = 4;
+            break;
+
+        default:
+            m_vertexMoveAxis = 0;
+            break;
+        }
+    }
+
+    ImGui::BeginDisabled(isMoving);
+
+    ImGui::Combo(
+        "Move Axis",
+        &m_vertexMoveAxis,
+        axisItems,
+        IM_ARRAYSIZE(axisItems)
+    );
+
+    ImGui::EndDisabled();
+
+    ImGui::Spacing();
+
+    // ============================================
+    // START A NEW MOVE
+    // ============================================
+
+    if (!isMoving)
+    {
+        if (ImGui::Button(
+            "Start Move",
+            ImVec2(120.0f, 0.0f)))
+        {
+            VertexMoveAxis axis =
+                VertexMoveAxis::None;
+
+            switch (m_vertexMoveAxis)
+            {
+            case 1:
+                axis = VertexMoveAxis::X;
+                break;
+
+            case 2:
+                axis = VertexMoveAxis::Y;
+                break;
+
+            case 3:
+                axis = VertexMoveAxis::Z;
+                break;
+
+            case 4:
+                axis = VertexMoveAxis::Normal;
+                break;
+
+            default:
+                break;
+            }
+
+            if (axis != VertexMoveAxis::None)
+            {
+                vertexEditController.StartMove(
+                    entity,
+                    axis
+                );
+            }
+        }
+
+        ImGui::TextDisabled(
+            "Choose an axis and start moving."
+        );
+
+        return;
+    }
+
+    // ============================================
+    // PRECISE MOVEMENT DISTANCE
+    // ============================================
+
+    float distance =
+        vertexEditController.GetMoveDistance();
+
+    if (ImGui::InputFloat(
+        "Move Distance",
+        &distance,
+        0.01f,
+        0.10f,
+        "%.4f"))
+    {
+        vertexEditController.SetMoveDistance(
+            entity,
+            distance
+        );
+    }
+
+    ImGui::TextDisabled(
+        "Negative values move in reverse."
+    );
+
+    ImGui::Spacing();
+
+    // ============================================
+    // CONFIRM / CANCEL
+    // ============================================
+
+    if (ImGui::Button(
+        "Confirm",
+        ImVec2(90.0f, 0.0f)))
+    {
+        vertexEditController.ConfirmMove();
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::Button(
+        "Cancel",
+        ImVec2(90.0f, 0.0f)))
+    {
+        vertexEditController.CancelMove(entity);
+    }
+}
+
+
+void ObjectExplorerPanel::EdgeMoveControls(
+    Entity& entity,
+    EdgeEditController& edgeEditController)
+{
+    const bool isMoving =
+        edgeEditController.IsMultiMoving();
+
+    ImGui::SeparatorText(
+        isMoving
+        ? "Active Operation"
+        : "Edge Movement"
+    );
+
+    ImGui::Text(
+        "Selected Edges: %d",
+        static_cast<int>(
+            entity.GetSelectedEdges().size()
+            )
+    );
+
+    ImGui::Spacing();
+
+    // ============================================
+    // AXIS SELECTION
+    // ============================================
+
+    const char* axisItems[] =
+    {
+        "None",
+        "X",
+        "Y",
+        "Z",
+        "Normal"
+    };
+
+    if (isMoving)
+    {
+        switch (edgeEditController.GetMultiMoveAxis())
+        {
+        case EdgeMoveAxis::X:
+            m_edgeMoveAxis = 1;
+            break;
+
+        case EdgeMoveAxis::Y:
+            m_edgeMoveAxis = 2;
+            break;
+
+        case EdgeMoveAxis::Z:
+            m_edgeMoveAxis = 3;
+            break;
+
+        case EdgeMoveAxis::Normal:
+            m_edgeMoveAxis = 4;
+            break;
+
+        default:
+            m_edgeMoveAxis = 0;
+            break;
+        }
+    }
+
+    ImGui::BeginDisabled(isMoving);
+
+    ImGui::Combo(
+        "Move Axis",
+        &m_edgeMoveAxis,
+        axisItems,
+        IM_ARRAYSIZE(axisItems)
+    );
+
+    ImGui::EndDisabled();
+
+    ImGui::Spacing();
+
+    // ============================================
+    // START EDGE MOVE
+    // ============================================
+
+    if (!isMoving)
+    {
+        if (ImGui::Button(
+            "Start Move",
+            ImVec2(120.0f, 0.0f)))
+        {
+            EdgeMoveAxis axis =
+                EdgeMoveAxis::None;
+
+            switch (m_edgeMoveAxis)
+            {
+            case 1:
+                axis = EdgeMoveAxis::X;
+                break;
+
+            case 2:
+                axis = EdgeMoveAxis::Y;
+                break;
+
+            case 3:
+                axis = EdgeMoveAxis::Z;
+                break;
+
+            case 4:
+                axis = EdgeMoveAxis::Normal;
+                break;
+
+            default:
+                break;
+            }
+
+            if (axis != EdgeMoveAxis::None)
+            {
+                edgeEditController.StartMultiMove(
+                    entity,
+                    axis
+                );
+            }
+        }
+
+        ImGui::TextDisabled(
+            "Choose an axis and start moving."
+        );
+
+        return;
+    }
+
+    // ============================================
+    // PRECISE MOVEMENT DISTANCE
+    // ============================================
+
+    float distance =
+        edgeEditController.GetMultiMoveDistance();
+
+    if (ImGui::InputFloat(
+        "Move Distance##Edge",
+        &distance,
+        0.01f,
+        0.10f,
+        "%.4f"))
+    {
+        edgeEditController.SetMultiMoveDistance(
+            entity,
+            distance
+        );
+    }
+
+    ImGui::TextDisabled(
+        "Negative values move in reverse."
+    );
+
+    ImGui::Spacing();
+
+    // ============================================
+    // CONFIRM / CANCEL
+    // ============================================
+
+    if (ImGui::Button(
+        "Confirm##EdgeMove",
+        ImVec2(90.0f, 0.0f)))
+    {
+        edgeEditController.ConfirmMultiMove();
+    }
+
+    ImGui::SameLine();
+
+    if (ImGui::Button(
+        "Cancel##EdgeMove",
+        ImVec2(90.0f, 0.0f)))
+    {
+        edgeEditController.CancelMultiMove(
+            entity
+        );
+    }
+}

@@ -443,16 +443,7 @@ bool VertexEditController::PickVertex(BoxEngine& engine, const ImVec2& viewportP
 
         return false;
     }
-    /*if (closestVertex == InvalidVertex)
-    {
-        m_selectedVertex =
-            InvalidVertex;
-
-        entity->ClearSelectedVertices();
-
-        return false;
-    }*/
-
+    
     const bool shiftHeld =
         ImGui::GetIO().KeyShift;
 
@@ -854,6 +845,12 @@ void VertexEditController::EditBeginMove(
 
     m_moveAxis = axis;
     m_startMouse = ImGui::GetMousePos();
+
+    // Start a new operation at zero distance.
+    m_moveDistance = 0.0f;
+    m_usePreciseDistance = false;
+
+
     m_isMoving = true;
 
     BOX_LOG_INFO(
@@ -863,44 +860,6 @@ void VertexEditController::EditBeginMove(
         << static_cast<int>(axis)
     );
 }
-
-
-//void VertexEditController::EditBeginMove(Entity& entity, VertexMoveAxis axis)
-//{
-//
-//    if (m_selectedVertex ==
-//        InvalidVertex)
-//    {
-//        return;
-//    }
-//
-//    MeshEditing& editableMesh =
-//        entity.GetEditableMesh();
-//
-//    if (m_selectedVertex >=
-//        editableMesh.GetVertexCount())
-//    {
-//        m_selectedVertex =
-//            InvalidVertex;
-//
-//        return;
-//    }
-//
-//    m_startVertexPosition =
-//        editableMesh
-//        .GetVertex(m_selectedVertex)
-//        .position;
-//
-//    m_moveAxis =
-//        axis;
-//
-//    m_startMouse =
-//        ImGui::GetMousePos();
-//
-//    m_isMoving = true;
-//
-//}
-
 
 void VertexEditController::EditUpdateMove(
     Entity& entity)
@@ -945,8 +904,23 @@ void VertexEditController::EditUpdateMove(
         return;
     }
 
-    MeshEditing& mesh =
-        entity.GetEditableMesh();
+    // ============================================
+    // APPLY PRECISE DISTANCE IF ENTERED
+    // ============================================
+
+    if (m_usePreciseDistance)
+    {
+        amount = m_moveDistance;
+    }
+    else
+    {
+        // Keep the panel's numerical value
+        // updated while moving the mouse.
+        m_moveDistance = amount;
+    }
+
+
+    MeshEditing& mesh = entity.GetEditableMesh();
 
     // ============================================
     // MOVE ALL SELECTED VERTICES
@@ -985,89 +959,6 @@ void VertexEditController::EditUpdateMove(
 }
 
 
-//void VertexEditController::EditUpdateMove(Entity& entity)
-//{
-//    
-//
-//    if (!m_isMoving)
-//    {
-//        return;
-//    }
-//
-//    const ImVec2 currentMouse =
-//        ImGui::GetMousePos();
-//
-//    const float deltaX =
-//        currentMouse.x -
-//        m_startMouse.x;
-//
-//    const float deltaY =
-//        currentMouse.y -
-//        m_startMouse.y;
-//
-//    glm::vec3 movement(0.0f);
-//
-//    switch (m_moveAxis)
-//    {
-//    case VertexMoveAxis::X:
-//        movement.x =
-//            deltaX *
-//            m_moveSensitivity;
-//        break;
-//
-//    case VertexMoveAxis::Y:
-//        movement.y =
-//            -deltaY *
-//            m_moveSensitivity;
-//        break;
-//
-//    case VertexMoveAxis::Z:
-//        movement.z =
-//            deltaX *
-//            m_moveSensitivity;
-//        break;
-//
-//    case VertexMoveAxis::None:
-//    default:
-//        return;
-//    }
-//
-//    MeshEditing& editableMesh =
-//        entity.GetEditableMesh();
-//
-//    editableMesh
-//        .GetVertex(m_selectedVertex)
-//        .position =
-//        m_startVertexPosition +
-//        movement;
-//
-//
-//    // Rebuild render mesh from the
-//    // modelling topology.
-//    MeshData renderMesh;
-//
-//    if (!editableMesh.BuildRenderMesh(
-//        renderMesh))
-//    {
-//        BOX_LOG_ERROR(
-//            "Vertex move: failed to rebuild render mesh"
-//        );
-//
-//        return;
-//    }
-//
-//    if (!entity.CreateFromMeshData(
-//        renderMesh))
-//    {
-//        BOX_LOG_ERROR(
-//            "Vertex move: failed to update GPU mesh"
-//        );
-//
-//        return;
-//    }
-//    
-//}
-
 void VertexEditController::EditConfirmMove()
 {
     if (!m_isMoving)
@@ -1076,19 +967,12 @@ void VertexEditController::EditConfirmMove()
     m_isMoving = false;
     m_moveAxis = VertexMoveAxis::None;
 
+    m_moveDistance = 0.0f;
+    m_usePreciseDistance = false;
     m_moveVertices.clear();
 
     BOX_LOG_INFO("Vertex move confirmed");
 }
-
-//void VertexEditController::EditConfirmMove()
-//{
-//    m_isMoving = false;
-//
-//    m_moveAxis =
-//        VertexMoveAxis::None;
-//
-//}
 
 
 void VertexEditController::EditCancelMove(
@@ -1120,45 +1004,27 @@ void VertexEditController::EditCancelMove(
     m_isMoving = false;
     m_moveAxis = VertexMoveAxis::None;
 
+    m_moveDistance = 0.0f;
+    m_usePreciseDistance = false;
     m_moveVertices.clear();
 
     BOX_LOG_INFO("Vertex move cancelled");
 }
 
 
-//void VertexEditController::EditCancelMove(Entity& entity)
-//{
-//
-//    if (!m_isMoving)
-//    {
-//        return;
-//    }
-//
-//    MeshEditing& editableMesh =
-//        entity.GetEditableMesh();
-//
-//    if (m_selectedVertex <
-//        editableMesh.GetVertexCount())
-//    {
-//        editableMesh
-//            .GetVertex(m_selectedVertex)
-//            .position =
-//            m_startVertexPosition;
-//    }
-//
-//    MeshData renderMesh;
-//
-//    if (editableMesh.BuildRenderMesh(
-//        renderMesh))
-//    {
-//        entity.CreateFromMeshData(
-//            renderMesh
-//        );
-//    }
-//
-//    m_isMoving = false;
-//
-//    m_moveAxis =
-//        VertexMoveAxis::None;
-//
-//}
+void VertexEditController::SetMoveDistance(
+    Entity& entity,
+    float distance)
+{
+    if (!m_isMoving)
+        return;
+
+    m_moveDistance = distance;
+
+    // The user has entered a numerical value.
+    // Stop mouse movement overwriting it.
+    m_usePreciseDistance = true;
+
+    // Rebuild the vertex positions immediately.
+    EditUpdateMove(entity);
+}

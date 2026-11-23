@@ -2320,9 +2320,10 @@ void EdgeEditController::EditBeginMultiMove(Entity& entity, EdgeMoveAxis axis)
     m_multiMoveStartMouse =
         ImGui::GetMousePos();
 
+    m_multiMoveDistance = 0.0f;
+    m_usePreciseMultiMove = false;
 
-    m_isMultiMoving =
-        true;
+    m_isMultiMoving = true;
 
 
     BOX_LOG_INFO(
@@ -2396,52 +2397,19 @@ void EdgeEditController::EditUpdateMultiMove(Entity& entity)
         return;
     }
 
+    // ============================================
+    // PRECISE DISTANCE OVERRIDE
+    // ============================================
 
-
-    //glm::vec3 movement(0.0f);
-
-
-    //// -----------------------------------------
-    //// Build movement from the selected axis.
-    //// -----------------------------------------
-
-    //switch (m_multiMoveAxis)
-    //{
-    //case EdgeMoveAxis::X:
-
-    //    movement.x =
-    //        deltaX *
-    //        m_multiMoveSensitivity;
-
-    //    break;
-
-
-    //case EdgeMoveAxis::Y:
-
-    //    movement.y =
-    //        -deltaY *
-    //        m_multiMoveSensitivity;
-
-    //    break;
-
-
-    //case EdgeMoveAxis::Z:
-
-    //    // Same screen-direction fix we used
-    //    // for object movement.
-    //    movement.z =
-    //        -deltaX *
-    //        m_multiMoveSensitivity;
-
-    //    break;
-
-
-    //case EdgeMoveAxis::None:
-    //default:
-
-    //    return;
-    //}
-
+    if (m_usePreciseMultiMove)
+    {
+        amount = m_multiMoveDistance;
+    }
+    else
+    {
+        // Show current mouse movement in the GUI.
+        m_multiMoveDistance = amount;
+    }
 
     MeshEditing& editableMesh =
         entity.GetEditableMesh();
@@ -2481,11 +2449,7 @@ void EdgeEditController::EditUpdateMultiMove(Entity& entity)
             m_multiMoveStartPositions[index] +
             m_multiMoveDirections[index] * amount;
 
-        /*editableMesh
-            .GetVertex(vertexIndex)
-            .position =
-            m_multiMoveStartPositions[index] +
-            movement;*/
+        
     }
 
 
@@ -2529,6 +2493,8 @@ void EdgeEditController::EditConfirmMultiMove()
 
     m_multiMoveAxis = EdgeMoveAxis::None;
 
+    m_multiMoveDistance = 0.0f;
+    m_usePreciseMultiMove = false;
     m_multiMoveVertices.clear();
     m_multiMoveStartPositions.clear();
     BOX_LOG_INFO(
@@ -2562,6 +2528,8 @@ void EdgeEditController::EditCancelMultiMove(Entity& entity)
 
     m_multiMoveAxis = EdgeMoveAxis::None;
 
+    m_multiMoveDistance = 0.0f;
+    m_usePreciseMultiMove = false;
     m_multiMoveVertices.clear();
     m_multiMoveStartPositions.clear();
     m_multiMoveDirections.clear();
@@ -3045,4 +3013,21 @@ void EdgeEditController::SetMultiMoveAxis(Entity& entity, EdgeMoveAxis axis)
     // Recalculate directions for the new axis.
     // Particularly important for Normal movement.
     BuildMultiMoveDirections(entity);
+
+    m_multiMoveDistance = 0.0f;
+    m_usePreciseMultiMove = false;
+}
+
+
+void EdgeEditController::SetMultiMoveDistance(Entity& entity, float distance)
+{
+    if (!m_isMultiMoving)
+        return;
+
+    m_multiMoveDistance = distance;
+    m_usePreciseMultiMove = true;
+
+    // Recalculate all selected edge vertices
+    // using the exact distance.
+    EditUpdateMultiMove(entity);
 }

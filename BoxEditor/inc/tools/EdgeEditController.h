@@ -134,6 +134,49 @@ public:
 
     };
 
+    // ============================================
+// PRECISE EDGE MOVEMENT
+// ============================================
+
+    bool IsMultiMoving() const
+    {
+        return m_isMultiMoving;
+    }
+
+    EdgeMoveAxis GetMultiMoveAxis() const
+    {
+        return m_multiMoveAxis;
+    }
+
+    float GetMultiMoveDistance() const
+    {
+        return m_multiMoveDistance;
+    }
+
+    void StartMultiMove(
+        Entity& entity,
+        EdgeMoveAxis axis)
+    {
+        if (!m_isMultiMoving && !m_isMoving)
+        {
+            EditBeginMultiMove(entity, axis);
+        }
+    }
+
+    void SetMultiMoveDistance(
+        Entity& entity,
+        float distance
+    );
+
+    void ConfirmMultiMove()
+    {
+        EditConfirmMultiMove();
+    }
+
+    void CancelMultiMove(Entity& entity)
+    {
+        EditCancelMultiMove(entity);
+    }
 	
 private: // loopcuts - facecut
     // face cut variables
@@ -241,7 +284,9 @@ private:
     // Calculate directions for X, Y, Z or Normal.
     void BuildMultiMoveDirections(Entity& entity);
 
-
+    // Precise edge movement
+    float m_multiMoveDistance = 0.0f;
+    bool m_usePreciseMultiMove = false;
 
     bool m_isMoving = false;
 

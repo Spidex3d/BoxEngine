@@ -109,7 +109,10 @@ public:
     {
         return m_edgeEditController;
     }
-
+    VertexEditController& GetVertexEditController()
+    {
+        return m_vertexEditController;
+    }
 
 	void Shutdown();
 

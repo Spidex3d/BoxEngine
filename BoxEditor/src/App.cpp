@@ -371,9 +371,19 @@ int App::Run()
 		// ------------------------------ Object Explorer Panel --------------------------------------
         if (m_imgObjectExplorer)
         {
+            m_imgObjectExplorer->DrawObjectExplorer(
+                *m_engine,
+                m_sceneViewport->GetFaceEditController(),
+                m_sceneViewport->GetEdgeEditController(),
+                m_sceneViewport->GetVertexEditController()
+            );
+        }
+        
+        /*if (m_imgObjectExplorer)
+        {
             m_imgObjectExplorer->DrawObjectExplorer(*m_engine, m_sceneViewport->GetFaceEditController(),
                 m_sceneViewport->GetEdgeEditController());
-        }
+        }*/
 
         if (m_materialEditorPanel)
         {

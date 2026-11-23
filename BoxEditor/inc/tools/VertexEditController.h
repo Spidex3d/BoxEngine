@@ -64,6 +64,28 @@ public:
         BoxEngine& engine
     );
 
+    void StartMove(Entity& entity, VertexMoveAxis axis)
+    {
+        if (!m_isMoving)
+        {
+            EditBeginMove(entity, axis);
+        }
+    }
+
+    // ============================================
+    // GUI CONFIRM / CANCEL
+    // ============================================
+
+    void ConfirmMove()
+    {
+        EditConfirmMove();
+    }
+
+    void CancelMove(Entity& entity)
+    {
+        EditCancelMove(entity);
+    }
+
 private:
     bool PickVertex(
         BoxEngine& engine,
@@ -86,6 +108,8 @@ private:
     void EditCancelMove(
         Entity& entity
     );
+
+    
 
 private:
     

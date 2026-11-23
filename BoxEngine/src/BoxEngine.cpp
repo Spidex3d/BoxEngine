@@ -4024,9 +4024,6 @@ Entity* BoxEngine::CreateRuntimeCollectible(const glm::vec3& position)
     return result;
 }
 
-
-
-
 void BoxEngine::DestroyRuntimeEntity(Entity* entity)
 {
     if (!entity)
@@ -4046,4 +4043,6 @@ void BoxEngine::DestroyRuntimeEntity(Entity* entity)
         ),
         m_entities.end()
     );
+
+   
 }
