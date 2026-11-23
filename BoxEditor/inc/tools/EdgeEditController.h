@@ -14,12 +14,14 @@ enum class EdgeMoveAxis
     None,
     X,
     Y,
-    Z
+    Z,
+    Normal
 };
 
 class EdgeEditController
 {
 public:
+
 
     void HandleInput(
         BoxEngine& engine,
@@ -223,6 +225,23 @@ private:
 
     glm::vec3 m_startPositionA{ 0.0f };
     glm::vec3 m_startPositionB{ 0.0f };
+
+    // Direction for each unique selected vertex.
+    // Same order as m_multiMoveVertices.
+    std::vector<glm::vec3> m_multiMoveDirections;
+
+    // Mirror settings captured when the move starts.
+    bool m_multiMoveMirrorEnabled = false;
+    int m_multiMoveMirrorAxis = 0;
+    float m_multiMoveMirrorTolerance = 0.001f;
+
+    // Which side contains the actively picked edge?
+    float m_multiMoveActiveSide = 0.0f;
+
+    // Calculate directions for X, Y, Z or Normal.
+    void BuildMultiMoveDirections(Entity& entity);
+
+
 
     bool m_isMoving = false;
 

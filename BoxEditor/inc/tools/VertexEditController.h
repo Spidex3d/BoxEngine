@@ -12,7 +12,8 @@ enum class VertexMoveAxis
     None,
     X,
     Y,
-    Z
+    Z,
+    Normal
 };
 
 
@@ -33,6 +34,31 @@ public:
         const ImVec2& viewportSize,
         bool vertexModeActive
     );
+
+    // ============================================
+    // PRECISE VERTEX MOVEMENT
+    // ============================================
+
+    bool IsMoving() const
+    {
+        return m_isMoving;
+    }
+
+    VertexMoveAxis GetMoveAxis() const
+    {
+        return m_moveAxis;
+    }
+
+    float GetMoveDistance() const
+    {
+        return m_moveDistance;
+    }
+
+    void SetMoveDistance(
+        Entity& entity,
+        float distance
+    );
+
 
     void ClearSelection(
         BoxEngine& engine
@@ -71,10 +97,29 @@ private:
 
     VertexMoveAxis m_moveAxis = VertexMoveAxis::None;
 
-    glm::vec3 m_startVertexPosition{ 0.0f };
+    // ============================================
+    // MULTI-VERTEX MOVEMENT
+    // ============================================
+
+    struct MoveVertex
+    {
+        std::size_t index = 0;
+
+        glm::vec3 startPosition{ 0.0f };
+        glm::vec3 direction{ 0.0f };
+    };
+
+    std::vector<MoveVertex> m_moveVertices;
 
     ImVec2 m_startMouse = ImVec2(0.0f, 0.0f);
 
     float m_moveSensitivity = 0.01f;
+
+    // Precise movement settings
+    float m_moveDistance = 0.0f;
+
+    bool m_usePreciseDistance = false;
+
+
 };
 

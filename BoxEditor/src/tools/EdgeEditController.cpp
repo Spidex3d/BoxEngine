@@ -11,6 +11,183 @@
 #include <mesh/modifiers/LoopCut.h>
 #include <mesh/modifiers/Bevel.h>
 
+
+void EdgeEditController::BuildMultiMoveDirections(
+    Entity& entity)
+{
+    const MeshEditing& mesh =
+        entity.GetEditableMesh();
+
+    m_multiMoveDirections.clear();
+
+    m_multiMoveDirections.resize(
+        m_multiMoveVertices.size(),
+        glm::vec3(0.0f)
+    );
+
+    const int mirrorAxis =
+        m_multiMoveMirrorAxis;
+
+    const float tolerance =
+        m_multiMoveMirrorTolerance;
+
+    // ============================================
+    // PROCESS EACH UNIQUE SELECTED VERTEX
+    // ============================================
+
+    for (std::size_t i = 0;
+        i < m_multiMoveVertices.size();
+        ++i)
+    {
+        const std::size_t vertexIndex =
+            m_multiMoveVertices[i];
+
+        if (vertexIndex >= mesh.GetVertexCount())
+            continue;
+
+        const glm::vec3 position =
+            mesh.GetVertex(vertexIndex).position;
+
+        glm::vec3 direction(0.0f);
+
+        // ========================================
+        // X / Y / Z
+        // ========================================
+
+        switch (m_multiMoveAxis)
+        {
+        case EdgeMoveAxis::X:
+            direction.x = 1.0f;
+            break;
+
+        case EdgeMoveAxis::Y:
+            direction.y = 1.0f;
+            break;
+
+        case EdgeMoveAxis::Z:
+            direction.z = 1.0f;
+            break;
+
+        case EdgeMoveAxis::Normal:
+        {
+            // ====================================
+            // AVERAGE CONNECTED FACE NORMALS
+            // ====================================
+
+            glm::vec3 normalSum(0.0f);
+
+            for (const EditFace& face :
+                mesh.GetFaces())
+            {
+                if (face.vertices.size() < 3)
+                    continue;
+
+                // Does this face use our vertex?
+                const bool containsVertex =
+                    std::find(
+                        face.vertices.begin(),
+                        face.vertices.end(),
+                        vertexIndex
+                    ) != face.vertices.end();
+
+                if (!containsVertex)
+                    continue;
+
+                // Calculate a polygon normal using
+                // all the polygon's boundary edges.
+                glm::vec3 faceNormal(0.0f);
+
+                const std::size_t count =
+                    face.vertices.size();
+
+                for (std::size_t j = 0;
+                    j < count;
+                    ++j)
+                {
+                    const std::size_t indexA =
+                        face.vertices[j];
+
+                    const std::size_t indexB =
+                        face.vertices[(j + 1) % count];
+
+                    const glm::vec3 a =
+                        mesh.GetVertex(indexA).position;
+
+                    const glm::vec3 b =
+                        mesh.GetVertex(indexB).position;
+
+                    // Newell normal contribution.
+                    faceNormal.x +=
+                        (a.y - b.y) * (a.z + b.z);
+
+                    faceNormal.y +=
+                        (a.z - b.z) * (a.x + b.x);
+
+                    faceNormal.z +=
+                        (a.x - b.x) * (a.y + b.y);
+                }
+
+                const float length =
+                    glm::length(faceNormal);
+
+                if (length > 0.000001f)
+                {
+                    normalSum +=
+                        faceNormal / length;
+                }
+            }
+
+            if (glm::length(normalSum) > 0.000001f)
+            {
+                direction =
+                    glm::normalize(normalSum);
+            }
+
+            break;
+        }
+
+        case EdgeMoveAxis::None:
+        default:
+            break;
+        }
+
+        // ========================================
+        // MIRROR SYMMETRY
+        // ========================================
+
+        if (m_multiMoveMirrorEnabled)
+        {
+            const float side =
+                position[mirrorAxis];
+
+            // Never move a centreline vertex
+            // away from the mirror plane.
+            if (std::abs(side) <= tolerance)
+            {
+                direction[mirrorAxis] = 0.0f;
+            }
+            else if (
+                m_multiMoveAxis != EdgeMoveAxis::Normal &&
+                std::abs(m_multiMoveActiveSide) > tolerance &&
+                side * m_multiMoveActiveSide < 0.0f)
+            {
+                // Reflect axis movement for
+                // vertices on the opposite side.
+                direction[mirrorAxis] =
+                    -direction[mirrorAxis];
+            }
+
+            // For Normal mode, the normals come
+            // from each side's actual faces.
+            // No additional sign flip is required
+            // on a properly symmetrical mesh.
+        }
+
+        m_multiMoveDirections[i] = direction;
+    }
+}
+
+
 void EdgeEditController::HandleInput(
     BoxEngine& engine,
     bool viewportHovered,
@@ -193,6 +370,16 @@ void EdgeEditController::HandleInput(
             SetMultiMoveAxis(
                 *entity,
                 EdgeMoveAxis::Z
+            );
+        }
+
+        else if (ImGui::IsKeyPressed(
+            ImGuiKey_N,
+            false))
+        {
+            SetMultiMoveAxis(
+                *entity,
+                EdgeMoveAxis::Normal
             );
         }
 
@@ -1307,6 +1494,99 @@ bool EdgeEditController::PickEdge(BoxEngine& engine, const ImVec2& viewportPosit
         );
     }
 
+
+    // ============================================
+    // MIRROR EDGE SELECTION
+    // ============================================
+
+    bool mirrorEnabled = false;
+    int mirrorAxis = 0;
+    float mirrorTolerance = 0.001f;
+
+    // ============================================
+    // READ THE OBJECT'S MIRROR MODIFIER
+    // ============================================
+
+    for (const ModifierData& modifier :
+        entity->GetModifiers())
+    {
+        if (modifier.type != ModifierType::Mirror)
+            continue;
+
+        mirrorEnabled = modifier.modEnabled;
+
+        mirrorTolerance =
+            modifier.mirror.tolerance;
+
+        switch (modifier.mirror.axis)
+        {
+        case ModifierAxis::Y:
+            mirrorAxis = 1;
+            break;
+
+        case ModifierAxis::Z:
+            mirrorAxis = 2;
+            break;
+
+        case ModifierAxis::X:
+        default:
+            mirrorAxis = 0;
+            break;
+        }
+
+        break;
+    }
+
+    // ============================================
+    // SELECT MIRRORED EDGES
+    // ============================================
+
+    if (mirrorEnabled)
+    {
+        const MeshEditing& mesh =
+            entity->GetEditableMesh();
+
+        // Copy the selection before adding to it.
+        // This allows Ctrl multi-select AND Alt
+        // edge-loop selection to use mirroring.
+        const std::vector<std::size_t> selectedEdges =
+            entity->GetSelectedEdges();
+
+        int mirroredCount = 0;
+
+        for (std::size_t edgeIndex : selectedEdges)
+        {
+            const std::size_t oppositeEdge =
+                mesh.FindMirroredEdge(
+                    edgeIndex,
+                    mirrorAxis,
+                    mirrorTolerance
+                );
+
+            const std::size_t InvalidIndex =
+                static_cast<std::size_t>(-1);
+
+            if (oppositeEdge == InvalidIndex)
+                continue;
+
+            if (!entity->IsEdgeSelected(oppositeEdge))
+            {
+                entity->AddSelectedEdge(oppositeEdge);
+
+                ++mirroredCount;
+            }
+        }
+
+        BOX_LOG_INFO(
+            "Mirror Edge Selection: "
+            << mirroredCount
+            << " opposite edges added"
+        );
+    }
+
+
+
+
     BOX_LOG_INFO(
         "Selected edge index: "
         << pickedEdge
@@ -1956,8 +2236,81 @@ void EdgeEditController::EditBeginMultiMove(Entity& entity, EdgeMoveAxis axis)
     // Store active axis.
     // -----------------------------------------
 
-    m_multiMoveAxis =
-        axis;
+    m_multiMoveAxis = axis;
+
+
+    // ============================================
+    // CAPTURE MIRROR MODIFIER SETTINGS
+    // ============================================
+
+    m_multiMoveMirrorEnabled = false;
+    m_multiMoveMirrorAxis = 0;
+    m_multiMoveMirrorTolerance = 0.001f;
+    m_multiMoveActiveSide = 0.0f;
+
+    for (const ModifierData& modifier :
+        entity.GetModifiers())
+    {
+        if (modifier.type != ModifierType::Mirror)
+            continue;
+
+        if (!modifier.modEnabled ||
+            modifier.mirror.axis == ModifierAxis::None)
+        {
+            break;
+        }
+
+        m_multiMoveMirrorEnabled = true;
+        m_multiMoveMirrorTolerance =
+            modifier.mirror.tolerance;
+
+        switch (modifier.mirror.axis)
+        {
+        case ModifierAxis::Y:
+            m_multiMoveMirrorAxis = 1;
+            break;
+
+        case ModifierAxis::Z:
+            m_multiMoveMirrorAxis = 2;
+            break;
+
+        case ModifierAxis::X:
+        default:
+            m_multiMoveMirrorAxis = 0;
+            break;
+        }
+
+        break;
+    }
+
+    // ============================================
+    // USE ACTIVE EDGE TO DETERMINE DIRECTION
+    // ============================================
+
+    if (m_selectedEdge < editableMesh.GetEdgeCount())
+    {
+        const EditEdge& activeEdge =
+            editableMesh.GetEdge(m_selectedEdge);
+
+        const glm::vec3 a =
+            editableMesh.GetVertex(
+                activeEdge.vertexA
+            ).position;
+
+        const glm::vec3 b =
+            editableMesh.GetVertex(
+                activeEdge.vertexB
+            ).position;
+
+        const glm::vec3 centre = (a + b) * 0.5f;
+
+        m_multiMoveActiveSide =
+            centre[m_multiMoveMirrorAxis];
+    }
+
+    // Build the initial movement directions.
+    BuildMultiMoveDirections(entity);
+
 
 
     // -----------------------------------------
@@ -2009,49 +2362,85 @@ void EdgeEditController::EditUpdateMultiMove(Entity& entity)
         m_multiMoveStartMouse.y;
 
 
-    glm::vec3 movement(0.0f);
+    // ============================================
+    // CALCULATE MOVEMENT AMOUNT
+    // ============================================
 
-
-    // -----------------------------------------
-    // Build movement from the selected axis.
-    // -----------------------------------------
+    float amount = 0.0f;
 
     switch (m_multiMoveAxis)
     {
     case EdgeMoveAxis::X:
-
-        movement.x =
-            deltaX *
-            m_multiMoveSensitivity;
-
+        amount =
+            deltaX * m_multiMoveSensitivity;
         break;
-
 
     case EdgeMoveAxis::Y:
-
-        movement.y =
-            -deltaY *
-            m_multiMoveSensitivity;
-
+        amount =
+            -deltaY * m_multiMoveSensitivity;
         break;
-
 
     case EdgeMoveAxis::Z:
-
-        // Same screen-direction fix we used
-        // for object movement.
-        movement.z =
-            -deltaX *
-            m_multiMoveSensitivity;
-
+        // Preserve your existing Z mouse direction.
+        amount =
+            -deltaX * m_multiMoveSensitivity;
         break;
 
+    case EdgeMoveAxis::Normal:
+        amount =
+            deltaX * m_multiMoveSensitivity;
+        break;
 
     case EdgeMoveAxis::None:
     default:
-
         return;
     }
+
+
+
+    //glm::vec3 movement(0.0f);
+
+
+    //// -----------------------------------------
+    //// Build movement from the selected axis.
+    //// -----------------------------------------
+
+    //switch (m_multiMoveAxis)
+    //{
+    //case EdgeMoveAxis::X:
+
+    //    movement.x =
+    //        deltaX *
+    //        m_multiMoveSensitivity;
+
+    //    break;
+
+
+    //case EdgeMoveAxis::Y:
+
+    //    movement.y =
+    //        -deltaY *
+    //        m_multiMoveSensitivity;
+
+    //    break;
+
+
+    //case EdgeMoveAxis::Z:
+
+    //    // Same screen-direction fix we used
+    //    // for object movement.
+    //    movement.z =
+    //        -deltaX *
+    //        m_multiMoveSensitivity;
+
+    //    break;
+
+
+    //case EdgeMoveAxis::None:
+    //default:
+
+    //    return;
+    //}
 
 
     MeshEditing& editableMesh =
@@ -2069,6 +2458,12 @@ void EdgeEditController::EditUpdateMultiMove(Entity& entity)
     // Move every unique selected vertex.
     // -----------------------------------------
 
+    if (m_multiMoveDirections.size() !=
+        m_multiMoveVertices.size())
+    {
+        return;
+    }
+
     for (std::size_t index = 0;
         index < count;
         ++index)
@@ -2082,12 +2477,15 @@ void EdgeEditController::EditUpdateMultiMove(Entity& entity)
             continue;
         }
 
+        editableMesh.GetVertex(vertexIndex).position =
+            m_multiMoveStartPositions[index] +
+            m_multiMoveDirections[index] * amount;
 
-        editableMesh
+        /*editableMesh
             .GetVertex(vertexIndex)
             .position =
             m_multiMoveStartPositions[index] +
-            movement;
+            movement;*/
     }
 
 
@@ -2166,6 +2564,9 @@ void EdgeEditController::EditCancelMultiMove(Entity& entity)
 
     m_multiMoveVertices.clear();
     m_multiMoveStartPositions.clear();
+    m_multiMoveDirections.clear();
+    m_multiMoveMirrorEnabled = false;
+
     BOX_LOG_INFO(
         "Multi-edge move cancelled."
 	);
@@ -2640,4 +3041,8 @@ void EdgeEditController::SetMultiMoveAxis(Entity& entity, EdgeMoveAxis axis)
             .GetVertex(vertexIndex)
             .position;
     }
+
+    // Recalculate directions for the new axis.
+    // Particularly important for Normal movement.
+    BuildMultiMoveDirections(entity);
 }

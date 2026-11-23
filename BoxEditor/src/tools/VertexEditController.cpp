@@ -6,6 +6,7 @@
 #include <camera/Camera.h>
 #include <limits>
 #include <algorithm>
+#include <cmath>
 #include <glm/gtc/matrix_transform.hpp>
 #include <mesh/modifiers/FaceFill.h>
 
@@ -130,6 +131,10 @@ void VertexEditController::HandleInput(BoxEngine& engine, bool viewportHovered, 
         {
             EditBeginMove(*entity, VertexMoveAxis::Z);
         }
+        else if (ImGui::IsKeyPressed(ImGuiKey_N, false))
+        {
+            EditBeginMove(*entity, VertexMoveAxis::Normal);
+        }
     }
 
     /*
@@ -144,7 +149,8 @@ void VertexEditController::HandleInput(BoxEngine& engine, bool viewportHovered, 
             EditConfirmMove();
         }
         else if (
-            ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+            ImGui::IsMouseClicked(ImGuiMouseButton_Right) ||
+            ImGui::IsKeyPressed(ImGuiKey_Escape, false))
         {
             EditCancelMove(*entity);
         }
@@ -474,21 +480,136 @@ bool VertexEditController::PickVertex(BoxEngine& engine, const ImVec2& viewportP
         );
     }
 
+
+    // =================================================
+    // MIRROR VERTEX SELECTION
+    // =================================================
+
+    bool mirrorEnabled = false;
+    int mirrorAxis = 0;
+    float mirrorTolerance = 0.001f;
+
+    // -------------------------------------------------
+    // Read the existing Mirror Modifier
+    // -------------------------------------------------
+
+    for (const ModifierData& modifier :
+        entity->GetModifiers())
+    {
+        if (modifier.type != ModifierType::Mirror)
+            continue;
+
+        if (!modifier.modEnabled ||
+            modifier.mirror.axis == ModifierAxis::None)
+        {
+            break;
+        }
+
+        mirrorEnabled = true;
+
+        mirrorTolerance =
+            modifier.mirror.tolerance;
+
+        switch (modifier.mirror.axis)
+        {
+        case ModifierAxis::Y:
+            mirrorAxis = 1;
+            break;
+
+        case ModifierAxis::Z:
+            mirrorAxis = 2;
+            break;
+
+        case ModifierAxis::X:
+        default:
+            mirrorAxis = 0;
+            break;
+        }
+
+        break;
+    }
+
+    // -------------------------------------------------
+    // Find and select matching opposite vertices
+    // -------------------------------------------------
+
+    if (mirrorEnabled)
+    {
+        // Copy before adding mirrored vertices.
+        // This preserves Shift multi-selection.
+        const std::vector<std::size_t> selectedVertices =
+            entity->GetSelectedVertices();
+
+        const float toleranceSquared =
+            mirrorTolerance * mirrorTolerance;
+
+        int mirroredCount = 0;
+
+        for (std::size_t selectedIndex : selectedVertices)
+        {
+            if (selectedIndex >= editableMesh.GetVertexCount())
+                continue;
+
+            glm::vec3 mirroredPosition =
+                editableMesh.GetVertex(selectedIndex).position;
+
+            // Reflect the position across the chosen plane.
+            mirroredPosition[mirrorAxis] =
+                -mirroredPosition[mirrorAxis];
+
+            std::size_t closestMatch =
+                InvalidVertex;
+
+            float bestDistanceSquared =
+                toleranceSquared;
+
+            // Search the editable mesh for a matching vertex.
+            for (std::size_t candidateIndex = 0;
+                candidateIndex < editableMesh.GetVertexCount();
+                ++candidateIndex)
+            {
+                const glm::vec3 candidatePosition =
+                    editableMesh.GetVertex(candidateIndex).position;
+
+                const glm::vec3 difference =
+                    candidatePosition - mirroredPosition;
+
+                const float distanceSquared =
+                    glm::dot(difference, difference);
+
+                if (distanceSquared <= bestDistanceSquared)
+                {
+                    bestDistanceSquared = distanceSquared;
+                    closestMatch = candidateIndex;
+                }
+            }
+
+            // No matching vertex found.
+            if (closestMatch == InvalidVertex)
+                continue;
+
+            // A centreline vertex can be its own mirror.
+            // Don't add it again.
+            if (!entity->IsVertexSelected(closestMatch))
+            {
+                entity->AddSelectedVertex(closestMatch);
+                ++mirroredCount;
+            }
+        }
+
+        BOX_LOG_INFO(
+            "Mirror Vertex Selection: "
+            << mirroredCount
+            << " opposite vertices added"
+        );
+    }
+
+
     BOX_LOG_INFO(
         "Selected editable vertex index: "
         << m_selectedVertex
     );
 
-
-    /*m_selectedVertex = closestVertex;
-
-    entity->ClearSelectedVertices();
-
-    entity->AddSelectedVertex(closestVertex);
-
-    BOX_LOG_INFO(
-        "Selected editable vertex index: "
-        << m_selectedVertex);*/
 
     return true;
     
@@ -498,167 +619,546 @@ bool VertexEditController::PickVertex(BoxEngine& engine, const ImVec2& viewportP
 // ##########################################################################################
 // ############################# new functions for moving vertices ##########################
 // ##########################################################################################
-void VertexEditController::EditBeginMove(Entity& entity, VertexMoveAxis axis)
+
+
+void VertexEditController::EditBeginMove(
+    Entity& entity,
+    VertexMoveAxis axis)
 {
+    MeshEditing& mesh = entity.GetEditableMesh();
 
-    if (m_selectedVertex ==
-        InvalidVertex)
-    {
+    const auto& selected =
+        entity.GetSelectedVertices();
+
+    if (selected.empty())
         return;
+
+    m_moveVertices.clear();
+
+    // ============================================
+    // READ MIRROR SETTINGS
+    // ============================================
+
+    bool mirrorEnabled = false;
+    int mirrorAxis = 0;
+    float mirrorTolerance = 0.001f;
+
+    for (const ModifierData& modifier :
+        entity.GetModifiers())
+    {
+        if (modifier.type != ModifierType::Mirror)
+            continue;
+
+        if (!modifier.modEnabled ||
+            modifier.mirror.axis == ModifierAxis::None)
+        {
+            break;
+        }
+
+        mirrorEnabled = true;
+        mirrorTolerance = modifier.mirror.tolerance;
+
+        switch (modifier.mirror.axis)
+        {
+        case ModifierAxis::Y:
+            mirrorAxis = 1;
+            break;
+
+        case ModifierAxis::Z:
+            mirrorAxis = 2;
+            break;
+
+        default:
+            mirrorAxis = 0;
+            break;
+        }
+
+        break;
     }
 
-    MeshEditing& editableMesh =
-        entity.GetEditableMesh();
+    // ============================================
+    // ACTIVE VERTEX DETERMINES MIRROR DIRECTION
+    // ============================================
 
-    if (m_selectedVertex >=
-        editableMesh.GetVertexCount())
+    float activeSide = 0.0f;
+
+    if (m_selectedVertex < mesh.GetVertexCount())
     {
-        m_selectedVertex =
-            InvalidVertex;
-
-        return;
+        activeSide =
+            mesh.GetVertex(m_selectedVertex)
+            .position[mirrorAxis];
     }
 
-    m_startVertexPosition =
-        editableMesh
-        .GetVertex(m_selectedVertex)
-        .position;
+    // ============================================
+    // COLLECT UNIQUE SELECTED VERTICES
+    // ============================================
 
-    m_moveAxis =
-        axis;
+    for (std::size_t vertexIndex : selected)
+    {
+        if (vertexIndex >= mesh.GetVertexCount())
+            continue;
 
-    m_startMouse =
-        ImGui::GetMousePos();
+        const bool alreadyAdded =
+            std::find_if(
+                m_moveVertices.begin(),
+                m_moveVertices.end(),
+                [vertexIndex](const MoveVertex& item)
+        {
+            return item.index == vertexIndex;
+        }
+            ) != m_moveVertices.end();
 
+        if (alreadyAdded)
+            continue;
+
+        MoveVertex item;
+
+        item.index = vertexIndex;
+
+        item.startPosition =
+            mesh.GetVertex(vertexIndex).position;
+
+        glm::vec3 direction(0.0f);
+
+        // ========================================
+        // STANDARD AXES
+        // ========================================
+
+        switch (axis)
+        {
+        case VertexMoveAxis::X:
+            direction.x = 1.0f;
+            break;
+
+        case VertexMoveAxis::Y:
+            direction.y = 1.0f;
+            break;
+
+        case VertexMoveAxis::Z:
+            direction.z = 1.0f;
+            break;
+
+        case VertexMoveAxis::Normal:
+        {
+            // ====================================
+            // CALCULATE AVERAGED VERTEX NORMAL
+            // ====================================
+
+            glm::vec3 normalSum(0.0f);
+
+            for (const EditFace& face : mesh.GetFaces())
+            {
+                if (face.vertices.size() < 3)
+                    continue;
+
+                const bool containsVertex =
+                    std::find(
+                        face.vertices.begin(),
+                        face.vertices.end(),
+                        vertexIndex
+                    ) != face.vertices.end();
+
+                if (!containsVertex)
+                    continue;
+
+                glm::vec3 faceNormal(0.0f);
+
+                const std::size_t count =
+                    face.vertices.size();
+
+                // Newell polygon normal calculation.
+                for (std::size_t j = 0; j < count; ++j)
+                {
+                    const std::size_t aIndex =
+                        face.vertices[j];
+
+                    const std::size_t bIndex =
+                        face.vertices[(j + 1) % count];
+
+                    if (aIndex >= mesh.GetVertexCount() ||
+                        bIndex >= mesh.GetVertexCount())
+                    {
+                        continue;
+                    }
+
+                    const glm::vec3 a =
+                        mesh.GetVertex(aIndex).position;
+
+                    const glm::vec3 b =
+                        mesh.GetVertex(bIndex).position;
+
+                    faceNormal.x +=
+                        (a.y - b.y) * (a.z + b.z);
+
+                    faceNormal.y +=
+                        (a.z - b.z) * (a.x + b.x);
+
+                    faceNormal.z +=
+                        (a.x - b.x) * (a.y + b.y);
+                }
+
+                const float length =
+                    glm::length(faceNormal);
+
+                if (length > 0.000001f)
+                {
+                    normalSum += faceNormal / length;
+                }
+            }
+
+            if (glm::length(normalSum) > 0.000001f)
+            {
+                direction = glm::normalize(normalSum);
+            }
+
+            break;
+        }
+
+        default:
+            break;
+        }
+
+        // ========================================
+        // MIRROR MOVEMENT
+        // ========================================
+
+        if (mirrorEnabled)
+        {
+            const float vertexSide =
+                item.startPosition[mirrorAxis];
+
+            // A vertex on the mirror plane
+            // must remain on that plane.
+            if (std::abs(vertexSide) <= mirrorTolerance)
+            {
+                direction[mirrorAxis] = 0.0f;
+            }
+            else if (
+                axis != VertexMoveAxis::Normal &&
+                std::abs(activeSide) > mirrorTolerance &&
+                vertexSide * activeSide < 0.0f)
+            {
+                // Mirror movement on the opposite side.
+                direction[mirrorAxis] =
+                    -direction[mirrorAxis];
+            }
+        }
+
+        item.direction = direction;
+
+        m_moveVertices.push_back(item);
+    }
+
+    if (m_moveVertices.empty())
+        return;
+
+    m_moveAxis = axis;
+    m_startMouse = ImGui::GetMousePos();
     m_isMoving = true;
 
+    BOX_LOG_INFO(
+        "Vertex move started. Vertices="
+        << m_moveVertices.size()
+        << " Axis="
+        << static_cast<int>(axis)
+    );
 }
 
-void VertexEditController::EditUpdateMove(Entity& entity)
-{
-    
 
+//void VertexEditController::EditBeginMove(Entity& entity, VertexMoveAxis axis)
+//{
+//
+//    if (m_selectedVertex ==
+//        InvalidVertex)
+//    {
+//        return;
+//    }
+//
+//    MeshEditing& editableMesh =
+//        entity.GetEditableMesh();
+//
+//    if (m_selectedVertex >=
+//        editableMesh.GetVertexCount())
+//    {
+//        m_selectedVertex =
+//            InvalidVertex;
+//
+//        return;
+//    }
+//
+//    m_startVertexPosition =
+//        editableMesh
+//        .GetVertex(m_selectedVertex)
+//        .position;
+//
+//    m_moveAxis =
+//        axis;
+//
+//    m_startMouse =
+//        ImGui::GetMousePos();
+//
+//    m_isMoving = true;
+//
+//}
+
+
+void VertexEditController::EditUpdateMove(
+    Entity& entity)
+{
     if (!m_isMoving)
-    {
         return;
-    }
 
     const ImVec2 currentMouse =
         ImGui::GetMousePos();
 
     const float deltaX =
-        currentMouse.x -
-        m_startMouse.x;
+        currentMouse.x - m_startMouse.x;
 
     const float deltaY =
-        currentMouse.y -
-        m_startMouse.y;
+        currentMouse.y - m_startMouse.y;
 
-    glm::vec3 movement(0.0f);
+    // ============================================
+    // CALCULATE MOVEMENT DISTANCE
+    // ============================================
+
+    float amount = 0.0f;
 
     switch (m_moveAxis)
     {
     case VertexMoveAxis::X:
-        movement.x =
-            deltaX *
-            m_moveSensitivity;
+        amount = deltaX * m_moveSensitivity;
         break;
 
     case VertexMoveAxis::Y:
-        movement.y =
-            -deltaY *
-            m_moveSensitivity;
+        amount = -deltaY * m_moveSensitivity;
         break;
 
     case VertexMoveAxis::Z:
-        movement.z =
-            deltaX *
-            m_moveSensitivity;
+        amount = deltaX * m_moveSensitivity;
         break;
 
-    case VertexMoveAxis::None:
+    case VertexMoveAxis::Normal:
+        amount = deltaX * m_moveSensitivity;
+        break;
+
     default:
         return;
     }
 
-    MeshEditing& editableMesh =
+    MeshEditing& mesh =
         entity.GetEditableMesh();
 
-    editableMesh
-        .GetVertex(m_selectedVertex)
-        .position =
-        m_startVertexPosition +
-        movement;
+    // ============================================
+    // MOVE ALL SELECTED VERTICES
+    // ============================================
 
+    for (const MoveVertex& item : m_moveVertices)
+    {
+        if (item.index >= mesh.GetVertexCount())
+            continue;
 
-    // Rebuild render mesh from the
-    // modelling topology.
+        mesh.GetVertex(item.index).position =
+            item.startPosition +
+            item.direction * amount;
+    }
+
+    // ============================================
+    // REBUILD THE RENDER MESH
+    // ============================================
+
     MeshData renderMesh;
 
-    if (!editableMesh.BuildRenderMesh(
-        renderMesh))
+    if (!mesh.BuildRenderMesh(renderMesh))
     {
         BOX_LOG_ERROR(
-            "Vertex move: failed to rebuild render mesh"
+            "Vertex move: failed to rebuild mesh"
         );
-
         return;
     }
 
-    if (!entity.CreateFromMeshData(
-        renderMesh))
+    if (!entity.CreateFromMeshData(renderMesh))
     {
         BOX_LOG_ERROR(
             "Vertex move: failed to update GPU mesh"
         );
-
-        return;
     }
-    
 }
+
+
+//void VertexEditController::EditUpdateMove(Entity& entity)
+//{
+//    
+//
+//    if (!m_isMoving)
+//    {
+//        return;
+//    }
+//
+//    const ImVec2 currentMouse =
+//        ImGui::GetMousePos();
+//
+//    const float deltaX =
+//        currentMouse.x -
+//        m_startMouse.x;
+//
+//    const float deltaY =
+//        currentMouse.y -
+//        m_startMouse.y;
+//
+//    glm::vec3 movement(0.0f);
+//
+//    switch (m_moveAxis)
+//    {
+//    case VertexMoveAxis::X:
+//        movement.x =
+//            deltaX *
+//            m_moveSensitivity;
+//        break;
+//
+//    case VertexMoveAxis::Y:
+//        movement.y =
+//            -deltaY *
+//            m_moveSensitivity;
+//        break;
+//
+//    case VertexMoveAxis::Z:
+//        movement.z =
+//            deltaX *
+//            m_moveSensitivity;
+//        break;
+//
+//    case VertexMoveAxis::None:
+//    default:
+//        return;
+//    }
+//
+//    MeshEditing& editableMesh =
+//        entity.GetEditableMesh();
+//
+//    editableMesh
+//        .GetVertex(m_selectedVertex)
+//        .position =
+//        m_startVertexPosition +
+//        movement;
+//
+//
+//    // Rebuild render mesh from the
+//    // modelling topology.
+//    MeshData renderMesh;
+//
+//    if (!editableMesh.BuildRenderMesh(
+//        renderMesh))
+//    {
+//        BOX_LOG_ERROR(
+//            "Vertex move: failed to rebuild render mesh"
+//        );
+//
+//        return;
+//    }
+//
+//    if (!entity.CreateFromMeshData(
+//        renderMesh))
+//    {
+//        BOX_LOG_ERROR(
+//            "Vertex move: failed to update GPU mesh"
+//        );
+//
+//        return;
+//    }
+//    
+//}
 
 void VertexEditController::EditConfirmMove()
 {
+    if (!m_isMoving)
+        return;
+
     m_isMoving = false;
+    m_moveAxis = VertexMoveAxis::None;
 
-    m_moveAxis =
-        VertexMoveAxis::None;
+    m_moveVertices.clear();
 
+    BOX_LOG_INFO("Vertex move confirmed");
 }
 
-void VertexEditController::EditCancelMove(Entity& entity)
+//void VertexEditController::EditConfirmMove()
+//{
+//    m_isMoving = false;
+//
+//    m_moveAxis =
+//        VertexMoveAxis::None;
+//
+//}
+
+
+void VertexEditController::EditCancelMove(
+    Entity& entity)
 {
-
     if (!m_isMoving)
-    {
         return;
-    }
 
-    MeshEditing& editableMesh =
+    MeshEditing& mesh =
         entity.GetEditableMesh();
 
-    if (m_selectedVertex <
-        editableMesh.GetVertexCount())
+    // Restore every moved vertex.
+    for (const MoveVertex& item : m_moveVertices)
     {
-        editableMesh
-            .GetVertex(m_selectedVertex)
-            .position =
-            m_startVertexPosition;
+        if (item.index >= mesh.GetVertexCount())
+            continue;
+
+        mesh.GetVertex(item.index).position =
+            item.startPosition;
     }
 
     MeshData renderMesh;
 
-    if (editableMesh.BuildRenderMesh(
-        renderMesh))
+    if (mesh.BuildRenderMesh(renderMesh))
     {
-        entity.CreateFromMeshData(
-            renderMesh
-        );
+        entity.CreateFromMeshData(renderMesh);
     }
 
     m_isMoving = false;
+    m_moveAxis = VertexMoveAxis::None;
 
-    m_moveAxis =
-        VertexMoveAxis::None;
+    m_moveVertices.clear();
 
+    BOX_LOG_INFO("Vertex move cancelled");
 }
+
+
+//void VertexEditController::EditCancelMove(Entity& entity)
+//{
+//
+//    if (!m_isMoving)
+//    {
+//        return;
+//    }
+//
+//    MeshEditing& editableMesh =
+//        entity.GetEditableMesh();
+//
+//    if (m_selectedVertex <
+//        editableMesh.GetVertexCount())
+//    {
+//        editableMesh
+//            .GetVertex(m_selectedVertex)
+//            .position =
+//            m_startVertexPosition;
+//    }
+//
+//    MeshData renderMesh;
+//
+//    if (editableMesh.BuildRenderMesh(
+//        renderMesh))
+//    {
+//        entity.CreateFromMeshData(
+//            renderMesh
+//        );
+//    }
+//
+//    m_isMoving = false;
+//
+//    m_moveAxis =
+//        VertexMoveAxis::None;
+//
+//}
