@@ -2087,20 +2087,7 @@ void BoxEngine::RenderScene()
         // =============================================================================================================
 
 
-        // =====================================================
-        // PARTICLE SYSTEM - ROCKS moved up
-        // =====================================================
-
-        /*if (m_sceneShader && m_sceneShader->ID() != 0)
-        {
-            m_particleSystemRender.RenderRocks(
-                m_entities,
-                *m_sceneShader,
-                view,
-                projection,
-                m_camera->Position,
-                m_smallRockAlbedoTexture);
-        }*/
+        
 
         // ===========================================================================================
         // ============================= END PARTICLE SYSTEM - ROCKS =================================

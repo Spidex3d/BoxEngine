@@ -3,6 +3,8 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <string>
+#include <array>
+#include <cstdint>
 
 class Shader;
 
@@ -108,21 +110,32 @@ public:
 	// TERRAIN SCATTER SELECTION
 	// ============================================
 
-	void SelectScatterCell(int x, int z)
+
+// ============================================
+// TERRAIN SCATTER SELECTION
+// ============================================
+
+// Paint multiple cells inside a circular brush.
+	void PaintScatterSelection(const glm::vec3& worldPosition,
+		float radius, bool addSelection = true);
+
+	// Remove all selected cells.
+	void ClearScatterSelection();
+
+	// Get selected terrain cells.
+	const std::vector<glm::ivec2>&
+		GetSelectedScatterCells() const
 	{
-		m_selectedScatterCellX = x;
-		m_selectedScatterCellZ = z;
+		return m_selectedScatterCells;
 	}
 
-	int GetSelectedScatterCellX() const
-	{
-		return m_selectedScatterCellX;
-	}
+	// Get the four world-space corners of a cell.
+	bool GetScatterCellCorners(
+		int cellX,
+		int cellZ,
+		std::array<glm::vec3, 4>& corners
+	) const;
 
-	int GetSelectedScatterCellZ() const
-	{
-		return m_selectedScatterCellZ;
-	}
 
 
 
@@ -232,9 +245,11 @@ private:
 	unsigned int m_dirtNormalTexture = 0;
 	unsigned int m_grassNormalTexture = 0;
 
-	// Selected scatter cell for terrain surface scattering
-	int m_selectedScatterCellX = -1;
-	int m_selectedScatterCellZ = -1;
+	// Selected grid cells (X, Z).
+	std::vector<glm::ivec2> m_selectedScatterCells;
+
+	// Lookup mask prevents duplicate selection.
+	std::vector<std::uint8_t> m_scatterSelectionMask;
 
 	int rez = 1;
 	int numStrips = 0;

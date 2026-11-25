@@ -2039,3 +2039,199 @@ bool Terrain::GetCellAtWorldPosition(
     return true;
 }
 
+
+// =====================================================
+// PAINT TERRAIN SCATTER SELECTION
+// =====================================================
+
+void Terrain::PaintScatterSelection(
+    const glm::vec3& worldPosition,
+    float radius, bool addSelection)
+{
+    if (m_heightMap.empty() ||
+        heightmapWidth < 2 ||
+        heightmapHeight < 2 ||
+        radius <= 0.0f)
+    {
+        return;
+    }
+
+    // Number of selectable grid cells.
+    const int cellsX = heightmapHeight - 1;
+    const int cellsZ = heightmapWidth - 1;
+
+    const std::size_t totalCells =
+        static_cast<std::size_t>(cellsX) *
+        static_cast<std::size_t>(cellsZ);
+
+    // Create the selection lookup mask.
+    if (m_scatterSelectionMask.size() != totalCells)
+    {
+        m_selectedScatterCells.clear();
+
+        m_scatterSelectionMask.assign(
+            totalCells, 0
+        );
+    }
+
+    // Convert brush centre into terrain grid coordinates.
+    const float mapX =
+        worldPosition.x - m_position.x +
+        static_cast<float>(heightmapHeight) * 0.5f;
+
+    const float mapZ =
+        worldPosition.z - m_position.z +
+        static_cast<float>(heightmapWidth) * 0.5f;
+
+    const int minX = std::max(
+        0,
+        static_cast<int>(std::floor(mapX - radius))
+    );
+
+    const int maxX = std::min(
+        cellsX - 1,
+        static_cast<int>(std::ceil(mapX + radius))
+    );
+
+    const int minZ = std::max(
+        0,
+        static_cast<int>(std::floor(mapZ - radius))
+    );
+
+    const int maxZ = std::min(
+        cellsZ - 1,
+        static_cast<int>(std::ceil(mapZ + radius))
+    );
+
+    const float radiusSquared = radius * radius;
+
+    for (int x = minX; x <= maxX; ++x)
+    {
+        for (int z = minZ; z <= maxZ; ++z)
+        {
+            // Test the centre of each cell.
+            const float dx =
+                (static_cast<float>(x) + 0.5f) - mapX;
+
+            const float dz =
+                (static_cast<float>(z) + 0.5f) - mapZ;
+
+            if (dx * dx + dz * dz > radiusSquared)
+                continue;
+
+            const std::size_t index =
+                static_cast<std::size_t>(x) * cellsZ + z;
+
+            
+
+            // Already selected? Skip it.
+            if (addSelection)
+            {
+                // ADD SELECTION
+                if (m_scatterSelectionMask[index] == 0)
+                {
+                    m_scatterSelectionMask[index] = 1;
+
+                    m_selectedScatterCells.emplace_back(x, z);
+                }
+            }
+            else
+            {
+                // ERASE SELECTION
+                if (m_scatterSelectionMask[index] != 0)
+                {
+                    m_scatterSelectionMask[index] = 0;
+                }
+            }
+                       
+        }
+    }
+
+
+    // ============================================
+    // REMOVE ERASED CELLS FROM SELECTION VECTOR
+    // ============================================
+
+    if (!addSelection)
+    {
+        m_selectedScatterCells.erase(
+            std::remove_if(
+                m_selectedScatterCells.begin(),
+                m_selectedScatterCells.end(),
+
+                [&](const glm::ivec2& cell)
+        {
+            const std::size_t index =
+                static_cast<std::size_t>(cell.x) *
+                cellsZ + cell.y;
+
+            return m_scatterSelectionMask[index] == 0;
+        }
+            ),
+            m_selectedScatterCells.end()
+        );
+    }
+
+}
+
+// =====================================================
+// CLEAR SCATTER SELECTION
+// =====================================================
+
+void Terrain::ClearScatterSelection()
+{
+    m_selectedScatterCells.clear();
+    m_scatterSelectionMask.clear();
+}
+
+// =====================================================
+// GET CELL CORNERS FOR HIGHLIGHTING
+// =====================================================
+
+bool Terrain::GetScatterCellCorners(
+    int cellX,
+    int cellZ,
+    std::array<glm::vec3, 4>& corners) const
+{
+    if (cellX < 0 ||
+        cellZ < 0 ||
+        cellX >= heightmapHeight - 1 ||
+        cellZ >= heightmapWidth - 1)
+    {
+        return false;
+    }
+
+    // Terrain mesh has 8 floats per vertex.
+    const auto GetVertex = [this](int x, int z)
+    {
+        const std::size_t index =
+            static_cast<std::size_t>(
+                x * heightmapWidth + z
+                ) * 8;
+
+        return glm::vec3(
+            m_vertices[index],
+            m_vertices[index + 1],
+            m_vertices[index + 2]
+        ) + m_position;
+    };
+
+    const std::size_t requiredSize =
+        static_cast<std::size_t>(heightmapWidth) *
+        static_cast<std::size_t>(heightmapHeight) * 8;
+
+    if (m_vertices.size() < requiredSize)
+        return false;
+
+    // Four corners follow the actual terrain mesh.
+    const glm::vec3 offset(0.0f, 0.03f, 0.0f);
+
+    corners[0] = GetVertex(cellX, cellZ) + offset;
+    corners[1] = GetVertex(cellX + 1, cellZ) + offset;
+    corners[2] = GetVertex(cellX + 1, cellZ + 1) + offset;
+    corners[3] = GetVertex(cellX, cellZ + 1) + offset;
+
+    return true;
+}
+
+

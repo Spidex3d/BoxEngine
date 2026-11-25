@@ -19,6 +19,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 // terrain
 #include <rendering/Terrain.h>
+#include <array>
 // #####
 #include <runtime\Player.h>
 
@@ -836,6 +837,146 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
             m_sceneViewportPos = ImGui::GetItemRectMin();
             m_sceneViewportSize = ImGui::GetItemRectSize();
 
+
+            // =====================================================
+            // TERRAIN SCATTER SELECTION OVERLAY
+            // =====================================================
+
+            if (engine.HasTerrain() &&
+                engine.GetTerrainBrushType() ==
+                TerrainBrushType::ScatterSelect &&
+                m_sceneViewportSize.x > 0.0f &&
+                m_sceneViewportSize.y > 0.0f)
+            {
+                const Terrain& terrain = engine.GetTerrain();
+
+                const auto& selectedCells =
+                    terrain.GetSelectedScatterCells();
+
+                Camera& camera = engine.GetCamera();
+
+                const glm::mat4 view =
+                    camera.GetViewMatrix();
+
+                const float aspect =
+                    m_sceneViewportSize.x / m_sceneViewportSize.y;
+
+                const glm::mat4 projection =
+                    camera.GetProjectionMatrix(aspect);
+
+                const glm::mat4 vp = projection * view;
+
+                ImDrawList* drawList =
+                    ImGui::GetWindowDrawList();
+
+                const ImVec2 clipMin = m_sceneViewportPos;
+
+                const ImVec2 clipMax(
+                    m_sceneViewportPos.x + m_sceneViewportSize.x,
+                    m_sceneViewportPos.y + m_sceneViewportSize.y
+                );
+
+                drawList->PushClipRect(
+                    clipMin,
+                    clipMax,
+                    true
+                );
+
+                // Project a world-space point into the viewport.
+                const auto ProjectPoint =
+                    [&](const glm::vec3& world,
+                        ImVec2& screen) -> bool
+                {
+                    const glm::vec4 clip =
+                        vp * glm::vec4(world, 1.0f);
+
+                    // Skip corners behind or outside camera depth.
+                    if (clip.w <= 0.0001f ||
+                        clip.z < -clip.w ||
+                        clip.z > clip.w)
+                    {
+                        return false;
+                    }
+
+                    const glm::vec3 ndc =
+                        glm::vec3(clip) / clip.w;
+
+                    screen.x =
+                        m_sceneViewportPos.x +
+                        (ndc.x * 0.5f + 0.5f) *
+                        m_sceneViewportSize.x;
+
+                    screen.y =
+                        m_sceneViewportPos.y +
+                        (1.0f - (ndc.y * 0.5f + 0.5f)) *
+                        m_sceneViewportSize.y;
+
+                    return true;
+                };
+
+                // Transparent green selection.
+                const ImU32 fillColor =
+                    IM_COL32(35, 220, 80, 65);
+
+                const ImU32 outlineColor =
+                    IM_COL32(50, 255, 100, 165);
+
+                for (const glm::ivec2& cell : selectedCells)
+                {
+                    std::array<glm::vec3, 4> corners;
+
+                    if (!terrain.GetScatterCellCorners(
+                        cell.x,
+                        cell.y,
+                        corners))
+                    {
+                        continue;
+                    }
+
+                    ImVec2 p[4];
+
+                    bool visible = true;
+
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        if (!ProjectPoint(corners[i], p[i]))
+                        {
+                            visible = false;
+                            break;
+                        }
+                    }
+
+                    if (!visible)
+                        continue;
+
+                    // Draw the cell as two triangles.
+                    drawList->AddTriangleFilled(
+                        p[0], p[1], p[2], fillColor
+                    );
+
+                    drawList->AddTriangleFilled(
+                        p[0], p[2], p[3], fillColor
+                    );
+
+                    // Outline each selected cell.
+                    drawList->AddQuad(
+                        p[0], p[1], p[2], p[3],
+                        outlineColor,
+                        1.0f
+                    );
+                }
+
+                drawList->PopClipRect();
+            }
+
+            // =====================================================
+            // END TERRAIN SCATTER SELECTION OVERLAY
+            // =====================================================
+
+
+
+
+
             // ############################################################################################
             // #################################### Transforme tools ######################################
             // ############################################################################################
@@ -845,6 +986,31 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 
 
 			// ################################ terrain camera###########################################################
+           
+
+
+            // ============================================
+            // ESCAPE - RETURN TO TERRAIN SCULPTING
+            // ============================================
+
+            if (engine.GetTerrainBrushType() ==
+                TerrainBrushType::ScatterSelect &&
+                ImGui::IsKeyPressed(ImGuiKey_Escape) &&
+                !ImGui::GetIO().WantTextInput)
+            {
+                engine.SetTerrainBrushType(
+                    TerrainBrushType::Raise
+                );
+
+                engine.HideTerrainBrush();
+
+                BOX_LOG_INFO(
+                    "Exited Scatter Selection - Sculpting Mode"
+                );
+            }
+
+
+
             // Keep water animation running independently of camera movement
             engine.UpdateWater(ImGui::GetIO().DeltaTime);
 
@@ -1243,6 +1409,8 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                         terrainHit
                     );
 
+
+
                 if (terrainHitFound)
                 {
                     // --------------------------------------
@@ -1262,40 +1430,24 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                     if (engine.GetTerrainBrushType() ==
                         TerrainBrushType::ScatterSelect)
                     {
-                        // Select one cell on a mouse click.
-                        if (ImGui::IsMouseClicked(
-                            ImGuiMouseButton_Left))
+                        if (engine.HasTerrain() &&
+                            ImGui::IsMouseDown(ImGuiMouseButton_Left) &&
+                            !engine.IsPlaying())
                         {
-                            if (engine.HasTerrain())
-                            {
-                                Terrain& terrain = engine.GetTerrain();
+                            Terrain& terrain = engine.GetTerrain();
 
-                                int cellX = -1;
-                                int cellZ = -1;
+                            // Hold Shift to erase selected cells.
+                            const bool eraseSelection = ImGui::GetIO().KeyShift;
 
-                                if (terrain.GetCellAtWorldPosition(
-                                    terrainHit,
-                                    cellX,
-                                    cellZ))
-                                {
-                                    terrain.SelectScatterCell(
-                                        cellX,
-                                        cellZ
-                                    );
+                            terrain.PaintScatterSelection(terrainHit, engine.GetTerrainBrushSize(),
+                                !eraseSelection);
 
-                                    BOX_LOG_INFO(
-                                        "Scatter cell selected: X="
-                                        << cellX
-                                        << " Z=" << cellZ
-                                    );
-                                }
-                            }
+                            /*terrain.PaintScatterSelection(
+                                terrainHit,
+                                engine.GetTerrainBrushSize()
+                            );*/
                         }
                     }
-
-
-
-
 
                     // --------------------------------------
                     // Sculpt terrain

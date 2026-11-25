@@ -558,119 +558,6 @@ EcoSystemAction EcosystemPanel::RocksTab(
     return action;
 }
 
-
-//EcoSystemAction EcosystemPanel::RocksTab(
-//    BoxEngine& engine)
-//{
-//    EcoSystemAction action =
-//        EcoSystemAction::None;
-//
-//    ImGui::Text("Rock Generator");
-//    ImGui::Separator();
-//    ImGui::Spacing();
-//
-//
-//    // =================================================
-//    // ROCK SIZE
-//    // =================================================
-//
-//    ImGui::Text("Rock Size");
-//
-//    ImGui::DragFloat(
-//        "Radius",
-//        &m_rockRadius,
-//        0.05f,
-//        0.1f,
-//        5.0f,
-//        "%.2f",
-//        ImGuiSliderFlags_AlwaysClamp
-//    );
-//
-//
-//    ImGui::Spacing();
-//    ImGui::Separator();
-//    ImGui::Spacing();
-//
-//
-//    // =================================================
-//    // ROCK SHAPE
-//    // =================================================
-//
-//    
-//
-//    ImGui::DragInt(
-//        "Subdivisions",
-//        &m_rockSubdivisions,
-//        1.0f,
-//        0,
-//        6
-//    );
-//
-//	
-//    ImGui::DragFloat(
-//        "Roughness",
-//        &m_rockRoughness,
-//        0.01f,
-//        0.0f,
-//        1.0f,
-//        "%.2f"
-//    );
-//
-//
-//    ImGui::Spacing();
-//    ImGui::Separator();
-//    ImGui::Spacing();
-//
-//
-//    // =================================================
-//    // RANDOM SEED
-//    // =================================================
-//
-//    ImGui::Text("Variation");
-//
-//    ImGui::InputInt(
-//        "Seed",
-//        &m_rockSeed
-//    );
-//
-//
-//    ImGui::Spacing();
-//    ImGui::Separator();
-//    ImGui::Spacing();
-//
-//	// ------------------------------------------------
-//	// ROCK FLATTENING
-//	// ------------------------------------------------
-//
-//    ImGui::DragFloat(
-//        "Flattening",
-//        &m_rockFlattening,
-//        0.01f,
-//        0.0f,
-//        0.75f,
-//        "%.2f",
-//        ImGuiSliderFlags_AlwaysClamp
-//    );
-//
-//    ImGui::Spacing();
-//    ImGui::Separator();
-//    ImGui::Spacing();
-//
-//    // =================================================
-//    // GENERATE
-//    // =================================================
-//
-//    if (ImGui::Button(
-//        "Generate Rock",
-//        ImVec2(140.0f, 32.0f)))
-//    {
-//        action =
-//            EcoSystemAction::AddRocks;
-//    }
-//
-//    return action;
-//}
-
 // ---------------------------------------------------------------------------------------------------------------
 // Terrain Generator
 // ---------------------------------------------------------------------------------------------------------------
@@ -769,23 +656,35 @@ EcoSystemAction EcosystemPanel::TerrainTab(BoxEngine& engine)
 	// TERRAIN SCATTER SELECTION
 	// =================================================
 
-    ImGui::SeparatorText("Scatter Selection");
+
+    // ============================================
+    // TERRAIN EDITING MODES
+    // ============================================
+
+    ImGui::SeparatorText("Terrain Editing Mode");
 
     const bool scatterMode =
         engine.GetTerrainBrushType() ==
         TerrainBrushType::ScatterSelect;
 
-    if (scatterMode)
+    // SCULPTING MODE
+    if (ImGui::Button(
+        "Sculpting Mode",
+        ImVec2(150.0f, 32.0f)))
     {
-        ImGui::TextColored(
-            ImVec4(0.3f, 0.9f, 0.4f, 1.0f),
-            "Scatter Select Active"
+        engine.SetTerrainBrushType(
+            TerrainBrushType::Raise
         );
     }
 
+    ImGui::SameLine();
+
+    // SCATTER SELECTION MODE
     ImGui::BeginDisabled(!engine.HasTerrain());
 
-    if (ImGui::Button("Select Scatter Area"))
+    if (ImGui::Button(
+        "Scatter Select",
+        ImVec2(150.0f, 32.0f)))
     {
         engine.SetTerrainBrushType(
             TerrainBrushType::ScatterSelect
@@ -794,6 +693,27 @@ EcoSystemAction EcosystemPanel::TerrainTab(BoxEngine& engine)
 
     ImGui::EndDisabled();
 
+    // Show which mode is active.
+    if (engine.GetTerrainBrushType() ==
+        TerrainBrushType::ScatterSelect)
+    {
+        ImGui::TextColored(
+            ImVec4(0.3f, 0.9f, 0.4f, 1.0f),
+            "Mode: Scatter Selection"
+        );
+    }
+    else
+    {
+        ImGui::TextDisabled(
+            "Mode: Terrain Sculpting"
+        );
+    }
+
+    ImGui::TextDisabled(
+        "ESC: Return to Sculpting Mode"
+    );
+
+    ImGui::TextDisabled("Left Drag: Select | Shift + Left Drag: Erase");
 
 
 
@@ -1357,110 +1277,6 @@ EcoSystemAction EcosystemPanel::TerrainTab(BoxEngine& engine)
         }
     }
 
-
- //   ImGui::Spacing();
-
- //   ImGui::SeparatorText("Terrain File");
-
- //   const bool terrainAvailable =
- //       engine.HasTerrain();
-
-	//// Save terrain button
- //   if (ImGui::Button(
- //       "Save Terrain",
- //       ImVec2(160.0f, 32.0f)))
- //   {
- //       Terrain& terrain = engine.GetTerrain();
-
- //       const std::string path =
- //           "assets/terrain/test_terrain.bterrain";
-
- //       if (terrain.SaveHeightMap(path))
- //       {
- //           BOX_LOG_INFO(
- //               "Terrain successfully saved to " << path
- //           );
- //       }
- //       else
- //       {
- //           BOX_LOG_ERROR(
- //               "Failed to save terrain"
- //           );
- //       }
-
- //       
- //   }
-
- //   
-
- //   ImGui::SameLine();
-	//// Load terrain button
- //   if (ImGui::Button(
- //       "Load Terrain",
- //       ImVec2(160.0f, 32.0f)))
- //   {
- //       const std::string path =
- //           "assets/terrain/test_terrain.bterrain";
-
- //       // Make sure a terrain exists before loading.
- //       if (!engine.HasTerrain())
- //       {
- //           BOX_LOG_WARNING(
- //               "Load Terrain: no terrain exists. "
- //               "Creating a new terrain first."
- //           );
-
- //           if (!engine.CreateTerrain())
- //           {
- //               BOX_LOG_ERROR(
- //                   "Load Terrain: failed to create terrain"
- //               );
- //           }
- //       }
-
- //       // Only load if we have a valid terrain.
- //       if (engine.HasTerrain())
- //       {
- //           Terrain& terrain = engine.GetTerrain();
-
- //           if (terrain.LoadHeightMap(path))
- //           {
- //               BOX_LOG_INFO(
- //                   "Terrain successfully loaded"
- //               );
- //           }
- //           else
- //           {
- //               BOX_LOG_ERROR(
- //                   "Failed to load terrain"
- //               );
- //           }
- //       }
- //   }
-
-
-
-
-    /*if (ImGui::Button(
-        "Load Terrain",
-        ImVec2(160.0f, 32.0f)))
-    {
-        Terrain& terrain = engine.GetTerrain();
-
-        const std::string path =
-            "assets/terrain/test_terrain.bterrain";
-
-        if (terrain.LoadHeightMap(path))
-        {
-            BOX_LOG_INFO("Terrain successfully loaded");
-        }
-        else
-        {
-            BOX_LOG_ERROR("Failed to load terrain");
-        }
-    }*/
-
-
     return action;
 }
 
@@ -1756,13 +1572,6 @@ EcoSystemAction EcosystemPanel::SkyTab(BoxEngine& engine)
 
     Sky& sky = engine.GetSky();
 
-
-    /*if (sky.IsLoading())
-    {
-        sky.LoadNextSky();
-    }*/
-
-
     // =================================================
     // SKY
     // =================================================
@@ -1820,13 +1629,7 @@ EcoSystemAction EcosystemPanel::SkyTab(BoxEngine& engine)
         ImGui::TextDisabled("Sky library loaded");
     }
 
-    /*if (ImGui::Button(
-        "Load Skies",
-        ImVec2(140.0f, 32.0f)))
-    {
-        action = EcoSystemAction::AddSky;
-    }*/
-
+    
 	// progress bar for loading sky textures
     if (sky.IsLoading())
     {
