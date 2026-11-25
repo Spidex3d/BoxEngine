@@ -1,6 +1,6 @@
 #pragma once
 #include <memory>
-
+#include <string>
 
 class BoxEngine;
 // use this for the button actions in the ecosystem panel, to select which type of ecosystem element to generate
@@ -261,10 +261,18 @@ private:
 
 	// -------------- Rock Generator End --------------
 
+	// ============================================
+	// TERRAIN FILE MANAGEMENT
+	// ============================================
 	// -------------- Terrain generator ----------------
 	int m_terrainBrushType = 0;
 	float m_terrainBrushSize = 5.0f;
 	float m_terrainBrushStrength = 0.05f;
+
+	// Empty until a terrain has been saved or loaded.
+	std::string m_currentTerrainPath;
+	
+
 	// ------------- End Terrain generator ----------------
 
 	// ---------------- Grass Generator ----------------

@@ -412,5 +412,156 @@ std::string FileDialog::SaveOBJ()
     return {};
 }
 
+// =================================================
+// SAVE TERRAIN
+// =================================================
+
+std::string FileDialog::SaveTerrain()
+{
+    OPENFILENAMEW ofn{};
+    std::vector<wchar_t> filename(MAX_PATH, L'\0');
+
+    // Suggested filename
+    const wchar_t* defaultName = L"NewTerrain.bterrain";
+    wcscpy_s(
+        filename.data(),
+        filename.size(),
+        defaultName
+    );
+
+    static const wchar_t filter[] =
+        L"BoxEditor Terrain (*.bterrain)\0"
+        L"*.bterrain\0"
+        L"All Files (*.*)\0"
+        L"*.*\0\0";
+
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = NULL;
+    ofn.lpstrFile = filename.data();
+    ofn.nMaxFile = static_cast<DWORD>(filename.size());
+    ofn.lpstrFilter = filter;
+    ofn.nFilterIndex = 1;
+    ofn.lpstrDefExt = L"bterrain";
+
+    ofn.Flags =
+        OFN_EXPLORER |
+        OFN_PATHMUSTEXIST |
+        OFN_OVERWRITEPROMPT |
+        OFN_NOCHANGEDIR;
+
+    if (!GetSaveFileNameW(&ofn))
+    {
+        return {};
+    }
+
+    // Convert selected Windows path to UTF-8.
+    const int required = WideCharToMultiByte(
+        CP_UTF8,
+        0,
+        filename.data(),
+        -1,
+        nullptr,
+        0,
+        nullptr,
+        nullptr
+    );
+
+    if (required <= 0)
+        return {};
+
+    std::string result(
+        static_cast<std::size_t>(required),
+        '\0'
+    );
+
+    WideCharToMultiByte(
+        CP_UTF8,
+        0,
+        filename.data(),
+        -1,
+        result.data(),
+        required,
+        nullptr,
+        nullptr
+    );
+
+    result.resize(
+        static_cast<std::size_t>(required - 1)
+    );
+
+    return result;
+}
+
+// =================================================
+// OPEN TERRAIN
+// =================================================
+
+std::string FileDialog::OpenTerrain()
+{
+    OPENFILENAMEW ofn{};
+    std::vector<wchar_t> filename(MAX_PATH, L'\0');
+
+    static const wchar_t filter[] =
+        L"BoxEditor Terrain (*.bterrain)\0"
+        L"*.bterrain\0"
+        L"All Files (*.*)\0"
+        L"*.*\0\0";
+
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = NULL;
+    ofn.lpstrFile = filename.data();
+    ofn.nMaxFile = static_cast<DWORD>(filename.size());
+    ofn.lpstrFilter = filter;
+    ofn.nFilterIndex = 1;
+    ofn.lpstrDefExt = L"bterrain";
+
+    ofn.Flags =
+        OFN_EXPLORER |
+        OFN_PATHMUSTEXIST |
+        OFN_FILEMUSTEXIST |
+        OFN_NOCHANGEDIR;
+
+    if (!GetOpenFileNameW(&ofn))
+    {
+        return {};
+    }
+
+    const int required = WideCharToMultiByte(
+        CP_UTF8,
+        0,
+        filename.data(),
+        -1,
+        nullptr,
+        0,
+        nullptr,
+        nullptr
+    );
+
+    if (required <= 0)
+        return {};
+
+    std::string result(
+        static_cast<std::size_t>(required),
+        '\0'
+    );
+
+    WideCharToMultiByte(
+        CP_UTF8,
+        0,
+        filename.data(),
+        -1,
+        result.data(),
+        required,
+        nullptr,
+        nullptr
+    );
+
+    result.resize(
+        static_cast<std::size_t>(required - 1)
+    );
+
+    return result;
+}
+
 
 

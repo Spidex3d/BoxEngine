@@ -15,7 +15,12 @@ public:
     static std::string OpenScene();
     static std::string SaveScene();
 
+	// BoxEditor OBJ files
     static std::string SaveOBJ();
+
+    // BoxEditor Terrain files
+    static std::string SaveTerrain();
+    static std::string OpenTerrain();
 
 
 private:

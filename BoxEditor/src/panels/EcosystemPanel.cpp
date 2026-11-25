@@ -6,6 +6,9 @@
 #include <rendering/Sky.h>
 #include <rendering/Terrain.h>
 #include <algorithm>
+#include <FileDialog.h>
+#include <filesystem>
+
 
 
 EcosystemPanel::~EcosystemPanel() = default;
@@ -762,6 +765,37 @@ EcoSystemAction EcosystemPanel::TerrainTab(BoxEngine& engine)
         );
     }
 
+	// =================================================
+	// TERRAIN SCATTER SELECTION
+	// =================================================
+
+    ImGui::SeparatorText("Scatter Selection");
+
+    const bool scatterMode =
+        engine.GetTerrainBrushType() ==
+        TerrainBrushType::ScatterSelect;
+
+    if (scatterMode)
+    {
+        ImGui::TextColored(
+            ImVec4(0.3f, 0.9f, 0.4f, 1.0f),
+            "Scatter Select Active"
+        );
+    }
+
+    ImGui::BeginDisabled(!engine.HasTerrain());
+
+    if (ImGui::Button("Select Scatter Area"))
+    {
+        engine.SetTerrainBrushType(
+            TerrainBrushType::ScatterSelect
+        );
+    }
+
+    ImGui::EndDisabled();
+
+
+
 
     // =================================================
     // GRID
@@ -839,29 +873,6 @@ EcoSystemAction EcosystemPanel::TerrainTab(BoxEngine& engine)
                 rockSlopeEnd
             );
         }
-
-
-        //// -------------------------------------------------
-        //// Rock normal strength
-        //// -------------------------------------------------
-
-        //float rockNormalStrength =
-        //    terrain.GetRockNormalStrength();
-
-
-        //if (ImGui::DragFloat(
-        //    "Rock Normal Strength",
-        //    &rockNormalStrength,
-        //    0.01f,
-        //    0.0f,
-        //    1.0f,
-        //    "%.2f",
-        //    ImGuiSliderFlags_AlwaysClamp))
-        //{
-        //    terrain.SetRockNormalStrength(
-        //        rockNormalStrength
-        //    );
-        //}
 
 
         // -------------------------------------------------
@@ -1130,281 +1141,329 @@ EcoSystemAction EcosystemPanel::TerrainTab(BoxEngine& engine)
         action = EcoSystemAction::Addterrain;
     }
 
+    // =====================================================
+    // TERRAIN FILE MANAGEMENT
+    // =====================================================
+
+    ImGui::Spacing();
+    ImGui::SeparatorText("Terrain File");
+
+
+    // ============================================
+    // COLLECT CURRENT WATER SETTINGS
+    // ============================================
+
+    auto GetCurrentWaterSettings = [&engine]()
+    {
+        TerrainWaterSettings water;
+
+        water.enabled =
+            engine.IsWaterEnabled();
+
+        water.height =
+            engine.GetWaterHeight();
+
+        water.waveSpeed =
+            engine.GetWaveSpeed();
+
+        water.waveStrength =
+            engine.GetWaveStrength();
+
+        water.specularPower =
+            engine.GetWaterSpecularPower();
+
+        return water;
+    };
+
+    // ============================================
+    // RESTORE LOADED WATER SETTINGS
+    // ============================================
+
+    auto ApplyWaterSettings = [&engine](
+        const TerrainWaterSettings& water)
+    {
+        // Old V1 terrain files have no water data.
+        if (!water.hasWaterSettings)
+            return;
+
+        engine.SetWaterHeight(water.height);
+        engine.SetWaveSpeed(water.waveSpeed);
+        engine.SetWaveStrength(water.waveStrength);
+
+        engine.SetWaterSpecularPower(
+            water.specularPower
+        );
+
+        engine.SetWaterEnabled(water.enabled);
+    };
+
+
+    // #######################################################
+
+    const bool terrainAvailable = engine.HasTerrain();
+
+    // -----------------------------------------------------
+    // SAVE TERRAIN
+    // -----------------------------------------------------
+
+    ImGui::BeginDisabled(!terrainAvailable);
+
+    if (ImGui::Button("Save Terrain",
+        ImVec2(130.0f, 32.0f)))
+    {
+        // No existing filename? Open Save As.
+        std::string path = m_currentTerrainPath;
+
+        if (path.empty())
+        {
+            path = FileDialog::SaveTerrain();
+        }
+
+        if (!path.empty())
+        {
+            if (engine.GetTerrain().SaveHeightMap(path, GetCurrentWaterSettings()))
+            {
+                m_currentTerrainPath = path;
+
+                BOX_LOG_INFO(
+                    "Terrain saved: " << path
+                );
+            }
+            else
+            {
+                BOX_LOG_ERROR(
+                    "Failed to save terrain: " << path
+                );
+            }
+        }
+    }
+
+    // -----------------------------------------------------
+    // SAVE AS
+    // -----------------------------------------------------
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("Save As",
+        ImVec2(110.0f, 32.0f)))
+    {
+        const std::string path =
+            FileDialog::SaveTerrain();
+
+        if (!path.empty())
+        {
+            if (engine.GetTerrain().SaveHeightMap(path, GetCurrentWaterSettings()))
+            {
+                m_currentTerrainPath = path;
+
+                BOX_LOG_INFO(
+                    "Terrain saved as: " << path
+                );
+            }
+            else
+            {
+                BOX_LOG_ERROR(
+                    "Failed to save terrain: " << path
+                );
+            }
+        }
+    }
+
+    ImGui::EndDisabled();
+
+    // -----------------------------------------------------
+    // LOAD TERRAIN
+    // -----------------------------------------------------
+
+    ImGui::SameLine();
+
+    if (ImGui::Button("Load Terrain",
+        ImVec2(130.0f, 32.0f)))
+    {
+        const std::string path =
+            FileDialog::OpenTerrain();
+
+        if (!path.empty())
+        {
+            // Create terrain if it doesn't exist.
+            if (!engine.HasTerrain())
+            {
+                if (!engine.CreateTerrain())
+                {
+                    BOX_LOG_ERROR(
+                        "Failed to create terrain for loading"
+                    );
+                }
+            }
+
+            // Only load if terrain is valid.   
+            if (engine.HasTerrain())
+            {
+                TerrainWaterSettings water;
+                if (engine.GetTerrain().LoadHeightMap(path, water))
+                {
+                    m_currentTerrainPath = path;
+
+                    ApplyWaterSettings(water);
+
+                    BOX_LOG_INFO(
+                        "Terrain loaded: " << path
+                    );
+                }
+                else
+                {
+                    BOX_LOG_ERROR(
+                        "Failed to load terrain: " << path
+                    );
+                }
+            }
+        }
+    }
+
+    // -----------------------------------------------------
+    // DISPLAY CURRENT FILE
+    // -----------------------------------------------------
+
+    ImGui::Spacing();
+
+    if (m_currentTerrainPath.empty())
+    {
+        ImGui::TextDisabled(
+            "Terrain: Unsaved"
+        );
+    }
+    else
+    {
+        std::string fileName = m_currentTerrainPath;
+
+        const size_t lastSlash = fileName.find_last_of("/\\");
+
+        if (lastSlash != std::string::npos)
+        {
+            fileName = fileName.substr(lastSlash + 1);
+        }
+
+
+        
+
+        ImGui::Text("Current File: %s", fileName.c_str());
+
+        if (ImGui::IsItemHovered())
+        {
+            ImGui::SetTooltip(
+                "%s",
+                m_currentTerrainPath.c_str()
+            );
+        }
+    }
+
+
+ //   ImGui::Spacing();
+
+ //   ImGui::SeparatorText("Terrain File");
+
+ //   const bool terrainAvailable =
+ //       engine.HasTerrain();
+
+	//// Save terrain button
+ //   if (ImGui::Button(
+ //       "Save Terrain",
+ //       ImVec2(160.0f, 32.0f)))
+ //   {
+ //       Terrain& terrain = engine.GetTerrain();
+
+ //       const std::string path =
+ //           "assets/terrain/test_terrain.bterrain";
+
+ //       if (terrain.SaveHeightMap(path))
+ //       {
+ //           BOX_LOG_INFO(
+ //               "Terrain successfully saved to " << path
+ //           );
+ //       }
+ //       else
+ //       {
+ //           BOX_LOG_ERROR(
+ //               "Failed to save terrain"
+ //           );
+ //       }
+
+ //       
+ //   }
+
+ //   
+
+ //   ImGui::SameLine();
+	//// Load terrain button
+ //   if (ImGui::Button(
+ //       "Load Terrain",
+ //       ImVec2(160.0f, 32.0f)))
+ //   {
+ //       const std::string path =
+ //           "assets/terrain/test_terrain.bterrain";
+
+ //       // Make sure a terrain exists before loading.
+ //       if (!engine.HasTerrain())
+ //       {
+ //           BOX_LOG_WARNING(
+ //               "Load Terrain: no terrain exists. "
+ //               "Creating a new terrain first."
+ //           );
+
+ //           if (!engine.CreateTerrain())
+ //           {
+ //               BOX_LOG_ERROR(
+ //                   "Load Terrain: failed to create terrain"
+ //               );
+ //           }
+ //       }
+
+ //       // Only load if we have a valid terrain.
+ //       if (engine.HasTerrain())
+ //       {
+ //           Terrain& terrain = engine.GetTerrain();
+
+ //           if (terrain.LoadHeightMap(path))
+ //           {
+ //               BOX_LOG_INFO(
+ //                   "Terrain successfully loaded"
+ //               );
+ //           }
+ //           else
+ //           {
+ //               BOX_LOG_ERROR(
+ //                   "Failed to load terrain"
+ //               );
+ //           }
+ //       }
+ //   }
+
+
+
+
+    /*if (ImGui::Button(
+        "Load Terrain",
+        ImVec2(160.0f, 32.0f)))
+    {
+        Terrain& terrain = engine.GetTerrain();
+
+        const std::string path =
+            "assets/terrain/test_terrain.bterrain";
+
+        if (terrain.LoadHeightMap(path))
+        {
+            BOX_LOG_INFO("Terrain successfully loaded");
+        }
+        else
+        {
+            BOX_LOG_ERROR("Failed to load terrain");
+        }
+    }*/
+
 
     return action;
 }
 
-//EcoSystemAction EcosystemPanel::TerrainTab(BoxEngine& engine)
-//{
-//    EcoSystemAction action = EcoSystemAction::None;
-//    // TODO: Implement terrain generation logic here
-//    ImGui::Text("Terrain Generator");
-//
-//    const char* terrainBrushItems[] =
-//    {
-//        "Raise",
-//        "Lower",
-//        "Smooth",
-//        "Flatten",
-//        "Noise",
-//        "TexturePaint"
-//    };
-//
-//    
-//	ImGui::SeparatorText("Brush Type");
-//	ImGui::SeparatorText("Texture Blending");
-//	
-//    if (ImGui::Combo(
-//        "Brush",
-//        &m_terrainBrushType,
-//        terrainBrushItems,
-//        IM_ARRAYSIZE(terrainBrushItems)))
-//    {
-//        if (m_terrainBrushType == 0)
-//        {
-//            engine.SetTerrainBrushType(
-//                TerrainBrushType::Raise
-//            );
-//        }
-//        else if (m_terrainBrushType == 1)
-//        {
-//            engine.SetTerrainBrushType(
-//                TerrainBrushType::Lower
-//            );
-//        }
-//
-//		else if (m_terrainBrushType == 2)
-//		{
-//			engine.SetTerrainBrushType(
-//				TerrainBrushType::Smooth
-//			);
-//		}
-//		else if (m_terrainBrushType == 3)
-//		{
-//			engine.SetTerrainBrushType(
-//				TerrainBrushType::Flatten
-//			);
-//		}
-//		else if (m_terrainBrushType == 4)
-//		{
-//			engine.SetTerrainBrushType(
-//				TerrainBrushType::Noise
-//			);
-//		}
-//		else if (m_terrainBrushType == 5)
-//		{
-//			engine.SetTerrainBrushType(
-//				TerrainBrushType::TexturePaint
-//			);
-//		}
-//    }
-//
-//    if (ImGui::InputFloat("Brush Size", &m_terrainBrushSize, 0.10f, 50.1f, "%.2f"))
-//    {
-//        if (m_terrainBrushSize < 1.0f)
-//        {
-//            m_terrainBrushSize = 1.0f;
-//        }
-//
-//        if (m_terrainBrushSize > 50.0f)
-//        {
-//            m_terrainBrushSize = 50.0f;
-//        }
-//        engine.SetTerrainBrushSize(
-//            m_terrainBrushSize
-//        );
-//    }
-//
-//    Terrain& terrain = engine.GetTerrain();
-//
-//    static float rockSlopeStart = 0.30f;
-//    static float rockSlopeEnd = 0.65f;
-//
-//    static float dirtHeightStart = 0.0f;
-//    static float dirtHeightEnd = 8.0f;
-//
-//    static float dirtAmount = 0.8f;
-//
-//    static float textureTiling = 32.0f;
-//
-//    ImGui::SeparatorText("Grid Enabled");
-//
-//	bool gridEnabled = engine.IsGridVisible();
-//    if (ImGui::Checkbox(
-//        "Enable Grid",
-//        &gridEnabled))
-//    {
-//        engine.SetGridVisible(
-//            gridEnabled
-//        );
-//    }
-//  
-//
-//    ImGui::SeparatorText("Texture Blending");
-//
-//    const bool hasTerrain = engine.HasTerrain();
-//
-//    ImGui::BeginDisabled(!hasTerrain);
-//
-//    if (ImGui::DragFloat(
-//        "Rock Slope Start",
-//        &rockSlopeStart,
-//        0.01f,
-//        0.0f,
-//        1.0f))
-//    {
-//        terrain.SetRockSlopeStart(
-//            rockSlopeStart
-//        );
-//    }
-//
-//    if (ImGui::DragFloat(
-//        "Rock Slope End",
-//        &rockSlopeEnd,
-//        0.01f,
-//        0.0f,
-//        1.0f))
-//    {
-//        terrain.SetRockSlopeEnd(
-//            rockSlopeEnd
-//        );
-//    }
-//
-//    if (ImGui::DragFloat(
-//        "Dirt Height Start",
-//        &dirtHeightStart,
-//        0.1f,
-//        -50.0f,
-//        100.0f))
-//    {
-//        terrain.SetDirtHeightStart(
-//            dirtHeightStart
-//        );
-//    }
-//
-//    if (ImGui::DragFloat(
-//        "Dirt Height End",
-//        &dirtHeightEnd,
-//        0.1f,
-//        -50.0f,
-//        100.0f))
-//    {
-//        terrain.SetDirtHeightEnd(
-//            dirtHeightEnd
-//        );
-//    }
-//
-//    if (ImGui::DragFloat(
-//        "Dirt Amount",
-//        &dirtAmount,
-//        0.01f,
-//        0.0f,
-//        1.0f))
-//    {
-//        terrain.SetDirtAmount(
-//            dirtAmount
-//        );
-//    }
-//
-//    ImGui::SeparatorText("Texture Tiling");
-//
-//    if (ImGui::InputFloat("Texture Tiling", &textureTiling, 0.10f, 128.1f, "%.2f"))
-//    {
-//        if (textureTiling < 32.0f)
-//        {
-//            textureTiling = 32.0f;
-//        }
-//
-//        if (textureTiling > 128.0f)
-//        {
-//            textureTiling = 128.0f;
-//        }
-//        terrain.SetTextureTiling(textureTiling);
-//    }
-//
-//    ImGui::EndDisabled();
-//
-//    ImGui::SeparatorText("Water");
-//
-//    bool waterEnabled = engine.IsWaterEnabled();
-//
-//    if (ImGui::Checkbox("Enable Water", &waterEnabled))
-//    {
-//        engine.SetWaterEnabled(waterEnabled);
-//    }
-//
-//    ImGui::BeginDisabled(!engine.IsWaterEnabled());
-//
-//    float waterHeight = engine.GetWaterHeight();
-//
-//    if (ImGui::InputFloat("Water Height", &waterHeight, 0.10f, 128.1f, "%.2f"))
-//    {
-//       if (waterHeight < -20.0f) { waterHeight = -20.0f; }
-//        if (waterHeight > 50.0f) { waterHeight = 50.0f; }
-//        engine.SetWaterHeight(waterHeight);
-//    }
-//
-//    float waveSpeed = engine.GetWaveSpeed();
-//
-//    if (ImGui::InputFloat("Wave Speed", &waveSpeed, 0.10f, 128.1f, "%.2f"))
-//    {
-//        if (waveSpeed < 0.1f) { waveSpeed = 0.1f; }
-//        if (waveSpeed > 2.0f) { waveSpeed = 2.0f; }
-//        engine.SetWaveSpeed(waveSpeed);
-//    }
-//
-//    float waveStrength = engine.GetWaveStrength();
-//
-//    if (ImGui::InputFloat("Wave Strength", &waveStrength, 0.10f, 128.1f, "%.2f"))
-//    {
-//        if (waveStrength < 0.1f) { waveStrength = 0.1f; }
-//        if (waveStrength > 1.0f) { waveStrength = 1.0f; }
-//        engine.SetWaveStrength(waveStrength );
-//    }
-//
-//    float specularPower = engine.GetWaterSpecularPower();
-//
-//    if (ImGui::InputFloat("Specular Power", &specularPower, 1.0f, 10.0f, "%.1f"))
-//    {
-//        if (specularPower < 1.0f) { specularPower = 1.0f; }
-//
-//        if (specularPower > 20.0f) { specularPower = 20.0f; }
-//
-//        engine.SetWaterSpecularPower(specularPower);
-//    }
-//
-//    float rockNormalStrength =  terrain.GetRockNormalStrength();
-//
-//    if (ImGui::DragFloat(
-//        "Rock Normal Strength",
-//        &rockNormalStrength,
-//        0.01f,
-//        0.0f,
-//        1.0f,
-//        "%.2f",
-//        ImGuiSliderFlags_AlwaysClamp))
-//    {
-//        terrain.SetRockNormalStrength(rockNormalStrength);
-//    }
-//
-//
-//    ImGui::EndDisabled();
-//
-//
-//    ImGui::Separator();
-//
-//    ImGui::SeparatorText("Terrain Generation");
-//
-//    ImGui::TextDisabled("Procedural terrain generation coming soon...");
-//    if (ImGui::Button(
-//        "Generate Terrain",
-//        ImVec2(140.0f, 32.0f)))
-//    {
-//        action = EcoSystemAction::Addterrain;
-//    }
-//
-//    return action;
-//}
 
 // -----------------------------------------------------------------------------------------------------------------
 // Water plane Generator

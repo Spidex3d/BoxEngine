@@ -12,6 +12,23 @@ struct TerrainImage
 	std::string path;
 };
 
+// ============================================
+// SAVED TERRAIN WATER SETTINGS
+// ============================================
+
+struct TerrainWaterSettings
+{
+	bool enabled = false;
+
+	float height = 0.0f;
+	float waveSpeed = 0.30f;
+	float waveStrength = 0.15f;
+	float specularPower = 8.0f;
+
+	// True when settings were read from a V2 file.
+	bool hasWaterSettings = false;
+};
+
 
 class Terrain
 {
@@ -36,6 +53,21 @@ public:
 	// update the terrain mesh with new width, depth, and scale values
 	void ReloadTerrainMeshFromFile(const std::string& heightmapPath);
 
+
+	// ============================================
+    // TERRAIN SAVE / LOAD
+    // ============================================
+
+	bool SaveHeightMap(const std::string& filePath, const TerrainWaterSettings& water) const;
+
+	bool LoadHeightMap(const std::string& filePath, TerrainWaterSettings& water);
+
+
+	//bool SaveHeightMap(const std::string& filePath) const;
+	//bool LoadHeightMap(const std::string& filePath);
+
+
+	// Set the position of the terrain in world space
 	void SetPosition(
 		const glm::vec3& position)
 	{
@@ -72,9 +104,34 @@ public:
 
 	void NoiseTerrain(const glm::vec3& worldPosition, float radius, float strength);
 
+	// ============================================
+	// TERRAIN SCATTER SELECTION
+	// ============================================
+
+	void SelectScatterCell(int x, int z)
+	{
+		m_selectedScatterCellX = x;
+		m_selectedScatterCellZ = z;
+	}
+
+	int GetSelectedScatterCellX() const
+	{
+		return m_selectedScatterCellX;
+	}
+
+	int GetSelectedScatterCellZ() const
+	{
+		return m_selectedScatterCellZ;
+	}
+
+
 
 	void UpdateMeshFromHeightMap();
 
+
+	// Find the terrain cell at a world position.
+// Returns false when the position is outside the terrain.
+	bool GetCellAtWorldPosition(const glm::vec3& worldPosition, int& outCellX, int& outCellZ) const;
 
 	void SetRockSlopeStart(float value)
 	{
@@ -175,6 +232,9 @@ private:
 	unsigned int m_dirtNormalTexture = 0;
 	unsigned int m_grassNormalTexture = 0;
 
+	// Selected scatter cell for terrain surface scattering
+	int m_selectedScatterCellX = -1;
+	int m_selectedScatterCellZ = -1;
 
 	int rez = 1;
 	int numStrips = 0;

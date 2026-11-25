@@ -10,6 +10,13 @@
 #include <cstdlib>
 #include <miniBoxLog.h>
 
+#include <cstring>
+#include <cmath>
+#include <utility>
+#include <fstream>
+#include <cstdint>
+#include <limits>
+#include <system_error>
 #include <filesystem>
 namespace fs = std::filesystem;
 
@@ -86,9 +93,7 @@ bool Terrain::Initialize()
             return false;
         }
 		
-    
-    
-    return GenerateTerrainMesh();
+    return true;
 
 
 
@@ -96,6 +101,11 @@ bool Terrain::Initialize()
 // Generate a terrain mesh with the given width, depth, and scale taken from the height map
 bool Terrain::GenerateTerrainMesh()
 {
+
+    // Clear previous terrain mesh data.
+    m_vertices.clear();
+    m_indices.clear();
+    m_heightMap.clear();
 
     unsigned char* t_data = stbi_load("assets/textures/terrain/Data/test_all_black_T.png",
         &heightmapWidth, &heightmapHeight, &heightmapChannels, 0); // test_all_black_T
@@ -106,9 +116,7 @@ bool Terrain::GenerateTerrainMesh()
     }
     std::cout << "Loading the Heightmap of size " << heightmapHeight << " X " << heightmapWidth << std::endl;
 
-    //std::vector<float> heightMap(heightmapWidth * heightmapHeight);
-    m_heightMap.clear();
-
+   
     m_heightMap.resize(heightmapWidth * heightmapHeight);
 
     float y_Scale = 64.0f / 256.0f;
@@ -1567,3 +1575,467 @@ void Terrain::Destroy()
     }
 
 }
+
+// =========================================================
+// Save the terrain heightmap to a binary file
+// =========================================================
+
+bool Terrain::SaveHeightMap(const std::string& filePath, const TerrainWaterSettings& water) const
+{
+    // ============================================
+    // VALIDATE TERRAIN
+    // ============================================
+
+    if (heightmapWidth <= 0 ||
+        heightmapHeight <= 0)
+    {
+        BOX_LOG_ERROR("Terrain Save: invalid dimensions");
+        return false;
+    }
+
+    const std::size_t expectedCount =
+        static_cast<std::size_t>(heightmapWidth) *
+        static_cast<std::size_t>(heightmapHeight);
+
+    if (m_heightMap.size() != expectedCount)
+    {
+        BOX_LOG_ERROR("Terrain Save: invalid heightmap size");
+        return false;
+    }
+
+    // ============================================
+    // CREATE DESTINATION FOLDER
+    // ============================================
+
+    const fs::path path(filePath);
+
+    if (path.has_parent_path())
+    {
+        std::error_code error;
+
+        fs::create_directories(
+            path.parent_path(),
+            error
+        );
+
+        if (error)
+        {
+            BOX_LOG_ERROR(
+                "Terrain Save: cannot create folder "
+                << error.message()
+            );
+
+            return false;
+        }
+    }
+
+    // ============================================
+    // OPEN BINARY FILE
+    // ============================================
+
+    
+
+    std::ofstream file(std::filesystem::path(filePath), std::ios::binary | std::ios::trunc);
+
+    /*std::ofstream file(
+        filePath,
+        std::ios::binary | std::ios::trunc);*/
+
+    if (!file.is_open())
+    {
+        BOX_LOG_ERROR(
+            "Terrain Save: cannot open " << filePath
+        );
+        return false;
+    }
+
+    // ============================================
+    // WRITE FILE HEADER
+    // ============================================
+
+    // 8-byte identifier
+    const char magic[8] =
+    {
+        'B', 'T', 'E', 'R',
+        'R', 'A', 'I', 'N'
+    };
+
+    const std::uint32_t version = 2;
+
+    const std::uint32_t width =
+        static_cast<std::uint32_t>(heightmapWidth);
+
+    const std::uint32_t height =
+        static_cast<std::uint32_t>(heightmapHeight);
+
+    file.write(magic, sizeof(magic));
+
+    file.write(
+        reinterpret_cast<const char*>(&version),
+        sizeof(version)
+    );
+
+    file.write(
+        reinterpret_cast<const char*>(&width),
+        sizeof(width)
+    );
+
+    file.write(
+        reinterpret_cast<const char*>(&height),
+        sizeof(height)
+    );
+
+    // ============================================
+    // WRITE TERRAIN HEIGHT VALUES
+    // ============================================
+
+    static_assert(
+        sizeof(float) == 4,
+        "Terrain format requires 32-bit floats"
+        );
+
+    file.write(
+        reinterpret_cast<const char*>(m_heightMap.data()),
+        static_cast<std::streamsize>(
+            m_heightMap.size() * sizeof(float)));
+
+
+    // ============================================
+    // VERSION 2 - SAVE WATER SETTINGS
+    // ============================================
+
+    // Store bool as a fixed-size integer.
+    const std::uint32_t waterEnabled =
+        water.enabled ? 1u : 0u;
+
+    file.write(
+        reinterpret_cast<const char*>(&waterEnabled),
+        sizeof(waterEnabled)
+    );
+
+    file.write(
+        reinterpret_cast<const char*>(&water.height),
+        sizeof(float)
+    );
+
+    file.write(
+        reinterpret_cast<const char*>(&water.waveSpeed),
+        sizeof(float)
+    );
+
+    file.write(
+        reinterpret_cast<const char*>(&water.waveStrength),
+        sizeof(float)
+    );
+
+    file.write(
+        reinterpret_cast<const char*>(&water.specularPower),
+        sizeof(float));
+
+	// end water settings
+
+
+
+
+
+    file.flush();
+
+    if (!file)
+    {
+        BOX_LOG_ERROR(
+            "Terrain Save: failed to write " << filePath
+        );
+
+        return false;
+    }
+
+    BOX_LOG_INFO(
+        "Terrain saved: " << filePath
+        << " Width=" << width
+        << " Height=" << height
+        << " Samples=" << m_heightMap.size()
+    );
+
+    return true;
+}
+
+
+bool Terrain::LoadHeightMap(const std::string& filePath, TerrainWaterSettings& water)
+{
+    water = TerrainWaterSettings{};
+
+    std::ifstream file(std::filesystem::path(filePath), std::ios::binary | std::ios::ate);
+
+    if (!file.is_open())
+    {
+        BOX_LOG_ERROR(
+            "Terrain Load: cannot open " << filePath
+        );
+        return false;
+    }
+
+    const std::streamoff fileSize = file.tellg();
+
+    file.seekg(0, std::ios::beg);
+
+    // ============================================
+    // READ AND VALIDATE HEADER
+    // ============================================
+
+    char magic[8]{};
+
+    
+    std::uint32_t version = 0;
+    std::uint32_t width = 0;
+    std::uint32_t height = 0;
+
+    file.read(magic, 8);
+
+    file.read(
+        reinterpret_cast<char*>(&version),
+        sizeof(version));
+
+    std::cout << "Terrain file version: " << version << std::endl;
+
+    file.read(
+        reinterpret_cast<char*>(&width),
+        sizeof(width));
+
+    file.read(
+        reinterpret_cast<char*>(&height),
+        sizeof(height));
+
+    const char expectedMagic[8] =
+    {
+        'B', 'T', 'E', 'R',
+        'R', 'A', 'I', 'N'
+    };
+
+    if (!file ||
+        std::memcmp(magic, expectedMagic, 8) != 0 ||
+        (version != 1 && version != 2) ||
+        width < 2 ||
+        height < 2 ||
+        width > 8192 ||
+        height > 8192)
+    {
+        BOX_LOG_ERROR(
+            "Terrain Load: invalid file header"
+        );
+        return false;
+    }
+
+    // ============================================
+    // VERIFY FILE SIZE
+    // ============================================
+
+    const std::uint64_t sampleCount =
+        static_cast<std::uint64_t>(width) *
+        static_cast<std::uint64_t>(height);
+
+    const std::uint64_t expectedSize =
+        20ULL +
+        sampleCount * sizeof(float) +
+        (version == 2 ? 20ULL : 0ULL);
+
+    if (fileSize < 0 ||
+        static_cast<std::uint64_t>(fileSize) != expectedSize)
+    {
+        BOX_LOG_ERROR(
+            "Terrain Load: unexpected file size"
+        );
+        return false;
+    }
+
+    // ============================================
+    // READ INTO TEMPORARY BUFFER
+    // ============================================
+
+    std::vector<float> loadedHeights(
+        static_cast<std::size_t>(sampleCount)
+    );
+
+    file.read(
+        reinterpret_cast<char*>(loadedHeights.data()),
+        static_cast<std::streamsize>(
+            sampleCount * sizeof(float)
+            )
+    );
+
+    if (!file)
+    {
+        BOX_LOG_ERROR(
+            "Terrain Load: failed to read heights"
+        );
+        return false;
+    }
+
+    for (float value : loadedHeights)
+    {
+        if (!std::isfinite(value))
+        {
+            BOX_LOG_ERROR(
+                "Terrain Load: invalid height value"
+            );
+            return false;
+        }
+    }
+
+
+    // ============================================
+    // VERSION 2 - LOAD WATER SETTINGS
+    // ============================================
+
+    TerrainWaterSettings loadedWater;
+
+    if (version == 2)
+    {
+        std::uint32_t waterEnabled = 0;
+
+        file.read(
+            reinterpret_cast<char*>(&waterEnabled),
+            sizeof(waterEnabled)
+        );
+
+        file.read(
+            reinterpret_cast<char*>(&loadedWater.height),
+            sizeof(float)
+        );
+
+        file.read(
+            reinterpret_cast<char*>(&loadedWater.waveSpeed),
+            sizeof(float)
+        );
+
+        file.read(
+            reinterpret_cast<char*>(&loadedWater.waveStrength),
+            sizeof(float)
+        );
+
+        file.read(
+            reinterpret_cast<char*>(&loadedWater.specularPower),
+            sizeof(float)
+        );
+
+        if (!file ||
+            waterEnabled > 1 ||
+            !std::isfinite(loadedWater.height) ||
+            !std::isfinite(loadedWater.waveSpeed) ||
+            !std::isfinite(loadedWater.waveStrength) ||
+            !std::isfinite(loadedWater.specularPower))
+        {
+            BOX_LOG_ERROR(
+                "Terrain Load: invalid water settings"
+            );
+
+            return false;
+        }
+
+        loadedWater.enabled = (waterEnabled == 1);
+        loadedWater.hasWaterSettings = true;
+    }
+
+
+    // ============================================
+    // UPDATE TERRAIN
+    // ============================================
+
+    std::cout << "\n========== TERRAIN LOAD ==========\n";
+
+    std::cout << "Saved file width: "
+        << width << "\n";
+
+    std::cout << "Saved file height: "
+        << height << "\n";
+    // Exception thrown: read access violation. this was nullptr.
+
+    std::cout << "Current terrain width: "
+        << heightmapWidth << "\n";
+
+    std::cout << "Current terrain height: "
+        << heightmapHeight << "\n";
+
+    std::cout << "Heightmap samples: "
+        << m_heightMap.size() << "\n";
+
+    std::cout << "Terrain vertices: "
+        << m_vertices.size() / 8 << "\n";
+
+    std::cout << "==================================\n";
+
+
+
+
+    // The current terrain renderer uses a fixed
+    // grid topology. For our first test, only
+    // load files matching the active grid size.
+    if (static_cast<int>(width) != heightmapWidth ||
+        static_cast<int>(height) != heightmapHeight)
+    {
+        BOX_LOG_ERROR(
+            "Terrain Load: dimensions do not match "
+            "the current terrain"
+        );
+        return false;
+    }
+
+    // All validation has succeeded.
+    m_heightMap = std::move(loadedHeights);
+
+    // Update vertex positions, normals and GPU data.
+    
+    UpdateMeshFromHeightMap();
+
+    // Return the loaded water settings to the caller.
+    water = loadedWater;
+
+    BOX_LOG_INFO(
+        "Terrain loaded: " << filePath
+        << " Width=" << width
+        << " Height=" << height
+    );
+
+    return true;
+}
+
+
+bool Terrain::GetCellAtWorldPosition(
+    const glm::vec3& worldPosition,
+    int& outCellX,
+    int& outCellZ) const
+{
+    if (heightmapWidth < 2 ||
+        heightmapHeight < 2 ||
+        m_heightMap.empty())
+    {
+        return false;
+    }
+
+    // Convert world coordinates into local terrain space.
+    const glm::vec3 localPosition =
+        worldPosition - m_position;
+
+    // Terrain is centred around the origin.
+    const float gridX =
+        localPosition.x +
+        static_cast<float>(heightmapHeight) * 0.5f;
+
+    const float gridZ =
+        localPosition.z +
+        static_cast<float>(heightmapWidth) * 0.5f;
+
+    // Make sure we're inside the terrain.
+    if (gridX < 0.0f ||
+        gridZ < 0.0f ||
+        gridX >= static_cast<float>(heightmapHeight - 1) ||
+        gridZ >= static_cast<float>(heightmapWidth - 1))
+    {
+        return false;
+    }
+
+    outCellX = static_cast<int>(std::floor(gridX));
+    outCellZ = static_cast<int>(std::floor(gridZ));
+
+    return true;
+}
+

@@ -51,7 +51,8 @@ enum class TerrainBrushType
     Smooth,
     Flatten,
     Noise,
-    TexturePaint
+    TexturePaint,
+    ScatterSelect
 };
 
 class BoxEngine
@@ -196,9 +197,6 @@ public:
     }
 
     
-
-
-
     bool HasTerrain() const
     {
         return m_terrain != nullptr;
@@ -411,6 +409,7 @@ private:
     TerrainBrushType m_terrainBrushType = TerrainBrushType::Raise;
     float m_terrainBrushSize = 5.0f;
     float m_terrainBrushStrength = 0.05f;
+	
 
 	// Water
     std::unique_ptr<Water> m_water;

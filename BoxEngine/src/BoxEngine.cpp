@@ -1076,18 +1076,23 @@ const Sky& BoxEngine::GetSky() const
 // ------------------------------------ Terrain ------------------------------------
 bool BoxEngine::CreateTerrain()
 {
-    if (!m_terrain)
+    // Terrain already exists.
+    if (m_terrain)
     {
-        m_terrain = std::make_unique<Terrain>();
-        m_terrain->SetPosition(glm::vec3(0.0f, 15.5f, 0.0f));
+        return true;
     }
+
+    m_terrain = std::make_unique<Terrain>();
+
+    m_terrain->SetPosition(
+        glm::vec3(0.0f, 15.5f, 0.0f)
+    );
 
     if (!m_terrain->Initialize())
     {
-        BOX_LOG_ERROR("Failed to initialize terrain" );
+        BOX_LOG_ERROR("Failed to initialize terrain");
 
         m_terrain.reset();
-
         return false;
     }
 

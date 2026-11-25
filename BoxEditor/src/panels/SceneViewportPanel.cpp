@@ -17,6 +17,8 @@
 #include <mesh/modifiers/ModifierData.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+// terrain
+#include <rendering/Terrain.h>
 // #####
 #include <runtime\Player.h>
 
@@ -1253,6 +1255,48 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
                     );
 
 
+                    // ============================================
+                    // TERRAIN SCATTER CELL SELECTION
+                    // ============================================
+
+                    if (engine.GetTerrainBrushType() ==
+                        TerrainBrushType::ScatterSelect)
+                    {
+                        // Select one cell on a mouse click.
+                        if (ImGui::IsMouseClicked(
+                            ImGuiMouseButton_Left))
+                        {
+                            if (engine.HasTerrain())
+                            {
+                                Terrain& terrain = engine.GetTerrain();
+
+                                int cellX = -1;
+                                int cellZ = -1;
+
+                                if (terrain.GetCellAtWorldPosition(
+                                    terrainHit,
+                                    cellX,
+                                    cellZ))
+                                {
+                                    terrain.SelectScatterCell(
+                                        cellX,
+                                        cellZ
+                                    );
+
+                                    BOX_LOG_INFO(
+                                        "Scatter cell selected: X="
+                                        << cellX
+                                        << " Z=" << cellZ
+                                    );
+                                }
+                            }
+                        }
+                    }
+
+
+
+
+
                     // --------------------------------------
                     // Sculpt terrain
                     // --------------------------------------
@@ -1346,7 +1390,7 @@ ViewportAction SceneViewportPanel::DrawSceneViewport(BoxEngine& engine, const Ed
 
 			// ------------------------------- end of terrain brush hover -----------------------------
 
-            if (viewportClicked)
+            if (viewportClicked && engine.GetTerrainBrushType() != TerrainBrushType::ScatterSelect)
             {
                 const ImVec2 mousePosition =
                     ImGui::GetMousePos();
