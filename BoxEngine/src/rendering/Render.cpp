@@ -941,36 +941,6 @@ void Render::RenderScanline(int y)
         }
 
         // ========================================
-        // TEST AGAINST SCENE TRIANGLES
-        // ========================================
-        if (IntersectAABB(rayOrigin,
-            rayDirection, m_sceneBounds, closestDistance))
-        {
-
-            for (const RenderTriangle& triangle :
-                m_scene.triangles)
-            {
-                float hitDistance = 0.0f;
-
-                if (!IntersectTriangle(
-                    rayOrigin,
-                    rayDirection,
-                    triangle,
-                    hitDistance))
-                {
-                    continue;
-                }
-
-                if (hitDistance >= closestDistance)
-                    continue;
-
-                closestDistance = hitDistance;
-                closestTriangle = &triangle;
-
-            }
-        }
-
-        // ========================================
         // SHADE THE CLOSEST HIT
         // ========================================
 

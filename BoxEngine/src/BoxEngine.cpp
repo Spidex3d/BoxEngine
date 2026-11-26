@@ -3037,58 +3037,7 @@ bool BoxEngine::StartFinalRender()
         const auto& faces =
             mesh.GetFaces();
 
-        // ============================================
-        // DEBUG MATERIAL TEXTURES
-        // ============================================
-
-        //BOX_LOG_INFO(
-        //    "Entity: " << entity->GetName()
-        //    << " Material slots: "
-        //    << entity->GetMaterialSlotCount()
-        //);
-
-        //// Check the entity's primary material.
-        //const Material& mainMaterial = entity->GetMaterial();
-
-        //BOX_LOG_INFO(
-        //    "Primary Material: "
-        //    << mainMaterial.GetName()
-        //    << " Texture ID: "
-        //    << mainMaterial.GetBaseColorTexture()
-        //    << " Uses Texture: "
-        //    << mainMaterial.UsesBaseColorTexture()
-        //);
-
-        //// Check each material slot.
-        //for (std::size_t slot = 0;
-        //    slot < entity->GetMaterialSlotCount();
-        //    ++slot)
-        //{
-        //    const Material& material =
-        //        entity->GetMaterialSlot(slot);
-
-        //    BOX_LOG_INFO(
-        //        "Material Slot " << slot
-        //        << " Name: " << material.GetName()
-        //        << " Texture ID: "
-        //        << material.GetBaseColorTexture()
-        //        << " Uses Texture: "
-        //        << material.UsesBaseColorTexture()
-        //    );
-        //}
-
-        //// Check which slot the first face uses.
-        //if (!faces.empty())
-        //{
-        //    BOX_LOG_INFO(
-        //        "First face material index: "
-        //        << faces[0].materialIndex
-        //        << " UV count: "
-        //        << faces[0].uvs.size()
-        //    );
-        //}
-
-
+        
 
         // ============================================= END TEST =====================================================
 
@@ -3317,6 +3266,111 @@ bool BoxEngine::StartFinalRender()
             }
         }
     }
+
+
+    // =====================================================
+    // BOX RENDERER - TERRAIN GEOMETRY TEST
+    // =====================================================
+
+    if (m_terrain)
+    {
+        const Terrain& terrain = *m_terrain;
+
+        const auto& vertices = terrain.GetVertices();
+
+        const int width = terrain.GetHeightMapWidth();
+        const int height = terrain.GetHeightMapHeight();
+
+        if (width >= 2 && height >= 2 &&
+            vertices.size() >=
+            static_cast<std::size_t>(width) *
+            static_cast<std::size_t>(height) * 8)
+        {
+            const glm::vec3 terrainPosition =
+                terrain.GetPosition();
+
+            // Terrain stores 8 floats per vertex.
+            const auto GetVertex =
+                [&](int x, int z) -> glm::vec3
+            {
+                const std::size_t index =
+                    (static_cast<std::size_t>(x) * width + z) * 8;
+
+                return glm::vec3(
+                    vertices[index],
+                    vertices[index + 1],
+                    vertices[index + 2]
+                ) + terrainPosition;
+            };
+
+            // Lower resolution for this first test.
+            constexpr int step = 4;
+             // constexpr int step = 16;
+
+            std::size_t terrainTriangleCount = 0;
+
+            for (int x = 0; x < height - 1; x += step)
+            {
+                for (int z = 0; z < width - 1; z += step)
+                {
+                    const int nextX =
+                        std::min(x + step, height - 1);
+
+                    const int nextZ =
+                        std::min(z + step, width - 1);
+
+                    const glm::vec3 p00 =
+                        GetVertex(x, z);
+
+                    const glm::vec3 p10 =
+                        GetVertex(nextX, z);
+
+                    const glm::vec3 p01 =
+                        GetVertex(x, nextZ);
+
+                    const glm::vec3 p11 =
+                        GetVertex(nextX, nextZ);
+
+                    // First triangle.
+                    RenderTriangle triangleA;
+
+                    triangleA.a = p00;
+                    triangleA.b = p11;
+                    triangleA.c = p10;
+
+                    triangleA.color =
+                        glm::vec3(0.25f, 0.55f, 0.20f);
+
+                    renderScene.triangles.push_back(triangleA);
+
+                    // Second triangle.
+                    RenderTriangle triangleB;
+
+                    triangleB.a = p00;
+                    triangleB.b = p01;
+                    triangleB.c = p11;
+
+                    triangleB.color =
+                        glm::vec3(0.25f, 0.55f, 0.20f);
+
+                    renderScene.triangles.push_back(triangleB);
+
+                    terrainTriangleCount += 2;
+                }
+            }
+
+            BOX_LOG_INFO(
+                "BoxRenderer Terrain: "
+                << terrainTriangleCount
+                << " triangles added"
+            );
+        }
+    }
+
+    // =====================================================
+    // END TERRAIN GEOMETRY TEST
+    // =====================================================
+
 
     BOX_LOG_INFO(
         "BoxRenderer snapshot contains "

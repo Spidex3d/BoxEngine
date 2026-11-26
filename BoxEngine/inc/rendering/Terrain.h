@@ -212,6 +212,18 @@ public:
 	const std::vector<float>& GetVertices() const { return m_vertices; }
 	const std::vector<unsigned int>& GetIndices() const { return m_indices; }
 
+	int GetHeightMapWidth() const
+	{
+		return heightmapWidth;
+	}
+
+	int GetHeightMapHeight() const
+	{
+		return heightmapHeight;
+	}
+
+
+
 private:
 	//GLuint m_VAO, m_VBO, m_EBO;
 	GLuint m_VAO = 0;
